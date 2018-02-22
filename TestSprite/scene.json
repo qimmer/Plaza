@@ -1,0 +1,19 @@
+{
+  "/Tilemaps/Tilemap1": {
+    "MaterialProgram": "/Programs/Sprite"
+  },
+  "/Sprites/TestSprite": {
+
+  },
+  "/Scene": {
+    "$components":[ "Scene" ]
+  },
+  "/Scene/Camera": {
+    "Camera2DPixelsPerUnit": 32
+  },
+
+  "/Scene/Sprite": {
+    "MeshInstanceMesh": "/Sprites/TestSprite",
+    "MeshInstanceMaterial": ""
+  }
+}

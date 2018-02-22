@@ -1,0 +1,105 @@
+//
+// Created by Kim Johannsen on 14/01/2018.
+//
+
+#ifndef PLAZA_TEXTURE_H
+#define PLAZA_TEXTURE_H
+
+#include <Core/Entity.h>
+
+
+    DeclareComponent(Texture)
+
+    DeclareComponentProperty(Texture, Entity, TextureDataStream)
+    DeclareComponentProperty(Texture, u16, TextureFormat)
+    DeclareComponentProperty(Texture, bool, TextureDynamic)
+    DeclareComponentProperty(Texture, u8, TextureMipLevels)
+
+    enum
+    {
+        TEXTURE_FORMAT_BC1,          //!< DXT1
+        TEXTURE_FORMAT_BC2,          //!< DXT3
+        TEXTURE_FORMAT_BC3,          //!< DXT5
+        TEXTURE_FORMAT_BC4,          //!< LATC1/ATI1
+        TEXTURE_FORMAT_BC5,          //!< LATC2/ATI2
+        TEXTURE_FORMAT_BC6H,         //!< BC6H
+        TEXTURE_FORMAT_BC7,          //!< BC7
+        TEXTURE_FORMAT_ETC1,         //!< ETC1 TEXTURE_FORMAT_RGB8
+        TEXTURE_FORMAT_ETC2,         //!< ETC2 TEXTURE_FORMAT_RGB8
+        TEXTURE_FORMAT_ETC2A,        //!< ETC2 TEXTURE_FORMAT_RGBA8
+        TEXTURE_FORMAT_ETC2A1,       //!< ETC2 TEXTURE_FORMAT_RGB8A1
+        TEXTURE_FORMAT_PTC12,        //!< PVRTC1 TEXTURE_FORMAT_RGB 2BPP
+        TEXTURE_FORMAT_PTC14,        //!< PVRTC1 TEXTURE_FORMAT_RGB 4BPP
+        TEXTURE_FORMAT_PTC12A,       //!< PVRTC1 TEXTURE_FORMAT_RGBA 2BPP
+        TEXTURE_FORMAT_PTC14A,       //!< PVRTC1 TEXTURE_FORMAT_RGBA 4BPP
+        TEXTURE_FORMAT_PTC22,        //!< PVRTC2 TEXTURE_FORMAT_RGBA 2BPP
+        TEXTURE_FORMAT_PTC24,        //!< PVRTC2 TEXTURE_FORMAT_RGBA 4BPP
+
+        TEXTURE_FORMAT_Unknown,      // Compressed formats above.
+
+        TEXTURE_FORMAT_R1,
+        TEXTURE_FORMAT_A8,
+        TEXTURE_FORMAT_R8,
+        TEXTURE_FORMAT_R8I,
+        TEXTURE_FORMAT_R8U,
+        TEXTURE_FORMAT_R8S,
+        TEXTURE_FORMAT_R16,
+        TEXTURE_FORMAT_R16I,
+        TEXTURE_FORMAT_R16U,
+        TEXTURE_FORMAT_R16F,
+        TEXTURE_FORMAT_R16S,
+        TEXTURE_FORMAT_R32I,
+        TEXTURE_FORMAT_R32U,
+        TEXTURE_FORMAT_R32F,
+        TEXTURE_FORMAT_RG8,
+        TEXTURE_FORMAT_RG8I,
+        TEXTURE_FORMAT_RG8U,
+        TEXTURE_FORMAT_RG8S,
+        TEXTURE_FORMAT_RG16,
+        TEXTURE_FORMAT_RG16I,
+        TEXTURE_FORMAT_RG16U,
+        TEXTURE_FORMAT_RG16F,
+        TEXTURE_FORMAT_RG16S,
+        TEXTURE_FORMAT_RG32I,
+        TEXTURE_FORMAT_RG32U,
+        TEXTURE_FORMAT_RG32F,
+        TEXTURE_FORMAT_RGB8,
+        TEXTURE_FORMAT_RGB8I,
+        TEXTURE_FORMAT_RGB8U,
+        TEXTURE_FORMAT_RGB8S,
+        TEXTURE_FORMAT_RGB9E5F,
+        TEXTURE_FORMAT_BGRA8,
+        TEXTURE_FORMAT_RGBA8,
+        TEXTURE_FORMAT_RGBA8I,
+        TEXTURE_FORMAT_RGBA8U,
+        TEXTURE_FORMAT_RGBA8S,
+        TEXTURE_FORMAT_RGBA16,
+        TEXTURE_FORMAT_RGBA16I,
+        TEXTURE_FORMAT_RGBA16U,
+        TEXTURE_FORMAT_RGBA16F,
+        TEXTURE_FORMAT_RGBA16S,
+        TEXTURE_FORMAT_RGBA32I,
+        TEXTURE_FORMAT_RGBA32U,
+        TEXTURE_FORMAT_RGBA32F,
+        TEXTURE_FORMAT_R5G6B5,
+        TEXTURE_FORMAT_RGBA4,
+        TEXTURE_FORMAT_RGB5A1,
+        TEXTURE_FORMAT_RGB10A2,
+        TEXTURE_FORMAT_RG11B10F,
+
+        TEXTURE_FORMAT_UnknownDepth, // Depth formats below.
+
+        TEXTURE_FORMAT_D16,
+        TEXTURE_FORMAT_D24,
+        TEXTURE_FORMAT_D24S8,
+        TEXTURE_FORMAT_D32,
+        TEXTURE_FORMAT_D16F,
+        TEXTURE_FORMAT_D24F,
+        TEXTURE_FORMAT_D32F,
+        TEXTURE_FORMAT_D0S8,
+
+        TEXTURE_FORMAT_Count
+    };
+
+
+#endif //PLAZA_TEXTURE_H
