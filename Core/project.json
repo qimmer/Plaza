@@ -1,0 +1,8 @@
+{
+    "Projects": {
+        "Core": {
+            "Flags": "Module;Proprietary",
+            "Conditions": "Win32;Win64;MacUniversal;iOS;Android;Linux32;Linux64"
+        }
+    }
+}

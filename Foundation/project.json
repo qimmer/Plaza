@@ -1,0 +1,11 @@
+{
+    "/Projects/Foundation": {
+        "ProjectCppSources": "*.cpp",
+        "ProjectCppInterfaces": "*.h",
+        "ProjectCppDefines": "FOUNDATION_EXPORTS",
+        "ProjectCppIncludeDirs": "..",
+        "ProjectDependencies": "Core",
+        "ProjectType": "Module",
+        "ProjectPlatforms": "Win32;Win64;MacUniversal;iOS;Android;Linux32;Linux64"
+    }
+}

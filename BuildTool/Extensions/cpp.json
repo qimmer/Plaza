@@ -1,0 +1,13 @@
+{
+    "ArgumentTypes:": {
+        "CppDefine": { "Flag": "-D" },
+        "CppIncludeDir": { "Flag": "-I" }
+    },
+    "Arguments": {
+        "Debug": { "ArgumentType": "CppDefine", "ArgumentValue": "DEBUG", "Conditions": "Debug" },
+        "NoDebug": { "ArgumentType": "CppDefine", "ArgumentValue": "NDEBUG", "Conditions": "!Debug" },
+        "Profile": { "ArgumentType": "CppDefine", "ArgumentValue": "PROFILE", "Conditions": "Profile" },
+        "Distribution": { "ArgumentType": "CppDefine", "ArgumentValue": "DISTRIBUTION", "Conditions": "Distribution" },
+        "ProjectSourceIncludeDir": { "ArgumentType": "CppIncludeDir", "ArgumentValue": "./Source" }
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "Flags": {
+        "Win32": { "Group": "Platform" },
+        "Win64": { "Group": "Platform" }
+    },
+    "SourceDirectories": { 
+        "Windows": "./Source/Windows"
+    }
+}

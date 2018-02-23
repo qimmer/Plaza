@@ -1,0 +1,10 @@
+{
+    "Flags": {
+        "MacUniversal": { "FlagGroup": "Platform" },
+        "Mac64": { "FlagGroup": "Platform" },
+        "Mac32": { "FlagGroup": "Platform" }
+    },
+    "SourceDirectories": {
+        "Mac": "./Source/Mac"
+    }    
+}

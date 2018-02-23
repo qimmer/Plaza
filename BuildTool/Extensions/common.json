@@ -1,0 +1,14 @@
+{
+    "Flags": {
+        "Debug": { "FlagGroup": "Configuration" },
+        "Profile": { "FlagGroup": "Configuration" },
+        "Release": { "FlagGroup": "Configuration" },
+        "Distribution": { "FlagGroup": "Configuration" },
+        
+        "Module": { "FlagGroup": "ProjectType" },
+        "Product": { "FlagGroup": "ProjectType" },
+
+        "Proprietary": { "FlagGroup": "ProjectDistributionType" },
+        "OpenSource": { "FlagGroup": "ProjectDistributionType" }
+    }
+}

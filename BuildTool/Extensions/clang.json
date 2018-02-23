@@ -1,0 +1,37 @@
+{
+    "Rules": {
+        "Clang_Compile_Mac": {
+            "Conditions": "MacUniversal",
+            "RulePhase": 1,
+            "RuleCommandLine": "clang -x c++ -lstdc++ -c [!Debug:-O 3] [Debug:-g] $(InputFile) $(CppDefine) $(CppIncludeDir) -o $(OutputPath)",
+            "RuleOutputPath": "$(InputPath)/Build/$(Platform)_$(Configuration)/$(InputName).o",
+            "FileTypes": "*.cpp;*.cxx"
+        },
+        "Clang_Mac_Shared": {
+            "RulePhase": 2,
+            "RuleConditions": "MacUniversal",
+            "RuleProjectTypes": "Module",
+            "RuleLibraryFlag": "-l",
+            "RuleCommandLine": "libtool -dynamic $(InputFiles) -o $(InputPath)/Build/$(Platform)_$(Configuration)/$(InputName).dylib -framework CoreFoundation -lSystem",
+            "FileTypes": "*.o"
+        },
+        "CPP_Mac_Static": {
+            "RulePhase": 2,
+            "RulePlatforms": "MacUniversal",
+            "RuleProjectTypes": "Module",
+            "RuleCommandLine": "clang -x c++ -lstdc++ [!Debug:-O 3] [Debug:-g] $(InputFiles) -o $(InputPath)/Build/$(Platform)_$(Configuration)/$(ProjectName)",
+            "RuleDefineFlag": "-D",
+            "RuleIncludeDirFlag": "-I",
+            "FileTypes": "*.o"
+        },
+        "CPP_Mac_Executable": {
+            "RulePhase": 2,
+            "RulePlatforms": "MacUniversal",
+            "RuleProjectTypes": "Tool",
+            "RuleCommandLine": "clang -x c++ -lstdc++ [!Debug:-O 3] [Debug:-g] $(InputFiles) -o $(InputPath)/Build/$(Platform)_$(Configuration)/$(ProjectName)",
+            "RuleDefineFlag": "-D",
+            "RuleIncludeDirFlag": "-I",
+            "FileTypes": "*.o"
+        }
+    }
+}
