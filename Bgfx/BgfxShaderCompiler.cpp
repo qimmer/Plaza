@@ -124,7 +124,7 @@ static const StringRef shaderTypes[] = {
             auto binaryShader = GetBinaryShader(shaderEntity, profile.c_str());
 
             char binaryPath[PATH_MAX];
-            sprintf(binaryPath, "Shaders/%s_%s.bin", GetName(shaderEntity), profile.c_str());
+            sprintf(binaryPath, "Shaders/%zu_%s.bin", std::hash<std::string>()(GetEntityPath(shaderEntity)), profile.c_str());
 
             SetFilePath(GetBinaryShaderStream(binaryShader), binaryPath);
 

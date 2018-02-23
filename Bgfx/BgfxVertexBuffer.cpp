@@ -129,8 +129,9 @@
                 continue;
             }
 
+            auto elementUsage = (bgfx::Attrib::Enum)GetVertexAttributeUsage(attribute);
             data->decl.add(
-                    (bgfx::Attrib::Enum)GetVertexAttributeUsage(attribute),
+                    elementUsage,
                     elementCount,
                     elementType,
                     GetVertexAttributeNormalize(attribute),

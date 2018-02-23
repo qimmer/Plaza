@@ -36,3 +36,4 @@
 .vs/
 obj/
 .vscode/
+cmake-build-*/

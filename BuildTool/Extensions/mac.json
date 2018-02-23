@@ -1,10 +1,33 @@
 {
     "Flags": {
-        "MacUniversal": { "FlagGroup": "Platform" },
-        "Mac64": { "FlagGroup": "Platform" },
-        "Mac32": { "FlagGroup": "Platform" }
+        "MacUniversal": { "FlagGroup": "Platform" }
+    },
+    "Arguments": {
+        "MacDefine": { 
+            "ArgumentType": "CppDefine", 
+            "ArgumentValue": "MACOSX",
+            "Conditions": "MacUniversal"
+        },
+        "UsrLocalInclude": { 
+            "ArgumentType": "CppIncludeDir", 
+            "ArgumentValue": "/usr/local/include",
+            "Conditions": "MacUniversal"
+        },
+        "UsrInclude": { 
+            "ArgumentType": "CppIncludeDir", 
+            "ArgumentValue": "/usr/include",
+            "Conditions": "MacUniversal"
+        },
+        "Clang350Include": { 
+            "ArgumentType": "CppIncludeDir", 
+            "ArgumentValue": "/usr/local/lib/clang/3.5.0/include",
+            "Conditions": "MacUniversal"
+        }
     },
     "SourceDirectories": {
-        "Mac": "./Source/Mac"
+        "Mac": {
+            "Path": "Source/Mac",
+            "Conditions": "MacUniversal"
+        }
     }    
 }

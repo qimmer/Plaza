@@ -1,7 +1,7 @@
 {
     "ArgumentTypes:": {
-        "CppDefine": { "Flag": "-D" },
-        "CppIncludeDir": { "Flag": "-I" }
+        "CppDefine": {},
+        "CppIncludeDir": {}
     },
     "Arguments": {
         "Debug": { "ArgumentType": "CppDefine", "ArgumentValue": "DEBUG", "Conditions": "Debug" },

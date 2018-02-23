@@ -3,7 +3,14 @@
         "Win32": { "Group": "Platform" },
         "Win64": { "Group": "Platform" }
     },
-    "SourceDirectories": { 
-        "Windows": "./Source/Windows"
+    "SourceDirectories": {
+        "Win32": {
+            "Path": "Source/Windows",
+            "Conditions": "Win32"
+        },
+        "Win64": {
+            "Path": "Source/Windows",
+            "Conditions": "Win64"
+        }
     }
 }
