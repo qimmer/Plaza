@@ -35,19 +35,7 @@
         // First, prepare command list
         auto commandList = data->CommandList;
         auto renderTarget = GetCameraRenderTarget(sceneRenderer);
-        auto viewportMultiplier = GetCameraViewport(sceneRenderer);
-        v2i size;
-
-        if(IsEntityValid(renderTarget)) {
-            if(HasContext(renderTarget)) {
-                size = GetContextSize(renderTarget);
-            }
-        }
-
-        v4i viewport = {viewportMultiplier.x * size.x,
-                        viewportMultiplier.y * size.y,
-                        viewportMultiplier.z * size.x,
-                        viewportMultiplier.w * size.y};
+        auto viewport = GetCameraViewport(sceneRenderer);
 
         SetCommandListViewport(commandList, viewport);
         SetCommandListClearColor(commandList, GetCameraClearColor(sceneRenderer));
@@ -57,23 +45,23 @@
         SetCommandListViewMatrix(commandList, GetCameraViewMatrix(sceneRenderer));
         SetCommandListProjectionMatrix(commandList, GetCameraProjectionMatrix(sceneRenderer));
 
-        // Now, update batches
         auto batch = GetFirstChild(data->CommandList);
-
+        auto batchIndex = 0;
         for(auto i = 0; i < GetNumMeshInstance(); ++i) {
             auto meshInstance = GetMeshInstanceEntity(i);
 
             if(GetSceneNodeScene(meshInstance) != GetSceneNodeScene(sceneRenderer)) continue;
 
-            if(IsEntityValid(batch)) {
-                batch = GetSibling(batch);
-            } else {
-                batch = CreateBatch(FormatString("%s/Batch_%i", GetEntityPath(data->CommandList), i));
+            if(!IsEntityValid(batch)) {
+                batch = CreateBatch(FormatString("%s/Batch_%i", GetEntityPath(data->CommandList), batchIndex));
             }
 
             SetBatchMaterial(batch, GetMeshInstanceMaterial(meshInstance));
             SetBatchMesh(batch, GetMeshInstanceMesh(meshInstance));
             SetBatchWorldMatrix(batch, GetGlobalTransform(meshInstance));
+
+            batch = GetSibling(batch);
+            batchIndex++;
         }
     }
 

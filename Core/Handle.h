@@ -98,8 +98,8 @@ Handle GetHandle(Index index, Generation generation);
         \
         Assert(HandleName ## _generations[index] % 2 == 0);\
     }\
-    DataTypeName& HandleName ## At(HandleName handle) { \
-        return HandleName ## _pool[GetHandleIndex(handle)];\
+    DataTypeName* HandleName ## At(HandleName handle) { \
+        return & HandleName ## _pool[GetHandleIndex(handle)];\
     }
 
 #endif

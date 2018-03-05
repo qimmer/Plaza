@@ -27,7 +27,7 @@ void Log(int channel, int severity, StringRef format, ...) {
             break;
         case LogSeverity_Error:
             sprintf(buffer, "Error:   ");
-            DebuggerBreak();
+            //DebuggerBreak();
             break;
         case LogSeverity_Fatal:
             sprintf(buffer, "Fatal:   ");
@@ -48,8 +48,8 @@ void Log(int channel, int severity, StringRef format, ...) {
 }
 
 void DebuggerBreak() {
-#ifdef _MSC_VER
-    __debugbreak()
+#ifdef WIN32
+    __debugbreak();
 #else
     raise(SIGTRAP);
 #endif
