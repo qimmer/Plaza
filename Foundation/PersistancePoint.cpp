@@ -31,7 +31,7 @@ DefineEvent(LoadFinished, EntityHandler)
 DefineEvent(SaveFinished, EntityHandler)
 
 void Unload(Entity persistancePoint) {
-    for(auto entity = GetNextEntityThat(0, HasPersistance); IsEntityValid(entity); entity = GetNextEntityThat(entity, HasPersistance)) {
+    for_entity(entity, Persistance) {
         if(GetEntityPersistancePoint(entity) == persistancePoint) {
             DestroyEntity(entity);
         }

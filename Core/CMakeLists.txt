@@ -22,6 +22,6 @@ add_library(Core Entity.cpp Entity.h Types.h Type.h Pool.h Handle.h Function.h D
 
 add_dependencies(Core ex_dyncall)
 
-target_link_libraries(Core PUBLIC dyncall "-gdwarf-2")
+target_link_libraries(Core PUBLIC dyncall)
 target_include_directories(Core PUBLIC ".." "cglm/include" ${ex_dyncall_inc_dir})
-target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions" "-gdwarf-2")
+target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions")

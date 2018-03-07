@@ -33,6 +33,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cmath>
+#include <cfloat>
 
 #ifdef __APPLE__
 extern "C" {
@@ -66,10 +67,19 @@ EndService()
 
 static u32 NumContexts = 0;
 static Entity PrimaryContext = 0;
+static double timeSinceLastPoll = FLT_MAX;
 
 static void OnAppUpdate(double deltaTime) {
-    for(auto entity = GetNextEntity(0); IsEntityValid(entity); entity = GetNextEntity(entity)) {
-        if(HasBgfxContext(entity)) {
+    timeSinceLastPoll += deltaTime;
+
+    auto numContexts = GetNumBgfxContext();
+
+    // Cap polls to 60fps to prevent overloading OS
+    if(timeSinceLastPoll > (1.0f / 30.0f)) {
+        timeSinceLastPoll = 0.0f;
+
+        for(auto i = 0; i < numContexts; ++i) {
+            auto entity = GetBgfxContextEntity(i);
             SetKeyState(entity, MOUSE_SCROLL_DOWN, 0.0f);
             SetKeyState(entity, MOUSE_SCROLL_UP, 0.0f);
             SetKeyState(entity, MOUSE_SCROLL_LEFT, 0.0f);
@@ -79,9 +89,9 @@ static void OnAppUpdate(double deltaTime) {
             SetKeyState(entity, MOUSE_LEFT, 0.0f);
             SetKeyState(entity, MOUSE_RIGHT, 0.0f);
         }
-    }
 
-    glfwPollEvents();
+        glfwPollEvents();
+    }
 
     // Validate all resources to eventual model changes
     ValidateAll(UpdateBgfxBinaryShader, HasBgfxBinaryShader);
@@ -96,25 +106,24 @@ static void OnAppUpdate(double deltaTime) {
     Entity viewIdTaken[256];
     memset(viewIdTaken, 0, sizeof(Entity) * 256);
 
-    for(auto entity = GetNextEntity(0); IsEntityValid(entity); entity = GetNextEntity(entity)) {
-        if(HasBgfxCommandList(entity)) {
-            auto viewId = GetCommandListLayer(entity);
-            if(viewIdTaken[viewId]) {
-                Log(LogChannel_Core, LogSeverity_Error, "Command list '%s' and '%s' are using same layer. Last command list skipped.", GetEntityPath(viewIdTaken[viewId]), GetEntityPath(entity));
-                continue;
-            }
-
-            RenderCommandList(entity, viewId);
+    auto numCommandLists = GetNumBgfxCommandList();
+    for(auto i = 0; i < numCommandLists; ++i) {
+        auto entity = GetBgfxCommandListEntity(i);
+        auto viewId = GetCommandListLayer(entity);
+        if(viewIdTaken[viewId]) {
+            Log(LogChannel_Core, LogSeverity_Error, "Command list '%s' and '%s' are using same layer. Last command list skipped.", GetEntityPath(viewIdTaken[viewId]), GetEntityPath(entity));
+            continue;
         }
+
+        RenderCommandList(entity, viewId);
     }
 
     bgfx::frame();
 
-    for(auto entity = GetNextEntity(0); IsEntityValid(entity); entity = GetNextEntity(entity)) {
-        if(HasBgfxContext(entity)) {
-            if(glfwWindowShouldClose(GetBgfxContext(entity)->window)) {
-                FireEvent(ContextClosing, entity);
-            }
+    for(auto i = 0; i < numContexts; ++i) {
+        auto entity = GetBgfxContextEntity(i);
+        if(glfwWindowShouldClose(GetBgfxContextByIndex(i)->window)) {
+            FireEvent(ContextClosing, entity);
         }
     }
 }
@@ -132,7 +141,7 @@ static void ResetContext(Entity entity) {
 #endif
     glfwSetWindowSize(data->window, size.x, size.y);
     if(entity == PrimaryContext) {
-        bgfx::reset(size.x, size.y, vsync ? BGFX_RESET_VSYNC : 0 + fullscreen ? BGFX_RESET_FULLSCREEN : 0);
+        bgfx::reset(size.x, size.y, (vsync ? BGFX_RESET_VSYNC : 0) + (fullscreen ? BGFX_RESET_FULLSCREEN : 0));
     } else {
         bgfx::destroy(data->fb);
         data->fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
@@ -258,7 +267,7 @@ static void OnBgfxContextAdded(Entity entity) {
         pd.session = NULL;
         bgfx::setPlatformData(pd);
 
-        bgfx::init();
+        bgfx::init(bgfx::RendererType::Metal);
         bgfx::reset(size.x, size.y);
 
         PrimaryContext = entity;

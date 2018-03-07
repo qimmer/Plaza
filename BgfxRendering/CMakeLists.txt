@@ -9,7 +9,7 @@ ExternalProject_Add(ex_bgfx
         GIT_REPOSITORY "https://github.com/JoshuaBrookover/bgfx.cmake.git"
         GIT_TAG "master"
         UPDATE_COMMAND ""
-        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_BUILD_EXAMPLES=OFF;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_BUILD_EXAMPLES=OFF;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=Release;-DBGFX_CONFIG_DEBUG=ON")
 
 ExternalProject_Get_Property(ex_bgfx BINARY_DIR)
 ExternalProject_Get_Property(ex_bgfx SOURCE_DIR)
@@ -44,13 +44,28 @@ add_library(BgfxRendering BgfxModule.cpp BgfxModule.h BgfxModule.cpp BgfxModule.
 add_dependencies(BgfxRendering ex_bgfx ex_glfw)
 
 target_include_directories(BgfxRendering PUBLIC ".." ${ex_bgfx_inc_dir} ${ex_glfw_inc_dir})
-target_link_libraries(BgfxRendering Core Foundation Rendering bgfx bimg glfw bx)
+
+SET(libs Core Foundation Rendering glfw)
+
+SET(libs ${libs} bgfx bimg bx)
 
 IF(WIN32)
-    target_link_libraries(BgfxRendering psapi)
+    SET(libs ${libs} psapi)
 ENDIF()
 
-IF(WIN32)
+IF(APPLE)
+    find_library( COCOA_LIBRARY Cocoa )
+    find_library( METAL_LIBRARY Metal )
+    find_library( QUARTZCORE_LIBRARY QuartzCore )
+    mark_as_advanced( COCOA_LIBRARY )
+    mark_as_advanced( METAL_LIBRARY )
+    mark_as_advanced( QUARTZCORE_LIBRARY )
+    SET(libs ${libs} "-framework IOKit -framework CoreFoundation -framework CoreVideo" ${COCOA_LIBRARY} ${METAL_LIBRARY} ${QUARTZCORE_LIBRARY})
+ENDIF()
+
+target_link_libraries(BgfxRendering ${libs})
+
+IF(WIN32 OR APPLE)
     SET(WITH_SHADER_COMPILER ON)
 ENDIF()
 

@@ -185,7 +185,10 @@ bool IsComponentAbstract(Type type);
         SetAndNotify(TYPENAME, PROPERTYTYPE, PROPERTYNAME, PROPERTYNAME ## Changed, value); \
     }
 
-#define for_entity(VARNAME, CONDITIONFUNC) for(auto VARNAME = GetNextEntityThat(0, CONDITIONFUNC); IsEntityValid(VARNAME); VARNAME = GetNextEntityThat(VARNAME, CONDITIONFUNC))
+#define for_entity(VARNAME, COMPONENTTYPE) \
+        auto num ## COMPONENTTYPE ## VARNAME = GetNum ## COMPONENTTYPE();\
+        Entity VARNAME = 0;\
+        for(auto COMPONENTTYPE_i = 0; (COMPONENTTYPE_i < num ## COMPONENTTYPE ## VARNAME) && (VARNAME = Get ## COMPONENTTYPE ## Entity(COMPONENTTYPE_i)); ++COMPONENTTYPE_i)
 
 #include <Core/Hierarchy.h>
 

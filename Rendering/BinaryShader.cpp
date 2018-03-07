@@ -30,7 +30,7 @@
     EndService()
 
 #ifdef __APPLE__
-    String SupportedShaderProfiles = "osx_410";
+    String SupportedShaderProfiles = "osx_metal";
 #endif
 
 #ifdef WIN32

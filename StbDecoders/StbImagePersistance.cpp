@@ -57,6 +57,8 @@ static bool DeserializeImage(Entity entity) {
 
         SetStreamPath(texture, GetStreamPath(entity));
     }
+
+    return result;
 }
 
 static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {

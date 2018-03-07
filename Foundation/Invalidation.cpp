@@ -8,6 +8,8 @@ struct Invalidation {
     bool Invalidated;
 };
 
+static std::unordered_set<Entity> invalidatedEntities;
+
 DefineComponent(Invalidation)
 EndComponent()
 
@@ -17,26 +19,45 @@ EndService()
 DefineComponentProperty(Invalidation, bool, Invalidated)
 
 void ValidateAll(EntityHandler validator, EntityBoolHandler condition) {
-    for_entity(entity, HasInvalidation) {
-        if(GetInvalidated(entity) && condition(entity)) {
-            SetInvalidated(entity, false);
-            validator(entity);
+    static std::unordered_set<Entity> copies;
+    copies = invalidatedEntities;
+
+    for(auto entity : copies) {
+        if(!IsEntityValid(entity) || !HasInvalidation(entity)) {
+            invalidatedEntities.erase(entity);
+        } else {
+            if(condition(entity)) {
+                SetInvalidated(entity, false);
+                validator(entity);
+            }
         }
     }
 }
 
 static void OnComponentChanged(Entity entity, Type type) {
-    if(type != TypeOf_Invalidation()) {
+    if(type != TypeOf_Invalidation() && HasInvalidation(entity)) {
         SetInvalidated(entity, true);
+    }
+}
+
+static void OnInvalidatedChanged(Entity entity, bool oldValue, bool newValue) {
+    if(!oldValue && newValue) {
+        invalidatedEntities.insert(entity);
+    }
+
+    if(oldValue && !newValue) {
+        invalidatedEntities.erase(entity);
     }
 }
 
 static bool ServiceStart() {
     SubscribeComponentChanged(OnComponentChanged);
+    SubscribeInvalidatedChanged(OnInvalidatedChanged);
     return true;
 }
 
 static bool ServiceStop() {
     UnsubscribeComponentChanged(OnComponentChanged);
+    UnsubscribeInvalidatedChanged(OnInvalidatedChanged);
     return true;
 }

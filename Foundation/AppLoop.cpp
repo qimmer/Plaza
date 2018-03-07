@@ -5,9 +5,10 @@
 #include <Foundation/AppLoop.h>
 #include <Core/Debug.h>
 
+#include <Core/String.h>
+
 #ifdef WIN32
 #include <windows.h>
-#include <Core/String.h>
 
 static double PCFreq = 0.0;
 
@@ -29,6 +30,23 @@ double GetTimeSinceStart()
 }
 #endif
 
+#ifdef __APPLE__
+#include <mach/mach_time.h>
+
+double GetTimeSinceStart()
+{
+    const u64 kOneMillion = 1000 * 1000 * 1000;
+    static mach_timebase_info_data_t s_timebase_info {0, 0};
+
+    if(!s_timebase_info.denom) {
+        mach_timebase_info(&s_timebase_info);
+    }
+
+    // mach_absolute_time() returns billionth of seconds,
+    // so divide by one million to get milliseconds
+    return (double)(mach_absolute_time() * s_timebase_info.numer) / (kOneMillion * s_timebase_info.denom);
+}
+#endif
 static double deltaTime = 0.0;
 
 DefineEvent(AppUpdate, AppUpdateHandler)

@@ -51,7 +51,7 @@
         viewport.z *= size.x;
         viewport.w *= size.y;
 
-        SetCommandListViewport(commandList, {lroundf(viewport.x), lroundf(viewport.y), lroundf(viewport.z), lroundf(viewport.w)});
+        SetCommandListViewport(commandList, {(int)viewport.x, (int)viewport.y, (int)viewport.z, (int)viewport.w});
         SetCommandListClearColor(commandList, GetCameraClearColor(sceneRenderer));
         SetCommandListRenderTarget(commandList, GetCameraRenderTarget(sceneRenderer));
         SetCommandListClearDepth(commandList, 0.0f);

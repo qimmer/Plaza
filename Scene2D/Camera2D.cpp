@@ -66,7 +66,7 @@ struct Camera2D {
 
     static void OnInvalidationChanged(Entity entity, bool oldValue, bool newValue) {
         if(HasRenderTarget(entity)) {
-            for(auto camera = GetNextEntityThat(0, HasCamera2D); IsEntityValid(camera); camera = GetNextEntityThat(camera, HasCamera2D)) {
+            for_entity(camera, Camera2D) {
                 if(GetCameraRenderTarget(camera) == entity) {
                     UpdateProjectionMatrix(camera);
                 }

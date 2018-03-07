@@ -284,7 +284,7 @@ void RebuildImGuiFonts() {
     }
 
     static void OnAppUpdate(double deltaTime) {
-        for_entity(context, HasImGuiRenderer) {
+        for_entity(context, ImGuiRenderer) {
             RenderImGui(context, deltaTime);
         }
     }

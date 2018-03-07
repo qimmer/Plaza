@@ -116,7 +116,7 @@ static const StringRef shaderTypes[] = {
         ss.clear();
         FILE *fpipe;
         char c = 0;
-        auto command = FormatString("shaderc -f \"%s\" -o \"%s\" -p %s -i \"%s\" --type %s --platform %s --varyingdef \"%s\" -O3",
+        auto command = FormatString("./shaderc -f \"%s\" -o \"%s\" -p %s -i \"%s\" --type %s --platform %s --varyingdef \"%s\" -O3",
                                     sourceFilePath,
                                     outputFilePath,
                                     profile,

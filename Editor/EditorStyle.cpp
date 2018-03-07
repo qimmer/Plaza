@@ -28,6 +28,8 @@ static bool ServiceStart() {
     io.Fonts->AddFontFromFileTTF("./Fonts/fontawesome-webfont.ttf", 14.0f, &config, awesomeRange);
     io.Fonts->AddFontFromFileTTF("./Fonts/MaterialIcons-Regular.ttf", 14.0f, &config, materialRange);
     RebuildImGuiFonts();
+
+    return true;
 }
 
 static bool ServiceStop() {

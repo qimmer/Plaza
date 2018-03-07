@@ -98,8 +98,8 @@ static void Draw(Entity context) {
             ImGui::EndPopup();
         }
 
-        for(auto entity = GetNextEntity(0); IsEntityValid(entity); entity = GetNextEntity(entity)) {
-            if(!HasHierarchy(entity) || IsEntityValid(GetParent(entity))) continue;
+        for_entity(entity, Hierarchy) {
+            if(IsEntityValid(GetParent(entity))) continue;
             DrawEntry(entity, 0);
         }
 

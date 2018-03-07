@@ -221,7 +221,9 @@ static void OnStreamPathChanged(Entity entity, StringRef oldValue, StringRef new
         return;
     }
 
-    strncpy(protocolIdentifier, resolvedPath, colonLocation - resolvedPath);
+    u32 len = colonLocation - resolvedPath;
+    strncpy(protocolIdentifier, resolvedPath, len);
+    protocolIdentifier[len] = 0;
 
     auto protocolIt = Protocols.find(protocolIdentifier);
     if(protocolIt == Protocols.end()) {

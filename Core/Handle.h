@@ -3,7 +3,7 @@
 
 #include <Core/Delegate.h>
 #include <Core/Debug.h>
-
+#include <Core/Pool.h>
 #include <climits>
 
 typedef u32 Generation;
@@ -14,20 +14,29 @@ typedef struct {
     u32 index, generation;
 } HandleData;
 
-Index GetHandleIndex(Handle handle);
-Generation GetHandleGeneration(Handle handle);
-Handle GetHandle(Index index, Generation generation);
+#define GetHandleIndex(handle) (((Index *) &handle)[0])
+#define GetHandleGeneration(handle) (((Generation *) &handle)[1])
+
+#define GetHandle(index, generation) ((Handle) generation << 32 | index)
 
 #define DeclareHandle(HandleName) \
+    extern Vector<Generation> HandleName ## _generations;\
+    extern Vector<Index> HandleName ## _freeSlots;\
     typedef Handle HandleName; \
     HandleName Get ## HandleName ## FromIndex (Index index); \
     HandleName GetNext ## HandleName (HandleName handle); \
-    bool Is ## HandleName ## Valid(HandleName handle); \
     HandleName Create ## HandleName(); \
     void Destroy ## HandleName (HandleName handle); \
     typedef void(* HandleName ## Handler)(HandleName handle); \
     DeclareEvent(HandleName ## Created, HandleName ## Handler) \
-    DeclareEvent(HandleName ## Destroyed, HandleName ## Handler)
+    DeclareEvent(HandleName ## Destroyed, HandleName ## Handler)\
+    inline bool Is ## HandleName ## Occupied(Index index) {\
+        return HandleName ## _generations[index] % 2 != 0;\
+    }\
+    inline bool Is ## HandleName ## Valid(HandleName handle) {\
+        auto index = GetHandleIndex(handle);\
+        return HandleName ## _generations.size() > index && Is ## HandleName ## Occupied(index) && HandleName ## _generations[index] == GetHandleGeneration(handle);\
+    }
 
 #define DefineHandle(HandleName, DataTypeName) \
     Vector<Generation> HandleName ## _generations;\
@@ -36,9 +45,6 @@ Handle GetHandle(Index index, Generation generation);
     DefineEvent(HandleName ## Created, HandleName ## Handler) \
     DefineEvent(HandleName ## Destroyed, HandleName ## Handler) \
     \
-    static bool Is ## HandleName ## Occupied(Index index) {\
-        return HandleName ## _generations[index] % 2 != 0;\
-    }\
     \
     HandleName Get ## HandleName ## FromIndex (Index index) {\
         if(index >= HandleName ## _generations.size()) return 0; \
@@ -57,11 +63,6 @@ Handle GetHandle(Index index, Generation generation);
         auto gen = HandleName ## _generations[index]; \
         return GetHandle(index, gen); \
     } \
-    \
-    bool Is ## HandleName ## Valid(HandleName handle) {\
-        auto index = GetHandleIndex(handle);\
-        return HandleName ## _generations.size() > index && Is ## HandleName ## Occupied(index) && HandleName ## _generations[index] == GetHandleGeneration(handle);\
-    }\
     \
     HandleName Create ## HandleName () {\
         Index index;\

@@ -14,7 +14,6 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <direct.h>
 #include <sstream>
 #include <iterator>
 
@@ -168,27 +167,28 @@ StringRef CleanupPath(StringRef messyPath) {
     auto isRelative = messyPath[0] != '/';
 #endif
 
-    String absolutePath;
+    String absolutePath = messyPath;
     if(isRelative) {
-        absolutePath = GetCurrentWorkingDirectory() + absolutePath;
-    } else {
-        absolutePath = messyPath;
+        absolutePath = GetCurrentWorkingDirectory();
+        absolutePath += "/";
+        absolutePath += messyPath;
     }
 
     std::replace(absolutePath.begin(), absolutePath.end(), '\\', '/');
 
-    FixedVector<String, 32> pathElements;
+    Vector<String> pathElements;
+    pathElements.clear();
     std::istringstream is(absolutePath);
     String element;
     while(std::getline(is, element, '/')) {
-        if(element.compare(element.length() - 2, 2, "..") == 0) {
+        if(element.length() == 0) {
+            // nothing in this element
+            continue;
+        } else if(element.length() > 1 && element.compare(element.length() - 2, 2, "..") == 0) {
             // parent directory identifier
             pathElements.pop_back();
         } else if(element.compare(element.length() - 1, 1, ".") == 0) {
             // current directory identifier
-            continue;
-        } else if(element.length() == 0) {
-            // nothing in this element
             continue;
         } else {
             pathElements.push_back(element);
@@ -196,8 +196,11 @@ StringRef CleanupPath(StringRef messyPath) {
     }
 
     std::stringstream os;
-    os << "file:/";
-    if(absolutePath[0] != '/') os << "/";
+    os << "file://";
+
+#ifndef WIN32
+    os << "/";
+#endif
 
     std::copy(pathElements.begin(), pathElements.end(), std::ostream_iterator<String>(os, "/"));
     auto asStr = os.str();

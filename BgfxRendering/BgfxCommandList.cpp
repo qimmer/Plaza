@@ -103,7 +103,10 @@
            !IsEntityValid(vertexBuffer) ||
            !IsEntityValid(indexBuffer) ||
            !IsEntityValid(mesh) ||
-           !IsEntityValid(material)) {
+           !IsEntityValid(material) ||
+            GetBgfxVertexBufferHandle(vertexBuffer) == bgfx::kInvalidHandle ||
+            GetBgfxIndexBufferHandle(indexBuffer) == bgfx::kInvalidHandle ||
+            GetBgfxProgramHandle(program)  == bgfx::kInvalidHandle) {
             return;
         }
 

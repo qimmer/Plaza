@@ -177,8 +177,8 @@ static bool SerializeJson(Entity persistancePoint) {
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
     writer.StartObject();
-    for(auto persistentEntity = GetNextEntity(0); IsEntityValid(persistentEntity); persistentEntity = GetNextEntity(persistentEntity)) {
-        if(!HasPersistance(persistentEntity) || GetEntityPersistancePoint(persistentEntity) != persistancePoint) continue;
+    for_entity(persistentEntity, Persistance) {
+        if(GetEntityPersistancePoint(persistentEntity) != persistancePoint) continue;
 
         writer.String(GetEntityPath(persistentEntity));
         writer.StartObject();
@@ -282,7 +282,7 @@ static bool DeserializeJson(Entity persistancePoint) {
                 while(std::getline(is, componentName, ';')) {
                     auto componentType = FindTypeByName(componentName.c_str());
                     if(!IsTypeValid(componentType)) {
-                        Log(LogChannel_Core, LogSeverity_Warning, "Unknown component type in JSON: %s", componentName);
+                        Log(LogChannel_Core, LogSeverity_Warning, "Unknown component type in JSON: %s", componentName.c_str());
                     } else {
                         AddComponent(persistentEntity, componentType);
                     }

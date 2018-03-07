@@ -49,13 +49,7 @@
     }
 
     static void OnInvalidated(Entity entity, bool before, bool after) {
-        if(after && HasStream(entity)) {
-            for(auto shader = GetNextEntity(0); IsEntityValid(shader); shader = GetNextEntity(shader)) {
-                if(!HasShader(shader)) {
-                    continue;
-                }
-            }
-        }
+
     }
 
     static bool ServiceStart() {

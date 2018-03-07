@@ -52,7 +52,7 @@ static void DrawEntry(Entity entry, int level) {
 
 static void Draw(Entity context) {
     if(ImGui::Begin("File Explorer", &Visible)) {
-        for(auto project = GetNextEntityThat(0, HasProject); IsEntityValid(project); project = GetNextEntityThat(project, HasProject)) {
+        for_entity(project, Project) {
             DrawEntry(GetProjectSourceFolder(project), 0);
         }
     }

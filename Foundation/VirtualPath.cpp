@@ -20,7 +20,7 @@ DefineComponentProperty(VirtualPath, StringRef, VirtualPathDestination)
 
 StringRef ResolveVirtualPath(StringRef virtualPath) {
     auto len = strlen(virtualPath);
-    for_entity(entity, HasVirtualPath) {
+    for_entity(entity, VirtualPath) {
         auto data = GetVirtualPath(entity);
         auto triggerLen = data->VirtualPathTrigger.length();
 
