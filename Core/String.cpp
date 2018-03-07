@@ -5,12 +5,12 @@
 #include <Core/String.h>
 #include <Core/Pool.h>
 
-#include <string>
+#include <string.h>
+#include <stdarg.h>
+#include <cstring>
+#include <memory>
 
-#define RING_MAX 2048
-
-static char ringBuffer[RING_MAX];
-static u32 ringBufferHead = 0;
+static std::vector<String> buffer;
 
 template<>
 const char * ApiConvert(const String& str) {
@@ -18,26 +18,23 @@ const char * ApiConvert(const String& str) {
 }
 
 StringRef FormatString(StringRef format, ...) {
-    char buffer[RING_MAX];
+    char buffer[1024 * 16];
     va_list args;
     va_start (args, format);
-    vsnprintf (buffer,RING_MAX,format, args);
+    vsnprintf (buffer,1024 * 16,format, args);
     va_end (args);
 
-    auto len = strlen(buffer);
+    return GetTempString(buffer);
+}
 
-    Assert(len < RING_MAX);
+StringRef GetTempString(StringRef tempString) {
+    buffer.push_back((String)tempString);
 
-    if(ringBufferHead + len > RING_MAX) {
-        ringBufferHead = 0;
-    }
+    return buffer[buffer.size() - 1].c_str();
+}
 
-    char *dest = &ringBuffer[ringBufferHead];
-    ringBufferHead += len + 1;
-
-    strcpy(dest, buffer);
-
-    return dest;
+void FreeTempStrings() {
+    buffer.clear();
 }
 
 

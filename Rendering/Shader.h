@@ -20,8 +20,6 @@
 
     DeclareComponent(Shader)
 
-    DeclareComponentProperty(Shader, Entity, ShaderSourceStream)
-    DeclareComponentProperty(Shader, Entity, ShaderVaryingDefStream)
     DeclareComponentProperty(Shader, u8, ShaderType)
 
     DeclareService(Shader)

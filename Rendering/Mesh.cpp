@@ -15,6 +15,13 @@
 
     DefineComponent(Mesh)
         Dependency(Invalidation)
+        DefineProperty(Entity, MeshVertexBuffer)
+        DefineProperty(Entity, MeshIndexBuffer)
+        DefineProperty(u32, MeshStartVertex)
+        DefineProperty(u32, MeshStartIndex)
+        DefineProperty(u32, MeshNumIndices)
+        DefineProperty(u32, MeshNumVertices)
+        DefineProperty(u32, MeshPrimitiveType)
     EndComponent()
 
     DefineService(MeshService)

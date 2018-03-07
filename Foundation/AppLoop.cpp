@@ -3,30 +3,43 @@
 //
 
 #include <Foundation/AppLoop.h>
+#include <Core/Debug.h>
 
-#include <ctime>
-#include <ratio>
-#include <chrono>
+#ifdef WIN32
+#include <windows.h>
+#include <Core/String.h>
 
-using namespace std::chrono;
+static double PCFreq = 0.0;
 
-typedef std::chrono::high_resolution_clock clocktype;
-typedef std::chrono::duration<double, std::milli> durationType;
+double GetTimeSinceStart()
+{
+    LARGE_INTEGER li;
 
-static clocktype::time_point lastAppUpdate = clocktype::now();
+    if(PCFreq == 0.0) {
+        if(!QueryPerformanceFrequency(&li)) {
+            Log(LogChannel_Core, LogSeverity_Fatal, "QueryPerformanceFrequency failed!");
+            return 0.0;
+        }
+
+        PCFreq = double(li.QuadPart);
+    }
+
+    QueryPerformanceCounter(&li);
+    return double(li.QuadPart)/PCFreq;
+}
+#endif
+
 static double deltaTime = 0.0;
 
 DefineEvent(AppUpdate, AppUpdateHandler)
 
 void AppUpdate() {
-    clocktype::time_point now = clocktype::now();
-    durationType delta = now - lastAppUpdate;
-
-    deltaTime = delta.count() / 1000.0;
-
-    lastAppUpdate = now;
-
+    auto startTime = GetTimeSinceStart();
     FireEvent(AppUpdate, deltaTime);
+    deltaTime = GetTimeSinceStart() - startTime;
+
+    // Free temporary strings that have accumulated during this frame
+    FreeTempStrings();
 }
 
 double GetDeltaTime() {

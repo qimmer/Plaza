@@ -5,13 +5,18 @@
 #include "Camera2D.h"
 #include <Scene/Camera.h>
 #include <cglm/cglm.h>
+#include <Rendering/RenderTarget.h>
+#include <Rendering/Context.h>
+#include <Foundation/Invalidation.h>
 
 
-    struct Camera2D {
+struct Camera2D {
         float Camera2DPixelsPerUnit;
     };
 
     DefineComponent(Camera2D)
+        Dependency(Camera)
+        DefineProperty(float, Camera2DPixelsPerUnit)
     EndComponent()
 
     DefineService(Camera2D)
@@ -20,13 +25,22 @@
     DefineComponentProperty(Camera2D, float, Camera2DPixelsPerUnit)
 
     static void UpdateProjectionMatrix(Entity entity) {
+        if(!HasCamera2D(entity)) return;
+
+        auto renderTarget = GetCameraRenderTarget(entity);
+        if(!IsEntityValid(renderTarget) || !HasRenderTarget(renderTarget)) {
+            return;
+        }
+
         auto data = GetCamera2D(entity);
 
-        v4i viewport = GetCameraViewport(entity);
-        v2f viewportExtent = {float(viewport.z - viewport.x) * 0.5f, float(viewport.w - viewport.y) * 0.5f};
+        auto viewport = GetCameraViewport(entity);
+        v2f viewportExtent = {(viewport.z - viewport.x) * 0.5f, (viewport.w - viewport.y) * 0.5f};
+        viewportExtent.x *= GetRenderTargetSize(renderTarget).x;
+        viewportExtent.y *= GetRenderTargetSize(renderTarget).y;
 
-        viewportExtent.x *= data->Camera2DPixelsPerUnit;
-        viewportExtent.y *= data->Camera2DPixelsPerUnit;
+        viewportExtent.x /= data->Camera2DPixelsPerUnit;
+        viewportExtent.y /= data->Camera2DPixelsPerUnit;
 
         m4x4f projection;
         glm_ortho(-viewportExtent.x, viewportExtent.x, -viewportExtent.y, viewportExtent.y, GetCameraNearClip(entity), GetCameraFarClip(entity), (vec4*)&projection);
@@ -34,11 +48,15 @@
         SetCameraProjectionMatrix(entity, projection);
     }
 
+    static void OnCameraAspectChanged(Entity entity, float oldAspect, float newAspect) {
+        UpdateProjectionMatrix(entity);
+    }
+
     static void OnCamera2DPixelsPerUnitChanged(Entity entity, float before, float after) {
         UpdateProjectionMatrix(entity);
     }
 
-    static void OnCameraViewportChanged(Entity entity, v4i before, v4i after) {
+    static void OnCameraViewportChanged(Entity entity, v4f before, v4f after) {
         UpdateProjectionMatrix(entity);
     }
 
@@ -46,10 +64,22 @@
         UpdateProjectionMatrix(entity);
     }
 
+    static void OnInvalidationChanged(Entity entity, bool oldValue, bool newValue) {
+        if(HasRenderTarget(entity)) {
+            for(auto camera = GetNextEntityThat(0, HasCamera2D); IsEntityValid(camera); camera = GetNextEntityThat(camera, HasCamera2D)) {
+                if(GetCameraRenderTarget(camera) == entity) {
+                    UpdateProjectionMatrix(camera);
+                }
+            }
+        }
+    }
+
     static bool ServiceStart() {
         SubscribeCamera2DPixelsPerUnitChanged(OnCamera2DPixelsPerUnitChanged);
         SubscribeCameraViewportChanged(OnCameraViewportChanged);
         SubscribeCameraRenderTargetChanged(OnCameraRenderTargetChanged);
+        SubscribeCamera2DAdded(UpdateProjectionMatrix);
+        SubscribeInvalidatedChanged(OnInvalidationChanged);
         return true;
     }
 
@@ -57,6 +87,8 @@
         UnsubscribeCamera2DPixelsPerUnitChanged(OnCamera2DPixelsPerUnitChanged);
         UnsubscribeCameraViewportChanged(OnCameraViewportChanged);
         UnsubscribeCameraRenderTargetChanged(OnCameraRenderTargetChanged);
+        UnsubscribeCamera2DAdded(UpdateProjectionMatrix);
+        UnsubscribeInvalidatedChanged(OnInvalidationChanged);
         return true;
     }
 

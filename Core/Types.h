@@ -69,7 +69,16 @@ typedef struct ALIGN(64) {
 } m4x4f;
 
 typedef struct {
-    u8 r, g, b, a;
+    union {
+        struct {
+            u8 r, g, b, a;
+        };
+
+        struct {
+            u8 x, y, z, w;
+        };
+    };
+
 } rgba8;
 
 typedef struct {

@@ -12,10 +12,6 @@
 
     DeclareService(Program)
 
-    DeclareComponentProperty(Program, Entity, VertexShader)
-
-    DeclareComponentProperty(Program, Entity, PixelShader)
-
     void SetShadingProfile(StringRef profile);
 
     StringRef GetShadingProfile();

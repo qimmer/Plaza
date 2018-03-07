@@ -2,7 +2,7 @@
 // Created by Kim Johannsen on 28/01/2018.
 //
 
-#include "Camera2D.h"
+#include "Camera3D.h"
 #include <Scene/Camera.h>
 #include <cglm/cglm.h>
 
@@ -20,12 +20,14 @@
     DefineComponentProperty(Camera3D, float, Camera3DFov)
 
     static void UpdateProjectionMatrix(Entity entity) {
+        if(!HasCamera3D(entity)) return;
+
         auto data = GetCamera3D(entity);
 
-        v4i viewport = GetCameraViewport(entity);
+        auto viewport = GetCameraViewport(entity);
 
         m4x4f projection;
-        glm_perspective(data->Camera3DFov, (float)viewport.x / viewport.y, GetCameraNearClip(entity), GetCameraFarClip(entity), (vec4*)&projection);
+        glm_perspective(glm_rad(data->Camera3DFov), viewport.x / viewport.y, GetCameraNearClip(entity), GetCameraFarClip(entity), (vec4*)&projection);
 
         SetCameraProjectionMatrix(entity, projection);
     }
@@ -34,25 +36,25 @@
         UpdateProjectionMatrix(entity);
     }
 
-    static void OnCameraViewportChanged(Entity entity, v4i before, v4i after) {
+    static void OnCameraViewportChanged(Entity entity, v4f before, v4f after) {
         UpdateProjectionMatrix(entity);
     }
 
-    static void OnCameraRenderTargetChanged(Entity entity, Entity before, Entity after) {
+    static void OnCamera3DAdded(Entity entity) {
         UpdateProjectionMatrix(entity);
     }
 
     static bool ServiceStart() {
-        SubscribeCamera3DFovChangedChanged(OnCamera2DPixelsPerUnitChanged);
+        SubscribeCamera3DAdded(OnCamera3DAdded);
+        SubscribeCamera3DFovChanged(OnCamera3DFovChanged);
         SubscribeCameraViewportChanged(OnCameraViewportChanged);
-        SubscribeCameraRenderTargetChanged(OnCameraRenderTargetChanged);
         return true;
     }
 
     static bool ServiceStop() {
-        UnsubscribeCamera3DFovChanged(OnCamera2DPixelsPerUnitChanged);
+        UnsubscribeCamera3DAdded(OnCamera3DAdded);
+        UnsubscribeCamera3DFovChanged(OnCamera3DFovChanged);
         UnsubscribeCameraViewportChanged(OnCameraViewportChanged);
-        UnsubscribeCameraRenderTargetChanged(OnCameraRenderTargetChanged);
         return true;
     }
-}
+

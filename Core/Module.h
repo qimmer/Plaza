@@ -9,37 +9,41 @@
 #include <Core/Type.h>
 #include <Core/Delegate.h>
 #include "Service.h"
+#include "Function.h"
 
+DeclareHandle(Module)
 
-    DeclareHandle(Module)
+typedef void(*ModuleHandler)(Module module);
 
-    typedef void(*ModuleHandler)(Module module);
+DeclareEvent(ModuleInitialized, ModuleHandler)
+DeclareEvent(ModuleShutdown, ModuleHandler)
 
-    DeclareEvent(ModuleInitialized, ModuleHandler)
-    DeclareEvent(ModuleShutdown, ModuleHandler)
+void InitializeModule(Module module);
+void ShutdownModule(Module module);
+bool IsModuleInitialized(Module module);
 
-    void InitializeModule(Module module);
-    void ShutdownModule(Module module);
-    bool IsModuleInitialized(Module module);
+void SetModuleName(Module module, const char *name);
+const char * GetModuleName(Module module);
 
-    void SetModuleName(Module module, const char *name);
-    const char * GetModuleName(Module module);
+void AddModuleService(Module module, Service service);
+void AddModuleType(Module module, Type type);
+void AddModuleFunction(Module module, Function f);
+void AddModuleDependency(Module module, Module dependency);
 
-    void AddModuleService(Module module, Service service);
-    void AddModuleType(Module module, Type type);
-    void AddModuleDependency(Module module, Module dependency);
+Index GetModuleTypes(Module module);
+Type GetModuleType(Module module, Index index);
 
-    Index GetModuleTypes(Module module);
-    Type GetModuleType(Module module, Index index);
+Index GetModuleServices(Module module);
+Service GetModuleService(Module module, Index index);
 
-    Index GetModuleServices(Module module);
-    Service GetModuleService(Module module, Index index);
+Index GetModuleFunctions(Module module);
+Function GetModuleFunction(Module module, Index index);
 
-    Index GetModuleDependencies(Module module);
-    Module GetModuleDependency(Module module, Index index);
+Index GetModuleDependencies(Module module);
+Module GetModuleDependency(Module module, Index index);
 
-    void SetModuleSourcePath(Module module, StringRef sourceFilePath);
-    StringRef GetModuleSourcePath(Module module);
+void SetModuleSourcePath(Module module, StringRef sourceFilePath);
+StringRef GetModuleSourcePath(Module module);
 
 #define DeclareModule(MODULE) \
     Module ModuleOf_ ## MODULE (); \
@@ -57,6 +61,9 @@
 
 #define ModuleType(TYPE) \
             AddModuleType(module, TypeOf_ ## TYPE ());
+
+#define ModuleFunction(FUNCTION) \
+            AddModuleFunction(module, FunctionOf_ ## FUNCTION ());
 
 #define EndModule(MODULE) \
         } \

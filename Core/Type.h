@@ -28,8 +28,9 @@ void SetTypeName(Type type, const char* name);
 const char* GetTypeName(Type type);
 u32 GetTypeSize(Type type);
 void SetTypeSize(Type type, u32 size);
-Type GetTypeFromName(StringRef name);
+Type FindTypeByName(StringRef name);
 
+DeclareType(void)
 DeclareType(u8)
 DeclareType(u16)
 DeclareType(u32)

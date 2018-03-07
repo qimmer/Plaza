@@ -23,6 +23,8 @@
     DefineComponent(Transform)
         Dependency(Invalidation)
         Dependency(Hierarchy)
+        DefineProperty(m4x4f, LocalTransform)
+        DefineProperty(m4x4f, GlobalTransform)
     EndComponent()
 
     DefineService(TransformUpdateService)

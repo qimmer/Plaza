@@ -7,11 +7,7 @@
 
 #include <Core/Service.h>
 
-
-    DeclareService(EntityExplorer)
-
-    bool GetEntityExplorerVisible();
-    void SetEntityExplorerVisible(bool value);
+DeclareService(EntityExplorer)
 
 namespace ImGui {
     void EntityContextMenu();

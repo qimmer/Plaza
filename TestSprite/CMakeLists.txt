@@ -13,8 +13,8 @@ configure_file(${PROJECT_SOURCE_DIR}/../Scene2D/Shaders/sprite.ps ${CMAKE_CURREN
 configure_file(${PROJECT_SOURCE_DIR}/../Scene2D/Shaders/sprite.vs ${CMAKE_CURRENT_BINARY_DIR}/Shaders/sprite.vs COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/../Scene2D/Shaders/sprite.var ${CMAKE_CURRENT_BINARY_DIR}/Shaders/sprite.var COPYONLY)
 
-configure_file(${PROJECT_SOURCE_DIR}/../Bgfx/shaders/bgfx_shader.sh ${CMAKE_CURRENT_BINARY_DIR}/Shaders/bgfx_shader.sh COPYONLY)
-configure_file(${PROJECT_SOURCE_DIR}/../Bgfx/shaders/common.sh ${CMAKE_CURRENT_BINARY_DIR}/Shaders/common.sh COPYONLY)
-configure_file(${PROJECT_SOURCE_DIR}/../Bgfx/shaders/shaderlib.sh ${CMAKE_CURRENT_BINARY_DIR}/Shaders/shaderlib.sh COPYONLY)
+#configure_file(${PROJECT_SOURCE_DIR}/../Bgfx/shaders/bgfx_shader.sh ${CMAKE_CURRENT_BINARY_DIR}/Shaders/bgfx_shader.sh COPYONLY)
+#configure_file(${PROJECT_SOURCE_DIR}/../Bgfx/shaders/common.sh ${CMAKE_CURRENT_BINARY_DIR}/Shaders/common.sh COPYONLY)
+#configure_file(${PROJECT_SOURCE_DIR}/../Bgfx/shaders/shaderlib.sh ${CMAKE_CURRENT_BINARY_DIR}/Shaders/shaderlib.sh COPYONLY)
 
-target_link_libraries(TestSprite Core Foundation Rendering Bgfx Editor ImGui Player Scene2D)
+target_link_libraries(TestSprite Core Foundation Rendering BgfxRendering Editor ImGui Player Scene2D)

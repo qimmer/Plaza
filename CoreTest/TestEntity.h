@@ -10,8 +10,6 @@
 #include <Core/Module.h>
 #include "Common.h"
 
-using namespace Plaza;
-
 TestResult TestEntity()
 {
     Entity entities[] =

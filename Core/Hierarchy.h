@@ -17,6 +17,8 @@ DeclareComponentProperty(Hierarchy, StringRef, Name)
 DeclareComponentProperty(Hierarchy, Entity, Parent)
 
 Entity GetFirstChild(Entity parent);
+Entity GetNextChild(Entity parent, Entity currentChild);
+Entity GetNextChildThat(Entity parent, Entity currentChild, EntityBoolHandler handler);
 Entity GetSibling(Entity child);
 
 bool IsEntityDecendant(Entity entity, Entity parent);

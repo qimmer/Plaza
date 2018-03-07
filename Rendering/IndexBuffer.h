@@ -15,7 +15,6 @@
 
     DeclareComponentProperty(IndexBuffer, bool, IndexBufferLong)
     DeclareComponentProperty(IndexBuffer, bool, IndexBufferDynamic)
-    DeclareComponentProperty(IndexBuffer, Entity, IndexBufferStream)
 
 
 #endif //PLAZA_INDEXBUFFER_H

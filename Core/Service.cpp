@@ -3,6 +3,7 @@
 //
 
 #include <Core/Service.h>
+#include <algorithm>
 #include "Pool.h"
 #include "String.h"
 #include "Dictionary.h"
@@ -29,51 +30,51 @@
     DefineEvent(ServiceStopped, ServiceHandler)
 
     void StartService(Service service) {
-        for(auto dependency : ServiceAt(service).dependencies) {
+        for(auto dependency : ServiceAt(service)->dependencies) {
             StartService(dependency);
         }
 
         if(!IsServiceRunning(service)) {
-            auto& data = ServiceAt(service);
-            data.startFunc();
+            auto data = ServiceAt(service);
+            data->startFunc();
         }
     }
 
     void StopService(Service service) {
         if(IsServiceRunning(service)) {
-            auto& data = ServiceAt(service);
+            auto data = ServiceAt(service);
 
             for(auto dependee = GetNextService(0); IsServiceValid(dependee); dependee = GetNextService(dependee)) {
-                auto& dependencies = ServiceAt(dependee).dependencies;
+                auto& dependencies = ServiceAt(dependee)->dependencies;
                 if(std::find(dependencies.begin(), dependencies.end(), service) != dependencies.end()) {
                     StopService(dependee);
                 }
             }
 
-            data.shutdownFunc();
+            data->shutdownFunc();
         }
     }
 
     bool IsServiceRunning(Service service) {
-        auto& data = ServiceAt(service);
-        return data.isRunningFunc();
+        auto data = ServiceAt(service);
+        return data->isRunningFunc();
     }
 
     void SetServiceFunctions(Service service, Handler startFunc, Handler shutdownFunc, BoolHandler isRunningFunc) {
-        auto& data = ServiceAt(service);
-        data.startFunc = startFunc;
-        data.shutdownFunc = shutdownFunc;
-        data.isRunningFunc = isRunningFunc;
+        auto data = ServiceAt(service);
+        data->startFunc = startFunc;
+        data->shutdownFunc = shutdownFunc;
+        data->isRunningFunc = isRunningFunc;
     }
 
     void SetServiceName(Service service, const char *name) {
-        auto& data = ServiceAt(service);
-        data.name = name;
+        auto data = ServiceAt(service);
+        data->name = name;
     }
 
     const char *GetServiceName(Service service) {
-        auto& data = ServiceAt(service);
-        return data.name.c_str();
+        auto data = ServiceAt(service);
+        return data->name.c_str();
     }
 
     void SetSetting(StringRef setting, StringRef value) {
@@ -97,10 +98,10 @@
         s.getter = getter;
         s.setter = setter;
 
-        ServiceAt(service).settings.push_back(setting);
+        ServiceAt(service)->settings.push_back(setting);
         SettingsTable[setting] = s;
     }
 
     void AddServiceDependency(Service service, Service dependency) {
-        ServiceAt(service).dependencies.push_back(dependency);
+        ServiceAt(service)->dependencies.push_back(dependency);
     }

@@ -2,6 +2,7 @@
 #include <Core/Pool.h>
 #include <Core/Debug.h>
 #include <Core/Dictionary.h>
+#include <Core/Function.h>
 #include "Delegate.h"
 #include "Service.h"
 #include "String.h"
@@ -22,6 +23,12 @@ static Pool<ComponentTypeData> componentTypes;
 DefineHandle(Entity, EntityData)
 
 DefineType(Entity)
+    DefineMethod(Entity, CreateEntity)
+    DefineMethod(void, DestroyEntity, Entity entity)
+    DefineMethod(bool, AddComponent, Entity entity, Type componentType)
+    DefineMethod(bool, RemoveComponent, Entity entity, Type componentType)
+    DefineMethod(bool, HasComponent, Entity entity, Type componentType)
+    DefineMethod(bool, IsComponent, Type componentType)
 EndType()
 
 DefineService(Entity)
@@ -179,7 +186,7 @@ bool RemoveDependency(Type componentType, Type dependencyType) {
 
 Entity GetNextEntityThat(Entity currentInList, EntityBoolHandler conditionFunc) {
     currentInList = GetNextEntity(currentInList);
-    while(currentInList && !conditionFunc(currentInList)) {
+    while(IsEntityValid(currentInList) && !conditionFunc(currentInList)) {
         currentInList = GetNextEntity(currentInList);
     }
     return currentInList;

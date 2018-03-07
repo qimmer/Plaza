@@ -18,6 +18,7 @@
         Dependency(Transform)
         Dependency(SceneNode)
         DefineProperty(Entity, MeshInstanceMesh)
+        DefineProperty(Entity, MeshInstanceMaterial)
     EndComponent()
 
     DefineComponentProperty(MeshInstance, Entity, MeshInstanceMesh)

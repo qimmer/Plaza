@@ -7,6 +7,7 @@
 #include <Core/Pool.h>
 #include <Core/Vector.h>
 #include <Core/Service.h>
+#include <Core/Function.h>
 
 DeclareHandle(Entity)
 DeclareType(Entity)
@@ -57,7 +58,6 @@ bool IsComponentAbstract(Type type);
     bool Add ## TYPENAME (Entity entity);\
     bool Remove ## TYPENAME (Entity entity); \
     bool Has ## TYPENAME (Entity entity); \
-    void Register ## TYPENAME (); \
     Index GetNum ## TYPENAME (); \
     Entity Get ## TYPENAME ## Entity(Index index);\
     DeclareEvent(TYPENAME ## Added, EntityHandler) \
@@ -65,6 +65,7 @@ bool IsComponentAbstract(Type type);
     DeclareEvent(TYPENAME ## Changed, EntityHandler)
 
 #define DefineComponent(TYPENAME) \
+    DeclareType(TYPENAME)\
     DefineEvent(TYPENAME ## Added, EntityHandler) \
     DefineEvent(TYPENAME ## Removed, EntityHandler) \
     DefineEvent(TYPENAME ## Changed, EntityHandler) \
@@ -83,22 +84,11 @@ bool IsComponentAbstract(Type type);
         Assert(index >= 0 && index < TYPENAME ## _data.size());\
         return TYPENAME ## _data[index].entity;\
     }\
-    Entity Create ## TYPENAME (StringRef entityPath) { \
-        auto entity  = CreateEntityFromPath(entityPath);\
-        Add ## TYPENAME (entity);\
-        return entity;\
-    }\
     bool Has ## TYPENAME (Entity entity) {\
         Assert(IsEntityValid(entity));\
         auto entityIndex = GetHandleIndex(entity);\
         return TYPENAME ## _component_indices.End() > entityIndex && TYPENAME ## _component_indices[entityIndex] != InvalidIndex; \
     } \
-    static TYPENAME * Get ## TYPENAME (Entity entity) {\
-        Assert(IsEntityValid(entity));\
-        if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
-        Index entityIndex = GetHandleIndex(entity); \
-        return &TYPENAME ## _data[TYPENAME ## _component_indices[entityIndex]].data; \
-    }\
     static TYPENAME * Get ## TYPENAME ## ByIndex (Index index) {\
         Assert(index >= 0 && index < TYPENAME ## _data.size());\
         return &TYPENAME ## _data[index].data; \
@@ -122,6 +112,20 @@ bool IsComponentAbstract(Type type);
             return true;\
         }\
         return false;\
+    }\
+    static u64 Get ## TYPENAME ## Index(Entity entity) {\
+        return TYPENAME ## _component_indices[GetHandleIndex(entity)];\
+    }\
+    static TYPENAME * Get ## TYPENAME (Entity entity) {\
+        if(!IsEntityValid(entity)) return NULL;\
+        if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
+        Index entityIndex = GetHandleIndex(entity); \
+        return &TYPENAME ## _data[TYPENAME ## _component_indices[entityIndex]].data; \
+    }\
+    Entity Create ## TYPENAME (StringRef entityPath) { \
+        auto entity  = CreateEntityFromPath(entityPath);\
+        Add ## TYPENAME (entity);\
+        return entity;\
     }\
     bool Remove ## TYPENAME (Entity entity) {\
         Assert(IsEntityValid(entity));\

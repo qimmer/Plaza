@@ -20,4 +20,3 @@
     static bool ServiceStop() {
         return true;
     }
-}

@@ -11,30 +11,30 @@
 #include <Core/Pool.h>
 
 
-    struct Person
-    {
-        String PersonName;
-    };
+struct Person
+{
+    String PersonName;
+};
 
-    DeclareComponent(Person)
+DeclareComponent(Person)
 
-    void SetPersonName(Entity entity, StringRef name);
-    StringRef GetPersonName(Entity entity);
+void SetPersonName(Entity entity, StringRef name);
+StringRef GetPersonName(Entity entity);
 
-    DefineComponent(Person)
-        DefineProperty(Person, PersonName)
-    EndComponent()
+DefineComponent(Person)
+    DefineProperty(Person, PersonName)
+EndComponent()
 
-    void SetPersonName(Entity entity, StringRef name)
-    {
-        GetPerson(entity)->PersonName = name;
-    }
-
-    StringRef GetPersonName(Entity entity)
-    {
-        return GetPerson(entity)->PersonName.c_str();
-    }
-
+void SetPersonName(Entity entity, StringRef name)
+{
+    GetPerson(entity)->PersonName = name;
 }
+
+StringRef GetPersonName(Entity entity)
+{
+    return GetPerson(entity)->PersonName.c_str();
+}
+
+
 
 #endif //PLAZA_CORETEST_COMMON_H

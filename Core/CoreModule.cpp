@@ -7,4 +7,8 @@
 
 DefineModule(Core)
     ModuleService(Entity)
+    ModuleService(Hierarchy)
+    ModuleService(FunctionCallService)
+
+    ModuleType(Hierarchy)
 EndModule()

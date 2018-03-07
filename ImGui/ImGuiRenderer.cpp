@@ -29,26 +29,25 @@
 #include <Rendering/Material.h>
 #include <Rendering/UniformState.h>
 #include <Core/String.h>
+#include <Foundation/Visibility.h>
 
 using namespace ImGui;
-
 
     ImGuiContext *PrimaryImGuiContext = NULL;
 
     struct ImGuiRenderer {
         ImGuiContext* ImGuiContext;
-        Entity CommandList, VertexBuffer, IndexBuffer, VertexBufferStream, IndexBufferStream;
+        Entity CommandList, VertexBuffer, IndexBuffer;
         Vector<Entity> Batches;
+        bool ShowMetrics, ShowDemo;
     };
 
     Entity FontTexture,
-            FontTextureStream,
             ImGuiVertexDeclaration,
             ImGuiTextureUniform,
             FontTextureUniformState,
-            ImGuiVertexShader, ImGuiVertexShaderStream,
-            ImGuiPixelShader, ImGuiPixelShaderStream,
-            ImGuiVaryingDefStream,
+            ImGuiVertexShader,
+            ImGuiPixelShader,
             ImGuiProgram,
             FontMaterial,
             ImGuiDataRoot;
@@ -59,32 +58,70 @@ using namespace ImGui;
     DefineService(ImGuiRenderer)
     EndService()
 
-    DefineEvent(ImGuiDraw, EntityHandler);
+    DefineEvent(ImGuiDraw, EntityHandler)
+
+void *GetDefaultImGuiContext() {
+    return PrimaryImGuiContext;
+}
+
+void RebuildImGuiFonts() {
+    ImGuiIO& io = GetIO();
+
+    // Build atlas
+    unsigned char* tex_pixels = NULL;
+    v2i textureSize;
+    io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &textureSize.x, &textureSize.y);
+
+    // Create texture with previous stream as data
+    FontTexture = CreateTexture2D(FormatString("%s/FontTexture", GetEntityPath(ImGuiDataRoot)));
+    StreamOpen(FontTexture, StreamMode_Write);
+    StreamWrite(FontTexture, textureSize.x * textureSize.y * 4, tex_pixels);
+    StreamClose(FontTexture);
+    SetTextureSize2D(FontTexture, textureSize);
+    SetTextureFormat(FontTexture, TEXTURE_FORMAT_RGBA8);
+
+    FontMaterial = CreateMaterial(FormatString("%s/FontMaterial", GetEntityPath(ImGuiDataRoot)));
+    SetMaterialProgram(FontMaterial, ImGuiProgram);
+    SetMaterialRenderState(FontMaterial, RenderState_STATE_RGB_WRITE |
+                                         RenderState_STATE_ALPHA_WRITE |
+                                         RenderState_STATE_MSAA |
+                                         RenderState_STATE_BLEND_FUNC(RenderState_STATE_BLEND_SRC_ALPHA, RenderState_STATE_BLEND_INV_SRC_ALPHA));
+
+
+
+    FontTextureUniformState = CreateUniformState(FormatString("%s/FontTextureUniformState", GetEntityPath(FontMaterial)));
+    SetUniformStateUniform(FontTextureUniformState, ImGuiTextureUniform);
+    SetUniformStateTexture(FontTextureUniformState, FontTexture);
+
+    io.Fonts->SetTexID((void*)(size_t)GetHandleIndex(FontMaterial));
+    io.Fonts->ClearTexData();
+
+};
 
     static void InitializeKeyMapping();
 
     static void OnContextAdded(Entity context) {
         auto data = GetImGuiRenderer(context);
 
+        auto oldContext = ImGui::GetCurrentContext();
+
         data->ImGuiContext = ImGui::CreateContext();
         ImGui::SetCurrentContext(data->ImGuiContext);
 
         InitializeKeyMapping();
 
-        data->CommandList = CreateCommandList(FormatString("%s/ImGuiCommandList", GetEntityPath(context)));
+        data->CommandList = CreateCommandList(FormatString("%s/.ImGuiCommandList", GetEntityPath(context)));
+        SetCommandListLayer(data->CommandList, 245 + GetImGuiRendererIndex(context));
 
-        data->VertexBuffer = CreateVertexBuffer(FormatString("%s/ImGuiVertexBuffer", GetEntityPath(context)));
-        data->IndexBuffer = CreateIndexBuffer(FormatString("%s/ImGuiIndexBuffer", GetEntityPath(context)));
-        data->VertexBufferStream = CreateMemoryStream(FormatString("%s/Stream", GetEntityPath(data->VertexBuffer)));
-        data->IndexBufferStream = CreateMemoryStream(FormatString("%s/Stream", GetEntityPath(data->IndexBuffer)));
-
-        SetIndexBufferStream(data->IndexBuffer, data->IndexBufferStream);
-        SetVertexBufferStream(data->VertexBuffer, data->VertexBufferStream);
+        data->VertexBuffer = CreateVertexBuffer(FormatString("%s/ImGuiVertexBuffer", GetEntityPath(data->CommandList)));
+        data->IndexBuffer = CreateIndexBuffer(FormatString("%s/ImGuiIndexBuffer", GetEntityPath(data->CommandList)));
 
         SetVertexBufferDeclaration(data->VertexBuffer, ImGuiVertexDeclaration);
 
         SetVertexBufferDynamic(data->VertexBuffer, true);
         SetIndexBufferDynamic(data->IndexBuffer, true);
+
+        ImGui::SetCurrentContext(oldContext);
     }
 
     static void OnContextRemoved(Entity context) {
@@ -94,13 +131,7 @@ using namespace ImGui;
             DestroyEntity(batch);
         }
 
-        DestroyEntity(data->VertexBuffer);
-        DestroyEntity(data->IndexBuffer);
-        DestroyEntity(data->VertexBufferStream);
-        DestroyEntity(data->IndexBufferStream);
-
         DestroyEntity(data->CommandList);
-
         DestroyContext(data->ImGuiContext);
     }
 
@@ -123,7 +154,7 @@ using namespace ImGui;
         data->Batches.resize(numBatches);
 
         for(int i = oldSize; i < numBatches; ++i) {
-            data->Batches[i] = CreateBatch(FormatString("%s/Batch_%i/CommandList", GetEntityPath(commandList), i));
+            data->Batches[i] = CreateBatch(FormatString("%s/Batch_%i", GetEntityPath(commandList), i));
 
             auto mesh = CreateMesh(FormatString("%s/Mesh", GetEntityPath(data->Batches[i])));
             SetMeshVertexBuffer(mesh, data->VertexBuffer);
@@ -134,10 +165,10 @@ using namespace ImGui;
             SetBatchMesh(data->Batches[i], mesh);
         }
 
-        StreamOpen(data->VertexBufferStream);
-        StreamOpen(data->IndexBufferStream);
-        StreamSeek(data->VertexBufferStream, 0);
-        StreamSeek(data->IndexBufferStream, 0);
+        StreamOpen(data->VertexBuffer, StreamMode_Write);
+        StreamOpen(data->IndexBuffer, StreamMode_Write);
+        StreamSeek(data->VertexBuffer, 0);
+        StreamSeek(data->IndexBuffer, 0);
 
         auto vbOffset = 0;
         auto ibOffset = 0;
@@ -147,8 +178,8 @@ using namespace ImGui;
             auto vertexBufferSize = drawData->CmdLists[i]->VtxBuffer.Size * stride;
             auto indexBufferSize = drawData->CmdLists[i]->IdxBuffer.Size * 2;
 
-            StreamWrite(data->VertexBufferStream, vertexBufferSize, drawData->CmdLists[i]->VtxBuffer.Data);
-            StreamWrite(data->IndexBufferStream, indexBufferSize, drawData->CmdLists[i]->IdxBuffer.Data);
+            StreamWrite(data->VertexBuffer, vertexBufferSize, drawData->CmdLists[i]->VtxBuffer.Data);
+            StreamWrite(data->IndexBuffer, indexBufferSize, drawData->CmdLists[i]->IdxBuffer.Data);
             
             auto numVertices = drawData->CmdLists[i]->VtxBuffer.Size;
             auto startIndex = 0;
@@ -184,8 +215,8 @@ using namespace ImGui;
             ibOffset += drawData->CmdLists[i]->IdxBuffer.Size;
         }
 
-        StreamClose(data->VertexBufferStream);
-        StreamClose(data->IndexBufferStream);
+        StreamClose(data->VertexBuffer);
+        StreamClose(data->IndexBuffer);
     }
 
     static void RenderImGui(Entity context, double deltaTime) {
@@ -225,6 +256,16 @@ using namespace ImGui;
 
         FireEvent(ImGuiDraw, context);
 
+        if(ImGui::IsKeyPressed(KEY_F8)) {
+            SetHidden(data->CommandList, !GetHidden(data->CommandList));
+        }
+
+        if(ImGui::IsKeyPressed(KEY_F9)) {
+            data->ShowMetrics = !data->ShowMetrics;
+        }
+
+        if(data->ShowMetrics) ShowMetricsWindow(&data->ShowMetrics);
+
         Render();
 
         m4x4f projectionMatrix, viewMatrix;
@@ -233,9 +274,8 @@ using namespace ImGui;
 
         SetCommandListProjectionMatrix(data->CommandList, projectionMatrix);
         SetCommandListViewMatrix(data->CommandList, viewMatrix);
-        SetCommandListClearTargets(data->CommandList, ClearTarget_Depth | ClearTarget_Color);
+        SetCommandListClearTargets(data->CommandList, ClearTarget_Depth);
         SetCommandListClearDepth(data->CommandList, 0.0f);
-        SetCommandListClearColor(data->CommandList, {60, 90, 255, 255});
         SetCommandListForceOrder(data->CommandList, true);
         SetCommandListRenderTarget(data->CommandList, context);
         SetCommandListViewport(data->CommandList, {0, 0, contextSize.x, contextSize.y});
@@ -259,29 +299,17 @@ using namespace ImGui;
 
 
     static void InitializeProgram() {
-        ImGuiVertexShader = CreateShader(FormatString("%s/VertexShader", GetEntityPath(ImGuiDataRoot)));
-        ImGuiPixelShader = CreateShader(FormatString("%s/PixelShader", GetEntityPath(ImGuiDataRoot)));
         ImGuiProgram = CreateProgram(FormatString("%s/Program", GetEntityPath(ImGuiDataRoot)));
-        ImGuiVertexShaderStream = CreateFileStream(FormatString("%s/Stream", GetEntityPath(ImGuiVertexShader)));
-        ImGuiPixelShaderStream = CreateFileStream(FormatString("%s/Stream", GetEntityPath(ImGuiPixelShader)));
-        ImGuiVaryingDefStream = CreateFileStream(FormatString("%s/Stream", GetEntityPath(ImGuiProgram)));
-
+        ImGuiVertexShader = CreateShader(FormatString("%s/VertexShader", GetEntityPath(ImGuiProgram)));
+        ImGuiPixelShader = CreateShader(FormatString("%s/PixelShader", GetEntityPath(ImGuiProgram)));
         ImGuiTextureUniform = CreateUniform(FormatString("%s/TextureUniform", GetEntityPath(ImGuiDataRoot)));
 
-        SetFilePath(ImGuiVertexShaderStream, "Shaders/imgui.vs");
-        SetFilePath(ImGuiPixelShaderStream, "Shaders/imgui.ps");
-        SetFilePath(ImGuiVaryingDefStream, "Shaders/imgui.var");
-
-        SetShaderSourceStream(ImGuiVertexShader, ImGuiVertexShaderStream);
-        SetShaderSourceStream(ImGuiPixelShader, ImGuiPixelShaderStream);
-        SetShaderVaryingDefStream(ImGuiVertexShader, ImGuiVaryingDefStream);
-        SetShaderVaryingDefStream(ImGuiPixelShader, ImGuiVaryingDefStream);
+        SetStreamPath(ImGuiVertexShader, "res://imgui/shaders/imgui.vs");
+        SetStreamPath(ImGuiPixelShader, "res://imgui/shaders/imgui.ps");
+        SetStreamPath(ImGuiProgram, "res://imgui/shaders/imgui.var");
 
         SetShaderType(ImGuiVertexShader, ShaderType_Vertex);
         SetShaderType(ImGuiPixelShader, ShaderType_Pixel);
-
-        SetVertexShader(ImGuiProgram, ImGuiVertexShader);
-        SetPixelShader(ImGuiProgram, ImGuiPixelShader);
 
         SetUniformName(ImGuiTextureUniform, "s_tex");
         SetUniformType(ImGuiTextureUniform, TypeOf_Entity());
@@ -310,39 +338,8 @@ using namespace ImGui;
     static void InitializeFontTexture() {
         ImGuiIO& io = ImGui::GetIO();
 
-        // Build atlas
-        unsigned char* tex_pixels = NULL;
-        v2i textureSize;
         io.Fonts->AddFontDefault();
-        io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &textureSize.x, &textureSize.y);
-
-        // Prepare memory stream for pixel data
-        FontTextureStream = CreateMemoryStream(FormatString("%s/FontTexture/Stream", GetEntityPath(ImGuiDataRoot)));
-        StreamOpen(FontTextureStream);
-        StreamWrite(FontTextureStream, textureSize.x * textureSize.y * 4, tex_pixels);
-        StreamClose(FontTextureStream);
-
-        // Create texture with previous stream as data
-        FontTexture = CreateTexture2D(FormatString("%s/FontTexture", GetEntityPath(ImGuiDataRoot)));
-        SetTextureDataStream(FontTexture, FontTextureStream);
-        SetTextureSize2D(FontTexture, textureSize);
-        SetTextureFormat(FontTexture, TEXTURE_FORMAT_RGBA8);
-
-        FontMaterial = CreateMaterial(FormatString("%s/FontMaterial", GetEntityPath(ImGuiDataRoot)));
-        SetMaterialProgram(FontMaterial, ImGuiProgram);
-        SetMaterialRenderState(FontMaterial, RenderState_RGB_WRITE |
-                                              RenderState_ALPHA_WRITE |
-                                              RenderState_MSAA |
-                                              RenderState_BLEND_FUNC(RenderState_BLEND_SRC_ALPHA, RenderState_BLEND_INV_SRC_ALPHA));
-
-
-
-        FontTextureUniformState = CreateUniformState(FormatString("%s/FontTextureUniformState", GetEntityPath(ImGuiDataRoot)));
-        SetUniformStateUniform(FontTextureUniformState, ImGuiTextureUniform);
-        SetUniformStateTexture(FontTextureUniformState, FontTexture);
-
-        io.Fonts->SetTexID((void*)(size_t)GetHandleIndex(FontMaterial));
-        io.Fonts->ClearTexData();
+        RebuildImGuiFonts();
     }
 
     static void InitializeKeyMapping() {

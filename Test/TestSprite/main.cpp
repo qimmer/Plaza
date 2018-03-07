@@ -6,7 +6,7 @@
 #include <Player/PlayerModule.h>
 #include <Player/PlayerContext.h>
 #include <Scene2D/Scene2DModule.h>
-#include <Bgfx/BgfxModule.h>
+#include <BgfxRendering/BgfxModule.h>
 
 int main(int argc, char** argv) {
     Module modules[] = {

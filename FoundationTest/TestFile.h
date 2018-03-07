@@ -7,31 +7,26 @@
 
 #include <Test/Test.h>
 #include <Core/Entity.h>
+#include <Foundation/Stream.h>
 #include <File/FileStream.h>
 #include <Core/Module.h>
 #include <Foundation/FoundationModule.h>
 #include "Common.h"
 
-using namespace Plaza;
-
 TestResult TestFile()
 {
     InitializeModule(ModuleOf_Foundation());
 
-    auto file = CreateEntity();
-    AddFileStream(file);
-
-    SetFilePath(file, "test.bin");
+    auto file = CreateStream("/testStream");
+    SetStreamPath(file, "file://test.bin");
 
     // Test write
-    SetFileMode(file, FileMode_Write);
-    Assert(StreamOpen(file));
+    Assert(StreamOpen(file, StreamMode_Write));
     Assert(StreamWrite(file, 6, "Hello") == 6);
     StreamClose(file);
 
     // Test read
-    SetFileMode(file, FileMode_Write);
-    Assert(StreamOpen(file));
+    Assert(StreamOpen(file, StreamMode_Read));
     Assert(StreamSeek(file, 1));
     char buffer[6];
     Assert(StreamRead(file, 5, buffer) == 5);

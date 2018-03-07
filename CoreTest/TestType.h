@@ -10,8 +10,6 @@
 #include <Core/Property.h>
 #include "Common.h"
 
-using namespace Plaza;
-
 TestResult TestType()
 {
     auto entity = CreateEntity();

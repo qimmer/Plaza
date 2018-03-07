@@ -12,25 +12,30 @@
         BinaryShader() {
             memset(this, 0, sizeof(BinaryShader));
         }
-        Entity BinaryShaderStream, SourceShader;
+        Entity SourceShader;
         String BinaryShaderProfile;
     };
 
     DefineComponent(BinaryShader)
-            Dependency(Invalidation)
-            DefineProperty(Entity, BinaryShaderStream)
-            DefineProperty(Entity, BinaryShaderProfile)
+        Dependency(Invalidation)
+        Dependency(Stream)
+        DefineProperty(Entity, BinaryShaderProfile)
     EndComponent()
 
     DefineComponentProperty(BinaryShader, Entity, SourceShader)
-    DefineComponentProperty(BinaryShader, Entity, BinaryShaderStream)
     DefineComponentProperty(BinaryShader, StringRef, BinaryShaderProfile)
 
     DefineService(BinaryShader)
         ServiceSetting(SupportedShaderProfiles, SETTING_SUPPORTED_SHADER_PROFILES)
     EndService()
 
+#ifdef __APPLE__
     String SupportedShaderProfiles = "osx_410";
+#endif
+
+#ifdef WIN32
+    String SupportedShaderProfiles = "windows_xs_4_0";
+#endif
 
     void SetSupportedShaderProfiles(StringRef profiles) {
         SupportedShaderProfiles = profiles;
@@ -40,27 +45,11 @@
         return SupportedShaderProfiles.c_str();
     }
 
-    static void OnInvalidated(Entity entity, bool before, bool after) {
-        if(after && HasStream(entity)) {
-            for(auto binaryShader = GetNextEntity(0); IsEntityValid(binaryShader); binaryShader = GetNextEntity(binaryShader)) {
-                if(!HasBinaryShader(binaryShader)) {
-                    continue;
-                }
-
-                if(GetBinaryShaderStream(binaryShader) == entity) {
-                    SetInvalidated(binaryShader, true);
-                }
-            }
-        }
-    }
-
     static bool ServiceStart() {
-        SubscribeInvalidatedChanged(OnInvalidated);
         return true;
     }
 
     static bool ServiceStop() {
-        UnsubscribeInvalidatedChanged(OnInvalidated);
         return true;
     }
 

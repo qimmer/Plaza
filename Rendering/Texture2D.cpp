@@ -4,16 +4,14 @@
 
 #include "Texture2D.h"
 
+struct Texture2D {
+    v2i TextureSize2D;
+};
 
-    struct Texture2D {
-        Texture2D() {
-            memset(this, 0, sizeof(Texture2D));
-        }
-        v2i TextureSize2D;
-    };
+DefineComponent(Texture2D)
+    DefineProperty(v2i, TextureSize2D)
+EndComponent()
 
-    DefineComponent(Texture2D)
-    EndComponent()
+DefineComponentProperty(Texture2D, v2i, TextureSize2D)
 
-    DefineComponentProperty(Texture2D, v2i, TextureSize2D)
 

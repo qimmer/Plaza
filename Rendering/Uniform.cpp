@@ -5,21 +5,22 @@
 #include <Foundation/Invalidation.h>
 #include "Uniform.h"
 
+struct Uniform {
+    Uniform() : UniformArrayCount(1) {}
 
-    struct Uniform {
-        Uniform() {
-            memset(this, 0, sizeof(Uniform));
-        }
-        StringRef UniformName;
-        u32 UniformArrayCount;
-        Type UniformType;
-    };
+    StringRef UniformName;
+    u32 UniformArrayCount;
+    Type UniformType;
+};
 
-    DefineComponent(Uniform)
-        Dependency(Invalidation)
-    EndComponent()
+DefineComponent(Uniform)
+    Dependency(Invalidation)
+    DefineProperty(StringRef, UniformName)
+    DefineProperty(u32, UniformArrayCount)
+    DefineProperty(Type, UniformType)
+EndComponent()
 
-    DefineComponentProperty(Uniform, StringRef, UniformName)
-    DefineComponentProperty(Uniform, u32, UniformArrayCount)
-    DefineComponentProperty(Uniform, Type, UniformType)
+DefineComponentProperty(Uniform, StringRef, UniformName)
+DefineComponentProperty(Uniform, u32, UniformArrayCount)
+DefineComponentProperty(Uniform, Type, UniformType)
 

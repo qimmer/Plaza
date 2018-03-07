@@ -7,12 +7,12 @@
 
 #include <Core/Entity.h>
 
+DeclareComponent(Transform2D)
+DeclareService(Transform2D)
 
-    DeclareComponent(Transform2D)
-    DeclareService(Transform2D)
-
-    DeclareComponentProperty(Transform2D, v2f, Position2D)
-    DeclareComponentProperty(Transform2D, float, Rotation2D)
-    DeclareComponentProperty(Transform2D, v2f, Scale2D)
+DeclareComponentProperty(Transform2D, v2f, Position2D)
+DeclareComponentProperty(Transform2D, float, Rotation2D)
+DeclareComponentProperty(Transform2D, v2f, Scale2D)
+DeclareComponentProperty(Transform2D, float, Distance2D)
 
 #endif //PLAZA_TRANSFORM2D_H

@@ -16,7 +16,6 @@
 
     DeclareComponentProperty(VertexBuffer, Entity, VertexBufferDeclaration)
     DeclareComponentProperty(VertexBuffer, bool, VertexBufferDynamic)
-    DeclareComponentProperty(VertexBuffer, Entity, VertexBufferStream)
 
     u32 GetVertexStride(Entity vertexDeclaration);
 

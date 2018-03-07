@@ -9,17 +9,21 @@
 #include "SceneNode.h"
 #include "Scene.h"
 #include "Transform.h"
+#include "SimpleSceneRenderer.h"
 
 
-    DefineModule(Scene)
+DefineModule(Scene)
         ModuleDependency(Rendering)
 
         ModuleService(SceneNode)
+        ModuleService(SimpleSceneRenderer)
         ModuleService(TransformUpdateService)
+        ModuleService(Camera)
 
         ModuleType(Camera)
         ModuleType(MeshInstance)
         ModuleType(Scene)
         ModuleType(SceneNode)
         ModuleType(Transform)
+        ModuleType(SimpleSceneRenderer)
     EndModule()

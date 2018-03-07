@@ -12,6 +12,7 @@
 #include <Foundation/PersistancePoint.h>
 #include <File/FileStream.h>
 #include <sstream>
+#include <cmath>
 
 #define RAPIDJSON_ASSERT(x) Assert(x)
 
@@ -41,7 +42,7 @@
     } else
 
 #define ReadVec2If(TYPE, JSONREADFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
+    if(type == TypeOf_ ## TYPE () && reader.GetType() == rapidjson::kObjectType) {\
         TYPE v;\
         v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
         v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
@@ -49,7 +50,7 @@
     } else
 
 #define ReadVec3If(TYPE, JSONREADFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
+    if(type == TypeOf_ ## TYPE () && reader.GetType() == rapidjson::kObjectType) {\
         TYPE v;\
         v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
         v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
@@ -58,12 +59,22 @@
     } else
 
 #define ReadVec4If(TYPE, JSONREADFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
+    if(type == TypeOf_ ## TYPE () && reader.GetType() == rapidjson::kObjectType) {\
         TYPE v;\
         v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
         v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
         v.z = reader.GetObject()["z"].Get ## JSONREADFUNC ();\
         v.w = reader.GetObject()["w"].Get ## JSONREADFUNC ();\
+        ((TYPE ## Setter)GetPropertySetter(property))(persistentEntity, v);\
+    } else
+
+#define ReadMat4x4If(TYPE)\
+    if(type == TypeOf_ ## TYPE () && reader.GetType() == rapidjson::kArrayType) {\
+        TYPE v;\
+        auto arr = reader.GetArray();\
+        for(auto i = 0; i < 16; ++i) {\
+            ((float*)&v.x.x)[i] = arr[i].GetDouble();\
+        }\
         ((TYPE ## Setter)GetPropertySetter(property))(persistentEntity, v);\
     } else
 
@@ -106,6 +117,18 @@
         writer.EndObject();\
     } else
 
+#define WriteMat4x4If(TYPE)\
+    if(type == TypeOf_ ## TYPE ()) {\
+        auto v = ((TYPE ## Getter)GetPropertyGetter(property))(persistentEntity);\
+        writer.StartArray();\
+        for(auto i = 0; i < 16; ++i) {\
+            auto val = ((float*)&v.x.x)[i];\
+            if(!std::isfinite(val)) val = 0.0f;\
+            writer.Double(val);\
+        }\
+        writer.EndArray();\
+    } else
+
 DefineService(JsonPersistance)
 EndService()
 
@@ -126,6 +149,9 @@ DeclareGetSet(v4f)
 DeclareGetSet(v2i)
 DeclareGetSet(v3i)
 DeclareGetSet(v4i)
+DeclareGetSet(m3x3f)
+DeclareGetSet(m4x4f)
+DeclareGetSet(rgba8)
 DeclareGetSet(Entity)
 DeclareGetSet(Type)
 DeclareGetSet(StringRef)
@@ -205,8 +231,10 @@ static bool SerializeJson(Entity persistancePoint) {
             WriteVec2If(v2i, Int)
             WriteVec3If(v3i, Int)
             WriteVec4If(v4i, Int)
+            WriteVec4If(rgba8, Int)
+            WriteMat4x4If(m4x4f)
             {
-                Log(LogChannel_Core, LogSeverity_Error, "Unsupported type when serializing property '%s': %s", GetPropertyName(property), GetTypeName(property));
+                Log(LogChannel_Core, LogSeverity_Error, "Unsupported type when serializing property '%s': %s", GetPropertyName(property), GetTypeName(type));
                 writer.Null();
             }
         }
@@ -228,7 +256,7 @@ static bool DeserializeJson(Entity persistancePoint) {
     Assert(StreamOpen(persistancePoint, StreamMode_Read));
     Assert(StreamSeek(persistancePoint, StreamSeek_End));
     auto size = StreamTell(persistancePoint);
-    char *data = (char*)alloca(size + 1);
+    char *data = (char*)malloc(size + 1);
     Assert(StreamSeek(persistancePoint, 0));
     Assert(StreamRead(persistancePoint, size, data));
     StreamClose(persistancePoint);
@@ -263,6 +291,10 @@ static bool DeserializeJson(Entity persistancePoint) {
             }
 
             auto property = FindPropertyByName(propertyName);
+            if(!IsPropertyValid(property)) {
+                Log(LogChannel_Core, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetStreamPath(persistentEntity), propertyName);
+                continue;
+            }
             auto& reader = propertyIterator->value;
             auto type = GetPropertyType(property);
             auto jsonType =propertyIterator->value.GetType();
@@ -288,11 +320,15 @@ static bool DeserializeJson(Entity persistancePoint) {
             ReadVec2If(v2i, Int)
             ReadVec3If(v3i, Int)
             ReadVec4If(v4i, Int)
+            ReadVec4If(rgba8, Int)
+            ReadMat4x4If(m4x4f)
             {
                 Log(LogChannel_Core, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetPropertyName(property), GetTypeName(property));
             }
         }
     }
+
+    free(data);
 
     return true;
 }

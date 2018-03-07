@@ -4,7 +4,6 @@
 #include "VoxelTile.h"
 #include <Foundation/Stream.h>
 
-#define
 #include "stb_voxel_render.h"
 
 
@@ -30,16 +29,15 @@
     DefineComponentProperty(VoxelMesh, v3i, VoxelMeshSize)
 
     static void BuildMesh(Entity voxelMesh) {
-        stbvox_set_buffer(&mm, )
+
     }
 
     static bool ServiceStart() {
         stbvox_init_mesh_maker(&mm);
-        stbvox_set_input_stride(&mm, )
+
         return true;
     }
 
     static bool ServiceStop() {
         return true;
     }
-}

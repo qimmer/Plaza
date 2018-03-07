@@ -3,24 +3,28 @@
 //
 
 #include <Foundation/Invalidation.h>
+#include <Foundation/Stream.h>
 #include "Texture.h"
 
+struct Texture {
+    Texture() : TextureMipLevels(1), TextureFlag(TextureFlag_NONE) {}
 
-    struct Texture {
-        Texture() {
-            memset(this, 0, sizeof(Texture));
-        }
-        u16 TextureFormat;
-        bool TextureDynamic;
-        Entity TextureDataStream;
-        u8 TextureMipLevels;
-    };
+    u32 TextureFlag;
+    u16 TextureFormat;
+    bool TextureDynamic;
+    u8 TextureMipLevels;
+};
 
-    DefineComponent(Texture)
-        Dependency(Invalidation)
-    EndComponent()
+DefineComponent(Texture)
+    Dependency(Invalidation)
+    Dependency(Stream)
+    DefineProperty(u16, TextureFormat)
+    DefineProperty(u32, TextureFlag)
+    DefineProperty(bool, TextureDynamic)
+    DefineProperty(u8, TextureMipLevels)
+EndComponent()
 
-    DefineComponentProperty(Texture, Entity, TextureDataStream)
-    DefineComponentProperty(Texture, u16, TextureFormat)
-    DefineComponentProperty(Texture, bool, TextureDynamic)
-    DefineComponentProperty(Texture, u8, TextureMipLevels)
+DefineComponentProperty(Texture, u32, TextureFlag)
+DefineComponentProperty(Texture, u16, TextureFormat)
+DefineComponentProperty(Texture, bool, TextureDynamic)
+DefineComponentProperty(Texture, u8, TextureMipLevels)

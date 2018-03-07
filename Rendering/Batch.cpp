@@ -14,6 +14,10 @@
     };
 
     DefineComponent(Batch)
+        DefineProperty(v4i, BatchScissor)
+        DefineProperty(Entity, BatchMaterial)
+        DefineProperty(Entity, BatchMesh)
+        DefineProperty(m4x4f, BatchWorldMatrix)
     EndComponent()
 
     DefineComponentProperty(Batch, v4i, BatchScissor)

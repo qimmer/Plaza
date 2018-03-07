@@ -7,11 +7,10 @@
 
 #include <Core/Entity.h>
 
+DeclareComponent(Transform)
+DeclareService(TransformUpdateService)
 
-    DeclareComponent(Transform)
-    DeclareService(TransformUpdateService)
-
-    DeclareComponentProperty(Transform, m4x4f, GlobalTransform)
-    DeclareComponentProperty(Transform, m4x4f, LocalTransform)
+DeclareComponentProperty(Transform, m4x4f, GlobalTransform)
+DeclareComponentProperty(Transform, m4x4f, LocalTransform)
 
 #endif //PLAZA_TRANSFORM_H

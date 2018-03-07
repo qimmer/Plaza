@@ -5,6 +5,7 @@
 #include <Core/Module.h>
 #include <Core/Pool.h>
 #include <Core/String.h>
+#include <algorithm>
 #include "Service.h"
 
 struct ModuleData {
@@ -22,100 +23,100 @@ DefineEvent(ModuleInitialized, ModuleHandler)
 DefineEvent(ModuleShutdown, ModuleHandler)
 
 void InitializeModule(Module module) {
-    auto& data = ModuleAt(module);
+    auto data = ModuleAt(module);
 
     if(!IsModuleInitialized(module)) {
-        for(auto dependency : data.dependencies) {
+        for(auto dependency : data->dependencies) {
             InitializeModule(dependency);
         }
 
         Log(LogChannel_Core, LogSeverity_Info, "Initializing %s ...", GetModuleName(module));
 
-        for(auto service : data.services) {
+        for(auto service : data->services) {
             StartService(service);
         }
-        data.initialized = true;
+        data->initialized = true;
     }
 }
 
 void ShutdownModule(Module module) {
-    auto& data = ModuleAt(module);
+    auto data = ModuleAt(module);
 
     if(IsModuleInitialized(module)) {
         Log(LogChannel_Core, LogSeverity_Info, "Shutting down %s ...", GetModuleName(module));
 
         for(auto dependee = GetNextModule(0); IsModuleValid(dependee); dependee = GetNextModule(dependee)) {
-            auto& dependencies = ModuleAt(dependee).dependencies;
+            auto& dependencies = ModuleAt(dependee)->dependencies;
             if(std::find(dependencies.begin(), dependencies.end(), module) != dependencies.end()) {
                 ShutdownModule(dependee);
             }
         }
 
-        for(auto service : data.services) {
+        for(auto service : data->services) {
             StopService(service);
         }
-        ModuleAt(module).initialized = false;
+        ModuleAt(module)->initialized = false;
     }
 }
 
 bool IsModuleInitialized(Module module) {
-    return ModuleAt(module).initialized;
+    return ModuleAt(module)->initialized;
 }
 
 void SetModuleFunctions(Module module, Handler initializeFunc, Handler shutdownFunc) {
-    auto& data = ModuleAt(module);
-    ModuleAt(module).initializeFunc = initializeFunc;
-    ModuleAt(module).shutdownFunc = shutdownFunc;
+    auto data = ModuleAt(module);
+    ModuleAt(module)->initializeFunc = initializeFunc;
+    ModuleAt(module)->shutdownFunc = shutdownFunc;
 }
 
 void SetModuleName(Module module, const char *name) {
-    ModuleAt(module).name = name;
+    ModuleAt(module)->name = name;
 }
 
 const char *GetModuleName(Module module) {
-    return ModuleAt(module).name.c_str();
+    return ModuleAt(module)->name.c_str();
 }
 
 void AddModuleService(Module module, Service service) {
-    ModuleAt(module).services.push_back(service);
+    ModuleAt(module)->services.push_back(service);
 }
 
 void AddModuleType(Module module, Type type) {
-    ModuleAt(module).types.push_back(type);
+    ModuleAt(module)->types.push_back(type);
 }
 
 void AddModuleDependency(Module module, Module dependency) {
-    ModuleAt(module).dependencies.push_back(dependency);
+    ModuleAt(module)->dependencies.push_back(dependency);
 }
 
 Index GetModuleTypes(Module module) {
-    return ModuleAt(module).types.size();
+    return ModuleAt(module)->types.size();
 }
 
 Type GetModuleType(Module module, Index index) {
-    return ModuleAt(module).types[index];
+    return ModuleAt(module)->types[index];
 }
 
 Index GetModuleServices(Module module) {
-    return ModuleAt(module).services.size();
+    return ModuleAt(module)->services.size();
 }
 
 Service GetModuleService(Module module, Index index) {
-    return ModuleAt(module).services[index];
+    return ModuleAt(module)->services[index];
 }
 
 Index GetModuleDependencies(Module module) {
-    return ModuleAt(module).dependencies.size();
+    return ModuleAt(module)->dependencies.size();
 }
 
 Module GetModuleDependency(Module module, Index index) {
-    return ModuleAt(module).dependencies[index];
+    return ModuleAt(module)->dependencies[index];
 }
 
 void SetModuleSourcePath(Module module, StringRef sourceFilePath) {
-    ModuleAt(module).sourceFilePath = sourceFilePath;
+    ModuleAt(module)->sourceFilePath = sourceFilePath;
 }
 
 StringRef GetModuleSourcePath(Module module) {
-    return ModuleAt(module).sourceFilePath.c_str();
+    return ModuleAt(module)->sourceFilePath.c_str();
 }

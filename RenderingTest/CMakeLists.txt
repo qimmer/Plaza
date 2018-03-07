@@ -5,4 +5,4 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_executable(RenderingTest main.cpp Common.h TestCube.h)
 
-target_link_libraries(RenderingTest Core Foundation Rendering Test Bgfx)
+target_link_libraries(RenderingTest Core Foundation Rendering Test BgfxRendering)

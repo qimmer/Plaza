@@ -3,7 +3,7 @@ project(Json)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Json JsonPersistance.h JsonPersistance.cpp)
+add_library(Json JsonPersistance.h JsonPersistance.cpp JsonModule.cpp JsonModule.h)
 
 target_include_directories(Json PUBLIC ".." ".")
 

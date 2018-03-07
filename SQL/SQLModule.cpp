@@ -7,10 +7,9 @@
 #include "SQLPersistancePoint.h"
 
 
-    DefineModule(SQL)
-        ModuleDependency(Foundation)
+DefineModule(SQL)
+    ModuleDependency(Foundation)
 
-        ModuleService(SQLPersistancePoint)
-        ModuleType(SQLPersistancePoint)
-    EndModule()
-}
+    ModuleService(SQLPersistancePoint)
+    ModuleType(SQLPersistancePoint)
+EndModule()

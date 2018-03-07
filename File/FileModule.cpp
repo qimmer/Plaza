@@ -14,7 +14,6 @@
 
 DefineModule(File)
     ModuleType(Folder)
-    ModuleType(FileStream)
     ModuleService(FileStream)
     ModuleService(Folder)
 

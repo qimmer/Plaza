@@ -74,7 +74,7 @@
         if(!HasHierarchy(child)) return 0;
 
         // If we have no parent, return next root entity
-        if(!GetParent(child)) {
+        if(!HasHierarchy(child) || !GetParent(child)) {
             auto entity = GetNextEntity(child);
             while(IsEntityValid(entity) && (!HasHierarchy(entity) || IsEntityValid(GetParent(entity)))) {
                 entity = GetNextEntity(entity);
@@ -93,7 +93,7 @@
     }
 
     StringRef GetEntityPath(Entity entity) {
-        if(!HasHierarchy(entity)) {
+        if(!IsEntityValid(entity) || !HasHierarchy(entity)) {
             return "";
         }
 
@@ -153,7 +153,21 @@
         return false;
     }
 
-    static void OnNameChanged(Entity entity, StringRef oldName, StringRef newName) {
+Entity GetNextChild(Entity parent, Entity currentChild) {
+    if(!HasHierarchy(parent) || !IsEntityValid(GetFirstChild(parent))) return 0;
+    if(!IsEntityValid(currentChild)) return GetFirstChild(parent);
+    return GetSibling(currentChild);
+}
+
+Entity GetNextChildThat(Entity parent, Entity currentChild, EntityBoolHandler handler) {
+    currentChild = GetNextChild(parent, currentChild);
+    while(IsEntityValid(currentChild) && !handler(currentChild)) {
+        currentChild = GetNextChild(parent, currentChild);
+    }
+    return currentChild;
+}
+
+static void OnNameChanged(Entity entity, StringRef oldName, StringRef newName) {
         auto newPath = CalculateEntityPath(entity);
         auto existingEntity = FindEntity(newPath);
         Assert(!IsEntityValid(existingEntity) || existingEntity == entity);
@@ -191,6 +205,7 @@
         }
 
         auto data = GetHierarchy(entity);
+        data->Sibling = 0;
         EntityPathMap.erase(data->Path);
         EntityMap.erase(entity);
 
@@ -202,7 +217,7 @@
             if(!IsEntityValid(child)) {
                 GetHierarchy(newParent)->FirstChild = entity;
             } else {
-                while(GetSibling(child)) {
+                while(IsEntityValid(GetSibling(child))) {
                     child = GetSibling(child);
                 }
 

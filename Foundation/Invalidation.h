@@ -8,13 +8,11 @@
 #include <Core/Entity.h>
 #include <Core/Service.h>
 
+DeclareComponent(Invalidation)
+DeclareService(Invalidation)
 
-    DeclareComponent(Invalidation)
-    DeclareService(Invalidation)
+DeclareComponentProperty(Invalidation, bool, Invalidated)
 
-    DeclareComponentProperty(Invalidation, bool, Invalidated)
-
-    void ValidateAll(EntityHandler validator, EntityBoolHandler condition);
-
+void ValidateAll(EntityHandler validator, EntityBoolHandler condition);
 
 #endif //PLAZA_INVALIDATION_H

@@ -2,8 +2,8 @@
 #define TEST_H
 
 
-    typedef const char * TestResult;
-}
+typedef const char * TestResult;
+
 
 #define Verify(message, test) if (!(test)) { static char buf[1024]; sprintf(buf, "%s (%s : %d)", message, __FILE__, __LINE__); return buf; } while (0)
 

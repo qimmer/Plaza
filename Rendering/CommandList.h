@@ -11,6 +11,7 @@
     DeclareComponent(CommandList)
 
     DeclareComponentProperty(CommandList, Entity, CommandListRenderTarget)
+    DeclareComponentProperty(CommandList, u8, CommandListLayer)
     DeclareComponentProperty(CommandList, u64, CommandListViewRenderState)
     DeclareComponentProperty(CommandList, m4x4f, CommandListViewMatrix)
     DeclareComponentProperty(CommandList, m4x4f, CommandListProjectionMatrix)

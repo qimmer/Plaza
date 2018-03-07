@@ -5,7 +5,6 @@
 #include <Core/Service.h>
 #include <Foundation/Stream.h>
 
-DeclareComponent(MemoryStream)
 DeclareService(MemoryStream)
 
 #endif

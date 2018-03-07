@@ -2,22 +2,21 @@
 #include "SQLPersistancePoint.h"
 
 
-    struct SQLPersistancePoint {
-    };
+struct SQLPersistancePoint {
+};
 
-    DefineComponent(SQLPersistancePoint)
+DefineComponent(SQLPersistancePoint)
 
-    EndComponent()
+EndComponent()
 
-    DefineService(SQLPersistancePoint)
+DefineService(SQLPersistancePoint)
 
-    EndService()
+EndService()
 
-    static bool ServiceStart() {
-        return true;
-    }
+static bool ServiceStart() {
+    return true;
+}
 
-    static bool ServiceStop() {
-        return true;
-    }
+static bool ServiceStop() {
+    return true;
 }

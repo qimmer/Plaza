@@ -9,6 +9,7 @@
 #include <Core/Hierarchy.h>
 #include <File/FileStream.h>
 #include <Editor/Project.h>
+#include <Foundation/Stream.h>
 
 DefineService(FileExplorer)
 EndService()
@@ -42,8 +43,8 @@ static void DrawEntry(Entity entry, int level) {
         }
     }
 
-    if(HasFileStream(entry)) {
-        if(ImGui::TreeNodeEx(GetFileName(GetFilePath(entry)), ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen)) {
+    if(HasStream(entry)) {
+        if(ImGui::TreeNodeEx(GetFileName(GetStreamPath(entry)), ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen)) {
 
         }
     }

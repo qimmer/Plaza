@@ -3,4 +3,25 @@ project(Core)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Core Entity.cpp Entity.h Types.h Type.h Pool.h Handle.h Function.h Delegate.h Debug.cpp Debug.h Handle.cpp Property.h Property.cpp Type.cpp Vector.cpp Vector.h StackContainer.h Dictionary.cpp Dictionary.h String.cpp String.h Variant.h Module.cpp Module.h Service.cpp Service.h CoreModule.cpp CoreModule.h Hierarchy.cpp Hierarchy.h)
+include(ExternalProject)
+
+ExternalProject_Add(ex_dyncall
+        HG_REPOSITORY "http://hg.dyncall.org/pub/dyncall/dyncall"
+        UPDATE_COMMAND ""
+        INSTALL_COMMAND "")
+
+ExternalProject_Get_Property(ex_dyncall BINARY_DIR)
+ExternalProject_Get_Property(ex_dyncall SOURCE_DIR)
+SET(ex_dyncall_lib_dir "${BINARY_DIR}")
+SET(ex_dyncall_inc_dir "${SOURCE_DIR}")
+
+ADD_LIBRARY(dyncall STATIC IMPORTED)
+SET_PROPERTY(TARGET dyncall PROPERTY IMPORTED_LOCATION "${ex_dyncall_lib_dir}/dyncall/libdyncall_s.a")
+
+add_library(Core Entity.cpp Entity.h Types.h Type.h Pool.h Handle.h Function.h Delegate.h Debug.cpp Debug.h Handle.cpp Property.h Property.cpp Type.cpp Vector.cpp Vector.h StackContainer.h Dictionary.cpp Dictionary.h String.cpp String.h Variant.h Module.cpp Module.h Service.cpp Service.h CoreModule.cpp CoreModule.h Hierarchy.cpp Hierarchy.h Function.cpp PerFrameStackAllocator.cpp PerFrameStackAllocator.h)
+
+add_dependencies(Core ex_dyncall)
+
+target_link_libraries(Core PUBLIC dyncall "-gdwarf-2")
+target_include_directories(Core PUBLIC ".." "cglm/include" ${ex_dyncall_inc_dir})
+target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions" "-gdwarf-2")

@@ -10,9 +10,10 @@
 #include <zconf.h>
 #include <Core/Hierarchy.h>
 #include <Foundation/PersistancePoint.h>
-#include <Foundation/StreamedPersistancePoint.h>
 #include <File/FileStream.h>
 #include <Core/String.h>
+#include <Foundation/Stream.h>
+#include <Foundation/VirtualPath.h>
 #include "PlayerContext.h"
 
 
@@ -25,8 +26,18 @@
         return PlayerContext;
     }
 
-    int PlayerMain(int argc, char** argv, Module *modules, StringRef* assets, StringRef title) {
+    int PlayerMain(int argc, char** argv, Module *modules, const StringRef* virtualPathMappings, const StringRef* assets, StringRef title) {
         InitializeModule(ModuleOf_Foundation());
+
+        while(virtualPathMappings && *virtualPathMappings) {
+            auto entity = CreateVirtualPath(FormatString("/.vpaths/%llu", (u64)*virtualPathMappings));
+            SetVirtualPathTrigger(entity, *virtualPathMappings);
+            virtualPathMappings++;
+            SetVirtualPathDestination(entity, CleanupPath(*virtualPathMappings));
+            virtualPathMappings++;
+
+            Log(LogChannel_Core, LogSeverity_Info, "Mapping path %s to %s ...", GetVirtualPathTrigger(entity), GetVirtualPathDestination(entity));
+        }
 
         for(int i = 0; modules[i]; ++i) {
             InitializeModule(modules[i]);
@@ -35,12 +46,9 @@
         SetContextTitle(PlayerContext, title);
 
         while(assets && *assets) {
-            auto persistancePoint = CreatePersistancePoint(FormatString("/Assets/%s", *assets));
-            auto fileStream = CreateFileStream(FormatString("%s/Stream", GetEntityPath(persistancePoint)));
-            SetFilePath(fileStream, *assets);
-            SetPersistancePointStream(persistancePoint, fileStream);
-
-            Load(persistancePoint);
+            auto assetStream = CreateStream(FormatString("/%s", strstr(*assets, "://") + 3));
+            SetStreamPath(assetStream, *assets);
+            Load(assetStream);
             assets++;
         }
 

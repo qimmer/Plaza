@@ -15,6 +15,8 @@
 #include <cglm/cglm.h>
 #include <Rendering/Context.h>
 #include <Core/String.h>
+#include <Foundation/Visibility.h>
+#include <Rendering/RenderTarget.h>
 #include "SimpleSceneRenderer.h"
 
 
@@ -37,13 +39,26 @@
         auto renderTarget = GetCameraRenderTarget(sceneRenderer);
         auto viewport = GetCameraViewport(sceneRenderer);
 
-        SetCommandListViewport(commandList, viewport);
+        bool shouldRender = IsEntityValid(renderTarget) && HasRenderTarget(renderTarget);
+        SetHidden(commandList, !shouldRender);
+        if(!shouldRender) {
+            return;
+        }
+
+        auto size = GetRenderTargetSize(renderTarget);
+        viewport.x *= size.x;
+        viewport.y *= size.y;
+        viewport.z *= size.x;
+        viewport.w *= size.y;
+
+        SetCommandListViewport(commandList, {lroundf(viewport.x), lroundf(viewport.y), lroundf(viewport.z), lroundf(viewport.w)});
         SetCommandListClearColor(commandList, GetCameraClearColor(sceneRenderer));
         SetCommandListRenderTarget(commandList, GetCameraRenderTarget(sceneRenderer));
         SetCommandListClearDepth(commandList, 0.0f);
-        SetCommandListClearTargets(commandList, ClearTarget_Color | ClearTarget_Depth);
+        SetCommandListClearTargets(commandList, (GetCameraClear(sceneRenderer) ? ClearTarget_Color : 0) | ClearTarget_Depth);
         SetCommandListViewMatrix(commandList, GetCameraViewMatrix(sceneRenderer));
         SetCommandListProjectionMatrix(commandList, GetCameraProjectionMatrix(sceneRenderer));
+        SetCommandListLayer(commandList, GetCameraLayer(sceneRenderer));
 
         auto batch = GetFirstChild(data->CommandList);
         auto batchIndex = 0;

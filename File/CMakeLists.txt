@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_library(File FileStream.cpp FileStream.h Folder.cpp Folder.h FileModule.cpp FileModule.h)
 
+if(WIN32)
+    target_link_libraries(File shlwapi)
+endif()
 target_include_directories(File PUBLIC ".." ".")
 
 target_link_libraries(File Foundation Core)

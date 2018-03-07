@@ -13,7 +13,6 @@
 
     DeclareComponentProperty(BinaryShader, Entity, SourceShader)
     DeclareComponentProperty(BinaryShader, StringRef, BinaryShaderProfile)
-    DeclareComponentProperty(BinaryShader, Entity, BinaryShaderStream)
 
     DeclareService(BinaryShader)
 

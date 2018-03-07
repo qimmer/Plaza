@@ -7,13 +7,12 @@
 
 #include <Core/Delegate.h>
 
+typedef void(*AppUpdateHandler)(double deltaTime);
 
-    typedef void(*AppUpdateHandler)(double deltaTime);
+void AppUpdate();
+double GetDeltaTime();
+double GetTimeSinceStart();
 
-    void AppUpdate();
-    double GetDeltaTime();
-
-    DeclareEvent(AppUpdate, AppUpdateHandler)
-
+DeclareEvent(AppUpdate, AppUpdateHandler)
 
 #endif //PLAZA_APPLOOP_H

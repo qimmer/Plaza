@@ -8,12 +8,13 @@ struct MemoryStream {
     bool open;
 };
 
+#define ProtocolIdentifier "memory"
+
 DefineComponent(MemoryStream)
     Dependency(Stream)
 EndComponent()
 
 DefineService(MemoryStream)
-
 EndService()
 
 static u64 Read(Entity entity, u64 size, void *data) {
@@ -42,7 +43,7 @@ static s32 Tell(Entity entity) {
 }
 
 static bool Seek(Entity entity, s32 offset) {
-    if(offset == STREAM_SEEK_END) {
+    if(offset == StreamSeek_End) {
         offset = GetMemoryStream(entity)->bytes.size();
     }
 
@@ -50,7 +51,7 @@ static bool Seek(Entity entity, s32 offset) {
     return true;
 }
 
-static bool Open(Entity entity) {
+static bool Open(Entity entity, int mode) {
     auto data = GetMemoryStream(entity);
     data->offset = 0;
     return data->open = true;
@@ -67,36 +68,26 @@ static bool IsOpen(Entity entity) {
     return GetMemoryStream(entity)->open;
 }
 
-void OnMemoryStreamAdded(Entity entity) {
-    SetStreamReadHandler(entity, Read);
-    SetStreamWriteHandler(entity, Write);
-    SetStreamSeekHandler(entity, Seek);
-    SetStreamTellHandler(entity, Tell);
-    SetStreamOpenHandler(entity, Open);
-    SetStreamCloseHandler(entity, Close);
-    SetStreamIsOpenHandler(entity, IsOpen);
-}
-
-void OnMemoryStreamRemoved(Entity entity) {
-    SetStreamReadHandler(entity, NULL);
-    SetStreamWriteHandler(entity, NULL);
-    SetStreamSeekHandler(entity, NULL);
-    SetStreamTellHandler(entity, NULL);
-    SetStreamOpenHandler(entity, NULL);
-    SetStreamCloseHandler(entity, NULL);
-    SetStreamIsOpenHandler(entity, NULL);
-}
-
 static bool ServiceStart() {
-    SubscribeMemoryStreamAdded(OnMemoryStreamAdded);
-    SubscribeMemoryStreamRemoved(OnMemoryStreamRemoved);
+    StreamProtocol p {
+        AddMemoryStream,
+        RemoveMemoryStream,
+        Seek,
+        Tell,
+        Read,
+        Write,
+        IsOpen,
+        Open,
+        Close
+    };
+
+    AddStreamProtocol(ProtocolIdentifier, &p);
 
     return true;
 }
 
 static bool ServiceStop() {
-    UnsubscribeMemoryStreamAdded(OnMemoryStreamAdded);
-    UnsubscribeMemoryStreamRemoved(OnMemoryStreamRemoved);
+    RemoveStreamProtocol(ProtocolIdentifier);
 
     return true;
 }

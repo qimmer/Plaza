@@ -9,6 +9,8 @@
 #include <Core/StackContainer.h>
 #include <unordered_set>
 #include <set>
+#include <limits>
+#include <memory.h>
 
 template <class T>
 class MyAlloc {

@@ -8,126 +8,231 @@
 #include <Core/Hierarchy.h>
 #include <ImGui/ImGuiRenderer.h>
 #include <Core/Module.h>
+#include <Core/String.h>
+#include <Foundation/PersistancePoint.h>
+#include <Foundation/Persistance.h>
 #include "EntityExplorer.h"
 #include "Selection.h"
 
+DefineService(EntityExplorer)
+EndService()
 
-    DefineService(EntityExplorer)
-    EndService()
+static bool Visible = true, DrawHidden = false, DrawFromRoot = false;
+static Entity Root = 0;
+static const char *EntityContextMenuId = "EntityExplorerContextMenu";
 
-    static bool Visible = true;
-    static const char *EntityContextMenuId = "EntityExplorerContextMenu";
+bool GetEntityExplorerVisible() {
+    return Visible;
+}
 
-    bool GetEntityExplorerVisible() {
-        return Visible;
+void SetEntityExplorerVisible(bool value) {
+    Visible = value;
+}
+
+static void DrawEntry(Entity entry, int level) {
+    if(HasHierarchy(entry) && (GetName(entry)[0] != '.' || DrawHidden)) {
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+        if(!IsEntityValid(GetFirstChild(entry))) {
+            flags |= ImGuiTreeNodeFlags_Leaf;
+        }
+
+        if(HasSelection(entry)) {
+            flags |= ImGuiTreeNodeFlags_Selected;
+        }
+
+        bool isOpen = ImGui::TreeNodeEx(GetName(entry), flags);
+        bool isClicked = ImGui::IsItemHoveredRect() && (ImGui::IsMouseReleased(0) || ImGui::IsMouseReleased(1));
+        bool isDragging = false;
+
+        if(ImGui::BeginDragDropTarget()) {
+            if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(GetTypeName(TypeOf_Entity()))) {
+                if(payload->Delivery && *((Entity*)payload->Data) != entry) {
+                    SetParent(*((Entity*)payload->Data), entry);
+                }
+            }
+            ImGui::EndDragDropTarget();
+        }
+
+        if(ImGui::BeginDragDropSource()) {
+            ImGui::SetDragDropPayload(GetTypeName(TypeOf_Entity()), &entry, sizeof(Entity));
+            ImGui::EndDragDropSource();
+
+            isDragging = true;
+            isClicked = false;
+        }
+
+        if(isOpen) {
+            for(auto child = GetFirstChild(entry); IsEntityValid(child); child = GetSibling(child)) {
+                DrawEntry(child, level + 1);
+            }
+            ImGui::TreePop();
+        }
+
+        if(isClicked && !ImGui::IsPopupOpen(EntityContextMenuId) && !isDragging) {
+            if(!ImGui::GetIO().KeyCtrl) {
+                DeselectAll();
+            }
+
+            AddSelection(entry);
+        }
+    }
+}
+
+static void Draw(Entity context) {
+    if(ImGui::Begin("Entity Explorer", &Visible)) {
+        ImGui::Checkbox("Draw Hidden Entities", &DrawHidden);
+
+        if(ImGui::IsWindowHovered()) {
+            if(ImGui::IsMouseReleased(1)) {
+                ImGui::OpenPopup(EntityContextMenuId);
+            }
+
+            if(ImGui::IsMouseReleased(0) && !ImGui::GetIO().KeyCtrl && !ImGui::IsMouseDragging(0)) {
+                DeselectAll();
+            }
+        }
+
+        if (ImGui::BeginPopup(EntityContextMenuId)) {
+            ImGui::EntityContextMenu();
+            ImGui::EndPopup();
+        }
+
+        for(auto entity = GetNextEntity(0); IsEntityValid(entity); entity = GetNextEntity(entity)) {
+            if(!HasHierarchy(entity) || IsEntityValid(GetParent(entity))) continue;
+            DrawEntry(entity, 0);
+        }
+
     }
 
-    void SetEntityExplorerVisible(bool value) {
-        Visible = value;
-    }
+    ImGui::End();
+}
 
-    static void DrawEntry(Entity entry, int level) {
-        if(HasHierarchy(entry)) {
-            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+static bool ServiceStart() {
+    SubscribeImGuiDraw(Draw);
+    return true;
+}
 
-            if(!IsEntityValid(GetFirstChild(entry))) {
-                flags |= ImGuiTreeNodeFlags_Leaf;
-            }
+static bool ServiceStop() {
+    UnsubscribeImGuiDraw(Draw);
+    return true;
+}
 
-            if(HasSelection(entry)) {
-                flags |= ImGuiTreeNodeFlags_Selected;
-            }
+static Type SelectComponentMenu() {
+    for(auto module = GetNextModule(0); IsModuleValid(module); module = GetNextModule(module)) {
+        if(ImGui::BeginMenu(GetModuleName(module))) {
+            for(auto i = 0; i < GetModuleTypes(module); ++i) {
+                auto type = GetModuleType(module, i);
 
-            bool isOpen = ImGui::TreeNodeEx(GetName(entry), flags);
-            bool isClicked = ImGui::IsItemHoveredRect() && (ImGui::IsMouseReleased(0) || ImGui::IsMouseReleased(1));
-            bool isDragging = false;
-
-            if(ImGui::BeginDragDropSource()) {
-                ImGui::SetDragDropPayload(GetTypeName(TypeOf_Entity()), &entry, sizeof(Entity));
-                ImGui::EndDragDropSource();
-
-                isDragging = true;
-                isClicked = false;
-            }
-
-            if(isOpen) {
-                for(auto child = GetFirstChild(entry); IsEntityValid(child); child = GetSibling(child)) {
-                    DrawEntry(child, level + 1);
+                if(!IsComponentAbstract(type) && ImGui::MenuItem(GetTypeName(type))) {
+                    ImGui::EndMenu();
+                    return type;
                 }
-                ImGui::TreePop();
             }
-
-            if(!isDragging) {
-                ImGui::OpenPopupOnItemClick(EntityContextMenuId, 1);
-            }
-
-
-            if(isClicked && !ImGui::IsPopupOpen(EntityContextMenuId)) {
-                if(!ImGui::GetIO().KeyCtrl) {
-                    DeselectAll();
-                }
-
-                AddSelection(entry);
-            }
+            ImGui::EndMenu();
         }
     }
 
-    static void Draw(Entity context) {
-        if(ImGui::Begin("Entity Explorer", &Visible)) {
-            for(auto entity = GetNextEntity(0); IsEntityValid(entity); entity = GetNextEntity(entity)) {
-                if(!HasHierarchy(entity) || IsEntityValid(GetParent(entity))) continue;
-                DrawEntry(entity, 0);
-            }
-
-            if (ImGui::BeginPopup(EntityContextMenuId)) {
-                ImGui::EntityContextMenu();
-                ImGui::EndPopup();
-            }
-        }
-
-        ImGui::End();
-    }
-
-    static bool ServiceStart() {
-        SubscribeImGuiDraw(Draw);
-        return true;
-    }
-
-    static bool ServiceStop() {
-        UnsubscribeImGuiDraw(Draw);
-        return true;
-    }
+    return 0;
+}
 
 
 void ImGui::EntityContextMenu() {
-    if(GetNumSelection() > 0 && ImGui::MenuItem("Destroy Entity")) {
-        while(GetNumSelection()) {
-            DestroyEntity(GetSelectionEntity(0));
-        }
-    }
-
     if(GetNumSelection() <= 1 && ImGui::BeginMenu("Create")) {
+        auto type = SelectComponentMenu();
+        if(IsTypeValid(type)) {
+            auto newEntity = CreateEntity();
+            AddHierarchy(newEntity);
+            AddComponent(newEntity, type);
+            SetName(newEntity, FormatString("%s_%lu", GetTypeName(type), GetHandleIndex(newEntity)));
 
-        for(auto module = GetNextModule(0); IsModuleValid(module); module = GetNextModule(module)) {
-            if(ImGui::BeginMenu(GetModuleName(module))) {
-                for(auto i = 0; i < GetModuleTypes(module); ++i) {
-                    auto type = GetModuleType(module, i);
-                    if(IsComponent(type)) {
-                        if(ImGui::MenuItem(GetTypeName(type))) {
-                            auto newEntity = CreateEntity();
-                            AddHierarchy(newEntity);
-                            AddComponent(newEntity, type);
+            if(GetNumSelection() > 0) {
+                SetParent(newEntity, GetSelectionEntity(0));
 
-                            if(GetNumSelection() > 0) {
-                                SetParent(newEntity, GetSelectionEntity(0));
-                            }
-                        }
-                    }
+                if(HasPersistance(GetSelectionEntity(0))) {
+                    SetEntityPersistancePoint(newEntity, GetEntityPersistancePoint(GetSelectionEntity(0)));
                 }
-                ImGui::EndMenu();
+                if(HasPersistancePoint(GetSelectionEntity(0))) {
+                    SetEntityPersistancePoint(newEntity, GetSelectionEntity(0));
+                }
             }
         }
 
         ImGui::EndMenu();
+    }
+
+    if(GetNumSelection() > 0 && ImGui::BeginMenu("Add")) {
+        auto type = SelectComponentMenu();
+        if(IsTypeValid(type)) {
+            for(auto i = 0; i < GetNumSelection(); ++i) {
+                auto entity = GetSelectionEntity(i);
+                AddComponent(entity, type);
+            }
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if(GetNumSelection() > 0 && ImGui::BeginMenu("Remove")) {
+        for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
+            if(IsComponent(type)) {
+                auto showType = false;
+                for(auto i = 0; i < GetNumSelection(); ++i) {
+                    if(HasComponent(GetSelectionEntity(i), type)) {
+                        showType = true;
+                        break;
+                    }
+                }
+
+                if(showType && ImGui::MenuItem(GetTypeName(type))) {
+                    for(auto i = 0; i < GetNumSelection(); ++i) {
+                        if(HasComponent(GetSelectionEntity(i), type)) {
+                            RemoveComponent(GetSelectionEntity(i), type);
+                        }
+                    }
+                }
+            }
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if(GetNumSelection() > 0) {
+        ImGui::Separator();
+
+        for(auto f = GetNextFunction(0); IsFunctionValid(f); f = GetNextFunction(f)) {
+            if(GetFunctionContextType(f) != TypeOf_Entity() || GetFunctionArguments(f) != 1 || GetFunctionArgumentType(f, 0) != TypeOf_Entity()) continue;
+
+            char returnData[128];
+            for(auto i = 0; i < GetNumSelection(); ++i) {
+                if(ImGui::MenuItem(GetFunctionName(f))) {
+                    for(auto j = 0; j < GetNumSelection(); ++j) {
+                        auto entity = GetSelectionEntity(j);
+                        CallFunction(f, &entity, &returnData);
+                    }
+                }
+                break;
+            }
+        }
+
+        ImGui::Separator();
+
+        for(auto f = GetNextFunction(0); IsFunctionValid(f); f = GetNextFunction(f)) {
+            auto contextType = GetFunctionContextType(f);
+            if(!IsTypeValid(contextType) || !IsComponent(contextType) || GetFunctionArguments(f) != 1 || GetFunctionArgumentType(f, 0) != TypeOf_Entity()) continue;
+
+            char returnData[128];
+            for(auto i = 0; i < GetNumSelection(); ++i) {
+                if(HasComponent(GetSelectionEntity(i), contextType)) {
+                    if(ImGui::MenuItem(GetFunctionName(f))) {
+                        for(auto j = 0; j < GetNumSelection(); ++j) {
+                            auto entity = GetSelectionEntity(j);
+                            CallFunction(f, &entity, &returnData);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
     }
 }

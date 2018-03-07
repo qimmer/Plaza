@@ -2,118 +2,129 @@
 // Created by Kim Johannsen on 02/01/2018.
 //
 
+#include <string.h>
+
 #include <Core/Type.h>
 #include <Core/String.h>
 #include <Core/Vector.h>
 #include <Core/Pool.h>
 
+struct TypeData {
+    String name;
+    u32 Size;
+    Vector<Type> dependencies;
+    Vector<Type> drivers;
+};
 
-    struct TypeData {
-        String name;
-        u32 Size;
-        Vector<Type> dependencies;
-        Vector<Type> drivers;
-    };
+DefineHandle(Type, TypeData)
 
-    DefineHandle(Type, TypeData)
+const char *GetTypeName(Type type) {
+    return TypeAt(type)->name.c_str();
+}
 
-    const char *GetTypeName(Type type) {
-        return TypeAt(type).name.c_str();
+void SetTypeName(Type type, const char *name) {
+    TypeAt(type)->name = name;
+}
+
+u32 GetTypeSize(Type type) {
+    return TypeAt(type)->Size;
+}
+
+void SetTypeSize(Type type, u32 size) {
+    TypeAt(type)->Size = size;
+}
+
+Type TypeOf_void () {
+    static Type type = 0;
+    if (!type) {
+        type = CreateType();
+        SetTypeName(type, "void");
+        SetTypeSize(type, 0);
     }
+    return type;
+}
 
-    void SetTypeName(Type type, const char *name) {
-        TypeAt(type).name = name;
-    }
+DefineType(u8)
+EndType()
 
-    u32 GetTypeSize(Type type) {
-        return TypeAt(type).Size;
-    }
+DefineType(u16)
+EndType()
 
-    void SetTypeSize(Type type, u32 size) {
-        TypeAt(type).Size = size;
-    }
+DefineType(u32)
+EndType()
 
-    DefineType(u8)
-    EndType()
+DefineType(u64)
+EndType()
 
-    DefineType(u16)
-    EndType()
+DefineType(s8)
+EndType()
 
-    DefineType(u32)
-    EndType()
+DefineType(s16)
+EndType()
 
-    DefineType(u64)
-    EndType()
+DefineType(s32)
+EndType()
 
-    DefineType(s8)
-    EndType()
+DefineType(s64)
+EndType()
 
-    DefineType(s16)
-    EndType()
+DefineType(float)
+EndType()
 
-    DefineType(s32)
-    EndType()
+DefineType(double)
+EndType()
 
-    DefineType(s64)
-    EndType()
+DefineType(StringRef)
+EndType()
 
-    DefineType(float)
-    EndType()
+DefineType(bool)
+EndType()
 
-    DefineType(double)
-    EndType()
+DefineType(v2i)
+EndType()
 
-    DefineType(StringRef)
-    EndType()
+DefineType(v3i)
+EndType()
 
-    DefineType(bool)
-    EndType()
+DefineType(v4i)
+EndType()
 
-    DefineType(v2i)
-    EndType()
+DefineType(v2f)
+EndType()
 
-    DefineType(v3i)
-    EndType()
+DefineType(v3f)
+EndType()
 
-    DefineType(v4i)
-    EndType()
+DefineType(v4f)
+EndType()
 
-    DefineType(v2f)
-    EndType()
+DefineType(rgba8)
+EndType()
 
-    DefineType(v3f)
-    EndType()
+DefineType(rgba32)
+EndType()
 
-    DefineType(v4f)
-    EndType()
+DefineType(rgb32)
+EndType()
 
-    DefineType(rgba8)
-    EndType()
+DefineType(rgb8)
+EndType()
 
-    DefineType(rgba32)
-    EndType()
+DefineType(m3x3f)
+EndType()
 
-    DefineType(rgb32)
-    EndType()
+DefineType(m4x4f)
+EndType()
 
-    DefineType(rgb8)
-    EndType()
+DefineType(Type)
+EndType()
 
-    DefineType(m3x3f)
-    EndType()
-
-    DefineType(m4x4f)
-    EndType()
-
-    DefineType(Type)
-    EndType()
-
-    Type GetTypeFromName(StringRef name) {
-        for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
-            if(strcmp(GetTypeName(type), name) == 0) {
-                return type;
-            }
+Type FindTypeByName(StringRef name) {
+    for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
+        if(strcmp(GetTypeName(type), name) == 0) {
+            return type;
         }
-
-        return 0;
     }
+
+    return 0;
+}

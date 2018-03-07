@@ -18,6 +18,10 @@
     };
 
     DefineComponent(UniformState)
+        DefineProperty(Entity, UniformStateUniform)
+        DefineProperty(v4f, UniformStateVec4)
+        DefineProperty(Entity, UniformStateTexture)
+        DefineProperty(u8, UniformStateStage)
     EndComponent()
 
     DefineComponentProperty(UniformState, Entity, UniformStateUniform);

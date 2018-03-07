@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.9)
 project(Plaza)
 
 set(CMAKE_CXX_STANDARD 14)
-set(BUILD_SHARED_LIBS ON)
+set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/.install)
 
 # Plaza Libraries
 add_subdirectory(Core)
@@ -16,16 +17,17 @@ add_subdirectory(Scene3D)
 add_subdirectory(ImGui)
 add_subdirectory(Player)
 add_subdirectory(Editor)
-add_subdirectory(Zip)
+#add_subdirectory(Zip)
 add_subdirectory(SQL)
-add_subdirectory(Xml)
+#add_subdirectory(Xml)
 add_subdirectory(Json)
-add_subdirectory(Excel)
+add_subdirectory(StbDecoders)
+#add_subdirectory(Excel)
 add_subdirectory(Voxel)
 
 
 # Plaza Plugins
-add_subdirectory(Bgfx)
+add_subdirectory(BgfxRendering)
 
 # Tests
 add_subdirectory(CoreTest)

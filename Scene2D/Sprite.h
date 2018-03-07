@@ -7,14 +7,10 @@
 
 #include <Core/Entity.h>
 
+DeclareService(Sprite)
 
-    DeclareComponent(Sprite)
-    DeclareService(Sprite)
-
-    Entity GetSpriteTextureUniform();
-
-    DeclareComponentProperty(Sprite, v2f, SpriteUvOffset)
-    DeclareComponentProperty(Sprite, v2f, SpriteUvSize)
-    DeclareComponentProperty(Sprite, v2f, SpriteUvScale)
+Entity GetSpriteTextureUniform();
+Entity GetSpriteMesh();
+Entity GetSpriteProgram();
 
 #endif //PLAZA_SPRITE_H

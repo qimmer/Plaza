@@ -9,19 +9,18 @@
 #include "Sprite.h"
 #include "Transform2D.h"
 #include "Sprite.h"
+#include "Tilemap2D.h"
 
 
-    DefineModule(Scene2D)
+DefineModule(Scene2D)
         ModuleDependency(Scene)
 
         ModuleService(Camera2D)
-        ModuleService(SimpleSceneRenderer)
         ModuleService(Sprite)
         ModuleService(Transform2D)
+        ModuleService(Tilemap2D)
 
         ModuleType(Camera2D)
-        ModuleType(SimpleSceneRenderer)
-        ModuleType(Sprite)
-        ModuleType(Sprite)
+        ModuleType(Tilemap2D)
         ModuleType(Transform2D)
     EndModule()

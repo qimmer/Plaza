@@ -6,13 +6,13 @@
 #include <Player/PlayerModule.h>
 #include <Player/PlayerContext.h>
 #include <Scene2D/Scene2DModule.h>
-#include <Bgfx/BgfxModule.h>
+#include <BgfxRendering/BgfxModule.h>
 
 int main(int argc, char** argv) {
     Module modules[] = {
 
         // Plugins
-        ModuleOf_Bgfx(),
+        ModuleOf_BgfxRendering(),
 
         // App Modules
         ModuleOf_Player(),
@@ -32,6 +32,7 @@ int main(int argc, char** argv) {
             argc,
             argv,
             modules,
+            0,
             assets,
             "Test Sprite - Built " __DATE__ " " __TIME__
     );

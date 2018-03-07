@@ -19,6 +19,10 @@
     DefineComponent(VertexAttribute)
         Dependency(Hierarchy)
         Dependency(Invalidation)
+        DefineProperty(Type, VertexAttributeType)
+        DefineProperty(u8, VertexAttributeUsage)
+        DefineProperty(bool, VertexAttributeNormalize)
+        DefineProperty(bool, VertexAttributeAsInt)
     EndComponent()
 
     DefineComponentProperty(VertexAttribute, Type, VertexAttributeType)

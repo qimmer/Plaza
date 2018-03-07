@@ -9,31 +9,22 @@
 #include <Core/String.h>
 #include <Core/Hierarchy.h>
 #include <Core/Dictionary.h>
+#include <Foundation/MemoryStream.h>
+
+#define ProtocolIdentifier "file"
 
 struct FileStream {
-    FileStream() : FileMode(FileMode_Read), fd(NULL) {}
+    FileStream() : fd(NULL) {}
 
-    String FilePath;
-    int FileMode;
     FILE *fd;
 };
 
-static Dictionary<String, String> fileTypes;
-
 DefineComponent(FileStream)
-        Dependency(Stream)
-        DefineProperty(StringRef, FilePath)
+    Dependency(Stream)
 EndComponent()
 
 DefineService(FileStream)
 EndService()
-
-DefineComponentProperty(FileStream, StringRef, FilePath)
-DefineComponentProperty(FileStream, int, FileMode)
-
-void RegisterFileType(StringRef fileExtension, StringRef mimeType) {
-    fileTypes[fileExtension] = mimeType;
-}
 
 static u64 Read(Entity entity, u64 size, void *data) {
     if(!GetFileStream(entity)->fd) return 0;
@@ -53,27 +44,35 @@ static s32 Tell(Entity entity) {
 static bool Seek(Entity entity, s32 offset) {
     if(!GetFileStream(entity)->fd) return false;
 
-    return fseek(GetFileStream(entity)->fd, offset == STREAM_SEEK_END ? 0 : offset, offset == STREAM_SEEK_END ? SEEK_END : SEEK_SET) == 0;
+    return fseek(GetFileStream(entity)->fd, offset == StreamSeek_End ? 0 : offset, offset == StreamSeek_End ? SEEK_END : SEEK_SET) == 0;
 }
 
-static bool Open(Entity entity) {
+static bool Open(Entity entity, int modeFlag) {
     auto data = GetFileStream(entity);
     if(data->fd) return true;
 
     const char *mode;
-    if(data->FileMode == FileMode_Read) {
+    if(modeFlag == StreamMode_Read) {
         mode = "rb";
-    } else if(data->FileMode == FileMode_Write) {
+    } else if(modeFlag == StreamMode_Write) {
         mode = "wb";
-    } else if(data->FileMode == (FileMode_Read | FileMode_Write)) {
+    } else if(modeFlag == (StreamMode_Read | StreamMode_Write)) {
         mode = "rb+";
     } else {
         return false;
     }
 
-    data->fd = fopen(data->FilePath.c_str(), mode);
+    auto nativePath = GetStreamResolvedPath(entity);
+    if(memcmp(nativePath, "file://", 7) != 0) {
+        Log(LogChannel_Core, LogSeverity_Error, "%s", "File stream has wrong protocol identifier.");
+        return false;
+    }
 
-    return true;
+    nativePath += 7; // Remove 'file://'
+
+    data->fd = fopen(nativePath, mode);
+
+    return data->fd;
 }
 
 static void Close(Entity entity) {
@@ -89,56 +88,26 @@ static bool IsOpen(Entity entity) {
     return data->fd;
 }
 
-static void OnFileStreamAdded(Entity entity) {
-    SetStreamReadHandler(entity, Read);
-    SetStreamWriteHandler(entity, Write);
-    SetStreamSeekHandler(entity, Seek);
-    SetStreamTellHandler(entity, Tell);
-    SetStreamOpenHandler(entity, Open);
-    SetStreamCloseHandler(entity, Close);
-    SetStreamIsOpenHandler(entity, IsOpen);
-}
-
-static void OnFileStreamRemoved(Entity entity) {
-    SetStreamReadHandler(entity, NULL);
-    SetStreamWriteHandler(entity, NULL);
-    SetStreamSeekHandler(entity, NULL);
-    SetStreamTellHandler(entity, NULL);
-    SetStreamOpenHandler(entity, NULL);
-    SetStreamCloseHandler(entity, NULL);
-    SetStreamIsOpenHandler(entity, NULL);
-}
-
-static void OnFilePathChanged(Entity entity, StringRef oldValue, StringRef newValue) {
-    if(memcmp(GetName(entity), "Entity_", 7) == 0 || strcmp(oldValue, GetName(entity)) == 0) {
-        SetName(entity, newValue);
-
-        // Eventually set mime type from file extension
-        auto mimeIt = fileTypes.find(GetFileExtension(newValue));
-        if(mimeIt != fileTypes.end()) {
-            SetStreamMimeType(entity, mimeIt->second.c_str());
-        } else {
-            SetStreamMimeType(entity, "application/octet-stream");
-        }
-    }
-}
-
 static bool ServiceStart() {
-    SubscribeFileStreamAdded(OnFileStreamAdded);
-    SubscribeFileStreamRemoved(OnFileStreamRemoved);
-    SubscribeFilePathChanged(OnFilePathChanged);
+    StreamProtocol p {
+            AddFileStream,
+            RemoveFileStream,
+            Seek,
+            Tell,
+            Read,
+            Write,
+            IsOpen,
+            Open,
+            Close
+    };
 
-    RegisterFileType(".txt", "text/plain");
+    AddStreamProtocol(ProtocolIdentifier, &p);
 
-    RegisterFileType(".txt", "text/plain");
-    RegisterFileType(".txt", "text/plain");
     return true;
 }
 
 static bool ServiceStop() {
-    UnsubscribeFileStreamAdded(OnFileStreamAdded);
-    UnsubscribeFileStreamRemoved(OnFileStreamRemoved);
-    UnsubscribeFilePathChanged(OnFilePathChanged);
+    RemoveStreamProtocol(ProtocolIdentifier);
 
     return true;
 }

@@ -9,22 +9,20 @@
 #include <Core/Entity.h>
 #include <Foundation/AppLoop.h>
 #include <Core/Module.h>
-#include <Bgfx/BgfxModule.h>
+#include <BgfxRendering/BgfxModule.h>
 #include <Rendering/RenderTarget.h>
 #include <Rendering/CommandList.h>
 #include <Rendering/Context.h>
 #include "Common.h"
 
-using namespace Plaza;
-
 TestResult TestCube()
 {
-    InitializeModule(ModuleOf_Bgfx());
+    InitializeModule(ModuleOf_BgfxRendering());
 
-    auto context = CreateContext();
-    auto commandList = CreateCommandList();
+    auto context = CreateContext("/CubeContext");
+    auto commandList = CreateCommandList("/CubeContext/CommandList");
 
-    SetCommandListClearColor(commandList, {0.2f, 0.6f, 1.0f, 1.0f});
+    SetCommandListClearColor(commandList, {50, 128, 255, 255});
     SetCommandListClearTargets(commandList, ClearTarget_Color);
 
     SetContextSize(context, {800, 600});

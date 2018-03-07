@@ -7,11 +7,9 @@
 
 #include <Core/Entity.h>
 
+DeclareComponent(Persistance)
+DeclareService(Persistance)
 
-    DeclareComponent(Persistance)
-    DeclareService(Persistance)
-
-    DeclareComponentProperty(Persistance, Entity, EntityPersistancePoint)
-
+DeclareComponentProperty(Persistance, Entity, EntityPersistancePoint)
 
 #endif //PLAZA_PERSISTANCE_H

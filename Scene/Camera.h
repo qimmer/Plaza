@@ -8,13 +8,15 @@
 #include <Core/Entity.h>
 
 
-    DeclareComponent(Camera)
+DeclareComponent(Camera)
+DeclareService(Camera)
 
     DeclareComponentProperty(Camera, m4x4f, CameraViewMatrix)
     DeclareComponentProperty(Camera, m4x4f, CameraProjectionMatrix)
     DeclareComponentProperty(Camera, rgba8, CameraClearColor)
-    DeclareComponentProperty(Camera, v4i, CameraViewport)
+    DeclareComponentProperty(Camera, v4f, CameraViewport)
     DeclareComponentProperty(Camera, bool, CameraClear)
+    DeclareComponentProperty(Camera, u8, CameraLayer)
     DeclareComponentProperty(Camera, Entity, CameraRenderTarget)
     DeclareComponentProperty(Camera, float, CameraNearClip)
     DeclareComponentProperty(Camera, float, CameraFarClip)

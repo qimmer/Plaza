@@ -17,7 +17,7 @@
         VertexBuffer() {
             memset(this, 0, sizeof(VertexBuffer));
         }
-        Entity VertexBufferDeclaration, VertexBufferStream;
+        Entity VertexBufferDeclaration;
         bool VertexBufferDynamic;
     };
 
@@ -28,6 +28,9 @@
 
     DefineComponent(VertexBuffer)
         Dependency(Invalidation)
+        Dependency(Stream)
+        DefineProperty(Entity, VertexBufferDeclaration)
+        DefineProperty(bool, VertexBufferDynamic)
     EndComponent()
 
     DefineService(VertexBuffer)
@@ -35,7 +38,6 @@
 
     DefineComponentProperty(VertexBuffer, Entity, VertexBufferDeclaration)
     DefineComponentProperty(VertexBuffer, bool, VertexBufferDynamic)
-    DefineComponentProperty(VertexBuffer, Entity, VertexBufferStream)
 
     u32 GetVertexStride(Entity vertexDeclaration) {
         u32 stride = 0;
@@ -56,14 +58,13 @@
                 }
             }
 
-            if(HasVertexDeclaration(entity) || HasStream(entity)) {
+            if(HasVertexDeclaration(entity)) {
                 for(auto vertexBuffer = GetNextEntity(0); IsEntityValid(vertexBuffer); vertexBuffer = GetNextEntity(vertexBuffer)) {
                     if(!HasVertexBuffer(vertexBuffer)) {
                         continue;
                     }
 
-                    if(GetVertexBufferDeclaration(vertexBuffer) == entity ||
-                       GetVertexBufferStream(vertexBuffer) == entity) {
+                    if(GetVertexBufferDeclaration(vertexBuffer) == entity) {
                         SetInvalidated(vertexBuffer, true);
                     }
                 }

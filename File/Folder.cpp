@@ -2,126 +2,235 @@
 // Created by Kim Johannsen on 23/01/2018.
 //
 
-#include <dirent.h>
-#include <unistd.h>
 #include <Core/String.h>
-#include <climits>
+#include <Foundation/Stream.h>
 #include "Folder.h"
 #include "Core/Hierarchy.h"
-#include "FileStream.h"
+#include <Foundation/VirtualPath.h>
 
+#include <unistd.h>
+#include <algorithm>
+#include <climits>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <direct.h>
+#include <sstream>
+#include <iterator>
 
-    struct Folder {
-        String FolderPath;
-    };
+struct Folder {
+    String FolderPath;
+};
 
-    DefineComponent(Folder)
-        Dependency(Hierarchy)
-    EndComponent()
+DefineComponent(Folder)
+    Dependency(Hierarchy)
+EndComponent()
 
-    DefineService(Folder)
-        ServiceDependency(FileStream)
-    EndService()
+DefineService(Folder)
+    ServiceDependency(Stream)
+EndService()
 
-    DefineComponentProperty(Folder, StringRef, FolderPath)
+DefineComponentProperty(Folder, StringRef, FolderPath)
 
-    StringRef GetCurrentWorkingDirectory() {
-        static char path[PATH_MAX];
-        getcwd(path, PATH_MAX);
-        return path;
+StringRef GetCurrentWorkingDirectory() {
+    static char path[PATH_MAX];
+    getcwd(path, PATH_MAX);
+    return path;
+}
+
+StringRef GetFileName(StringRef absolutePath) {
+    auto fileName = strrchr(absolutePath, '/');
+    if(!fileName) return absolutePath;
+    return fileName + 1;
+}
+
+StringRef GetFileExtension(StringRef absolutePath) {
+    auto extension = strrchr(absolutePath, '.');
+    if(!extension) return "";
+    return extension;
+}
+
+StringRef GetParentFolder(StringRef absolutePath) {
+    auto parentFolder = (char*)GetTempString(absolutePath);
+
+    auto ptr = strrchr(parentFolder, '/');
+    if(!ptr) {
+        return "";
     }
 
-    StringRef GetFileName(StringRef absolutePath) {
-        auto fileName = strrchr(absolutePath, GetPathSeparator());
-        if(!fileName) return absolutePath;
-        return fileName + 1;
+    parentFolder[ptr - parentFolder] = '\0';
+
+    return parentFolder;
+}
+
+void ScanFolder(Entity entity) {
+    while(IsEntityValid(GetFirstChild(entity))) {
+        DestroyEntity(GetFirstChild(entity));
     }
 
-    StringRef GetFileExtension(StringRef absolutePath) {
-        auto extension = strrchr(absolutePath, '.');
-        if(!extension) return "";
-        return extension;
-    }
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir (GetFolderPath(entity))) != NULL) {
+        while ((ent = readdir (dir)) != NULL) {
+            Entity entryEntity = 0;
 
-    char GetPathSeparator() {
-#ifdef WIN32
-        return '\\';
-#endif
-        return '/';
-    }
+            if(ent->d_name[0] == '.') continue;
 
-    StringRef GetParentFolder(StringRef absolutePath) {
-        static char parentFolder[PATH_MAX];
-        strcpy(parentFolder, absolutePath);
-        auto ptr = strrchr(parentFolder, GetPathSeparator());
-        if(!ptr) {
-            return "";
-        }
+            char entryPath[PATH_MAX];
+            sprintf(entryPath, "%s/%s", GetFolderPath(entity), ent->d_name);
 
-        parentFolder[ptr - parentFolder] = '\0';
+            char entityPath[PATH_MAX];
+            sprintf(entityPath, "%s/%s", GetEntityPath(entity), ent->d_name);
 
-        return parentFolder;
-    }
+            struct stat ent_stat;
+            stat(entryPath, &ent_stat);
 
-    void ScanFolder(Entity entity) {
-        while(IsEntityValid(GetFirstChild(entity))) {
-            DestroyEntity(GetFirstChild(entity));
-        }
-
-        DIR *dir;
-        struct dirent *ent;
-        if ((dir = opendir (GetFolderPath(entity))) != NULL) {
-            while ((ent = readdir (dir)) != NULL) {
-                Entity entryEntity = 0;
-
-                if(ent->d_name[0] == '.') continue;
-
-                char entryPath[PATH_MAX];
-                sprintf(entryPath, "%s/%s", GetFolderPath(entity), ent->d_name);
-
-                char entityPath[PATH_MAX];
-                sprintf(entityPath, "%s/%s", GetEntityPath(entity), ent->d_name);
-
-                if(ent->d_type == DT_DIR) {
+            switch(ent_stat.st_mode & S_IFMT) {
+                case S_IFDIR:
                     entryEntity = CreateFolder(entityPath);
                     SetName(entryEntity, ent->d_name);
                     SetParent(entryEntity, entity);
                     SetFolderPath(entryEntity, entryPath);
-                } else if(ent->d_type == DT_REG) {
-                    entryEntity = CreateFileStream(entityPath);
+                    break;
+                case S_IFREG:
+                    entryEntity = CreateStream(entityPath);
                     SetName(entryEntity, ent->d_name);
                     SetParent(entryEntity, entity);
-                    SetFilePath(entryEntity, entryPath);
-                }
+                    SetStreamPath(entryEntity, entryPath);
+                    break;
             }
-            closedir (dir);
+        }
+        closedir (dir);
+    }
+}
+
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <shlwapi.h>
+#endif
+
+bool CreateDirectories(StringRef fullPath) {
+    auto isVirtualPath = strstr(fullPath, "://") != NULL;
+
+    if(isVirtualPath && memcmp(fullPath, "file://", 7) != 0) {
+        Log(LogChannel_Core, LogSeverity_Error, "CreateDirectory only supports file:// paths.");
+        return false;
+    }
+
+    if(isVirtualPath) {
+        fullPath += 7;
+    }
+
+#ifdef WIN32
+    if (!(CreateDirectoryA(fullPath, NULL) || ERROR_ALREADY_EXISTS == GetLastError()))
+#else
+    if(mkdir(fullPath, 0700))
+#endif
+    {
+        Log(LogChannel_Core, LogSeverity_Error, "Could not create directory '%s'", fullPath);
+        return false;
+    }
+
+    return true;
+}
+
+bool IsFolder(StringRef absolutePath) {
+    absolutePath = ResolveVirtualPath(absolutePath);
+
+    auto isVirtualPath = strstr(absolutePath, "://") != NULL;
+
+    if(isVirtualPath && memcmp(absolutePath, "file://", 7) != 0) {
+        Log(LogChannel_Core, LogSeverity_Error, "IsDirectory only supports file:// paths.");
+        return false;
+    }
+
+    absolutePath += 7;
+
+    struct stat ent_stat;
+    stat(absolutePath, &ent_stat);
+
+    if(ent_stat.st_mode & S_IFMT) return true;
+
+    return false;
+}
+
+StringRef CleanupPath(StringRef messyPath) {
+    auto protocolLocation = strstr(messyPath, "://");
+
+    if(protocolLocation) {
+        messyPath = protocolLocation + 3;
+    }
+
+#ifdef WIN32
+    auto isRelative = ::PathIsRelativeA(messyPath) || messyPath[0] == '/';
+#else
+    auto isRelative = messyPath[0] != '/';
+#endif
+
+    String absolutePath;
+    if(isRelative) {
+        absolutePath = GetCurrentWorkingDirectory() + absolutePath;
+    } else {
+        absolutePath = messyPath;
+    }
+
+    std::replace(absolutePath.begin(), absolutePath.end(), '\\', '/');
+
+    FixedVector<String, 32> pathElements;
+    std::istringstream is(absolutePath);
+    String element;
+    while(std::getline(is, element, '/')) {
+        if(element.compare(element.length() - 2, 2, "..") == 0) {
+            // parent directory identifier
+            pathElements.pop_back();
+        } else if(element.compare(element.length() - 1, 1, ".") == 0) {
+            // current directory identifier
+            continue;
+        } else if(element.length() == 0) {
+            // nothing in this element
+            continue;
+        } else {
+            pathElements.push_back(element);
         }
     }
 
-    static void OnFolderPathChanged(Entity entity, StringRef before, StringRef after) {
-        //SetName(entity, GetFileName(after));
-    }
+    std::stringstream os;
+    os << "file:/";
+    if(absolutePath[0] != '/') os << "/";
 
-    static void OnFolderAdded(Entity entity) {
+    std::copy(pathElements.begin(), pathElements.end(), std::ostream_iterator<String>(os, "/"));
+    auto asStr = os.str();
+    asStr.pop_back(); // remove overflowing ending slash from ostream_iterator
 
-    }
+    auto result = GetTempString(asStr.c_str());
+    return result;
+}
 
-    static void OnFolderRemoved(Entity entity) {
+static void OnFolderPathChanged(Entity entity, StringRef before, StringRef after) {
+    //SetName(entity, GetFileName(after));
+}
 
-    }
+static void OnFolderAdded(Entity entity) {
 
-    static bool ServiceStart() {
-        SubscribeFolderAdded(OnFolderAdded);
-        SubscribeFolderRemoved(OnFolderRemoved);
-        SubscribeFolderPathChanged(OnFolderPathChanged);
+}
 
-        return true;
-    }
+static void OnFolderRemoved(Entity entity) {
 
-    static bool ServiceStop() {
-        UnsubscribeFolderAdded(OnFolderAdded);
-        UnsubscribeFolderRemoved(OnFolderRemoved);
-        UnsubscribeFolderPathChanged(OnFolderPathChanged);
+}
 
-        return true;
-    }
+static bool ServiceStart() {
+    SubscribeFolderAdded(OnFolderAdded);
+    SubscribeFolderRemoved(OnFolderRemoved);
+    SubscribeFolderPathChanged(OnFolderPathChanged);
+
+    return true;
+}
+
+static bool ServiceStop() {
+    UnsubscribeFolderAdded(OnFolderAdded);
+    UnsubscribeFolderRemoved(OnFolderRemoved);
+    UnsubscribeFolderPathChanged(OnFolderPathChanged);
+
+    return true;
+}

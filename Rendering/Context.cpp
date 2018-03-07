@@ -14,7 +14,7 @@
         v2i CursorPositions[CURSOR_MAX];
         String ContextTitle;
         v2i ContextSize;
-        bool ContextFullscreen;
+        bool ContextFullscreen, ContextVsync;
     };
 
     DefineComponent(Context)
@@ -26,6 +26,7 @@
     DefineComponentProperty(Context, StringRef, ContextTitle)
     DefineComponentProperty(Context, v2i, ContextSize)
     DefineComponentProperty(Context, bool, ContextFullscreen)
+    DefineComponentProperty(Context, bool, ContextVsync)
 
     DefineEvent(KeyStateChanged, KeyHandler)
     DefineEvent(CursorPositionChanged, CursorHandler)

@@ -10,9 +10,11 @@
 #include <Core/Module.h>
 #include <Core/Types.h>
 #include <climits>
+#include <Core/Dictionary.h>
 #include "PropertyEditor.h"
 #include "Selection.h"
 
+static Dictionary<Type, bool> SectionOpened;
 
 #define DefinePrimitiveImGuiDrawer(TYPE, INTERMEDIATETYPE, DRAWFUNC) \
     static void Draw ## TYPE(Property property) {\
@@ -81,21 +83,23 @@
 
         if(IsEntityValid(value)) {
             if(HasHierarchy(value)) {
-                sprintf(id, "%s##%llu", GetName(value), property);
+                sprintf(id, "%s", GetEntityPath(value));
             } else {
-                sprintf(id, "Entity_%d##%llu", GetHandleIndex(value), property);
+                sprintf(id, "Entity_%d", GetHandleIndex(value));
             }
         } else {
-            sprintf(id, "<None>##%llu", property);
+            sprintf(id, "<None>");
         }
 
+        ImGui::PushID(property);
         ImGui::Text("%s", id);
+        ImGui::PopID();
 
         if(ImGui::BeginDragDropTarget()) {
             if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(GetTypeName(TypeOf_Entity()))) {
                 if(payload->Delivery) {
                     for(auto i = 0; i < GetNumSelection(); ++i) {
-                        ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), value);
+                        ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), *((Entity*)payload->Data));
                     }
                 }
             }
@@ -103,6 +107,26 @@
         }
     }
 
+    static void Drawm4x4f(Property property) {
+        char idx[32], idy[32], idz[32], idw[32];
+        sprintf(idx, "##%llu_x", property);
+        sprintf(idy, "##%llu_y", property);
+        sprintf(idz, "##%llu_z", property);
+        sprintf(idw, "##%llu_w", property);
+
+        typedef m4x4f(*Getter)(Entity entity);
+        typedef void(*Setter)(Entity entity, m4x4f value);
+        auto value = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
+        if(ImGui::InputFloat4(idx, &value.x.x)
+           || ImGui::InputFloat4(idy, &value.y.x)
+           || ImGui::InputFloat4(idz, &value.z.x)
+           || ImGui::InputFloat4(idw, &value.w.x)) {
+
+            for(auto i = 0; i < GetNumSelection(); ++i) {
+                ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), value);
+            }
+        }
+    }
     static void DrawStringRef(Property property) {
         char id[128];
         char buf[PATH_MAX];
@@ -156,6 +180,7 @@
         typedef void(*Setter)(Entity entity, rgba8 value);
         auto v = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
         rgb32 rgba = { (float)v.r / 255.0f, (float)v.g / 255.0f, (float)v.b / 255.0f };
+
         if(ImGui::ColorEdit3(id, &rgba.r)) {
             for(auto i = 0; i < GetNumSelection(); ++i) {
                 ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), {(u8)(rgba.r * 255.0f), (u8)(rgba.g * 255.0f), (u8)(rgba.b * 255.0f) });
@@ -165,8 +190,6 @@
 
     static void Draw(Entity context) {
         if(ImGui::Begin("Property Editor", &Visible)) {
-            ImGui::Columns(2, "properties", true);
-
             for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
                 bool showType = false;
                 for(auto i = 0; i < GetNumSelection(); ++i) {
@@ -177,7 +200,9 @@
 
                 if(!showType) continue;
 
-                if(true) {//ImGui::CollapsingHeader(GetTypeName(type))) {
+                if(ImGui::CollapsingHeader(GetTypeName(type), ImGuiTreeNodeFlags_DefaultOpen)) {
+                    ImGui::Columns(2, GetTypeName(type));
+
                     for(auto property = GetNextProperty(0); IsPropertyValid(property); property = GetNextProperty(property)) {
                         if(GetPropertyOwner(property) != type) {
                             continue;
@@ -187,6 +212,8 @@
 
                         ImGui::Text("%s", GetPropertyName(property));
                         ImGui::NextColumn();
+
+                        ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
 
                         HandleDraw(float);
                         HandleDraw(double);
@@ -206,6 +233,7 @@
                         HandleDraw(v2i);
                         HandleDraw(v3i);
                         HandleDraw(v4i);
+                        HandleDraw(m4x4f);
                         HandleDraw(rgba8);
                         HandleDraw(rgba32);
                         HandleDraw(rgb8);
@@ -213,8 +241,12 @@
                         HandleDraw(Entity);
                         HandleDraw(Type);
 
+                        ImGui::PopItemWidth();
+
                         ImGui::NextColumn();
                     }
+
+                    ImGui::Columns(1);
                 }
             }
 

@@ -18,6 +18,7 @@
     DeclareComponentProperty(Context, StringRef, ContextTitle)
     DeclareComponentProperty(Context, v2i, ContextSize)
     DeclareComponentProperty(Context, bool, ContextFullscreen)
+    DeclareComponentProperty(Context, bool, ContextVsync)
 
     float GetKeyState(Entity context, u16 key);
     void SetKeyState(Entity context, u16 key, float state);

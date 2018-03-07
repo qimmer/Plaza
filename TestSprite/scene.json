@@ -1,19 +1,46 @@
 {
-  "/Tilemaps/Tilemap1": {
-    "MaterialProgram": "/Programs/Sprite"
+  "/Tilemaps/Tilemap1/Material": {
+    "Material": {
+      "MaterialProgram": "/.Sprite/Program"
+    }
+  },
+  "/Tilemaps/Tilemap1/Texture": {
+    "Texture2D": {
+      "UniformStateTexture": "",
+      "UniformStateStage": 0
+    }
+  },
+  "/Tilemaps/Tilemap1/Texture/Stream": {
+    "FileStream": {
+      "FilePath": "/roguelikeSheet_transparent.png",
+    }
+  },
+  "/Tilemaps/Tilemap1/TextureState": {
+    "UniformState": {
+      "UniformStateTexture": "",
+      "UniformStateStage": 0
+    }
   },
   "/Sprites/TestSprite": {
-
+    "Sprite": {
+      "SpriteUvOffset": [0, 0],
+      "SpriteUvSize": [16, 16],
+      "SpriteUvScale": [0.0010330578512397, 0.0019011406844106]
+    }
   },
   "/Scene": {
-    "$components":[ "Scene" ]
+    "Scene": {}
   },
   "/Scene/Camera": {
-    "Camera2DPixelsPerUnit": 32
+    "Camera2D": {
+      "Camera2DPixelsPerUnit": 32
+    }
   },
 
   "/Scene/Sprite": {
-    "MeshInstanceMesh": "/Sprites/TestSprite",
-    "MeshInstanceMaterial": ""
+    "MeshInstance": {
+      "MeshInstanceMesh": "/Sprites/TestSprite",
+      "MeshInstanceMaterial": "/Tilemaps/Tilemap1"
+    }
   }
 }

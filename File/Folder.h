@@ -16,7 +16,10 @@ StringRef GetCurrentWorkingDirectory();
 StringRef GetParentFolder(StringRef absolutePath);
 StringRef GetFileName(StringRef absolutePath);
 StringRef GetFileExtension(StringRef absolutePath);
+bool IsFolder(StringRef absolutePath);
+bool CreateDirectories(StringRef fullPath);
 char GetPathSeparator();
+StringRef CleanupPath(StringRef messyPath);
 void ScanFolder(Entity folder);
 
 DeclareService(Folder)

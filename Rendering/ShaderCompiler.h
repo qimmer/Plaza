@@ -10,7 +10,7 @@
 #include <Core/Entity.h>
 
 #define SETTING_SHADER_INCLUDE_DIRECTORY "shader_include_dir"
-
+#define LogChannel_ShaderCompiler 359
 
     typedef void(*ShaderCompilerFinishHandler)(bool hasErrors, StringRef output);
 

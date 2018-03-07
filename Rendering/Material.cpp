@@ -7,12 +7,16 @@
 
 
     struct Material {
+        Material() : MaterialRenderState(RenderState_STATE_DEFAULT) {}
+
         Entity MaterialProgram;
         u64 MaterialRenderState;
     };
 
     DefineComponent(Material)
         Dependency(Hierarchy)
+        DefineProperty(Entity, MaterialProgram)
+        DefineProperty(u64, MaterialRenderState)
     EndComponent()
 
     DefineComponentProperty(Material, Entity, MaterialProgram)

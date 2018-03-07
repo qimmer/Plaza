@@ -8,11 +8,12 @@
 #include <Core/Service.h>
 #include <Core/Entity.h>
 
+DeclareService(ImGuiRenderer)
+DeclareComponent(ImGuiRenderer)
 
-    DeclareService(ImGuiRenderer)
-    DeclareComponent(ImGuiRenderer)
+DeclareEvent(ImGuiDraw, EntityHandler);
 
-    DeclareEvent(ImGuiDraw, EntityHandler);
-
+void* GetDefaultImGuiContext();
+void RebuildImGuiFonts();
 
 #endif //PLAZA_ImGui_H

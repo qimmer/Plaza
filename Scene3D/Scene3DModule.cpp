@@ -3,13 +3,10 @@
 //
 
 #include <Scene/SceneModule.h>
-#include "Scene2DModule.h"
-#include "Camera2D.h"
+#include "Scene3DModule.h"
+#include "Camera3D.h"
+#include "Transform3D.h"
 #include "SimpleSceneRenderer.h"
-#include "Tilemap.h"
-#include "Transform2D.h"
-#include "Sprite.h"
-
 
     DefineModule(Scene3D)
         ModuleDependency(Scene)
@@ -20,4 +17,3 @@
         ModuleType(Camera3D)
         ModuleType(Transform3D)
     EndModule()
-}

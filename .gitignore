@@ -37,3 +37,4 @@
 obj/
 .vscode/
 cmake-build-*/
+\.install/

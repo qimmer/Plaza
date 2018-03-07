@@ -5,4 +5,4 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_executable(FoundationTest main.cpp Common.h TestFile.h)
 
-target_link_libraries(FoundationTest Core Foundation Test)
+target_link_libraries(FoundationTest Core Foundation File Test)

@@ -25,13 +25,24 @@
         rgba8 CommandListClearColor;
         v4i CommandListViewport;
         float CommandListClearDepth;
-        u8 CommandListClearStencil, CommandListClearTargets;
+        u8 CommandListClearStencil, CommandListClearTargets, CommandListLayer;
         bool CommandListForceOrder;
     };
 
     DefineComponent(CommandList)
+        DefineProperty(u8, CommandListLayer)
+        DefineProperty(Entity, CommandListRenderTarget)
+        DefineProperty(u64, CommandListViewRenderState)
+        DefineProperty(rgba8, CommandListClearColor)
+        DefineProperty(float, CommandListClearDepth)
+        DefineProperty(u8, CommandListClearStencil)
+        DefineProperty(bool, CommandListForceOrder)
+        DefineProperty(v4i, CommandListViewport)
+        DefineProperty(m4x4f, CommandListViewMatrix)
+        DefineProperty(m4x4f, CommandListProjectionMatrix)
     EndComponent()
 
+    DefineComponentProperty(CommandList, u8, CommandListLayer)
     DefineComponentProperty(CommandList, Entity, CommandListRenderTarget)
     DefineComponentProperty(CommandList, u64, CommandListViewRenderState)
     DefineComponentProperty(CommandList, m4x4f, CommandListViewMatrix)

@@ -9,7 +9,7 @@
 #include <Core/Entity.h>
 #include <Foundation/AppLoop.h>
 #include <Core/Module.h>
-#include <Bgfx/BgfxModule.h>
+#include <BgfxRendering/BgfxModule.h>
 #include <Rendering/RenderTarget.h>
 #include <Rendering/CommandList.h>
 #include <Rendering/Context.h>

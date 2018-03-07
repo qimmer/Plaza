@@ -15,18 +15,16 @@
         Shader() {
             memset(this, 0, sizeof(Shader));
         }
-        Entity ShaderSourceStream, ShaderVaryingDefStream;
+        Entity ShaderProgram;
         u8 ShaderType;
     };
 
     DefineComponent(Shader)
         Dependency(Invalidation)
-        DefineProperty(Entity, ShaderSourceStream)
-        DefineProperty(Entity, ShaderVaryingDefStream)
+        Dependency(Stream)
+        Dependency(Hierarchy)
     EndComponent()
 
-    DefineComponentProperty(Shader, Entity, ShaderSourceStream)
-    DefineComponentProperty(Shader, Entity, ShaderVaryingDefStream)
     DefineComponentProperty(Shader, u8, ShaderType)
 
     DefineService(Shader)
@@ -41,17 +39,11 @@
         }
 
         char binaryShaderPath[PATH_MAX];
-        char binaryShaderStreamPath[PATH_MAX];
         sprintf(binaryShaderPath, "%s/%s", GetEntityPath(shader), profile);
-        sprintf(binaryShaderStreamPath, "%s/Stream", binaryShaderPath);
 
-        auto binaryShaderStream = CreateMemoryStream(binaryShaderStreamPath);
         auto binaryShader = CreateBinaryShader(binaryShaderPath);
-
         SetSourceShader(binaryShader, shader);
-
         SetBinaryShaderProfile(binaryShader, profile);
-        SetBinaryShaderStream(binaryShader, binaryShaderStream);
 
         return binaryShader;
     }
@@ -61,11 +53,6 @@
             for(auto shader = GetNextEntity(0); IsEntityValid(shader); shader = GetNextEntity(shader)) {
                 if(!HasShader(shader)) {
                     continue;
-                }
-
-                if(GetShaderSourceStream(shader) == entity ||
-                   GetShaderVaryingDefStream(shader) == entity) {
-                    SetInvalidated(shader, true);
                 }
             }
         }

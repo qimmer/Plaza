@@ -13,11 +13,11 @@
         }
 
         bool IndexBufferLong, IndexBufferDynamic;
-        Entity IndexBufferStream;
     };
 
     DefineComponent(IndexBuffer)
         Dependency(Invalidation)
+        Dependency(Stream)
     EndComponent()
 
     DefineService(IndexBuffer)
@@ -25,28 +25,11 @@
 
     DefineComponentProperty(IndexBuffer, bool, IndexBufferLong)
     DefineComponentProperty(IndexBuffer, bool, IndexBufferDynamic)
-    DefineComponentProperty(IndexBuffer, Entity, IndexBufferStream)
-
-    static void OnInvalidated(Entity entity, bool before, bool after) {
-        if(after && HasStream(entity)) {
-            for(auto indexBuffer = GetNextEntity(0); IsEntityValid(indexBuffer); indexBuffer = GetNextEntity(indexBuffer)) {
-                if(!HasIndexBuffer(indexBuffer)) {
-                    continue;
-                }
-
-                if(GetIndexBufferStream(indexBuffer) == entity) {
-                    SetInvalidated(indexBuffer, true);
-                }
-            }
-        }
-    }
 
     static bool ServiceStart() {
-        SubscribeInvalidatedChanged(OnInvalidated);
         return true;
     }
 
     static bool ServiceStop() {
-        UnsubscribeInvalidatedChanged(OnInvalidated);
         return true;
     }

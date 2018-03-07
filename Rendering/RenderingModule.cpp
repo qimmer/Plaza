@@ -13,26 +13,37 @@
 #include "Texture.h"
 #include "Texture2D.h"
 #include "RenderTarget.h"
+#include "Mesh.h"
+#include "Material.h"
+#include "UniformState.h"
+#include "Context.h"
+#include "VertexAttribute.h"
+#include "SubTexture2D.h"
 #include <Foundation/FoundationModule.h>
 
+DefineModule(Rendering)
+    ModuleDependency(Foundation)
+    ModuleService(VertexBuffer)
+    ModuleService(IndexBuffer)
+    ModuleService(BinaryShader)
+    ModuleService(Shader)
+    ModuleService(ShaderCompiler)
+    ModuleService(Program)
+    ModuleService(SubTexture2D)
 
-    DefineModule(Rendering)
-        ModuleDependency(Foundation)
-        ModuleService(VertexBuffer)
-        ModuleService(IndexBuffer)
-        ModuleService(BinaryShader)
-        ModuleService(Shader)
-        ModuleService(ShaderCompiler)
-        ModuleService(Program)
-
-        ModuleType(VertexDeclaration)
-        ModuleType(VertexBuffer)
-        ModuleType(IndexBuffer)
-        ModuleType(Uniform)
-        ModuleType(Texture)
-        ModuleType(Texture2D)
-        ModuleType(RenderTarget)
-        ModuleType(Shader)
-        ModuleType(BinaryShader)
-        ModuleType(Program)
-    EndModule()
+    ModuleType(VertexDeclaration)
+    ModuleType(VertexAttribute)
+    ModuleType(VertexBuffer)
+    ModuleType(IndexBuffer)
+    ModuleType(Context)
+    ModuleType(Uniform)
+    ModuleType(UniformState)
+    ModuleType(Texture)
+    ModuleType(Texture2D)
+    ModuleType(RenderTarget)
+    ModuleType(Shader)
+    ModuleType(BinaryShader)
+    ModuleType(Program)
+    ModuleType(Mesh)
+    ModuleType(Material)
+EndModule()
