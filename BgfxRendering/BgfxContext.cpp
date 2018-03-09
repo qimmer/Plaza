@@ -12,6 +12,7 @@
 #include "BgfxProgram.h"
 #include "BgfxTexture2D.h"
 #include "BgfxUniform.h"
+#include "BgfxVertexDeclaration.h"
 
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
@@ -22,7 +23,6 @@
 #include <Rendering/Texture2D.h>
 #include <Rendering/Uniform.h>
 #include <Rendering/IndexBuffer.h>
-#include <Foundation/Invalidation.h>
 
 #include <BgfxRendering/BgfxBinaryShader.h>
 #include <BgfxRendering/BgfxIndexBuffer.h>
@@ -45,7 +45,10 @@ extern "C" {
 #endif
 
 #ifdef WIN32
+#undef GetHandle
 #include <windows.h>
+#include <Rendering/VertexDeclaration.h>
+
 #undef CreateService
 extern "C" {
     GLFWAPI HWND glfwGetWin32Window(GLFWwindow *window);
@@ -74,33 +77,24 @@ static void OnAppUpdate(double deltaTime) {
 
     auto numContexts = GetNumBgfxContext();
 
-    // Cap polls to 60fps to prevent overloading OS
-    if(timeSinceLastPoll > (1.0f / 30.0f)) {
-        timeSinceLastPoll = 0.0f;
+    for(auto i = 0; i < numContexts; ++i) {
+        auto entity = GetBgfxContextEntity(i);
+        SetKeyState(entity, MOUSE_SCROLL_DOWN, 0.0f);
+        SetKeyState(entity, MOUSE_SCROLL_UP, 0.0f);
+        SetKeyState(entity, MOUSE_SCROLL_LEFT, 0.0f);
+        SetKeyState(entity, MOUSE_SCROLL_RIGHT, 0.0f);
+        SetKeyState(entity, MOUSE_DOWN, 0.0f);
+        SetKeyState(entity, MOUSE_UP, 0.0f);
+        SetKeyState(entity, MOUSE_LEFT, 0.0f);
+        SetKeyState(entity, MOUSE_RIGHT, 0.0f);
+    }
 
-        for(auto i = 0; i < numContexts; ++i) {
-            auto entity = GetBgfxContextEntity(i);
-            SetKeyState(entity, MOUSE_SCROLL_DOWN, 0.0f);
-            SetKeyState(entity, MOUSE_SCROLL_UP, 0.0f);
-            SetKeyState(entity, MOUSE_SCROLL_LEFT, 0.0f);
-            SetKeyState(entity, MOUSE_SCROLL_RIGHT, 0.0f);
-            SetKeyState(entity, MOUSE_DOWN, 0.0f);
-            SetKeyState(entity, MOUSE_UP, 0.0f);
-            SetKeyState(entity, MOUSE_LEFT, 0.0f);
-            SetKeyState(entity, MOUSE_RIGHT, 0.0f);
-        }
+    // Cap polls to 60fps to prevent overloading OS
+    if(timeSinceLastPoll > (1.0f / 200.0f)) {
+        timeSinceLastPoll = 0.0f;
 
         glfwPollEvents();
     }
-
-    // Validate all resources to eventual model changes
-    ValidateAll(UpdateBgfxBinaryShader, HasBgfxBinaryShader);
-    ValidateAll(UpdateBgfxProgram, HasBgfxProgram);
-    ValidateAll(UpdateBgfxUniform, HasBgfxUniform);
-    ValidateAll(UpdateBgfxTexture2D, HasBgfxTexture2D);
-    ValidateAll(UpdateBgfxVertexDeclaration, HasBgfxVertexDeclaration);
-    ValidateAll(UpdateBgfxVertexBuffer, HasBgfxVertexBuffer);
-    ValidateAll(UpdateBgfxIndexBuffer, HasBgfxIndexBuffer);
 
     // Render all command lists
     Entity viewIdTaken[256];
@@ -266,8 +260,13 @@ static void OnBgfxContextAdded(Entity entity) {
         pd.backBufferDS = NULL;
         pd.session = NULL;
         bgfx::setPlatformData(pd);
-
+#ifdef __APPLE__
         bgfx::init(bgfx::RendererType::Metal);
+#endif
+
+#ifdef WIN32
+        bgfx::init();
+#endif
         bgfx::reset(size.x, size.y);
 
         PrimaryContext = entity;

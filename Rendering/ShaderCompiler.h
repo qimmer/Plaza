@@ -12,14 +12,17 @@
 #define SETTING_SHADER_INCLUDE_DIRECTORY "shader_include_dir"
 #define LogChannel_ShaderCompiler 359
 
-    typedef void(*ShaderCompilerFinishHandler)(bool hasErrors, StringRef output);
+typedef void(*ShaderCompileHandler)(Entity shader, Entity binaryShader);
+typedef void(*ShaderCompilerFinishHandler)(bool hasErrors, StringRef output);
 
-    DeclareEvent(ShaderCompilationNeeded, EntityHandler)
-    DeclareEvent(ShaderCompilerFinished, ShaderCompilerFinishHandler)
+DeclareEvent(ShaderCompile, ShaderCompileHandler)
+DeclareEvent(ShaderCompilerFinished, ShaderCompilerFinishHandler)
 
-    DeclareService(ShaderCompiler)
+DeclareService(ShaderCompiler)
 
-    void SetShaderIncludeDirectory(StringRef value);
-    StringRef GetShaderIncludeDirectory();
+void SetShaderIncludeDirectory(StringRef value);
+StringRef GetShaderIncludeDirectory();
+
+void CompileShader(Entity shader, Entity binaryShader);
 
 #endif //PLAZA_SHADERCOMPILER_H

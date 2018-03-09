@@ -29,7 +29,7 @@ DefineService(Folder)
     ServiceDependency(Stream)
 EndService()
 
-DefineComponentProperty(Folder, StringRef, FolderPath)
+DefineComponentPropertyReactive(Folder, StringRef, FolderPath)
 
 StringRef GetCurrentWorkingDirectory() {
     static char path[PATH_MAX];
@@ -49,17 +49,15 @@ StringRef GetFileExtension(StringRef absolutePath) {
     return extension;
 }
 
-StringRef GetParentFolder(StringRef absolutePath) {
-    auto parentFolder = (char*)GetTempString(absolutePath);
-
+void GetParentFolder(StringRef absolutePath, char *parentFolder) {
+    strcpy(parentFolder, absolutePath);
     auto ptr = strrchr(parentFolder, '/');
     if(!ptr) {
-        return "";
+        *parentFolder = 0;
+        return;
     }
 
     parentFolder[ptr - parentFolder] = '\0';
-
-    return parentFolder;
 }
 
 void ScanFolder(Entity entity) {
@@ -105,6 +103,7 @@ void ScanFolder(Entity entity) {
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
+#undef GetHandle
 #include <windows.h>
 #include <shlwapi.h>
 #endif
@@ -135,26 +134,29 @@ bool CreateDirectories(StringRef fullPath) {
 }
 
 bool IsFolder(StringRef absolutePath) {
-    absolutePath = ResolveVirtualPath(absolutePath);
+    char resolvedPath[PATH_MAX];
+    ResolveVirtualPath(absolutePath, resolvedPath);
 
-    auto isVirtualPath = strstr(absolutePath, "://") != NULL;
+    auto isVirtualPath = strstr(resolvedPath, "://") != NULL;
 
-    if(isVirtualPath && memcmp(absolutePath, "file://", 7) != 0) {
+    if(isVirtualPath && memcmp(resolvedPath, "file://", 7) != 0) {
         Log(LogChannel_Core, LogSeverity_Error, "IsDirectory only supports file:// paths.");
         return false;
     }
 
-    absolutePath += 7;
+    char *rawPath = resolvedPath;
+    rawPath += 7;
 
     struct stat ent_stat;
-    stat(absolutePath, &ent_stat);
+    stat(rawPath, &ent_stat);
 
     if(ent_stat.st_mode & S_IFMT) return true;
 
     return false;
 }
 
-StringRef CleanupPath(StringRef messyPath) {
+void CleanupPath(char* messyPath) {
+    char *dest = messyPath;
     auto protocolLocation = strstr(messyPath, "://");
 
     if(protocolLocation) {
@@ -206,8 +208,7 @@ StringRef CleanupPath(StringRef messyPath) {
     auto asStr = os.str();
     asStr.pop_back(); // remove overflowing ending slash from ostream_iterator
 
-    auto result = GetTempString(asStr.c_str());
-    return result;
+    strcpy(dest, asStr.c_str());
 }
 
 static void OnFolderPathChanged(Entity entity, StringRef before, StringRef after) {

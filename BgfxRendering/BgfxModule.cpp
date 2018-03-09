@@ -12,14 +12,16 @@
 #include "BgfxShaderCompiler.h"
 #include "BgfxProgram.h"
 #include "BgfxBinaryShader.h"
+#include "BgfxVertexDeclaration.h"
 
 
-    DefineModule(BgfxRendering)
+DefineModule(BgfxRendering)
         ModuleService(BgfxCommandList)
         ModuleService(BgfxContext)
         ModuleService(BgfxUniform)
         ModuleService(BgfxTexture2D)
         ModuleService(BgfxVertexBuffer)
+        ModuleService(BgfxVertexDeclaration)
         ModuleService(BgfxIndexBuffer)
         ModuleService(BgfxBinaryShader)
         ModuleService(BgfxProgram)

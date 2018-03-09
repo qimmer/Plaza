@@ -168,11 +168,25 @@ bool IsComponentAbstract(Type type);
 
 #define DeclareComponentProperty(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
     PROPERTYTYPE Get ## PROPERTYNAME (Entity entity); \
-    void Set ##  PROPERTYNAME (Entity entity, PROPERTYTYPE value); \
+    void Set ##  PROPERTYNAME (Entity entity, PROPERTYTYPE value);\
+    void Copy ## PROPERTYNAME(Entity src, Entity dst);
+
+#define DeclareComponentPropertyReactive(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
+    DeclareComponentProperty(TYPENAME, PROPERTYTYPE, PROPERTYNAME)\
     typedef void(*PROPERTYNAME ## ChangedHandler)(Entity entity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue); \
     DeclareEvent(PROPERTYNAME ## Changed, PROPERTYNAME ## ChangedHandler)
 
 #define DefineComponentProperty(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
+    PROPERTYTYPE Get ## PROPERTYNAME (Entity entity) { \
+        return ApiConvert<PROPERTYTYPE>(Get ## TYPENAME (entity)->PROPERTYNAME); \
+    } \
+    void Set ##  PROPERTYNAME (Entity entity, PROPERTYTYPE value) { \
+        auto data = Get ## TYPENAME (entity); \
+        data-> PROPERTYNAME = value; \
+    }\
+    void Copy ## PROPERTYNAME(Entity src, Entity dst) { Set ## PROPERTYNAME (dst, Get ## PROPERTYNAME (src)); }
+
+#define DefineComponentPropertyReactive(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
     DefineEvent(PROPERTYNAME ## Changed, PROPERTYNAME ## ChangedHandler) \
     PROPERTYTYPE Get ## PROPERTYNAME (Entity entity) { \
         Assert(IsEntityValid(entity));\
@@ -183,7 +197,8 @@ bool IsComponentAbstract(Type type);
         Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         SetAndNotify(TYPENAME, PROPERTYTYPE, PROPERTYNAME, PROPERTYNAME ## Changed, value); \
-    }
+    }\
+    void Copy ## PROPERTYNAME(Entity src, Entity dst) { Set ## PROPERTYNAME (dst, Get ## PROPERTYNAME (src)); }
 
 #define for_entity(VARNAME, COMPONENTTYPE) \
         auto num ## COMPONENTTYPE ## VARNAME = GetNum ## COMPONENTTYPE();\

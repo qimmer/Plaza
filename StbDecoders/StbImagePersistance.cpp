@@ -37,7 +37,9 @@ static bool DeserializeImage(Entity entity) {
     free(buffer);
 
     if(result) {
-        auto texture = CreateTexture2D(FormatString("%s/Texture", GetEntityPath(entity)));
+        char path[PATH_MAX];
+        snprintf(path, PATH_MAX, "%s/Texture", GetEntityPath(entity));
+        auto texture = CreateTexture2D(path);
         SetTextureSize2D(texture, {width, height});
 
         switch(channels) {

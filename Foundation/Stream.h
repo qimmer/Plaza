@@ -12,7 +12,8 @@ typedef s32(*StreamTellHandler)(Entity entity);
 typedef bool(*StreamOpenHandler)(Entity entity, int mode);
 typedef u64(*StreamReadHandler)(Entity entity, u64 size, void* data);
 typedef u64(*StreamWriteHandler)(Entity entity, u64 size, const void* data);
-typedef void(*StreamAsyncHandler)(Entity entity, u64 numBytes);
+typedef void(*StreamReadAsyncHandler)(Entity entity, u64 numBytes, const void *data);
+typedef void(*StreamWriteAsyncHandler)(Entity entity, u64 numBytes);
 typedef StringRef(*StreamMimeTypeHandler)(Entity entity);
 
 typedef struct StreamProtocol {
@@ -43,7 +44,7 @@ typedef struct StreamCompressor {
 DeclareComponent(Stream)
 DeclareService(Stream)
 
-DeclareComponentProperty(Stream, StringRef, StreamPath)
+DeclareComponentPropertyReactive(Stream, StringRef, StreamPath)
 
 StringRef GetStreamResolvedPath(Entity entity);
 
@@ -61,8 +62,8 @@ StringRef GetStreamMimeType(Entity entity);
 bool StreamOpen(Entity entity, int mode);
 void StreamClose(Entity entity);
 
-void StreamReadAsync(Entity entity, u64 size, void *data, StreamAsyncHandler readFinishedHandler);
-void StreamWriteAsync(Entity entity, u64 size, const void *data, StreamAsyncHandler writeFinishedHandler);
+void StreamReadAsync(Entity entity, u64 size, StreamReadAsyncHandler readFinishedHandler);
+void StreamWriteAsync(Entity entity, u64 size, const void *data, StreamWriteAsyncHandler writeFinishedHandler);
 
 void AddStreamProtocol(StringRef protocolIdentifier, struct StreamProtocol *protocol);
 void RemoveStreamProtocol(StringRef protocolIdentifier);

@@ -22,9 +22,13 @@ DefineComponentChild(Project, Folder, ProjectBuildFolder)
 void ScanProjects() {
     for(auto module = GetNextModule(0); IsModuleValid(module); module = GetNextModule(module)) {
         auto sourceFilePath = GetModuleSourcePath(module);
-        auto projectFolder = GetParentFolder(sourceFilePath);
 
-        auto project = CreateProject(FormatString("/Projects/%s", GetModuleName(module)));
+        char projectFolder[PATH_MAX];
+        GetParentFolder(sourceFilePath, projectFolder);
+
+        char path[PATH_MAX];
+        snprintf(path, PATH_MAX, "/Projects/%s", GetModuleName(module));
+        auto project = CreateProject(path);
         SetFolderPath(GetProjectSourceFolder(project), projectFolder);
         ScanFolder(GetProjectSourceFolder(project));
     }

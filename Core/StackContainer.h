@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <cassert>
+#include <memory.h>
 
 // This allocator can be used with STL containers to provide a stack buffer
 // from which to allocate memory and overflows onto the heap. This stack buffer
@@ -30,10 +31,12 @@ class StackAllocator : public std::allocator<T> {
 public:
     typedef typename std::allocator<T>::pointer pointer;
     typedef typename std::allocator<T>::size_type size_type;
+    static const unsigned long long magic = 0xFFAAFFAAFFAAFFAA;
 
     // For the straight up copy c-tor, we can share storage.
     StackAllocator(const StackAllocator<T, stack_capacity>& rhs)
-            : std::allocator<T>() {
+            : std::allocator<T>(), isAllocated(false) {
+
     }
     // ISO C++ requires the following constructor to be defined,
     // and std::vector in VC++2008SP1 Release fails with an error
@@ -46,6 +49,7 @@ public:
     // iff sizeof(T) == sizeof(U).
     template<typename U, size_t other_capacity>
     StackAllocator(const StackAllocator<U, other_capacity>& other) {
+        magicNumberStart = magicNumberEnd = magic;
     }
     explicit StackAllocator() {
     }
@@ -54,15 +58,23 @@ public:
     // allocator.
     pointer allocate(size_type n, void* hint = 0) {
         assert(n <= stack_capacity);
+        assert(magicNumberStart == magic && magicNumberEnd == magic && !isAllocated);
+        memset(stack_buffer_, 0, n);
+        isAllocated = true;
         return (pointer)stack_buffer_;
     }
     // Free: when trying to free the stack buffer, just mark it as free. For
     // non-stack-buffer pointers, just fall though to the standard allocator.
     void deallocate(pointer p, size_type n) {
-
+        assert(magicNumberStart == magic && magicNumberEnd == magic && isAllocated);
+        isAllocated = false;
     }
 private:
+    unsigned long long magicNumberStart;
     T stack_buffer_[stack_capacity];
+    unsigned long long magicNumberEnd;
+
+    bool isAllocated;
 };
 
 #endif  // BASE_STACK_CONTAINER_H_

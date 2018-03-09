@@ -30,10 +30,17 @@
         InitializeModule(ModuleOf_Foundation());
 
         while(virtualPathMappings && *virtualPathMappings) {
-            auto entity = CreateVirtualPath(FormatString("/.vpaths/%llu", (u64)*virtualPathMappings));
+            char name[PATH_MAX];
+            sprintf(name, "/.vpaths/%llu", (u64)*virtualPathMappings);
+            auto entity = CreateVirtualPath(name);
             SetVirtualPathTrigger(entity, *virtualPathMappings);
             virtualPathMappings++;
-            SetVirtualPathDestination(entity, CleanupPath(*virtualPathMappings));
+
+            char cleanPath[PATH_MAX];
+            strcpy(cleanPath, *virtualPathMappings);
+            CleanupPath(cleanPath);
+
+            SetVirtualPathDestination(entity, cleanPath);
             virtualPathMappings++;
 
             Log(LogChannel_Core, LogSeverity_Info, "Mapping path %s to %s ...", GetVirtualPathTrigger(entity), GetVirtualPathDestination(entity));
@@ -46,7 +53,9 @@
         SetContextTitle(PlayerContext, title);
 
         while(assets && *assets) {
-            auto assetStream = CreateStream(FormatString("/%s", strstr(*assets, "://") + 3));
+            char path[PATH_MAX];
+            snprintf(path, PATH_MAX, "/%s", strstr(*assets, "://") + 3);
+            auto assetStream = CreateStream(path);
             SetStreamPath(assetStream, *assets);
             Load(assetStream);
             assets++;

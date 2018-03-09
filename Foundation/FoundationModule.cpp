@@ -4,7 +4,6 @@
 
 #include "FoundationModule.h"
 #include "Stream.h"
-#include "Invalidation.h"
 #include "MemoryStream.h"
 #include "File/Folder.h"
 #include "Persistance.h"
@@ -20,11 +19,9 @@ DefineModule(Foundation)
     ModuleType(Persistance)
     ModuleType(PersistancePoint)
     ModuleType(PropertyBinding)
-    ModuleType(Invalidation)
 
     ModuleService(MemoryStream)
     ModuleService(Hierarchy)
-    ModuleService(Invalidation)
     ModuleService(Stream)
 
     ModuleDependency(Core)

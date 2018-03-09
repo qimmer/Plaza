@@ -23,10 +23,10 @@
         DefineProperty(v2i, ContextSize)
     EndComponent()
 
-    DefineComponentProperty(Context, StringRef, ContextTitle)
-    DefineComponentProperty(Context, v2i, ContextSize)
-    DefineComponentProperty(Context, bool, ContextFullscreen)
-    DefineComponentProperty(Context, bool, ContextVsync)
+    DefineComponentPropertyReactive(Context, StringRef, ContextTitle)
+    DefineComponentPropertyReactive(Context, v2i, ContextSize)
+    DefineComponentPropertyReactive(Context, bool, ContextFullscreen)
+    DefineComponentPropertyReactive(Context, bool, ContextVsync)
 
     DefineEvent(KeyStateChanged, KeyHandler)
     DefineEvent(CursorPositionChanged, CursorHandler)
@@ -60,3 +60,7 @@
 
         FireEvent(CursorPositionChanged, context, index, old, value);
     }
+
+float *GetKeyStates(Entity context) {
+    return GetContext(context)->KeyStates;
+}

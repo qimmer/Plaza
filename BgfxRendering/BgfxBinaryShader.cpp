@@ -6,46 +6,42 @@
 #include <Rendering/BinaryShader.h>
 #include <bgfx/bgfx.h>
 #include <Foundation/Stream.h>
-#include <Foundation/Invalidation.h>
+#include <Rendering/ShaderCompiler.h>
+#include <Rendering/Program.h>
+#include <Rendering/Shader.h>
 
+struct BgfxBinaryShader {
+    BgfxBinaryShader() : handle(BGFX_INVALID_HANDLE), invalidated(true) {}
 
-    struct BgfxBinaryShader {
-        BgfxBinaryShader() : handle(BGFX_INVALID_HANDLE) {}
+    bgfx::ShaderHandle handle;
+    bool invalidated;
+};
 
-        bgfx::ShaderHandle handle;
-    };
+DefineComponent(BgfxBinaryShader)
+EndComponent()
 
-    DefineComponent(BgfxBinaryShader)
-    EndComponent()
+DefineService(BgfxBinaryShader)
+EndService()
 
-    DefineService(BgfxBinaryShader)
-    EndService()
-
-    u16 GetBgfxBinaryShaderHandle(Entity entity) {
-        return GetBgfxBinaryShader(entity)->handle.idx;
-    }
-
-    void UpdateBgfxBinaryShader(Entity entity) {
-        if(!HasBgfxBinaryShader(entity))
-        {
-            return;
-        }
-
-        auto data = GetBgfxBinaryShader(entity);
-
+u16 GetBgfxBinaryShaderHandle(Entity entity) {
+    auto data = GetBgfxBinaryShader(entity);
+    if(data->invalidated) {
         // Eventually free old buffers
         if(bgfx::isValid(data->handle)) {
             bgfx::destroy(data->handle);
             data->handle = BGFX_INVALID_HANDLE;
         }
 
-        if(!StreamOpen(entity, StreamMode_Read)) return;
-        StreamSeek(entity, StreamSeek_End);
-        auto size = StreamTell(entity);
+        u32 size = 0;
+        if(StreamOpen(entity, StreamMode_Read)) {
+            StreamSeek(entity, StreamSeek_End);
+            size = StreamTell(entity);
+        }
 
         if(size == 0) {
             StreamClose(entity);
-            return;
+            CompileShader(GetParent(entity), entity);
+            return bgfx::kInvalidHandle;
         }
 
         auto buffer = malloc(size);
@@ -55,24 +51,51 @@
 
         data->handle = bgfx::createShader(bgfx::copy(buffer, size));
         free(buffer);
+
+        data->invalidated = false;
+
+        FireEvent(ProgramChanged, GetParent(GetParent(entity)));
     }
 
-    void OnBinaryShaderRemoved(Entity entity) {
-        auto data = GetBgfxBinaryShader(entity);
+    return data->handle.idx;
+}
 
-        if(bgfx::isValid(data->handle)) {
-            bgfx::destroy(data->handle);
-            data->handle = BGFX_INVALID_HANDLE;
+void OnBinaryShaderRemoved(Entity entity) {
+    auto data = GetBgfxBinaryShader(entity);
+
+    if(bgfx::isValid(data->handle)) {
+        bgfx::destroy(data->handle);
+        data->handle = BGFX_INVALID_HANDLE;
+    }
+}
+
+static void OnChanged(Entity entity) {
+    if(HasBgfxBinaryShader(entity)) {
+        GetBgfxBinaryShader(entity)->invalidated = true;
+
+        auto shader = GetParent(entity);
+        if(IsEntityValid(shader) && HasShader(shader)) {
+            auto program = GetParent(shader);
+            if(IsEntityValid(program) && HasProgram(program)) {
+                FireEvent(ProgramChanged, program);
+            }
         }
     }
+}
 
-    static bool ServiceStart() {
-        SubscribeBgfxBinaryShaderRemoved(OnBinaryShaderRemoved);
-        return true;
-    }
+static bool ServiceStart() {
+    SubscribeBgfxBinaryShaderRemoved(OnBinaryShaderRemoved);
+    SubscribeStreamChanged(OnChanged);
+    SubscribeStreamContentChanged(OnChanged);
+    SubscribeBinaryShaderChanged(OnChanged);
+    return true;
+}
 
-    static bool ServiceStop() {
-        UnsubscribeBgfxBinaryShaderRemoved(OnBinaryShaderRemoved);
-        return true;
-    }
+static bool ServiceStop() {
+    UnsubscribeBgfxBinaryShaderRemoved(OnBinaryShaderRemoved);
+    UnsubscribeStreamChanged(OnChanged);
+    UnsubscribeStreamContentChanged(OnChanged);
+    UnsubscribeBinaryShaderChanged(OnChanged);
+    return true;
+}
 

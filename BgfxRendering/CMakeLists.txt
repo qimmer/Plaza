@@ -9,7 +9,7 @@ ExternalProject_Add(ex_bgfx
         GIT_REPOSITORY "https://github.com/JoshuaBrookover/bgfx.cmake.git"
         GIT_TAG "master"
         UPDATE_COMMAND ""
-        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_BUILD_EXAMPLES=OFF;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=Release;-DBGFX_CONFIG_DEBUG=ON")
+        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_BUILD_EXAMPLES=OFF;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=Release;-DBGFX_CONFIG_DEBUG=OFF")
 
 ExternalProject_Get_Property(ex_bgfx BINARY_DIR)
 ExternalProject_Get_Property(ex_bgfx SOURCE_DIR)
@@ -40,7 +40,7 @@ SET(ex_glfw_inc_dir "${SOURCE_DIR}/include")
 ADD_LIBRARY(glfw STATIC IMPORTED)
 SET_PROPERTY(TARGET glfw PROPERTY IMPORTED_LOCATION "${ex_glfw_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}glfw3${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
-add_library(BgfxRendering BgfxModule.cpp BgfxModule.h BgfxModule.cpp BgfxModule.h BgfxContext.cpp BgfxContext.h BgfxCommandList.cpp BgfxCommandList.h BgfxVertexBuffer.cpp BgfxVertexBuffer.h BgfxIndexBuffer.cpp BgfxIndexBuffer.h BgfxProgram.cpp BgfxProgram.h BgfxBinaryShader.cpp BgfxBinaryShader.h BgfxUniform.cpp BgfxUniform.h BgfxTexture2D.cpp BgfxTexture2D.h)
+add_library(BgfxRendering BgfxModule.cpp BgfxModule.h BgfxModule.cpp BgfxModule.h BgfxContext.cpp BgfxContext.h BgfxCommandList.cpp BgfxCommandList.h BgfxVertexBuffer.cpp BgfxVertexBuffer.h BgfxIndexBuffer.cpp BgfxIndexBuffer.h BgfxProgram.cpp BgfxProgram.h BgfxBinaryShader.cpp BgfxBinaryShader.h BgfxUniform.cpp BgfxUniform.h BgfxTexture2D.cpp BgfxTexture2D.h BgfxVertexDeclaration.cpp BgfxVertexDeclaration.h)
 add_dependencies(BgfxRendering ex_bgfx ex_glfw)
 
 target_include_directories(BgfxRendering PUBLIC ".." ${ex_bgfx_inc_dir} ${ex_glfw_inc_dir})

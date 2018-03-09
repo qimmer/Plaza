@@ -22,7 +22,7 @@ EndComponent()
 DefineService(PersistancePoint)
 EndService()
 
-DefineComponentProperty(PersistancePoint, bool, Loaded)
+DefineComponentPropertyReactive(PersistancePoint, bool, Loaded)
 
 DefineEvent(LoadStarted, EntityHandler)
 DefineEvent(SaveStarted, EntityHandler)

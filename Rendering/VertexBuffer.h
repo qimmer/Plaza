@@ -8,16 +8,9 @@
 #include <Core/Entity.h>
 #include <Core/Service.h>
 
+DeclareComponent(VertexBuffer)
 
-    DeclareService(VertexBuffer)
-
-    DeclareComponent(VertexBuffer)
-    DeclareComponent(VertexDeclaration)
-
-    DeclareComponentProperty(VertexBuffer, Entity, VertexBufferDeclaration)
-    DeclareComponentProperty(VertexBuffer, bool, VertexBufferDynamic)
-
-    u32 GetVertexStride(Entity vertexDeclaration);
-
+DeclareComponentPropertyReactive(VertexBuffer, Entity, VertexBufferDeclaration)
+DeclareComponentPropertyReactive(VertexBuffer, bool, VertexBufferDynamic)
 
 #endif //PLAZA_VERTEXBUFFER_H

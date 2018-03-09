@@ -10,16 +10,16 @@
 
 DeclareComponent(Folder)
 
-DeclareComponentProperty(Folder, StringRef, FolderPath)
+DeclareComponentPropertyReactive(Folder, StringRef, FolderPath)
 
 StringRef GetCurrentWorkingDirectory();
-StringRef GetParentFolder(StringRef absolutePath);
+void GetParentFolder(StringRef absolutePath, char *parentFolder);
 StringRef GetFileName(StringRef absolutePath);
 StringRef GetFileExtension(StringRef absolutePath);
 bool IsFolder(StringRef absolutePath);
 bool CreateDirectories(StringRef fullPath);
 char GetPathSeparator();
-StringRef CleanupPath(StringRef messyPath);
+void CleanupPath(char* messyPath);
 void ScanFolder(Entity folder);
 
 DeclareService(Folder)

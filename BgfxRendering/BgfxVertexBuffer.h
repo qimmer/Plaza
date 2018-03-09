@@ -8,14 +8,9 @@
 #include <Core/Service.h>
 #include <Core/Entity.h>
 
+DeclareComponent(BgfxVertexBuffer)
+DeclareService(BgfxVertexBuffer)
 
-    DeclareComponent(BgfxVertexBuffer)
-    DeclareComponent(BgfxVertexDeclaration)
-    DeclareService(BgfxVertexBuffer)
-
-    u16 GetBgfxVertexBufferHandle(Entity entity);
-    void UpdateBgfxVertexBuffer(Entity entity);
-    void UpdateBgfxVertexDeclaration(Entity entity);
-
+u16 GetBgfxVertexBufferHandle(Entity entity);
 
 #endif //PLAZA_BGFXVERTEXBUFFER_H

@@ -25,10 +25,10 @@ EndComponent()
 DefineService(Transform2D)
 EndService()
 
-DefineComponentProperty(Transform2D, v2f, Position2D)
-DefineComponentProperty(Transform2D, float, Rotation2D)
-DefineComponentProperty(Transform2D, v2f, Scale2D)
-DefineComponentProperty(Transform2D, float, Distance2D)
+DefineComponentPropertyReactive(Transform2D, v2f, Position2D)
+DefineComponentPropertyReactive(Transform2D, float, Rotation2D)
+DefineComponentPropertyReactive(Transform2D, v2f, Scale2D)
+DefineComponentPropertyReactive(Transform2D, float, Distance2D)
 
 static void UpdateLocalTransform(Entity entity) {
     auto t = GetPosition2D(entity);

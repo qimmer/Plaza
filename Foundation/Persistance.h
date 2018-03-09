@@ -10,6 +10,6 @@
 DeclareComponent(Persistance)
 DeclareService(Persistance)
 
-DeclareComponentProperty(Persistance, Entity, EntityPersistancePoint)
+DeclareComponentPropertyReactive(Persistance, Entity, EntityPersistancePoint)
 
 #endif //PLAZA_PERSISTANCE_H

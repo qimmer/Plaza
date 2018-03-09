@@ -115,7 +115,7 @@ Index AddExtension(Type componentType, Type extensionType) {
     if(!componentTypes.IsValid(index)) return InvalidIndex;
     componentTypes[index].extensions.push_back(extensionType);
 
-    for(auto entity = GetNextEntity(0); IsEntityValid(entity); entity = GetNextEntity(entity)) {
+    for(auto entity = GetNextEntity(0); entity; entity = GetNextEntity(entity)) {
         if(!componentTypes[index].hasFunc(entity)) continue;
 
         componentTypes[GetHandleIndex(extensionType)].addFunc(entity);
@@ -137,7 +137,7 @@ bool RemoveExtensionByIndex(Type componentType, Index extensionIndex) {
     auto index = GetHandleIndex(componentType);
     if(!componentTypes.IsValid(index) || extensionIndex >= componentTypes[index].extensions.size()) return false;
 
-    for(auto entity = GetNextEntity(0); IsEntityValid(entity); entity = GetNextEntity(entity)) {
+    for(auto entity = GetNextEntity(0); entity; entity = GetNextEntity(entity)) {
         if(!componentTypes[index].hasFunc(entity)) continue;
 
         componentTypes[GetHandleIndex(componentTypes[index].extensions[extensionIndex])].removeFunc(entity);

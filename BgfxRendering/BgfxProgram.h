@@ -8,12 +8,9 @@
 #include <Core/Service.h>
 #include <Core/Entity.h>
 
+DeclareComponent(BgfxProgram)
+DeclareService(BgfxProgram)
 
-    DeclareComponent(BgfxProgram)
-    DeclareService(BgfxProgram)
-
-    u16 GetBgfxProgramHandle(Entity entity);
-    void UpdateBgfxProgram(Entity entity);
-
+u16 GetBgfxProgramHandle(Entity entity, u8 shaderProfile);
 
 #endif //PLAZA_BGFXPROGRAM_H

@@ -10,7 +10,7 @@
 DeclareComponent(Transform)
 DeclareService(TransformUpdateService)
 
-DeclareComponentProperty(Transform, m4x4f, GlobalTransform)
-DeclareComponentProperty(Transform, m4x4f, LocalTransform)
+DeclareComponentPropertyReactive(Transform, m4x4f, GlobalTransform)
+DeclareComponentPropertyReactive(Transform, m4x4f, LocalTransform)
 
 #endif //PLAZA_TRANSFORM_H

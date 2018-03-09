@@ -13,8 +13,8 @@ typedef void(*NameChangedHandler)(Entity entity, StringRef oldName, StringRef ne
 DeclareEvent(ParentChanged, ParentChangedHandler)
 DeclareEvent(NameChanged, NameChangedHandler)
 
-DeclareComponentProperty(Hierarchy, StringRef, Name)
-DeclareComponentProperty(Hierarchy, Entity, Parent)
+DeclareComponentPropertyReactive(Hierarchy, StringRef, Name)
+DeclareComponentPropertyReactive(Hierarchy, Entity, Parent)
 
 Entity GetFirstChild(Entity parent);
 Entity GetNextChild(Entity parent, Entity currentChild);
@@ -29,6 +29,8 @@ Entity CreateEntityFromPath(StringRef path);
 Entity FindChild(Entity parent, StringRef childName);
 Entity FindEntity(StringRef path);
 
+Entity CopyEntity(Entity templateEntity, StringRef copyPath);
+
 #define DeclareComponentChild(TYPENAME, PROPERTYNAME) \
     Entity Get ## PROPERTYNAME (Entity entity);
 
@@ -37,10 +39,15 @@ Entity FindEntity(StringRef path);
         Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         if(!IsEntityValid(Get ## TYPENAME (entity)->PROPERTYNAME)) { \
-            Get ## TYPENAME (entity)->PROPERTYNAME = Create ## CHILDCOMPONENTTYPE (FormatString("%s/" #PROPERTYNAME, GetEntityPath(entity))); \
+            char path[PATH_MAX];\
+            snprintf(path, PATH_MAX, "%s/" #PROPERTYNAME, GetEntityPath(entity));\
+            Get ## TYPENAME (entity)->PROPERTYNAME = Create ## CHILDCOMPONENTTYPE (path); \
         }\
         return Get ## TYPENAME (entity)->PROPERTYNAME; \
     }
+
+#define for_children(VARNAME, PARENT) \
+    for(auto VARNAME = GetFirstChild(PARENT); VARNAME; VARNAME = GetSibling(VARNAME))
 
 
 #endif //HIERARCHY_H

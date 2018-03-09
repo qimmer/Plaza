@@ -6,50 +6,39 @@
 #include "ShaderCompiler.h"
 #include "Shader.h"
 #include <unistd.h>
-#include <Foundation/Invalidation.h>
 #include <Foundation/AppLoop.h>
 
+DefineEvent(ShaderCompilerFinished, ShaderCompilerFinishHandler)
+DefineEvent(ShaderCompile, ShaderCompileHandler)
 
-    DefineEvent(ShaderCompilerFinished, ShaderCompilerFinishHandler)
-    DefineEvent(ShaderCompilationNeeded, EntityHandler)
+String ShaderIncludeDirectory;
 
-    String ShaderIncludeDirectory;
+DefineService(ShaderCompiler)
+    ServiceSetting(ShaderIncludeDirectory, SETTING_SHADER_INCLUDE_DIRECTORY)
+EndService()
 
-    DefineService(ShaderCompiler)
-        ServiceSetting(ShaderIncludeDirectory, SETTING_SHADER_INCLUDE_DIRECTORY)
-    EndService()
+void SetShaderIncludeDirectory(StringRef value) {
+    ShaderIncludeDirectory = value;
+}
 
-    void SetShaderIncludeDirectory(StringRef value) {
-        ShaderIncludeDirectory = value;
-    }
+StringRef GetShaderIncludeDirectory() {
+    return ShaderIncludeDirectory.c_str();
+}
 
-    StringRef GetShaderIncludeDirectory() {
-        return ShaderIncludeDirectory.c_str();
-    }
+void CompileShader(Entity shader, Entity binaryShader) {
+    FireEvent(ShaderCompile, shader, binaryShader);
+}
 
-    static void CompileIfNeeded(Entity shader) {
-        FireEvent(ShaderCompilationNeeded, shader);
-    }
+static bool ServiceStart() {
+    char cwd[PATH_MAX];
+    getcwd(cwd, PATH_MAX);
+    strcat(cwd, "/Shaders");
 
-    static void OnAppUpdate(double deltaTime) {
-        ValidateAll(CompileIfNeeded, HasShader);
-    }
+    ShaderIncludeDirectory = cwd;
 
-    static bool ServiceStart() {
-        char cwd[PATH_MAX];
-        getcwd(cwd, PATH_MAX);
-        strcat(cwd, "/Shaders");
+    return true;
+}
 
-        ShaderIncludeDirectory = cwd;
-
-        SubscribeAppUpdate(OnAppUpdate);
-        
-        return true;
-    }
-
-    static bool ServiceStop() {
-
-        UnsubscribeAppUpdate(OnAppUpdate);
-
-        return true;
-    }
+static bool ServiceStop() {
+    return true;
+}

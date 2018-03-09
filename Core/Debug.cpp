@@ -20,17 +20,17 @@ void Log(int channel, int severity, StringRef format, ...) {
 
     switch (severity) {
         case LogSeverity_Info:
-            sprintf(buffer, "Info:    ");
+            snprintf(buffer, 4096, "Info:    ");
             break;
         case LogSeverity_Warning:
-            sprintf(buffer, "Warning: ");
+            snprintf(buffer, 4096, "Warning: ");
             break;
         case LogSeverity_Error:
-            sprintf(buffer, "Error:   ");
+            snprintf(buffer, 4096, "Error:   ");
             //DebuggerBreak();
             break;
         case LogSeverity_Fatal:
-            sprintf(buffer, "Fatal:   ");
+            snprintf(buffer, 4096, "Fatal:   ");
             DebuggerBreak();
             break;
     }

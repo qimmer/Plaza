@@ -19,13 +19,11 @@
 #include "Context.h"
 #include "VertexAttribute.h"
 #include "SubTexture2D.h"
+#include "VertexDeclaration.h"
 #include <Foundation/FoundationModule.h>
 
 DefineModule(Rendering)
     ModuleDependency(Foundation)
-    ModuleService(VertexBuffer)
-    ModuleService(IndexBuffer)
-    ModuleService(BinaryShader)
     ModuleService(Shader)
     ModuleService(ShaderCompiler)
     ModuleService(Program)

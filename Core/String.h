@@ -18,8 +18,4 @@ using String = std::string;
 template<>
 const char * ApiConvert(const String& str);
 
-StringRef FormatString(StringRef format, ...);
-StringRef GetTempString(StringRef tempString);
-void FreeTempStrings();
-
 #endif //PLAZA_STRING_H

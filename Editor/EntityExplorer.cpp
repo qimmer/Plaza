@@ -63,7 +63,7 @@ static void DrawEntry(Entity entry, int level) {
         }
 
         if(isOpen) {
-            for(auto child = GetFirstChild(entry); IsEntityValid(child); child = GetSibling(child)) {
+            for_children(child, entry) {
                 DrawEntry(child, level + 1);
             }
             ImGui::TreePop();
@@ -98,8 +98,7 @@ static void Draw(Entity context) {
             ImGui::EndPopup();
         }
 
-        for_entity(entity, Hierarchy) {
-            if(IsEntityValid(GetParent(entity))) continue;
+        for_children(entity, 0) {
             DrawEntry(entity, 0);
         }
 
@@ -144,7 +143,11 @@ void ImGui::EntityContextMenu() {
             auto newEntity = CreateEntity();
             AddHierarchy(newEntity);
             AddComponent(newEntity, type);
-            SetName(newEntity, FormatString("%s_%lu", GetTypeName(type), GetHandleIndex(newEntity)));
+
+            char name[PATH_MAX];
+            sprintf(name, "%s_%lu", GetTypeName(type), GetHandleIndex(newEntity));
+
+            SetName(newEntity, name);
 
             if(GetNumSelection() > 0) {
                 SetParent(newEntity, GetSelectionEntity(0));

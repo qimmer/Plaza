@@ -11,14 +11,14 @@
 DeclareComponent(Camera)
 DeclareService(Camera)
 
-    DeclareComponentProperty(Camera, m4x4f, CameraViewMatrix)
-    DeclareComponentProperty(Camera, m4x4f, CameraProjectionMatrix)
-    DeclareComponentProperty(Camera, rgba8, CameraClearColor)
-    DeclareComponentProperty(Camera, v4f, CameraViewport)
-    DeclareComponentProperty(Camera, bool, CameraClear)
-    DeclareComponentProperty(Camera, u8, CameraLayer)
-    DeclareComponentProperty(Camera, Entity, CameraRenderTarget)
-    DeclareComponentProperty(Camera, float, CameraNearClip)
-    DeclareComponentProperty(Camera, float, CameraFarClip)
+    DeclareComponentPropertyReactive(Camera, m4x4f, CameraViewMatrix)
+    DeclareComponentPropertyReactive(Camera, m4x4f, CameraProjectionMatrix)
+    DeclareComponentPropertyReactive(Camera, rgba8, CameraClearColor)
+    DeclareComponentPropertyReactive(Camera, v4f, CameraViewport)
+    DeclareComponentPropertyReactive(Camera, bool, CameraClear)
+    DeclareComponentPropertyReactive(Camera, u8, CameraLayer)
+    DeclareComponentPropertyReactive(Camera, Entity, CameraRenderTarget)
+    DeclareComponentPropertyReactive(Camera, float, CameraNearClip)
+    DeclareComponentPropertyReactive(Camera, float, CameraFarClip)
 
 #endif //PLAZA_CAMERA_H

@@ -17,7 +17,7 @@
     DefineService(Camera3D)
     EndService()
 
-    DefineComponentProperty(Camera3D, float, Camera3DFov)
+    DefineComponentPropertyReactive(Camera3D, float, Camera3DFov)
 
     static void UpdateProjectionMatrix(Entity entity) {
         if(!HasCamera3D(entity)) return;

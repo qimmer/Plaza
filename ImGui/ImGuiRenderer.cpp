@@ -24,12 +24,12 @@
 #include <File/FileStream.h>
 #include <Rendering/Shader.h>
 #include <Rendering/Program.h>
-#include <Foundation/Invalidation.h>
 #include <Rendering/Mesh.h>
 #include <Rendering/Material.h>
 #include <Rendering/UniformState.h>
 #include <Core/String.h>
 #include <Foundation/Visibility.h>
+#include <Rendering/VertexDeclaration.h>
 
 using namespace ImGui;
 
@@ -73,14 +73,18 @@ void RebuildImGuiFonts() {
     io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &textureSize.x, &textureSize.y);
 
     // Create texture with previous stream as data
-    FontTexture = CreateTexture2D(FormatString("%s/FontTexture", GetEntityPath(ImGuiDataRoot)));
+    char texPath[PATH_MAX];
+    snprintf(texPath, PATH_MAX, "%s/FontTexture", GetEntityPath(ImGuiDataRoot));
+
+    FontTexture = CreateTexture2D(texPath);
     StreamOpen(FontTexture, StreamMode_Write);
     StreamWrite(FontTexture, textureSize.x * textureSize.y * 4, tex_pixels);
     StreamClose(FontTexture);
     SetTextureSize2D(FontTexture, textureSize);
     SetTextureFormat(FontTexture, TEXTURE_FORMAT_RGBA8);
 
-    FontMaterial = CreateMaterial(FormatString("%s/FontMaterial", GetEntityPath(ImGuiDataRoot)));
+    snprintf(texPath, PATH_MAX, "%s/FontMaterial", GetEntityPath(ImGuiDataRoot));
+    FontMaterial = CreateMaterial(texPath);
     SetMaterialProgram(FontMaterial, ImGuiProgram);
     SetMaterialRenderState(FontMaterial, RenderState_STATE_RGB_WRITE |
                                          RenderState_STATE_ALPHA_WRITE |
@@ -88,8 +92,8 @@ void RebuildImGuiFonts() {
                                          RenderState_STATE_BLEND_FUNC(RenderState_STATE_BLEND_SRC_ALPHA, RenderState_STATE_BLEND_INV_SRC_ALPHA));
 
 
-
-    FontTextureUniformState = CreateUniformState(FormatString("%s/FontTextureUniformState", GetEntityPath(FontMaterial)));
+    snprintf(texPath, PATH_MAX, "%s/FontTextureUniformState", GetEntityPath(FontMaterial));
+    FontTextureUniformState = CreateUniformState(texPath);
     SetUniformStateUniform(FontTextureUniformState, ImGuiTextureUniform);
     SetUniformStateTexture(FontTextureUniformState, FontTexture);
 
@@ -110,11 +114,16 @@ void RebuildImGuiFonts() {
 
         InitializeKeyMapping();
 
-        data->CommandList = CreateCommandList(FormatString("%s/.ImGuiCommandList", GetEntityPath(context)));
+        char path[PATH_MAX];
+        snprintf(path, PATH_MAX, "%s/.ImGuiCommandList", GetEntityPath(context));
+        data->CommandList = CreateCommandList(path);
         SetCommandListLayer(data->CommandList, 245 + GetImGuiRendererIndex(context));
 
-        data->VertexBuffer = CreateVertexBuffer(FormatString("%s/ImGuiVertexBuffer", GetEntityPath(data->CommandList)));
-        data->IndexBuffer = CreateIndexBuffer(FormatString("%s/ImGuiIndexBuffer", GetEntityPath(data->CommandList)));
+        snprintf(path, PATH_MAX, "%s/ImGuiVertexBuffer", GetEntityPath(data->CommandList));
+        data->VertexBuffer = CreateVertexBuffer(path);
+
+        snprintf(path, PATH_MAX, "%s/ImGuiIndexBuffer", GetEntityPath(data->CommandList));
+        data->IndexBuffer = CreateIndexBuffer(path);
 
         SetVertexBufferDeclaration(data->VertexBuffer, ImGuiVertexDeclaration);
 
@@ -154,9 +163,13 @@ void RebuildImGuiFonts() {
         data->Batches.resize(numBatches);
 
         for(int i = oldSize; i < numBatches; ++i) {
-            data->Batches[i] = CreateBatch(FormatString("%s/Batch_%i", GetEntityPath(commandList), i));
+            char path[PATH_MAX];
 
-            auto mesh = CreateMesh(FormatString("%s/Mesh", GetEntityPath(data->Batches[i])));
+            snprintf(path, PATH_MAX, "%s/Batch_%i", GetEntityPath(commandList), i);
+            data->Batches[i] = CreateBatch(path);
+
+            snprintf(path, PATH_MAX, "%s/Mesh", GetEntityPath(data->Batches[i]));
+            auto mesh = CreateMesh(path);
             SetMeshVertexBuffer(mesh, data->VertexBuffer);
             SetMeshIndexBuffer(mesh, data->IndexBuffer);
             SetMeshPrimitiveType(mesh, PrimitiveType_TRIANGLES);
@@ -232,32 +245,36 @@ void RebuildImGuiFonts() {
         io.DisplayFramebufferScale = ImVec2(1, 1);
         io.DeltaTime = deltaTime;
 
+        auto keyStates = GetKeyStates(context);
         for (auto i = 0; i < 512; ++i)
         {
-            io.KeysDown[i] = GetKeyState(context, i) > 0.5f;
+            io.KeysDown[i] = keyStates[i] > 0.5f;
         }
 
         for (auto i = 0; i < 3; ++i)
         {
-            io.MouseDown[i] =  GetKeyState(context, (i + MOUSEBUTTON_0)) > 0.5f;
+            io.MouseDown[i] =  keyStates[i + MOUSEBUTTON_0] > 0.5f;
         }
 
-        io.KeyAlt = GetKeyState(context, KEY_LEFT_ALT) > 0.0f
-                                              || GetKeyState(context, KEY_RIGHT_ALT) > 0.0f;
-        io.KeyCtrl = GetKeyState(context, KEY_LEFT_CONTROL) > 0.0f
-                                               || GetKeyState(context, KEY_RIGHT_CONTROL) > 0.0f;
-        io.KeyShift = GetKeyState(context, KEY_LEFT_SHIFT) > 0.0f
-                                                || GetKeyState(context, KEY_RIGHT_SHIFT) > 0.0f;
+        io.KeyAlt = keyStates[KEY_LEFT_ALT] > 0.0f
+                                              || keyStates[KEY_RIGHT_ALT] > 0.0f;
+        io.KeyCtrl = keyStates[KEY_LEFT_CONTROL] > 0.0f
+                                               || keyStates[KEY_RIGHT_CONTROL] > 0.0f;
+        io.KeyShift = keyStates[KEY_LEFT_SHIFT] > 0.0f
+                                                || keyStates[KEY_RIGHT_SHIFT] > 0.0f;
 
         io.MousePos = ImVec2(mousePosition.x, mousePosition.y);
-        io.MouseWheel = (GetKeyState(context, MOUSE_SCROLL_UP)  - GetKeyState(context, MOUSE_SCROLL_DOWN)) / 20.0f;
+        io.MouseWheel = (keyStates[MOUSE_SCROLL_UP]  - keyStates[MOUSE_SCROLL_DOWN]) / 20.0f;
 
         NewFrame();
 
-        FireEvent(ImGuiDraw, context);
-
+        static bool drawWindows = true;
         if(ImGui::IsKeyPressed(KEY_F8)) {
-            SetHidden(data->CommandList, !GetHidden(data->CommandList));
+            drawWindows = !drawWindows;
+        }
+
+        if(drawWindows) {
+            FireEvent(ImGuiDraw, context);
         }
 
         if(ImGui::IsKeyPressed(KEY_F9)) {
@@ -299,10 +316,19 @@ void RebuildImGuiFonts() {
 
 
     static void InitializeProgram() {
-        ImGuiProgram = CreateProgram(FormatString("%s/Program", GetEntityPath(ImGuiDataRoot)));
-        ImGuiVertexShader = CreateShader(FormatString("%s/VertexShader", GetEntityPath(ImGuiProgram)));
-        ImGuiPixelShader = CreateShader(FormatString("%s/PixelShader", GetEntityPath(ImGuiProgram)));
-        ImGuiTextureUniform = CreateUniform(FormatString("%s/TextureUniform", GetEntityPath(ImGuiDataRoot)));
+        char path[PATH_MAX];
+
+        snprintf(path, PATH_MAX, "%s/Program", GetEntityPath(ImGuiDataRoot));
+        ImGuiProgram = CreateProgram(path);
+
+        snprintf(path, PATH_MAX, "%s/VertexShader", GetEntityPath(ImGuiProgram));
+        ImGuiVertexShader = CreateShader(path);
+
+        snprintf(path, PATH_MAX, "%s/PixelShader", GetEntityPath(ImGuiProgram));
+        ImGuiPixelShader = CreateShader(path);
+
+        snprintf(path, PATH_MAX, "%s/TextureUniform", GetEntityPath(ImGuiDataRoot));
+        ImGuiTextureUniform = CreateUniform(path);
 
         SetStreamPath(ImGuiVertexShader, "res://imgui/shaders/imgui.vs");
         SetStreamPath(ImGuiPixelShader, "res://imgui/shaders/imgui.ps");
@@ -317,19 +343,25 @@ void RebuildImGuiFonts() {
     }
 
     static void InitializeVertexDeclaration() {
-        ImGuiVertexDeclaration = CreateVertexDeclaration(FormatString("%s/VertexDeclaration", GetEntityPath(ImGuiDataRoot)));
+        char path[PATH_MAX];
+
+        snprintf(path, PATH_MAX, "%s/VertexDeclaration", GetEntityPath(ImGuiDataRoot));
+        ImGuiVertexDeclaration = CreateVertexDeclaration(path);
 
         Entity attribute;
 
-        attribute = CreateVertexAttribute(FormatString("%s/Position", GetEntityPath(ImGuiVertexDeclaration)));
+        snprintf(path, PATH_MAX, "%s/Position", GetEntityPath(ImGuiVertexDeclaration));
+        attribute = CreateVertexAttribute(path);
         SetVertexAttributeType(attribute, TypeOf_v2f());
         SetVertexAttributeUsage(attribute, VertexAttributeUsage_Position);
 
-        attribute = CreateVertexAttribute(FormatString("%s/TexCoord", GetEntityPath(ImGuiVertexDeclaration)));
+        snprintf(path, PATH_MAX, "%s/TexCoord", GetEntityPath(ImGuiVertexDeclaration));
+        attribute = CreateVertexAttribute(path);
         SetVertexAttributeType(attribute, TypeOf_v2f());
         SetVertexAttributeUsage(attribute, VertexAttributeUsage_TexCoord0);
 
-        attribute = CreateVertexAttribute(FormatString("%s/Color", GetEntityPath(ImGuiVertexDeclaration)));
+        snprintf(path, PATH_MAX, "%s/Color", GetEntityPath(ImGuiVertexDeclaration));
+        attribute = CreateVertexAttribute(path);
         SetVertexAttributeType(attribute, TypeOf_rgba8());
         SetVertexAttributeUsage(attribute, VertexAttributeUsage_Color0);
         SetVertexAttributeNormalize(attribute, true);

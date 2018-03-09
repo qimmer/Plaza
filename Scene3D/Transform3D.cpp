@@ -27,10 +27,10 @@ EndComponent()
 DefineService(Transform3D)
 EndService()
 
-DefineComponentProperty(Transform3D, v3f, Position3D)
-DefineComponentProperty(Transform3D, v3f, RotationEuler3D)
-DefineComponentProperty(Transform3D, v4f, RotationQuat3D)
-DefineComponentProperty(Transform3D, v3f, Scale3D)
+DefineComponentPropertyReactive(Transform3D, v3f, Position3D)
+DefineComponentPropertyReactive(Transform3D, v3f, RotationEuler3D)
+DefineComponentPropertyReactive(Transform3D, v4f, RotationQuat3D)
+DefineComponentPropertyReactive(Transform3D, v3f, Scale3D)
 
 static void OnRotationEuler3DChanged(Entity entity, v3f before, v3f after) {
     v4f qx, qy, qz, t;

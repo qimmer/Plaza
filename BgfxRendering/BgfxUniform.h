@@ -9,12 +9,9 @@
 #include <Core/Entity.h>
 
 
-    DeclareComponent(BgfxUniform)
-    DeclareService(BgfxUniform)
+DeclareComponent(BgfxUniform)
+DeclareService(BgfxUniform)
 
-    u16 GetBgfxUniformHandle(Entity entity);
-
-    void UpdateBgfxUniform(Entity entity);
-
+u16 GetBgfxUniformHandle(Entity entity);
 
 #endif //PLAZA_BGFXUNIFORM_H

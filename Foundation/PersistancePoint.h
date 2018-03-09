@@ -7,7 +7,7 @@
 DeclareComponent(PersistancePoint)
 DeclareService(PersistancePoint)
 
-DeclareComponentProperty(PersistancePoint, bool, Loaded)
+DeclareComponentPropertyReactive(PersistancePoint, bool, Loaded)
 
 typedef struct Serializer {
     EntityBoolHandler SerializeHandler;

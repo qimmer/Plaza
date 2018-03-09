@@ -18,7 +18,7 @@ EndComponent()
 DefineService(Persistance)
 EndService()
 
-DefineComponentProperty(Persistance, Entity, EntityPersistancePoint)
+DefineComponentPropertyReactive(Persistance, Entity, EntityPersistancePoint)
 
 static void OnEntityPersistancePointChanged(Entity entity, Entity oldStream, Entity newStream) {
     for(auto child = GetFirstChild(entity); IsEntityValid(child); child = GetSibling(child)) {

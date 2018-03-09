@@ -47,7 +47,12 @@ int main(int argc, char** argv) {
         0
     };
 
-    StringRef sourceDirectory = GetParentFolder(CleanupPath(FormatString("file://%s", __FILE__)));
+    char sourceFilePath[PATH_MAX];
+    sprintf(sourceFilePath, "file://%s", __FILE__);
+    CleanupPath(sourceFilePath);
+
+    char sourceDirectory[PATH_MAX];
+    GetParentFolder(sourceFilePath, sourceDirectory);
     if(IsFolder(sourceDirectory)) {
         virtualPaths[8] = "res://source";
         virtualPaths[9] = sourceDirectory;

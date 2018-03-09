@@ -7,8 +7,10 @@
 #include <Core/String.h>
 #include <Rendering/Material.h>
 #include <Rendering/UniformState.h>
+#include <Scene/MeshInstance.h>
 #include "Tilemap2D.h"
 #include "Sprite.h"
+#include "Transform2D.h"
 
 struct Tilemap2D {
     v2i TileSize2D, TileSpacing2D;
@@ -23,8 +25,8 @@ EndComponent()
 DefineService(Tilemap2D)
 EndService()
 
-DefineComponentProperty(Tilemap2D, v2i, TileSize2D)
-DefineComponentProperty(Tilemap2D, v2i, TileSpacing2D)
+DefineComponentPropertyReactive(Tilemap2D, v2i, TileSize2D)
+DefineComponentPropertyReactive(Tilemap2D, v2i, TileSpacing2D)
 
 static void RegenerateTiles(Entity tilemap) {
     if(!HasTilemap2D(tilemap)) return;
@@ -51,24 +53,33 @@ static void RegenerateTiles(Entity tilemap) {
     }
 
     String tilemapPath = GetEntityPath(tilemap);
+    char tilePath[PATH_MAX];
+    char textureUniformStatePath[PATH_MAX];
+    char meshInstanceTemplatePath[PATH_MAX];
+
     // Create or update tiles
     for(auto x = 0; x < tileCount.x; ++x) {
         for(auto y = 0; y < tileCount.y; ++y) {
-            StringRef tilePath = FormatString("%s/Tile_%d_%d", tilemapPath.c_str(), x, y);
-            StringRef texturePath = FormatString("%s/Texture", tilePath);
-            StringRef materialPath = FormatString("%s/Material", tilePath);
-            StringRef textureUniformStatePath = FormatString("%s/TextureUniformState", materialPath);
+            sprintf(tilePath, "%s/Tile_%d_%d", tilemapPath.c_str(), x, y);
+            sprintf(textureUniformStatePath, "%s/TextureUniformState", tilePath);
+            sprintf(meshInstanceTemplatePath, "%s/MeshInstanceTemplate", tilePath);
 
-            auto subTexture = CreateSubTexture2D(texturePath);
+            auto subTexture = CreateSubTexture2D(tilePath);
             SetSubTexture2DOffset(subTexture, {x * tilemapInterval.x, y * tilemapInterval.y});
             SetSubTexture2DSize(subTexture, {tilemapTileSize.x, tilemapTileSize.y});
 
-            auto material = CreateMaterial(materialPath);
+            auto material = CreateMaterial(tilePath);
             SetMaterialProgram(material, GetSpriteProgram());
+            SetMaterialRenderState(material, RenderState_STATE_RGB_WRITE | RenderState_STATE_ALPHA_WRITE | RenderState_STATE_CULL_CW);
 
             auto textureUniformState = CreateUniformState(textureUniformStatePath);
             SetUniformStateTexture(textureUniformState, subTexture);
             SetUniformStateUniform(textureUniformState, GetSpriteTextureUniform());
+
+            auto meshInstanceTemplate = CreateMeshInstance(meshInstanceTemplatePath);
+            SetMeshInstanceMaterial(meshInstanceTemplate, material);
+            SetMeshInstanceMesh(meshInstanceTemplate, GetSpriteMesh());
+            SetPosition2D(meshInstanceTemplate, {x, -y});
         }
     }
 }

@@ -13,6 +13,7 @@ struct PropertyData
     void *getter;
     void *setter;
     Type type, owner;
+    PropertyTransferFunc transferFunc;
 };
 
 DefineHandle(Property, PropertyData)
@@ -66,4 +67,12 @@ Property FindPropertyByName(StringRef name) {
         return it->second;
     }
     return 0;
+}
+
+PropertyTransferFunc GetPropertyTransferFunc(Property property) {
+    return PropertyAt(property)->transferFunc;
+}
+
+void SetPropertyTransferFunc(Property property, PropertyTransferFunc func) {
+    PropertyAt(property)->transferFunc = func;
 }

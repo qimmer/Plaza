@@ -6,7 +6,6 @@
 #include <Core/Dictionary.h>
 #include <File/Folder.h>
 #include "Stream.h"
-#include "Invalidation.h"
 #include "VirtualPath.h"
 
 struct Stream {
@@ -27,14 +26,13 @@ static Dictionary<String, StreamCompressor> Compressors;
 static Dictionary<String, String> FileExtensionMimeTypes;
 
 DefineComponent(Stream)
-    Dependency(Invalidation)
     DefineProperty(StringRef, StreamPath)
 EndComponent()
 
 DefineService(Stream)
 EndService()
 
-DefineComponentProperty(Stream, StringRef, StreamPath)
+DefineComponentPropertyReactive(Stream, StringRef, StreamPath)
 
 DefineEvent(StreamContentChanged, EntityHandler)
 
@@ -106,18 +104,24 @@ void StreamClose(Entity entity) {
         if(data->InvalidationPending) {
             data->InvalidationPending = false;
             data->Mode = 0;
-            SetInvalidated(entity, true);
             FireEvent(StreamContentChanged, entity);
         }
     }
 }
 
-void StreamReadAsync(Entity entity, u64 size, void *data, StreamAsyncHandler readFinishedHandler){
-
+void StreamReadAsync(Entity entity, u64 size, StreamReadAsyncHandler readFinishedHandler){
+    char *buffer = (char*)malloc(size);
+    StreamRead(entity, size, buffer);
+    readFinishedHandler(entity, size, buffer);
+    free(buffer);
 }
 
-void StreamWriteAsync(Entity entity, u64 size, const void *data, StreamAsyncHandler writeFinishedHandler){
-
+void StreamWriteAsync(Entity entity, u64 size, const void *data, StreamWriteAsyncHandler writeFinishedHandler){
+    char *buffer = (char*)malloc(size);
+    memcpy(buffer, data, size);
+    StreamWrite(entity, size, buffer);
+    writeFinishedHandler(entity, size);
+    free(buffer);
 }
 
 void AddStreamProtocol(StringRef protocolIdentifier, struct StreamProtocol *protocol) {
@@ -210,9 +214,11 @@ static void OnStreamPathChanged(Entity entity, StringRef oldValue, StringRef new
 
     memset(&data->Protocol, 0, sizeof(StreamProtocol));
 
-    data->ResolvedPath = ResolveVirtualPath(newValue);
+    char resolvedPath[PATH_MAX];
+    ResolveVirtualPath(newValue, resolvedPath);
 
-    auto resolvedPath = data->ResolvedPath.c_str();
+    data->ResolvedPath = resolvedPath;
+
     char protocolIdentifier[32];
     auto colonLocation = strstr(resolvedPath, "://");
 
@@ -248,7 +254,9 @@ static void OnStreamPathChanged(Entity entity, StringRef oldValue, StringRef new
 }
 
 static void OnStreamAdded(Entity entity) {
-    SetStreamPath(entity, FormatString("memory://%llu.bin", entity));
+    char path[PATH_MAX];
+    sprintf(path, "memory://%llu.bin", entity);
+    SetStreamPath(entity, path);
 }
 static bool ServiceStart() {
     SubscribeStreamAdded(OnStreamAdded);

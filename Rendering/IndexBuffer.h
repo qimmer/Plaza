@@ -8,13 +8,9 @@
 #include <Core/Entity.h>
 #include <Core/Service.h>
 
+DeclareComponent(IndexBuffer)
 
-    DeclareService(IndexBuffer)
-
-    DeclareComponent(IndexBuffer)
-
-    DeclareComponentProperty(IndexBuffer, bool, IndexBufferLong)
-    DeclareComponentProperty(IndexBuffer, bool, IndexBufferDynamic)
-
+DeclareComponentPropertyReactive(IndexBuffer, bool, IndexBufferLong)
+DeclareComponentPropertyReactive(IndexBuffer, bool, IndexBufferDynamic)
 
 #endif //PLAZA_INDEXBUFFER_H

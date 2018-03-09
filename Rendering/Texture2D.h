@@ -7,9 +7,8 @@
 
 #include <Core/Entity.h>
 
-
 DeclareComponent(Texture2D)
 
-DeclareComponentProperty(Texture2D, v2i, TextureSize2D)
+DeclareComponentPropertyReactive(Texture2D, v2i, TextureSize2D)
 
 #endif //PLAZA_TEXTURE2D_H

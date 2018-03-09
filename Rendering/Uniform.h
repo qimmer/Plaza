@@ -7,11 +7,10 @@
 
 #include <Core/Entity.h>
 
+DeclareComponent(Uniform)
 
-    DeclareComponent(Uniform)
-
-    DeclareComponentProperty(Uniform, StringRef, UniformName)
-    DeclareComponentProperty(Uniform, u32, UniformArrayCount)
-    DeclareComponentProperty(Uniform, Type, UniformType)
+DeclareComponentPropertyReactive(Uniform, StringRef, UniformName)
+DeclareComponentPropertyReactive(Uniform, u32, UniformArrayCount)
+DeclareComponentPropertyReactive(Uniform, Type, UniformType)
 
 #endif //PLAZA_UNIFORM_H

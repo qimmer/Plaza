@@ -12,4 +12,6 @@
     DeclareService(BgfxShaderCompiler)
 #endif
 
+void GetBinaryShaderFilePath(Entity binaryShader, char *out);
+
 #endif //PLAZA_BGFXSHADERCOMPILER_H

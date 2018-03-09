@@ -12,6 +12,6 @@ DefineComponent(Texture2D)
     DefineProperty(v2i, TextureSize2D)
 EndComponent()
 
-DefineComponentProperty(Texture2D, v2i, TextureSize2D)
+DefineComponentPropertyReactive(Texture2D, v2i, TextureSize2D)
 
 

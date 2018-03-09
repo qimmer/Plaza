@@ -10,7 +10,7 @@
 DeclareComponent(Tilemap2D)
 DeclareService(Tilemap2D)
 
-DeclareComponentProperty(Tilemap2D, v2i, TileSize2D)
-DeclareComponentProperty(Tilemap2D, v2i, TileSpacing2D)
+DeclareComponentPropertyReactive(Tilemap2D, v2i, TileSize2D)
+DeclareComponentPropertyReactive(Tilemap2D, v2i, TileSpacing2D)
 
 #endif //PLAZA_TILEMAP2D_H

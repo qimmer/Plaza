@@ -9,8 +9,16 @@
     static Dictionary<String, Entity> EntityPathMap;
     std::map<Entity, String> EntityMap;
 
+    static Entity FirstRoot = 0;
+
     struct Hierarchy {
-        Hierarchy() : Parent(0), FirstChild(0), Sibling(0) {}
+        Hierarchy() : Parent(0), FirstChild(0), Sibling(0) {
+            char name[128];
+            ulltoa((unsigned long long)this, name, 10);
+            Name = name;
+            Path = "/";
+            Path += name;
+        }
 
         Entity Parent;
         String Name;
@@ -27,9 +35,9 @@
     DefineService(Hierarchy)
     EndService()
 
-    DefineComponentProperty(Hierarchy, StringRef, Name)
+    DefineComponentPropertyReactive(Hierarchy, StringRef, Name)
 
-    DefineComponentProperty(Hierarchy, Entity, Parent)
+    DefineComponentPropertyReactive(Hierarchy, Entity, Parent)
 
     static StringRef CalculateEntityPath(Entity entity) {
         static char path[PATH_MAX];
@@ -58,29 +66,14 @@
     Entity GetFirstChild(Entity parent) {
         // If parent is zero, return first root entity
         if(parent == 0) {
-            auto entity = GetNextEntity(0);
-            while(IsEntityValid(entity) && (!HasHierarchy(entity) || IsEntityValid(GetParent(entity)))) {
-                entity = GetNextEntity(entity);
-            }
-            return entity;
+            return FirstRoot;
         }
-
-        if(!HasHierarchy(parent)) return 0;
 
         return GetHierarchy(parent)->FirstChild;
     }
 
     Entity GetSibling(Entity child) {
-        if(!HasHierarchy(child)) return 0;
-
-        // If we have no parent, return next root entity
-        if(!HasHierarchy(child) || !GetParent(child)) {
-            auto entity = GetNextEntity(child);
-            while(IsEntityValid(entity) && (!HasHierarchy(entity) || IsEntityValid(GetParent(entity)))) {
-                entity = GetNextEntity(entity);
-            }
-            return entity;
-        }
+        if(!IsEntityValid(child)) return 0;
 
         return GetHierarchy(child)->Sibling;
     }
@@ -93,10 +86,6 @@
     }
 
     StringRef GetEntityPath(Entity entity) {
-        if(!IsEntityValid(entity) || !HasHierarchy(entity)) {
-            return "";
-        }
-
         return GetHierarchy(entity)->Path.c_str();
     }
 
@@ -122,6 +111,8 @@
         auto entity = CreateEntity();
         SetName(entity, name);
         SetParent(entity, parent);
+
+        //Log(LogChannel_Core, LogSeverity_Info, "Creating %s ...", path);
 
         return entity;
     }
@@ -154,8 +145,7 @@
     }
 
 Entity GetNextChild(Entity parent, Entity currentChild) {
-    if(!HasHierarchy(parent) || !IsEntityValid(GetFirstChild(parent))) return 0;
-    if(!IsEntityValid(currentChild)) return GetFirstChild(parent);
+    if(!currentChild) return GetFirstChild(parent);
     return GetSibling(currentChild);
 }
 
@@ -167,101 +157,138 @@ Entity GetNextChildThat(Entity parent, Entity currentChild, EntityBoolHandler ha
     return currentChild;
 }
 
+Entity CopyEntity(Entity templateEntity, StringRef copyPath) {
+    auto copy = CreateEntityFromPath(copyPath);
+
+    for(auto property = GetNextProperty(0); property; property = GetNextProperty(property)) {
+        auto componentType = GetPropertyOwner(property);
+        if(componentType == TypeOf_Hierarchy()) continue;
+        if(HasComponent(templateEntity, componentType)) {
+            GetPropertyTransferFunc(property)(templateEntity, copy);
+        }
+    }
+
+    return copy;
+}
+
 static void OnNameChanged(Entity entity, StringRef oldName, StringRef newName) {
-        auto newPath = CalculateEntityPath(entity);
-        auto existingEntity = FindEntity(newPath);
-        Assert(!IsEntityValid(existingEntity) || existingEntity == entity);
+    auto newPath = CalculateEntityPath(entity);
+    auto existingEntity = FindEntity(newPath);
+    Assert(!IsEntityValid(existingEntity) || existingEntity == entity);
 
-        auto data = GetHierarchy(entity);
-        EntityPathMap.erase(data->Path);
-        EntityMap.erase(entity);
-        data->Path = newPath;
-        EntityPathMap[data->Path] = entity;
-        EntityMap[entity] = data->Path;
-    }
+    auto data = GetHierarchy(entity);
+    EntityPathMap.erase(data->Path);
+    EntityMap.erase(entity);
+    data->Path = newPath;
+    EntityPathMap[data->Path] = entity;
+    EntityMap[entity] = data->Path;
+}
 
-    static void OnParentChanged(Entity entity, Entity oldParent, Entity newParent) {
-        if(oldParent == newParent) {
-            return;
-        }
-
-        auto newPath = CalculateEntityPath(entity);
-        auto existingEntity = FindEntity(newPath);
-        Assert(!IsEntityValid(existingEntity));
-
-        // Remove entity from old parent child list
-        if(IsEntityValid(oldParent)) {
-            if(GetFirstChild(oldParent) == entity) {
-                GetHierarchy(oldParent)->FirstChild = GetHierarchy(entity)->Sibling;
-            } else {
-                for(auto child = GetFirstChild(oldParent); IsEntityValid(child); child = GetSibling(child)) {
-                    auto sibling = GetSibling(child);
-                    if(sibling == entity) {
-                        GetHierarchy(child)->Sibling = GetHierarchy(sibling)->Sibling;
-                        break;
-                    }
+static void Detach(Entity entity, Entity parent) {
+    if(IsEntityValid(parent)) {
+        if(GetFirstChild(parent) == entity) {
+            GetHierarchy(parent)->FirstChild = GetHierarchy(entity)->Sibling;
+        } else {
+            for(auto child = GetFirstChild(parent); IsEntityValid(child); child = GetSibling(child)) {
+                auto sibling = GetSibling(child);
+                if(sibling == entity) {
+                    GetHierarchy(child)->Sibling = GetHierarchy(sibling)->Sibling;
+                    break;
                 }
             }
         }
-
-        auto data = GetHierarchy(entity);
-        data->Sibling = 0;
-        EntityPathMap.erase(data->Path);
-        EntityMap.erase(entity);
-
-        // Add entity to end of new parent child list
-        if(IsEntityValid(newParent)) {
-            if(!HasHierarchy(newParent)) AddHierarchy(newParent);
-
-            auto child = GetFirstChild(newParent);
-            if(!IsEntityValid(child)) {
-                GetHierarchy(newParent)->FirstChild = entity;
-            } else {
-                while(IsEntityValid(GetSibling(child))) {
-                    child = GetSibling(child);
+    } else {
+        if(FirstRoot == entity) {
+            FirstRoot = GetHierarchy(entity)->Sibling;
+        } else {
+            for(auto child = FirstRoot; IsEntityValid(child); child = GetSibling(child)) {
+                auto sibling = GetSibling(child);
+                if(sibling == entity) {
+                    GetHierarchy(child)->Sibling = GetHierarchy(sibling)->Sibling;
+                    break;
                 }
-
-                GetHierarchy(child)->Sibling = entity;
             }
         }
-
-        data->Path = newPath;
-        EntityPathMap[data->Path] = entity;
-        EntityMap[entity] = data->Path;
     }
 
-    static void OnHierarchyRemoved(Entity entity) {
-        while(GetFirstChild(entity)) {
-            DestroyEntity(GetFirstChild(entity));
+    auto data = GetHierarchy(entity);
+    data->Sibling = 0;
+    EntityPathMap.erase(data->Path);
+    EntityMap.erase(entity);
+}
+
+static void Attach(Entity entity, Entity parent) {
+    if(IsEntityValid(parent)) {
+        auto child = GetFirstChild(parent);
+        if(!IsEntityValid(child)) {
+            GetHierarchy(parent)->FirstChild = entity;
+        } else {
+            while(IsEntityValid(GetSibling(child))) {
+                child = GetSibling(child);
+            }
+
+            GetHierarchy(child)->Sibling = entity;
         }
+    } else {
+        auto child = FirstRoot;
+        if(!IsEntityValid(child)) {
+            FirstRoot = entity;
+        } else {
+            while(IsEntityValid(GetSibling(child))) {
+                child = GetSibling(child);
+            }
 
-        SetParent(entity, 0);
-
-        EntityPathMap.erase(GetHierarchy(entity)->Path);
+            GetHierarchy(child)->Sibling = entity;
+        }
     }
 
-    static void OnHierarchyAdded(Entity entity) {
-        char name[32];
-        sprintf(name, "Entity_%d", GetHandleIndex(entity));
+    auto data = GetHierarchy(entity);
+    data->Path = CalculateEntityPath(entity);
+    EntityPathMap[data->Path] = entity;
+    EntityMap[entity] = data->Path;
+}
 
-        SetName(entity, name);
+static void OnParentChanged(Entity entity, Entity oldParent, Entity newParent) {
+    if(oldParent == newParent) {
+        return;
     }
 
-    static bool ServiceStart() {
-        SubscribeParentChanged(OnParentChanged);
-        SubscribeNameChanged(OnNameChanged);
-        SubscribeHierarchyAdded(OnHierarchyAdded);
-        SubscribeHierarchyRemoved(OnHierarchyRemoved);
+    Detach(entity, oldParent);
+    Attach(entity, newParent);
+}
 
-        return true;
+static void OnHierarchyRemoved(Entity entity) {
+    while(GetFirstChild(entity)) {
+        DestroyEntity(GetFirstChild(entity));
     }
 
-    static bool ServiceStop() {
-        UnsubscribeParentChanged(OnParentChanged);
-        UnsubscribeNameChanged(OnNameChanged);
-        UnsubscribeHierarchyAdded(OnHierarchyAdded);
-        UnsubscribeHierarchyRemoved(OnHierarchyRemoved);
+    Detach(entity, GetParent(entity));
+}
 
-        return true;
-    }
+static void OnHierarchyAdded(Entity entity) {
+    char name[32];
+    sprintf(name, "Entity_%d", GetHandleIndex(entity));
+
+    SetName(entity, name);
+
+    Attach(entity, 0); // Attach to hierarchy as a root entity
+}
+
+static bool ServiceStart() {
+    SubscribeParentChanged(OnParentChanged);
+    SubscribeNameChanged(OnNameChanged);
+    SubscribeHierarchyAdded(OnHierarchyAdded);
+    SubscribeHierarchyRemoved(OnHierarchyRemoved);
+
+    return true;
+}
+
+static bool ServiceStop() {
+    UnsubscribeParentChanged(OnParentChanged);
+    UnsubscribeNameChanged(OnNameChanged);
+    UnsubscribeHierarchyAdded(OnHierarchyAdded);
+    UnsubscribeHierarchyRemoved(OnHierarchyRemoved);
+
+    return true;
+}
 

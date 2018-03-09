@@ -11,9 +11,9 @@
     DeclareComponent(Transform3D)
     DeclareService(Transform3D)
 
-    DeclareComponentProperty(Transform3D, v3f, Position3D)
-    DeclareComponentProperty(Transform3D, v3f, RotationEuler3D)
-    DeclareComponentProperty(Transform3D, v4f, RotationQuat3D)
-    DeclareComponentProperty(Transform3D, v3f, Scale3D)
+    DeclareComponentPropertyReactive(Transform3D, v3f, Position3D)
+    DeclareComponentPropertyReactive(Transform3D, v3f, RotationEuler3D)
+    DeclareComponentPropertyReactive(Transform3D, v4f, RotationQuat3D)
+    DeclareComponentPropertyReactive(Transform3D, v3f, Scale3D)
 
 #endif //PLAZA_TRANSFORM3D_H

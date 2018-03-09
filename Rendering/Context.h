@@ -15,11 +15,12 @@
     typedef void(*CharHandler)(Entity context, char c);
     typedef void(*CursorHandler)(Entity context, u8 index, v2i oldState, v2i newState);
 
-    DeclareComponentProperty(Context, StringRef, ContextTitle)
-    DeclareComponentProperty(Context, v2i, ContextSize)
-    DeclareComponentProperty(Context, bool, ContextFullscreen)
-    DeclareComponentProperty(Context, bool, ContextVsync)
+    DeclareComponentPropertyReactive(Context, StringRef, ContextTitle)
+    DeclareComponentPropertyReactive(Context, v2i, ContextSize)
+    DeclareComponentPropertyReactive(Context, bool, ContextFullscreen)
+    DeclareComponentPropertyReactive(Context, bool, ContextVsync)
 
+    float *GetKeyStates(Entity context);
     float GetKeyState(Entity context, u16 key);
     void SetKeyState(Entity context, u16 key, float state);
 

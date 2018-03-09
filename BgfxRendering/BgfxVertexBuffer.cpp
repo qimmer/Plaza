@@ -5,54 +5,77 @@
 #include <bgfx/bgfx.h>
 #include <Rendering/VertexBuffer.h>
 #include "BgfxVertexBuffer.h"
+#include "BgfxVertexDeclaration.h"
 #include <Foundation/Stream.h>
 #include <Foundation/AppLoop.h>
 #include <Core/Vector.h>
-#include <Foundation/Invalidation.h>
 #include <Core/Hierarchy.h>
 #include <Rendering/VertexAttribute.h>
 
 
-    struct BgfxVertexBuffer {
-        BgfxVertexBuffer() :
-                staticHandle(BGFX_INVALID_HANDLE),
-                dynamicHandle(BGFX_INVALID_HANDLE) {}
+struct BgfxVertexBuffer {
+    BgfxVertexBuffer() :
+            staticHandle(BGFX_INVALID_HANDLE),
+            dynamicHandle(BGFX_INVALID_HANDLE), invalidated(true) {}
 
-        bgfx::VertexBufferHandle staticHandle;
-        bgfx::DynamicVertexBufferHandle dynamicHandle;
-        u32 size;
-    };
+    bgfx::VertexBufferHandle staticHandle;
+    bgfx::DynamicVertexBufferHandle dynamicHandle;
+    u32 size;
+    bool invalidated;
+};
 
-    struct BgfxVertexDeclaration {
-        bgfx::VertexDecl decl;
-    };
+DefineComponent(BgfxVertexBuffer)
+EndComponent()
 
-    DefineComponent(BgfxVertexBuffer)
-    EndComponent()
+DefineService(BgfxVertexBuffer)
+EndService()
 
-    DefineComponent(BgfxVertexDeclaration)
-    EndComponent()
+static void OnChanged(Entity entity) {
+    if(HasBgfxVertexBuffer(entity)) {
+        GetBgfxVertexBuffer(entity)->invalidated = true;
+    }
+}
 
-    DefineService(BgfxVertexBuffer)
-    EndService()
+void OnVertexBufferRemoved(Entity entity) {
+    auto data = GetBgfxVertexBuffer(entity);
 
-    void UpdateBgfxVertexBuffer(Entity entity) {
-        if(!HasBgfxVertexBuffer(entity)) {
-            return;
-        }
-        auto vertexDeclaration = GetVertexBufferDeclaration(entity);
-        if(!IsEntityValid(vertexDeclaration) || !HasBgfxVertexDeclaration(vertexDeclaration)) {
-            return;
-        }
+    if(bgfx::isValid(data->staticHandle)) {
+        bgfx::destroy(data->staticHandle);
+        data->staticHandle = BGFX_INVALID_HANDLE;
+    }
+}
 
-        auto data = GetBgfxVertexBuffer(entity);
-        if(!StreamOpen(entity, StreamMode_Read)) return;
+static bool ServiceStart() {
+    SubscribeBgfxVertexBufferRemoved(OnVertexBufferRemoved);
+    SubscribeVertexBufferChanged(OnChanged);
+    SubscribeStreamChanged(OnChanged);
+    SubscribeStreamContentChanged(OnChanged);
+    return true;
+}
+
+static bool ServiceStop() {
+    UnsubscribeBgfxVertexBufferRemoved(OnVertexBufferRemoved);
+    UnsubscribeVertexBufferChanged(OnChanged);
+    UnsubscribeStreamChanged(OnChanged);
+    UnsubscribeStreamContentChanged(OnChanged);
+    return true;
+}
+
+u16 GetBgfxVertexBufferHandle(Entity entity) {
+    auto data = GetBgfxVertexBuffer(entity);
+
+    if(data->invalidated) {
+        auto declData = (bgfx::VertexDecl*)GetBgfxVertexDeclarationHandle(GetVertexBufferDeclaration(entity));
+
+        if(declData->m_hash == 0) return bgfx::kInvalidHandle;
+
+        if(!StreamOpen(entity, StreamMode_Read)) return bgfx::kInvalidHandle;
         StreamSeek(entity, StreamSeek_End);
         auto size = StreamTell(entity);
 
         if(size == 0) {
             StreamClose(entity);
-            return;
+            return bgfx::kInvalidHandle;
         }
 
         auto buffer = malloc(size);
@@ -83,87 +106,24 @@
         // Create or update buffer
         if(GetVertexBufferDynamic(entity)) {
             if(!bgfx::isValid(data->dynamicHandle)) {
-                data->dynamicHandle = bgfx::createDynamicVertexBuffer(bgfx::copy(buffer, size), GetBgfxVertexDeclaration(vertexDeclaration)->decl);
+                data->dynamicHandle = bgfx::createDynamicVertexBuffer(bgfx::copy(buffer, size), *declData);
             } else {
                 bgfx::updateDynamicVertexBuffer(data->dynamicHandle, 0, bgfx::copy(buffer, size));
             }
         } else {
-            data->staticHandle = bgfx::createVertexBuffer(bgfx::copy(buffer, size), GetBgfxVertexDeclaration(vertexDeclaration)->decl);
+            data->staticHandle = bgfx::createVertexBuffer(bgfx::copy(buffer, size), *declData);
         }
 
         data->size = size;
         free(buffer);
+
+        data->invalidated = false;
     }
 
-    void UpdateBgfxVertexDeclaration(Entity entity) {
-        if(!HasBgfxVertexDeclaration(entity)) return;
-
-        auto data = GetBgfxVertexDeclaration(entity);
-
-        data->decl.begin();
-        for(auto attribute = GetFirstChild(entity); IsEntityValid(attribute); attribute = GetSibling(attribute)) {
-            if(!HasVertexAttribute(attribute)) continue;
-
-            bgfx::AttribType::Enum elementType;
-            u32 elementCount;
-            if(GetVertexAttributeType(attribute) == TypeOf_float()) {
-                elementType = bgfx::AttribType::Float;
-                elementCount = 1;
-            } else if(GetVertexAttributeType(attribute) == TypeOf_v2f()) {
-                elementType = bgfx::AttribType::Float;
-                elementCount = 2;
-            } else if(GetVertexAttributeType(attribute) == TypeOf_v3f()) {
-                elementType = bgfx::AttribType::Float;
-                elementCount = 3;
-            } else if(GetVertexAttributeType(attribute) == TypeOf_v4f()) {
-                elementType = bgfx::AttribType::Float;
-                elementCount = 4;
-            } else if(GetVertexAttributeType(attribute) == TypeOf_rgba8()) {
-                elementType = bgfx::AttribType::Uint8;
-                elementCount = 4;
-            } else if(GetVertexAttributeType(attribute) == TypeOf_s16()) {
-                elementType = bgfx::AttribType::Int16;
-                elementCount = 1;
-            } else {
-                Log(LogChannel_Core, LogSeverity_Error, "Unsupported attribute type: %s", GetTypeName(GetVertexAttributeType(attribute)));
-                continue;
-            }
-
-            auto elementUsage = (bgfx::Attrib::Enum)GetVertexAttributeUsage(attribute);
-            data->decl.add(
-                    elementUsage,
-                    elementCount,
-                    elementType,
-                    GetVertexAttributeNormalize(attribute),
-                    GetVertexAttributeAsInt(attribute));
-        }
-        data->decl.end();
+    if(GetVertexBufferDynamic(entity)) {
+        return GetBgfxVertexBuffer(entity)->dynamicHandle.idx;
+    } else {
+        return GetBgfxVertexBuffer(entity)->staticHandle.idx;
     }
-
-    void OnVertexBufferRemoved(Entity entity) {
-        auto data = GetBgfxVertexBuffer(entity);
-
-        if(bgfx::isValid(data->staticHandle)) {
-            bgfx::destroy(data->staticHandle);
-            data->staticHandle = BGFX_INVALID_HANDLE;
-        }
-    }
-
-    static bool ServiceStart() {
-        SubscribeBgfxVertexBufferRemoved(OnVertexBufferRemoved);
-        return true;
-    }
-
-    static bool ServiceStop() {
-        UnsubscribeBgfxVertexBufferRemoved(OnVertexBufferRemoved);
-        return true;
-    }
-
-    u16 GetBgfxVertexBufferHandle(Entity entity) {
-        if(GetVertexBufferDynamic(entity)) {
-            return GetBgfxVertexBuffer(entity)->dynamicHandle.idx;
-        } else {
-            return GetBgfxVertexBuffer(entity)->staticHandle.idx;
-        }
-    }
+}
 

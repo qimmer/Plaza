@@ -13,6 +13,6 @@ DeclareComponent(VirtualPath)
 DeclareComponentProperty(VirtualPath, StringRef, VirtualPathTrigger)
 DeclareComponentProperty(VirtualPath, StringRef, VirtualPathDestination)
 
-StringRef ResolveVirtualPath(StringRef virtualPath);
+void ResolveVirtualPath(StringRef virtualPath, char *resolvedPath);
 
 #endif //PLAZA_VIRTUALPATH_H

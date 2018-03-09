@@ -8,6 +8,7 @@
 #include <Core/String.h>
 
 #ifdef WIN32
+#undef GetHandle
 #include <windows.h>
 
 static double PCFreq = 0.0;
@@ -55,9 +56,6 @@ void AppUpdate() {
     auto startTime = GetTimeSinceStart();
     FireEvent(AppUpdate, deltaTime);
     deltaTime = GetTimeSinceStart() - startTime;
-
-    // Free temporary strings that have accumulated during this frame
-    FreeTempStrings();
 }
 
 double GetDeltaTime() {

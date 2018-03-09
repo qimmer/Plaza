@@ -4,7 +4,6 @@
 
 #include <Scene/Transform.h>
 #include <Rendering/Mesh.h>
-#include <Foundation/Invalidation.h>
 #include <Foundation/AppLoop.h>
 #include <Rendering/VertexBuffer.h>
 #include <Rendering/VertexAttribute.h>
@@ -16,6 +15,7 @@
 #include <Core/String.h>
 #include <Foundation/Stream.h>
 #include <Rendering/IndexBuffer.h>
+#include <Rendering/VertexDeclaration.h>
 #include "Sprite.h"
 
 struct SpriteVertex {
@@ -46,18 +46,24 @@ Entity GetSpriteProgram() {
 }
 
 static void InitializeSpriteMesh() {
-    v2f uvTopLeft = {0.0f, 0.0f};
-    v2f uvBottomRight = {1.0f, 1.0f};
+    v2f uvTopLeft = {0.0f, 1.0f};
+    v2f uvBottomRight = {1.0f, 0.0f};
     v2f posTopLeft = {-0.5f, -0.5f};
     v2f posBottomRight = {0.5f, 0.5f};
 
-    SpriteMesh = CreateMesh(FormatString("%s/Mesh", GetEntityPath(SpriteRoot)));
+    char path[PATH_MAX];
+    snprintf(path, PATH_MAX, "%s/Mesh", GetEntityPath(SpriteRoot));
+    SpriteMesh = CreateMesh(path);
 
-    SpriteVertexBuffer = CreateVertexBuffer(FormatString("%s/VertexBuffer", GetEntityPath(SpriteRoot)));
+    char vbpath[PATH_MAX];
+    snprintf(vbpath, PATH_MAX, "%s/VertexBuffer", GetEntityPath(SpriteRoot));
+    SpriteVertexBuffer = CreateVertexBuffer(vbpath);
     SetVertexBufferDeclaration(SpriteVertexBuffer, SpriteVertexDeclaration);
     SetMeshVertexBuffer(SpriteMesh, SpriteVertexBuffer);
 
-    SpriteIndexBuffer = CreateIndexBuffer(FormatString("%s/IndexBuffer", GetEntityPath(SpriteRoot)));
+    char ibpath[PATH_MAX];
+    snprintf(ibpath, PATH_MAX, "%s/IndexBuffer", GetEntityPath(SpriteRoot));
+    SpriteIndexBuffer = CreateIndexBuffer(ibpath);
     SetMeshIndexBuffer(SpriteMesh, SpriteIndexBuffer);
 
     SpriteVertex vts[] = {
@@ -82,22 +88,40 @@ static void InitializeSpriteMesh() {
 }
 
 static void InitializeSpriteVertexDeclaration() {
-    SpriteVertexDeclaration = CreateVertexDeclaration(FormatString("%s/VertexDeclaration", GetEntityPath(SpriteRoot)));
+    char declPath[PATH_MAX];
+    char posPath[PATH_MAX];
+    char texPath[PATH_MAX];
 
-    auto positionAttribute = CreateVertexAttribute(FormatString("%s/Position", GetEntityPath(SpriteVertexDeclaration)));
+    snprintf(declPath, PATH_MAX, "%s/VertexDeclaration", GetEntityPath(SpriteRoot));
+    snprintf(posPath, PATH_MAX, "%s/Position", declPath);
+    snprintf(texPath, PATH_MAX, "%s/TexCoord", declPath);
+
+    SpriteVertexDeclaration = CreateVertexDeclaration(declPath);
+
+    auto positionAttribute = CreateVertexAttribute(posPath);
     SetVertexAttributeUsage(positionAttribute, VertexAttributeUsage_Position);
     SetVertexAttributeType(positionAttribute, TypeOf_v2f());
 
-    auto uvAttribute = CreateVertexAttribute(FormatString("%s/TexCoord", GetEntityPath(SpriteVertexDeclaration)));
+    auto uvAttribute = CreateVertexAttribute(texPath);
     SetVertexAttributeUsage(uvAttribute, VertexAttributeUsage_TexCoord0);
     SetVertexAttributeType(uvAttribute, TypeOf_v2f());
 }
 
 static void InitializeSpriteProgram() {
-    SpriteProgram = CreateProgram(FormatString("%s/Program", GetEntityPath(SpriteRoot)));
-    auto VertexShader = CreateShader(FormatString("%s/VertexShader", GetEntityPath(SpriteProgram)));
-    auto PixelShader = CreateShader(FormatString("%s/PixelShader", GetEntityPath(SpriteProgram)));
-    SpriteTextureUniform = CreateUniform(FormatString("%s/TextureUniform", GetEntityPath(SpriteRoot)));
+    char programPath[PATH_MAX];
+    char vsPath[PATH_MAX];
+    char psPath[PATH_MAX];
+    char ufPath[PATH_MAX];
+
+    snprintf(programPath, PATH_MAX, "%s/Program", GetEntityPath(SpriteRoot));
+    snprintf(vsPath, PATH_MAX, "%s/VertexShader", programPath);
+    snprintf(psPath, PATH_MAX, "%s/PixelShader", programPath);
+    snprintf(ufPath, PATH_MAX, "%s/TextureUniform", GetEntityPath(SpriteRoot));
+
+    SpriteProgram = CreateProgram(programPath);
+    auto VertexShader = CreateShader(vsPath);
+    auto PixelShader = CreateShader(psPath);
+    SpriteTextureUniform = CreateUniform(ufPath);
 
     SetStreamPath(VertexShader, "res://scene2d/shaders/sprite.vs");
     SetStreamPath(PixelShader, "res://scene2d/shaders/sprite.ps");

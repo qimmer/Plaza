@@ -7,13 +7,12 @@
 
 #include <Core/Entity.h>
 
+DeclareComponent(UniformState)
 
-    DeclareComponent(UniformState)
-
-    DeclareComponentProperty(UniformState, Entity, UniformStateUniform);
-    DeclareComponentProperty(UniformState, m4x4f, UniformStateMat4);
-    DeclareComponentProperty(UniformState, v4f, UniformStateVec4);
-    DeclareComponentProperty(UniformState, Entity, UniformStateTexture);
-    DeclareComponentProperty(UniformState, u8, UniformStateStage);
+DeclareComponentProperty(UniformState, Entity, UniformStateUniform);
+DeclareComponentProperty(UniformState, m4x4f, UniformStateMat4);
+DeclareComponentProperty(UniformState, v4f, UniformStateVec4);
+DeclareComponentProperty(UniformState, Entity, UniformStateTexture);
+DeclareComponentProperty(UniformState, u8, UniformStateStage);
 
 #endif //PLAZA_UNIFORMSTATE_H

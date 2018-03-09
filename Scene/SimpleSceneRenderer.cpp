@@ -7,7 +7,6 @@
 #include <Scene/MeshInstance.h>
 #include <Rendering/Batch.h>
 #include <Core/Hierarchy.h>
-#include <Foundation/Invalidation.h>
 #include <Rendering/Mesh.h>
 #include <Scene/SceneNode.h>
 #include <Scene/Transform.h>
@@ -62,13 +61,16 @@
 
         auto batch = GetFirstChild(data->CommandList);
         auto batchIndex = 0;
+        auto scene = GetSceneNodeScene(sceneRenderer);
         for(auto i = 0; i < GetNumMeshInstance(); ++i) {
             auto meshInstance = GetMeshInstanceEntity(i);
-
-            if(GetSceneNodeScene(meshInstance) != GetSceneNodeScene(sceneRenderer)) continue;
+            auto meshInstanceScene = GetSceneNodeScene(meshInstance);
+            if(!meshInstanceScene || meshInstanceScene != scene) continue;
 
             if(!IsEntityValid(batch)) {
-                batch = CreateBatch(FormatString("%s/Batch_%i", GetEntityPath(data->CommandList), batchIndex));
+                char path[PATH_MAX];
+                snprintf(path, PATH_MAX, "%s/Batch_%i", GetEntityPath(data->CommandList), batchIndex);
+                batch = CreateBatch(path);
             }
 
             SetBatchMaterial(batch, GetMeshInstanceMaterial(meshInstance));
@@ -87,7 +89,9 @@
     }
 
     static void OnSimpleRendererAdded(Entity entity) {
-        GetSimpleSceneRenderer(entity)->CommandList = CreateCommandList(FormatString("%s/CommandList", GetEntityPath(entity)));
+        char path[PATH_MAX];
+        snprintf(path, PATH_MAX, "%s/CommandList", GetEntityPath(entity));
+        GetSimpleSceneRenderer(entity)->CommandList = CreateCommandList(path);
     }
 
     static void OnSimpleRendererRemoved(Entity entity) {

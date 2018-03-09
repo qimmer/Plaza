@@ -10,11 +10,14 @@
 
 DeclareHandle(Property)
 
+typedef void(*PropertyTransferFunc)(Handle src, Handle dst);
+
 Type GetPropertyOwner(Property property);
 Type GetPropertyType(Property property);
 void* GetPropertyGetter(Property property);
 void* GetPropertySetter(Property property);
 const char * GetPropertyName(Property property);
+PropertyTransferFunc GetPropertyTransferFunc(Property property);
 
 Property FindPropertyByName(StringRef name);
 
@@ -23,6 +26,7 @@ void SetPropertyType(Property property, Type type);
 void SetPropertyGetter(Property property, void* getter);
 void SetPropertySetter(Property property, void *setter);
 void SetPropertyName(Property property, const char * name);
+void SetPropertyTransferFunc(Property property, PropertyTransferFunc func);
 
 #define DefineProperty(PROPERTYTYPE, PROPERTYNAME) \
         Property prop_ ## PROPERTYNAME = CreateProperty(); \
@@ -30,6 +34,7 @@ void SetPropertyName(Property property, const char * name);
         SetPropertyType(prop_ ## PROPERTYNAME, TypeOf_ ## PROPERTYTYPE ()); \
         SetPropertyName(prop_ ## PROPERTYNAME, #PROPERTYNAME ); \
         SetPropertyGetter(prop_ ## PROPERTYNAME, (void*)& Get ## PROPERTYNAME); \
-        SetPropertySetter(prop_ ## PROPERTYNAME, (void*)& Set ## PROPERTYNAME);
+        SetPropertySetter(prop_ ## PROPERTYNAME, (void*)& Set ## PROPERTYNAME); \
+        SetPropertyTransferFunc(prop_ ## PROPERTYNAME, Copy ## PROPERTYNAME);
 
 #endif //PLAZA_PROPERTY_H

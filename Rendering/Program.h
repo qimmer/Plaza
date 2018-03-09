@@ -7,15 +7,7 @@
 
 #include <Core/Entity.h>
 
-
-    DeclareComponent(Program)
-
-    DeclareService(Program)
-
-    void SetShadingProfile(StringRef profile);
-
-    StringRef GetShadingProfile();
-
-#define SETTING_SHADING_PROFILE "shading_profile"
+DeclareComponent(Program)
+DeclareService(Program)
 
 #endif //PLAZA_PROGRAM_H

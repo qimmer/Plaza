@@ -5,30 +5,55 @@
 #include "BgfxUniform.h"
 #include <bgfx/bgfx.h>
 #include <Rendering/Uniform.h>
-#include <Foundation/Invalidation.h>
 
 
-    struct BgfxUniform {
-        BgfxUniform() :
-                handle(BGFX_INVALID_HANDLE) {}
+struct BgfxUniform {
+    BgfxUniform() :
+            handle(BGFX_INVALID_HANDLE), invalidated(true) {}
 
-        bgfx::UniformHandle handle;
-    };
+    bgfx::UniformHandle handle;
+    bool invalidated;
+};
 
-    DefineComponent(BgfxUniform)
-    EndComponent()
+DefineComponent(BgfxUniform)
+EndComponent()
 
-    DefineService(BgfxUniform)
-    EndService()
+DefineService(BgfxUniform)
+EndService()
 
-    void UpdateBgfxUniform(Entity entity) {
-        if(!HasBgfxUniform(entity) || GetUniformType(entity) == 0)
-        {
-            return;
-        }
+void OnUniformRemoved(Entity entity) {
+    auto data = GetBgfxUniform(entity);
 
-        auto data = GetBgfxUniform(entity);
+    if(bgfx::isValid(data->handle)) {
+        bgfx::destroy(data->handle);
+        data->handle = BGFX_INVALID_HANDLE;
+    }
+}
 
+static void OnChanged(Entity entity) {
+    if(HasBgfxUniform(entity)) {
+        GetBgfxUniform(entity)->invalidated = true;
+    }
+}
+
+static bool ServiceStart() {
+    SubscribeBgfxUniformRemoved(OnUniformRemoved);
+    SubscribeUniformChanged(OnChanged);
+
+    return true;
+}
+
+static bool ServiceStop() {
+    UnsubscribeBgfxUniformRemoved(OnUniformRemoved);
+    UnsubscribeUniformChanged(OnChanged);
+
+    return true;
+}
+
+u16 GetBgfxUniformHandle(Entity entity) {
+    auto data = GetBgfxUniform(entity);
+
+    if(data->invalidated) {
         // Eventually free old buffers
         if(bgfx::isValid(data->handle)) {
             bgfx::destroy(data->handle);
@@ -48,34 +73,15 @@
             type = bgfx::UniformType::Int1;
         } else {
             Log(LogChannel_Core, LogSeverity_Error, "Unsupported uniform type: %s", GetTypeName(GetUniformType(entity)));
-            return;
+            return bgfx::kInvalidHandle;
         }
 
-        data->handle = bgfx::createUniform(GetUniformName(entity), type, std::max((u32)1, GetUniformArrayCount(entity)));
+        auto name = GetUniformName(entity);
+        auto arrayCount = std::max((u32)1, GetUniformArrayCount(entity));
+        data->handle = bgfx::createUniform(name, type, arrayCount);
+
+        data->invalidated = false;
     }
-
-    void OnUniformRemoved(Entity entity) {
-        auto data = GetBgfxUniform(entity);
-
-        if(bgfx::isValid(data->handle)) {
-            bgfx::destroy(data->handle);
-            data->handle = BGFX_INVALID_HANDLE;
-        }
-    }
-
-    static bool ServiceStart() {
-        SubscribeBgfxUniformRemoved(OnUniformRemoved);
-
-        return true;
-    }
-
-    static bool ServiceStop() {
-        UnsubscribeBgfxUniformRemoved(OnUniformRemoved);
-
-        return true;
-    }
-
-    u16 GetBgfxUniformHandle(Entity entity) {
-        return GetBgfxUniform(entity)->handle.idx;
-    }
+    return data->handle.idx;
+}
 

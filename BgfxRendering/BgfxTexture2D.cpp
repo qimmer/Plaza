@@ -7,32 +7,61 @@
 #include <Foundation/Stream.h>
 #include <Rendering/Texture.h>
 #include <Rendering/Texture2D.h>
-#include <Foundation/Invalidation.h>
 
+struct BgfxTexture2D {
+    BgfxTexture2D() :
+            handle(BGFX_INVALID_HANDLE),
+            size(0), invalidated(true) {}
 
-    struct BgfxTexture2D {
-        BgfxTexture2D() :
-                handle(BGFX_INVALID_HANDLE),
-                size(0) {}
+    bgfx::TextureHandle handle;
+    u32 size, flag;
+    bool invalidated;
+};
 
-        bgfx::TextureHandle handle;
-        u32 size, flag;
-    };
+DefineComponent(BgfxTexture2D)
+EndComponent()
 
-    DefineComponent(BgfxTexture2D)
-    EndComponent()
+DefineService(BgfxTexture2D)
+EndService()
 
-    DefineService(BgfxTexture2D)
-    EndService()
+static void OnChanged(Entity entity) {
+    if(HasBgfxTexture2D(entity)) {
+        GetBgfxTexture2D(entity)->invalidated = true;
+    }
+}
 
-    void UpdateBgfxTexture2D(Entity entity) {
-        if(!HasBgfxTexture2D(entity))
-        {
-            return;
-        }
+void OnTexture2DRemoved(Entity entity) {
+    auto data = GetBgfxTexture2D(entity);
 
-        auto data = GetBgfxTexture2D(entity);
-        if(!StreamOpen(entity, StreamMode_Read)) return;
+    if(bgfx::isValid(data->handle)) {
+        bgfx::destroy(data->handle);
+        data->handle = BGFX_INVALID_HANDLE;
+    }
+}
+
+static bool ServiceStart() {
+    SubscribeBgfxTexture2DRemoved(OnTexture2DRemoved);
+    SubscribeTextureChanged(OnChanged);
+    SubscribeTexture2DChanged(OnChanged);
+    SubscribeStreamChanged(OnChanged);
+    SubscribeStreamContentChanged(OnChanged);
+    return true;
+}
+
+static bool ServiceStop() {
+    UnsubscribeBgfxTexture2DRemoved(OnTexture2DRemoved);
+    UnsubscribeTextureChanged(OnChanged);
+    UnsubscribeTexture2DChanged(OnChanged);
+    UnsubscribeStreamChanged(OnChanged);
+    UnsubscribeStreamContentChanged(OnChanged);
+    return true;
+}
+
+u16 GetBgfxTexture2DHandle(Entity entity) {
+    auto data = GetBgfxTexture2D(entity);
+
+    if(data->invalidated) {
+        if(!StreamOpen(entity, StreamMode_Read)) return bgfx::kInvalidHandle;
 
         auto flag = GetTextureFlag(entity);
         auto dimensions = GetTextureSize2D(entity);
@@ -60,28 +89,9 @@
 
         free(buffer);
         data->size = info.storageSize;
+        data->invalidated = false;
     }
 
-    void OnTexture2DRemoved(Entity entity) {
-        auto data = GetBgfxTexture2D(entity);
-
-        if(bgfx::isValid(data->handle)) {
-            bgfx::destroy(data->handle);
-            data->handle = BGFX_INVALID_HANDLE;
-        }
-    }
-
-    static bool ServiceStart() {
-        SubscribeBgfxTexture2DRemoved(OnTexture2DRemoved);
-        return true;
-    }
-
-    static bool ServiceStop() {
-        UnsubscribeBgfxTexture2DRemoved(OnTexture2DRemoved);
-        return true;
-    }
-
-    u16 GetBgfxTexture2DHandle(Entity entity) {
-        return GetBgfxTexture2D(entity)->handle.idx;
-    }
+    return data->handle.idx;
+}
 

@@ -5,7 +5,6 @@
 #include "FoundationModule.h"
 #include "Stream.h"
 #include "File/FileStream.h"
-#include "Invalidation.h"
 #include "MemoryStream.h"
 #include "File/Folder.h"
 #include <Core/Hierarchy.h>

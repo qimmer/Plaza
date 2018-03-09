@@ -8,40 +8,66 @@
 #include <Foundation/Stream.h>
 #include <Foundation/AppLoop.h>
 #include <Core/Vector.h>
-#include <Foundation/Invalidation.h>
 
+struct BgfxIndexBuffer {
+    BgfxIndexBuffer() :
+            staticHandle(BGFX_INVALID_HANDLE),
+            dynamicHandle(BGFX_INVALID_HANDLE),
+            size(0), invalidated(true) {}
 
-    struct BgfxIndexBuffer {
-        BgfxIndexBuffer() :
-                staticHandle(BGFX_INVALID_HANDLE),
-                dynamicHandle(BGFX_INVALID_HANDLE),
-                size(0) {}
+    bgfx::IndexBufferHandle staticHandle;
+    bgfx::DynamicIndexBufferHandle dynamicHandle;
+    u32 size;
+    bool invalidated;
+};
 
-        bgfx::IndexBufferHandle staticHandle;
-        bgfx::DynamicIndexBufferHandle dynamicHandle;
-        u32 size;
-    };
+DefineComponent(BgfxIndexBuffer)
+EndComponent()
 
-    DefineComponent(BgfxIndexBuffer)
-    EndComponent()
+DefineService(BgfxIndexBuffer)
+EndService()
 
-    DefineService(BgfxIndexBuffer)
-    EndService()
+void OnIndexBufferRemoved(Entity entity) {
+    auto data = GetBgfxIndexBuffer(entity);
 
-    void UpdateBgfxIndexBuffer(Entity entity) {
-        if(!HasBgfxIndexBuffer(entity))
-        {
-            return;
-        }
+    if(bgfx::isValid(data->staticHandle)) {
+        bgfx::destroy(data->staticHandle);
+        data->staticHandle = BGFX_INVALID_HANDLE;
+    }
+}
 
-        auto data = GetBgfxIndexBuffer(entity);
-        if(!StreamOpen(entity, StreamMode_Read)) return;
+static void OnChanged(Entity entity) {
+    if(HasBgfxIndexBuffer(entity)) {
+        GetBgfxIndexBuffer(entity)->invalidated = true;
+    }
+}
+
+static bool ServiceStart() {
+    SubscribeBgfxIndexBufferRemoved(OnIndexBufferRemoved);
+    SubscribeIndexBufferChanged(OnChanged);
+    SubscribeStreamChanged(OnChanged);
+    SubscribeStreamContentChanged(OnChanged);
+    return true;
+}
+
+static bool ServiceStop() {
+    UnsubscribeBgfxIndexBufferRemoved(OnIndexBufferRemoved);
+    UnsubscribeIndexBufferChanged(OnChanged);
+    UnsubscribeStreamChanged(OnChanged);
+    UnsubscribeStreamContentChanged(OnChanged);
+    return true;
+}
+
+u16 GetBgfxIndexBufferHandle(Entity entity) {
+    auto data = GetBgfxIndexBuffer(entity);
+    if(data->invalidated) {
+        if(!StreamOpen(entity, StreamMode_Read)) return BGFX_INVALID_HANDLE;
         StreamSeek(entity, StreamSeek_End);
         auto size = StreamTell(entity);
 
         if(size == 0) {
             StreamClose(entity);
-            return;
+            return BGFX_INVALID_HANDLE;
         }
 
         auto buffer = malloc(size);
@@ -82,32 +108,14 @@
 
         data->size = size;
         free(buffer);
+
+        data->invalidated = false;
     }
 
-    void OnIndexBufferRemoved(Entity entity) {
-        auto data = GetBgfxIndexBuffer(entity);
-
-        if(bgfx::isValid(data->staticHandle)) {
-            bgfx::destroy(data->staticHandle);
-            data->staticHandle = BGFX_INVALID_HANDLE;
-        }
+    if(data->dynamicHandle.idx != bgfx::kInvalidHandle) {
+        return data->dynamicHandle.idx;
+    } else {
+        return data->staticHandle.idx;
     }
-
-    static bool ServiceStart() {
-        SubscribeBgfxIndexBufferRemoved(OnIndexBufferRemoved);
-        return true;
-    }
-
-    static bool ServiceStop() {
-        UnsubscribeBgfxIndexBufferRemoved(OnIndexBufferRemoved);
-        return true;
-    }
-
-    u16 GetBgfxIndexBufferHandle(Entity entity) {
-        if(GetIndexBufferDynamic(entity)) {
-            return GetBgfxIndexBuffer(entity)->dynamicHandle.idx;
-        } else {
-            return GetBgfxIndexBuffer(entity)->staticHandle.idx;
-        }
-    }
+}
 

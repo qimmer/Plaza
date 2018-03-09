@@ -4,7 +4,7 @@
 #include <Core/Vector.h>
 #include "Types.h"
 
-#define FireEvent(EVENTNAME, ...) for(auto it : _ ## EVENTNAME ## Handlers) { (*it)(__VA_ARGS__); } do {} while(false)
+#define FireEvent(EVENTNAME, ...) for(auto i = 0; i < _ ## EVENTNAME ## Handlers.size(); ++i) { _ ## EVENTNAME ## Handlers[i](__VA_ARGS__); } do {} while(false)
 
 #define DeclareEvent(EVENTNAME, FUNCTIONTYPE) \
     extern Vector<FUNCTIONTYPE> _ ## EVENTNAME ## Handlers;\

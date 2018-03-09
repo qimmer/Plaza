@@ -2,7 +2,6 @@
 // Created by Kim Johannsen on 14/01/2018.
 //
 
-#include <Foundation/Invalidation.h>
 #include "Uniform.h"
 
 struct Uniform {
@@ -14,13 +13,12 @@ struct Uniform {
 };
 
 DefineComponent(Uniform)
-    Dependency(Invalidation)
     DefineProperty(StringRef, UniformName)
     DefineProperty(u32, UniformArrayCount)
     DefineProperty(Type, UniformType)
 EndComponent()
 
-DefineComponentProperty(Uniform, StringRef, UniformName)
-DefineComponentProperty(Uniform, u32, UniformArrayCount)
-DefineComponentProperty(Uniform, Type, UniformType)
+DefineComponentPropertyReactive(Uniform, StringRef, UniformName)
+DefineComponentPropertyReactive(Uniform, u32, UniformArrayCount)
+DefineComponentPropertyReactive(Uniform, Type, UniformType)
 

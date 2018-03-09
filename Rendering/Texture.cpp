@@ -2,7 +2,6 @@
 // Created by Kim Johannsen on 14/01/2018.
 //
 
-#include <Foundation/Invalidation.h>
 #include <Foundation/Stream.h>
 #include "Texture.h"
 
@@ -16,7 +15,6 @@ struct Texture {
 };
 
 DefineComponent(Texture)
-    Dependency(Invalidation)
     Dependency(Stream)
     DefineProperty(u16, TextureFormat)
     DefineProperty(u32, TextureFlag)
@@ -24,7 +22,7 @@ DefineComponent(Texture)
     DefineProperty(u8, TextureMipLevels)
 EndComponent()
 
-DefineComponentProperty(Texture, u32, TextureFlag)
-DefineComponentProperty(Texture, u16, TextureFormat)
-DefineComponentProperty(Texture, bool, TextureDynamic)
-DefineComponentProperty(Texture, u8, TextureMipLevels)
+DefineComponentPropertyReactive(Texture, u32, TextureFlag)
+DefineComponentPropertyReactive(Texture, u16, TextureFormat)
+DefineComponentPropertyReactive(Texture, bool, TextureDynamic)
+DefineComponentPropertyReactive(Texture, u8, TextureMipLevels)
