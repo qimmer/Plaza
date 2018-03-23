@@ -37,23 +37,21 @@ static bool DeserializeImage(Entity entity) {
     free(buffer);
 
     if(result) {
-        char path[PATH_MAX];
-        snprintf(path, PATH_MAX, "%s/Texture", GetEntityPath(entity));
-        auto texture = CreateTexture2D(path);
+        auto texture = CreateTexture2D(entity, "Texture");
         SetTextureSize2D(texture, {width, height});
 
         switch(channels) {
             case 1:
-                SetTextureFormat(texture, TEXTURE_FORMAT_R8);
+                SetTextureFormat(texture, TextureFormat_R8);
                 break;
             case 2:
-                SetTextureFormat(texture, TEXTURE_FORMAT_RG8);
+                SetTextureFormat(texture, TextureFormat_RG8);
                 break;
             case 3:
-                SetTextureFormat(texture, TEXTURE_FORMAT_RGB8);
+                SetTextureFormat(texture, TextureFormat_RGB8);
                 break;
             case 4:
-                SetTextureFormat(texture, TEXTURE_FORMAT_RGBA8);
+                SetTextureFormat(texture, TextureFormat_RGBA8);
                 break;
         }
 

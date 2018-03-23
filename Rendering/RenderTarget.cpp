@@ -6,16 +6,13 @@
 #include "Context.h"
 
 struct RenderTarget {
+    RenderTarget() : RenderTargetSize({256, 256}) {}
+
+    v2i RenderTargetSize;
 };
 
 DefineComponent(RenderTarget)
+    DefineProperty(v2i, RenderTargetSize)
 EndComponent()
 
-v2i GetRenderTargetSize(Entity entity) {
-    Assert(IsEntityValid(entity));
-    if(HasContext(entity)) {
-        return GetContextSize(entity);
-    }
-    return {0, 0};
-}
-
+DefineComponentPropertyReactive(RenderTarget, v2i, RenderTargetSize)

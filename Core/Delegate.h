@@ -17,7 +17,7 @@
         _ ## EVENTNAME ## Handlers.push_back(func); \
     }\
     void Unsubscribe ## EVENTNAME (FUNCTIONTYPE func) { \
-        for(auto i = _ ## EVENTNAME ## Handlers.size()-1; i >= 0; --i) { \
+        for(int i = _ ## EVENTNAME ## Handlers.size()-1; i >= 0; --i) { \
             if(_ ## EVENTNAME ## Handlers[i] == func) {\
                 _ ## EVENTNAME ## Handlers.erase(_ ## EVENTNAME ## Handlers.begin() + i);\
                 return;\

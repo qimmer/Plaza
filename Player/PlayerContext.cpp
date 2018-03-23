@@ -14,13 +14,14 @@
 #include <Core/String.h>
 #include <Foundation/Stream.h>
 #include <Foundation/VirtualPath.h>
+#include <Rendering/RenderTarget.h>
 #include "PlayerContext.h"
 
 
     DefineService(PlayerContext)
     EndService()
 
-    Entity PlayerContext, RuntimeFolder;
+    Entity PlayerContext = 0, RuntimeFolder = 0;
 
     Entity GetPlayerContext() {
         return PlayerContext;
@@ -32,7 +33,7 @@
         while(virtualPathMappings && *virtualPathMappings) {
             char name[PATH_MAX];
             sprintf(name, "/.vpaths/%llu", (u64)*virtualPathMappings);
-            auto entity = CreateVirtualPath(name);
+            auto entity = CreateEntityFromPath(name);
             SetVirtualPathTrigger(entity, *virtualPathMappings);
             virtualPathMappings++;
 
@@ -54,8 +55,10 @@
 
         while(assets && *assets) {
             char path[PATH_MAX];
-            snprintf(path, PATH_MAX, "/%s", strstr(*assets, "://") + 3);
-            auto assetStream = CreateStream(path);
+			auto protocolOffset = strstr(*assets, "://");
+			Assert(protocolOffset);
+            snprintf(path, PATH_MAX, "/%s", protocolOffset + 3);
+            auto assetStream = CreateEntityFromPath(path);
             SetStreamPath(assetStream, *assets);
             Load(assetStream);
             assets++;
@@ -82,8 +85,8 @@
         }
     }
     static bool ServiceStart() {
-        PlayerContext = CreateContext("/PlayerContext");
-        SetContextSize(PlayerContext, {800, 600});
+        PlayerContext = CreateContext(0, "PlayerContext");
+        SetRenderTargetSize(PlayerContext, {800, 600});
 
         SubscribeContextClosing(OnContextClosing);
 

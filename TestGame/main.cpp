@@ -12,6 +12,9 @@
 #include <File/Folder.h>
 #include <Core/String.h>
 #include <StbDecoders/StbDecodersModule.h>
+#include <Rendering/RenderingModule.h>
+#include <ImGui/ImGuiModule.h>
+#include <Scene/SceneModule.h>
 
 int main(int argc, char** argv) {
     Module modules[] = {
@@ -23,8 +26,11 @@ int main(int argc, char** argv) {
 
         // App Modules
         ModuleOf_Player(),
-        ModuleOf_Editor(),
+        //ModuleOf_Editor(),
 
+        ModuleOf_Rendering(),
+        ModuleOf_Scene(),
+        ModuleOf_ImGui(),
         ModuleOf_Scene2D(),
         ModuleOf_Scene3D(),
 
@@ -36,6 +42,7 @@ int main(int argc, char** argv) {
     StringRef virtualPaths[] = {
         "res://imgui", "file://.",
         "res://scene2d", "file://.",
+        "res://voxel", "file://.",
         "res://assets", "file://.",
         "res://shadercache", "file://./shadercache",
         0, 0,
@@ -48,14 +55,14 @@ int main(int argc, char** argv) {
     };
 
     char sourceFilePath[PATH_MAX];
-    sprintf(sourceFilePath, "file://%s", __FILE__);
+    snprintf(sourceFilePath, PATH_MAX, "file://%s", __FILE__);
     CleanupPath(sourceFilePath);
 
     char sourceDirectory[PATH_MAX];
-    GetParentFolder(sourceFilePath, sourceDirectory);
+    GetParentFolder(sourceFilePath, sourceDirectory, PATH_MAX);
     if(IsFolder(sourceDirectory)) {
-        virtualPaths[8] = "res://source";
-        virtualPaths[9] = sourceDirectory;
+        virtualPaths[10] = "res://source";
+        virtualPaths[11] = sourceDirectory;
         scenes[0] = "res://source/game.json";
     }
 

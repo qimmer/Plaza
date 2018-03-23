@@ -10,7 +10,8 @@
 struct Transform {
     Transform() {
         GlobalTransform = LocalTransform = m4x4f_Identity;
-        GlobalInvalidated = true;
+        GlobalInvalidated = LocalInvalidated = true;
+		HierarchyDepth = 0;
     }
 
     m4x4f GlobalTransform, LocalTransform;
@@ -37,10 +38,11 @@ static void UpdateTransforms() {
     for(auto depth = 0; depth <= InvalidationDepth; depth++) {
         for(auto i = 0; i < GetNumTransform(); ++i) {
             auto data = GetTransformByIndex(i);
+            auto entity = GetTransformEntity(i);
             if(!data->GlobalInvalidated || data->HierarchyDepth != depth) continue;
 
+            auto oldTransform = data->GlobalTransform;
             data->LocalInvalidated = data->GlobalInvalidated = false;
-            auto entity = GetTransformEntity(i);
             auto parent = GetParent(entity);
             if(depth > 0) {
                 auto parentGlobalMatrix = GetGlobalTransform(parent);
@@ -48,6 +50,8 @@ static void UpdateTransforms() {
             } else {
                 data->GlobalTransform = data->LocalTransform;
             }
+
+            FireEvent(GlobalTransformChanged, entity, oldTransform, data->GlobalTransform);
         }
     }
 
@@ -55,10 +59,13 @@ static void UpdateTransforms() {
     for(auto depth = 0; depth <= InvalidationDepth; depth++) {
         for(auto i = 0; i < GetNumTransform(); ++i) {
             auto data = GetTransformByIndex(i);
+            auto entity = GetTransformEntity(i);
+
             if(!data->LocalInvalidated || data->HierarchyDepth != depth) continue;
 
+            auto oldTransform = data->LocalTransform;
             data->LocalInvalidated = data->GlobalInvalidated = false;
-            auto entity = GetTransformEntity(i);
+
             auto parent = GetParent(entity);
             if(depth > 0) {
                 auto parentGlobalMatrix = GetGlobalTransform(parent);
@@ -68,6 +75,8 @@ static void UpdateTransforms() {
             } else {
                 data->LocalTransform = data->GlobalTransform;
             }
+
+            FireEvent(LocalTransformChanged, entity, oldTransform, data->LocalTransform);
         }
     }
 

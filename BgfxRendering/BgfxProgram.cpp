@@ -11,6 +11,8 @@
 #include <Foundation/Stream.h>
 #include <Rendering/BinaryShader.h>
 
+#define ShaderProfile_Max 32
+
 struct BgfxProgram {
     BgfxProgram() {
         for(auto i = 0; i < ShaderProfile_Max;++i) {
@@ -69,18 +71,25 @@ static bool ServiceStop() {
 }
 
 u16 GetBgfxProgramHandle(Entity entity, u8 shaderProfile) {
+    Assert(shaderProfile < ShaderProfile_Max);
+
     auto data = GetBgfxProgram(entity);
     if(data->invalidated[shaderProfile]) {
-        auto vertexShader = GetNextChildThat(entity, 0, IsVertexShader);
-        auto pixelShader = GetNextChildThat(entity, 0, IsPixelShader);
-        auto binaryVertexShader = GetBinaryShader(vertexShader, shaderProfile);
-        auto binaryPixelShader = GetBinaryShader(pixelShader, shaderProfile);
-
         // Eventually free old buffers
         if(bgfx::isValid(data->handle[shaderProfile])) {
             bgfx::destroy(data->handle[shaderProfile]);
             data->handle[shaderProfile] = BGFX_INVALID_HANDLE;
         }
+
+        auto vertexShader = GetVertexShader(entity);
+        auto pixelShader = GetPixelShader(entity);
+
+        if(!IsEntityValid(vertexShader) || !IsEntityValid(pixelShader)) return bgfx::kInvalidHandle;
+
+        auto binaryVertexShader = GetBinaryShader(vertexShader, shaderProfile);
+        auto binaryPixelShader = GetBinaryShader(pixelShader, shaderProfile);
+
+        if(!IsEntityValid(binaryVertexShader) || !IsEntityValid(binaryPixelShader)) return bgfx::kInvalidHandle;
 
         auto vertexShaderHandle = GetBgfxBinaryShaderHandle(binaryVertexShader);
         auto pixelShaderHandle = GetBgfxBinaryShaderHandle(binaryPixelShader);

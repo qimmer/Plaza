@@ -15,4 +15,8 @@ DeclareComponentProperty(UniformState, v4f, UniformStateVec4);
 DeclareComponentProperty(UniformState, Entity, UniformStateTexture);
 DeclareComponentProperty(UniformState, u8, UniformStateStage);
 
+void SetUniformStateState(Entity entity, u64 size, const void *data);
+void GetUniformStateState(Entity entity, u64 size, void *data);
+
+
 #endif //PLAZA_UNIFORMSTATE_H

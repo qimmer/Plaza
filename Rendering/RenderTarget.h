@@ -8,7 +8,6 @@
 #include <Core/Entity.h>
 
 DeclareComponent(RenderTarget)
-
-v2i GetRenderTargetSize(Entity entity);
+DeclareComponentPropertyReactive(RenderTarget, v2i, RenderTargetSize)
 
 #endif //PLAZA_RENDERTARGET_H

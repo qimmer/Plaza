@@ -183,20 +183,6 @@ static bool SerializeJson(Entity persistancePoint) {
         writer.String(GetEntityPath(persistentEntity));
         writer.StartObject();
 
-        writer.String("$components");
-
-        std::stringstream componentsStream;
-        for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
-            if(!IsComponent(type)) continue;
-
-            if(HasComponent(persistentEntity, type)) {
-                componentsStream << GetTypeName(type) << ";";
-            }
-        }
-        auto components = componentsStream.str();
-        if(components.c_str()[components.length()] == ';') components.pop_back();
-        writer.String(components.c_str());
-
         for(auto property = GetNextProperty(0); IsPropertyValid(property); property = GetNextProperty(property)) {
             auto componentType = GetPropertyOwner(property);
             if(!HasComponent(persistentEntity, componentType)) {
@@ -239,6 +225,20 @@ static bool SerializeJson(Entity persistancePoint) {
             }
         }
 
+        writer.String("$components");
+
+        std::stringstream componentsStream;
+        for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
+            if(!IsComponent(type)) continue;
+
+            if(HasComponent(persistentEntity, type)) {
+                componentsStream << GetTypeName(type) << ";";
+            }
+        }
+        auto components = componentsStream.str();
+        if(components.c_str()[components.length()] == ';') components.pop_back();
+        writer.String(components.c_str());
+
         writer.EndObject();
     }
     writer.EndObject();
@@ -257,6 +257,7 @@ static bool DeserializeJson(Entity persistancePoint) {
     Assert(StreamSeek(persistancePoint, StreamSeek_End));
     auto size = StreamTell(persistancePoint);
     char *data = (char*)malloc(size + 1);
+	Assert(data);
     Assert(StreamSeek(persistancePoint, 0));
     Assert(StreamRead(persistancePoint, size, data));
     StreamClose(persistancePoint);
@@ -272,21 +273,14 @@ static bool DeserializeJson(Entity persistancePoint) {
         auto persistentEntity = CreateEntityFromPath(entityPath);
         SetEntityPersistancePoint(persistentEntity, persistancePoint);
 
+        String componentList;
+
         for (auto propertyIterator = entityIterator->value.MemberBegin();
              propertyIterator != entityIterator->value.MemberEnd(); ++propertyIterator) {
             auto propertyName = propertyIterator->name.GetString();
 
             if(strcmp(propertyName, "$components") == 0 && propertyIterator->value.IsString()) {
-                std::istringstream is(propertyIterator->value.GetString());
-                String componentName;
-                while(std::getline(is, componentName, ';')) {
-                    auto componentType = FindTypeByName(componentName.c_str());
-                    if(!IsTypeValid(componentType)) {
-                        Log(LogChannel_Core, LogSeverity_Warning, "Unknown component type in JSON: %s", componentName.c_str());
-                    } else {
-                        AddComponent(persistentEntity, componentType);
-                    }
-                }
+                componentList = propertyIterator->value.GetString();
                 continue;
             }
 
@@ -324,6 +318,17 @@ static bool DeserializeJson(Entity persistancePoint) {
             ReadMat4x4If(m4x4f)
             {
                 Log(LogChannel_Core, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetPropertyName(property), GetTypeName(property));
+            }
+        }
+
+        std::istringstream is(componentList);
+        String componentName;
+        while(std::getline(is, componentName, ';')) {
+            auto componentType = FindTypeByName(componentName.c_str());
+            if(!IsTypeValid(componentType)) {
+                Log(LogChannel_Core, LogSeverity_Warning, "Unknown component type in JSON: %s", componentName.c_str());
+            } else {
+                AddComponent(persistentEntity, componentType);
             }
         }
     }

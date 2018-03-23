@@ -18,7 +18,8 @@
 #define ShaderProfile_GLSL_4_3 7
 #define ShaderProfile_Metal_OSX 8
 #define ShaderProfile_Metal_iOS 9
-#define ShaderProfile_Max 16
+
+DeclareEnum(ShaderProfile)
 
 DeclareComponent(BinaryShader)
 

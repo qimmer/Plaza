@@ -9,23 +9,29 @@
 #include "BinaryShader.h"
 
 struct Program {
+    Entity VertexShader, PixelShader;
 };
 
 DefineComponent(Program)
-    Dependency(Stream)
-    Dependency(Hierarchy)
+    DefineProperty(Entity, VertexShader)
+    DefineProperty(Entity, PixelShader)
 EndComponent()
+
+DefineComponentPropertyReactive(Program, Entity, VertexShader);
+DefineComponentPropertyReactive(Program, Entity, PixelShader);
 
 DefineService(Program)
 EndService()
 
-static void OnChanged(Entity entity) {
-    auto parent = GetParent(entity);
-    auto grandParent = IsEntityValid(parent) ? GetParent(parent) : 0;
+static void OnChanged(Entity binaryShader) {
+    auto shader = GetParent(binaryShader);
 
-    if(IsEntityValid(grandParent) && HasProgram(grandParent))
-    {
-        FireEvent(ProgramChanged, grandParent);
+    if(IsEntityValid(shader) && HasShader(shader)) {
+        for_entity(program, Program) {
+            if(GetVertexShader(program) == shader || GetPixelShader(program) == shader) {
+                FireEvent(ProgramChanged, program);
+            }
+        }
     }
 }
 

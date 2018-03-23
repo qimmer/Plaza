@@ -40,7 +40,7 @@ u16 GetBgfxBinaryShaderHandle(Entity entity) {
 
         if(size == 0) {
             StreamClose(entity);
-            CompileShader(GetParent(entity), entity);
+            CompileShader(GetSourceShader(entity), entity);
             return bgfx::kInvalidHandle;
         }
 
@@ -53,8 +53,6 @@ u16 GetBgfxBinaryShaderHandle(Entity entity) {
         free(buffer);
 
         data->invalidated = false;
-
-        FireEvent(ProgramChanged, GetParent(GetParent(entity)));
     }
 
     return data->handle.idx;
@@ -69,33 +67,14 @@ void OnBinaryShaderRemoved(Entity entity) {
     }
 }
 
-static void OnChanged(Entity entity) {
-    if(HasBgfxBinaryShader(entity)) {
-        GetBgfxBinaryShader(entity)->invalidated = true;
-
-        auto shader = GetParent(entity);
-        if(IsEntityValid(shader) && HasShader(shader)) {
-            auto program = GetParent(shader);
-            if(IsEntityValid(program) && HasProgram(program)) {
-                FireEvent(ProgramChanged, program);
-            }
-        }
-    }
-}
 
 static bool ServiceStart() {
     SubscribeBgfxBinaryShaderRemoved(OnBinaryShaderRemoved);
-    SubscribeStreamChanged(OnChanged);
-    SubscribeStreamContentChanged(OnChanged);
-    SubscribeBinaryShaderChanged(OnChanged);
     return true;
 }
 
 static bool ServiceStop() {
     UnsubscribeBgfxBinaryShaderRemoved(OnBinaryShaderRemoved);
-    UnsubscribeStreamChanged(OnChanged);
-    UnsubscribeStreamContentChanged(OnChanged);
-    UnsubscribeBinaryShaderChanged(OnChanged);
     return true;
 }
 

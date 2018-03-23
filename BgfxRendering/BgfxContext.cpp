@@ -13,6 +13,7 @@
 #include "BgfxTexture2D.h"
 #include "BgfxUniform.h"
 #include "BgfxVertexDeclaration.h"
+#include "BgfxOffscreenRenderTarget.h"
 
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
@@ -48,6 +49,8 @@ extern "C" {
 #undef GetHandle
 #include <windows.h>
 #include <Rendering/VertexDeclaration.h>
+#include <Rendering/RenderTarget.h>
+#include <Rendering/OffscreenRenderTarget.h>
 
 #undef CreateService
 extern "C" {
@@ -67,6 +70,10 @@ EndComponent()
 
 DefineService(BgfxContext)
 EndService()
+
+u16 GetBgfxContextHandle(Entity entity) {
+    return GetBgfxContext(entity)->fb.idx;
+}
 
 static u32 NumContexts = 0;
 static Entity PrimaryContext = 0;
@@ -124,7 +131,7 @@ static void OnAppUpdate(double deltaTime) {
 
 static void ResetContext(Entity entity) {
     auto data = GetBgfxContext(entity);
-    auto size = GetContextSize(entity);
+    auto size = GetRenderTargetSize(entity);
     auto vsync = GetContextVsync(entity);
     auto fullscreen = GetContextFullscreen(entity);
 
@@ -143,7 +150,7 @@ static void ResetContext(Entity entity) {
 }
 
 static void OnContextResized(Entity entity, v2i oldSize, v2i newSize) {
-    ResetContext(entity);
+    if(HasBgfxContext(entity)) ResetContext(entity);
 }
 
 static void OnContextFlagChanged(Entity entity, bool oldValue, bool newValue) {
@@ -157,7 +164,7 @@ static void OnContextTitleChanged(Entity entity, StringRef before, StringRef aft
 }
 
 static void OnGlfwWindowResized(GLFWwindow *window, int w, int h) {
-    SetContextSize((Entity)glfwGetWindowUserPointer(window), {w, h});
+    SetRenderTargetSize((Entity)glfwGetWindowUserPointer(window), {w, h});
 }
 
 static void OnCharPressed(GLFWwindow *window, unsigned int c) {
@@ -198,14 +205,16 @@ static void OnMouseScroll(GLFWwindow *window, double x, double y) {
 }
 
 static void OnMouseMove(GLFWwindow *window, double x, double y) {
-    SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_DOWN, fmaxf(y, 0.0f));
-    SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_UP, fmaxf(-y, 0.0f));
-    SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_LEFT, fmaxf(-x, 0.0f));
-    SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_RIGHT, fmaxf(x, 0.0f));
+    auto cp = GetCursorPosition((Entity)glfwGetWindowUserPointer(window), 0);
+    auto dx = x - cp.x;
+    auto dy = y - cp.y;
 
-    v2d cp;
-    glfwGetCursorPos(window, &cp.x, &cp.y);
-    SetCursorPosition((Entity)glfwGetWindowUserPointer(window), 0, {(int)cp.x, (int)cp.y});
+    SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_DOWN, fmaxf(dy, 0.0f));
+    SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_UP, fmaxf(-dy, 0.0f));
+    SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_LEFT, fmaxf(-dx, 0.0f));
+    SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_RIGHT, fmaxf(dx, 0.0f));
+
+    SetCursorPosition((Entity)glfwGetWindowUserPointer(window), 0, {(int)x, (int)y});
 }
 
 static void OnMouseButton(GLFWwindow *window, int button, int action, int mods) {
@@ -220,12 +229,12 @@ static void OnMouseButton(GLFWwindow *window, int button, int action, int mods) 
 
 static void OnBgfxContextAdded(Entity entity) {
     auto data = GetBgfxContext(entity);
-    auto size = GetContextSize(entity);
+    auto size = GetRenderTargetSize(entity);
 
     if(NumContexts == 1) {
         glfwInit();
         SubscribeAppUpdate(OnAppUpdate);
-        SubscribeContextSizeChanged(OnContextResized);
+        SubscribeRenderTargetSizeChanged(OnContextResized);
         SubscribeContextTitleChanged(OnContextTitleChanged);
         SubscribeContextVsyncChanged(OnContextFlagChanged);
         SubscribeContextFullscreenChanged(OnContextFlagChanged);
@@ -265,7 +274,7 @@ static void OnBgfxContextAdded(Entity entity) {
 #endif
 
 #ifdef WIN32
-        bgfx::init();
+        bgfx::init(bgfx::RendererType::Direct3D11);
 #endif
         bgfx::reset(size.x, size.y);
 
@@ -279,6 +288,7 @@ static void OnBgfxContextAdded(Entity entity) {
         AddExtension(TypeOf_Program(), TypeOf_BgfxProgram());
         AddExtension(TypeOf_Texture2D(), TypeOf_BgfxTexture2D());
         AddExtension(TypeOf_Uniform(), TypeOf_BgfxUniform());
+        AddExtension(TypeOf_OffscreenRenderTarget(), TypeOf_BgfxOffscreenRenderTarget());
     } else {
         data->fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
     }
@@ -300,6 +310,7 @@ static void OnBgfxContextRemoved(Entity entity) {
         RemoveExtension(TypeOf_Program(), TypeOf_BgfxProgram());
         RemoveExtension(TypeOf_Texture2D(), TypeOf_BgfxTexture2D());
         RemoveExtension(TypeOf_Uniform(), TypeOf_BgfxUniform());
+        RemoveExtension(TypeOf_OffscreenRenderTarget(), TypeOf_BgfxOffscreenRenderTarget());
 
         bgfx::shutdown();
     }
@@ -307,7 +318,7 @@ static void OnBgfxContextRemoved(Entity entity) {
     glfwDestroyWindow(data->window);
 
     if(NumContexts == 1) {
-        UnsubscribeContextSizeChanged(OnContextResized);
+        UnsubscribeRenderTargetSizeChanged(OnContextResized);
         UnsubscribeAppUpdate(OnAppUpdate);
         UnsubscribeContextTitleChanged(OnContextTitleChanged);
         UnsubscribeContextVsyncChanged(OnContextFlagChanged);

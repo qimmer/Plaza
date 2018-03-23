@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 include(ExternalProject)
 
 ExternalProject_Add(ex_dyncall
-        HG_REPOSITORY "http://hg.dyncall.org/pub/dyncall/dyncall"
+        GIT_REPOSITORY "https://github.com/Snaipe/dyncall.git"
         UPDATE_COMMAND ""
         INSTALL_COMMAND "")
 
@@ -18,7 +18,7 @@ SET(ex_dyncall_inc_dir "${SOURCE_DIR}")
 ADD_LIBRARY(dyncall STATIC IMPORTED)
 SET_PROPERTY(TARGET dyncall PROPERTY IMPORTED_LOCATION "${ex_dyncall_lib_dir}/dyncall/libdyncall_s.a")
 
-add_library(Core Entity.cpp Entity.h Types.h Type.h Pool.h Handle.h Function.h Delegate.h Debug.cpp Debug.h Handle.cpp Property.h Property.cpp Type.cpp Vector.cpp Vector.h StackContainer.h Dictionary.cpp Dictionary.h String.cpp String.h Variant.h Module.cpp Module.h Service.cpp Service.h CoreModule.cpp CoreModule.h Hierarchy.cpp Hierarchy.h Function.cpp PerFrameStackAllocator.cpp PerFrameStackAllocator.h NulledAllocator.h Base64.cpp Base64.h)
+add_library(Core Entity.cpp Entity.h Types.h Type.h Pool.h Handle.h Function.h Delegate.h Debug.cpp Debug.h Handle.cpp Property.h Property.cpp Type.cpp Vector.cpp Vector.h StackContainer.h Dictionary.cpp Dictionary.h String.cpp String.h Variant.h Module.cpp Module.h Service.cpp Service.h CoreModule.cpp CoreModule.h Hierarchy.cpp Hierarchy.h Function.cpp Base64.cpp Base64.h Enum.cpp Enum.h)
 
 add_dependencies(Core ex_dyncall)
 

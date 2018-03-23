@@ -1,0 +1,7 @@
+uvec4 a_xyz_vindex : POSITION;
+uvec4 a_palette_ao_height : TEXCOORD0;
+
+vec2 v_uv : TEXCOORD0;
+vec2 v_ao_palette : TEXCOORD1;
+vec3 v_normal : TEXCOORD2;
+

@@ -17,12 +17,15 @@
 #include <Rendering/SubTexture2D.h>
 #include <Rendering/Texture2D.h>
 #include <Rendering/BinaryShader.h>
+#include <Rendering/Context.h>
 #include "BgfxCommandList.h"
 #include "BgfxVertexBuffer.h"
 #include "BgfxIndexBuffer.h"
 #include "BgfxProgram.h"
 #include "BgfxUniform.h"
 #include "BgfxTexture2D.h"
+#include "BgfxContext.h"
+#include "BgfxOffscreenRenderTarget.h"
 
 
 struct BgfxCommandList {
@@ -47,7 +50,8 @@ static void SetUniformState(Entity uniformState) {
 
         if(IsTypeValid(uniformType)) {
             if(uniformType != TypeOf_Entity()) {
-                auto state = GetUniformStateMat4(uniformState);
+                m4x4f state[32];
+                GetUniformStateState(uniformState, sizeof(m4x4f)*32, state);
                 bgfx::setUniform(
                         handle,
                         &state,
@@ -55,9 +59,9 @@ static void SetUniformState(Entity uniformState) {
             } else {
                 auto texture = GetUniformStateTexture(uniformState);
                 if(IsEntityValid(texture)) {
-                    auto textureParent = GetParent(texture);
                     auto uvOffsetScaleUniform = GetBgfxUniformHandle(GetSubTexture2DUvOffsetScaleUniform());
-                    if(HasSubTexture2D(texture) && IsEntityValid(textureParent) && HasTexture2D(textureParent)) {
+                    Entity textureParent = 0;
+                    if(HasSubTexture2D(texture) && (textureParent = GetSubTexture2DTexture(texture)) && IsEntityValid(textureParent)) {
                         auto size = GetTextureSize2D(textureParent);
                         auto uvOffset = GetSubTexture2DOffset(texture);
                         auto uvSize = GetSubTexture2DSize(texture);
@@ -101,9 +105,13 @@ void RenderBatch(u32 viewId, Entity entity, u8 shaderProfile) {
     auto vertexBuffer = GetMeshVertexBuffer(mesh);
     auto indexBuffer = GetMeshIndexBuffer(mesh);
 
+    auto programOverride = GetBatchProgram(entity);
+    if(IsEntityValid(programOverride)) {
+        program = programOverride;
+    }
+
     if(!IsEntityValid(program) ||
        !IsEntityValid(vertexBuffer) ||
-       !IsEntityValid(indexBuffer) ||
        !IsEntityValid(mesh) ||
        !IsEntityValid(material)) {
         return;
@@ -113,10 +121,15 @@ void RenderBatch(u32 viewId, Entity entity, u8 shaderProfile) {
 
     auto programHandle = GetBgfxProgramHandle(program, shaderProfile);
     if(GetBgfxVertexBufferHandle(vertexBuffer) == bgfx::kInvalidHandle ||
-       GetBgfxIndexBufferHandle(indexBuffer) == bgfx::kInvalidHandle ||
-            programHandle == bgfx::kInvalidHandle) return;
+       programHandle == bgfx::kInvalidHandle ||
+            (IsEntityValid(indexBuffer) && GetBgfxIndexBufferHandle(indexBuffer) == bgfx::kInvalidHandle )) return;
 
-    bgfx::setState(GetMaterialRenderState(material) | GetMeshPrimitiveType(mesh));
+    bgfx::setState(GetMaterialWriteMask(material) |
+                           GetMaterialBlendMode(material) |
+                           GetMaterialDepthTest(material) |
+                           GetMaterialMultisampleMode(material) |
+                           GetMeshCullMode(mesh) |
+                           GetMeshPrimitiveType(mesh));
 
     if(scissor.x < scissor.z && scissor.y < scissor.w) {
         bgfx::setScissor(scissor.x, scissor.y, scissor.z, scissor.w);
@@ -130,13 +143,21 @@ void RenderBatch(u32 viewId, Entity entity, u8 shaderProfile) {
         bgfx::setVertexBuffer(0, bgfx::VertexBufferHandle {GetBgfxVertexBufferHandle(vertexBuffer)}, GetMeshStartVertex(mesh), GetMeshNumVertices(mesh));
     }
 
-    if(GetIndexBufferDynamic(indexBuffer)) {
-        bgfx::setIndexBuffer(bgfx::DynamicIndexBufferHandle {GetBgfxIndexBufferHandle(indexBuffer)}, GetMeshStartIndex(mesh), GetMeshNumIndices(mesh));
-    } else {
-        bgfx::setIndexBuffer(bgfx::IndexBufferHandle {GetBgfxIndexBufferHandle(indexBuffer)}, GetMeshStartIndex(mesh), GetMeshNumIndices(mesh));
+    if(IsEntityValid(indexBuffer)) {
+        if(GetIndexBufferDynamic(indexBuffer)) {
+            bgfx::setIndexBuffer(bgfx::DynamicIndexBufferHandle {GetBgfxIndexBufferHandle(indexBuffer)}, GetMeshStartIndex(mesh), GetMeshNumIndices(mesh));
+        } else {
+            bgfx::setIndexBuffer(bgfx::IndexBufferHandle {GetBgfxIndexBufferHandle(indexBuffer)}, GetMeshStartIndex(mesh), GetMeshNumIndices(mesh));
+        }
     }
 
-    for(auto uniformState = GetFirstChild(material); IsEntityValid(uniformState); uniformState = GetSibling(uniformState)) {
+    for(auto uniformState = GetFirstChild(material); uniformState; uniformState = GetSibling(uniformState)) {
+        if(!HasUniformState(uniformState)) continue;
+
+        SetUniformState(uniformState);
+    }
+
+    for(auto uniformState = GetFirstChild(program); uniformState; uniformState = GetSibling(uniformState)) {
         if(!HasUniformState(uniformState)) continue;
 
         SetUniformState(uniformState);
@@ -154,10 +175,27 @@ void RenderCommandList(Entity entity, unsigned char viewId) {
     auto viewMat = GetCommandListViewMatrix(entity);
     auto projMat = GetCommandListProjectionMatrix(entity);
 
-    //bgfx::setViewFrameBuffer(viewId, )
+    auto renderTarget = GetCommandListRenderTarget(entity);
+    if(IsEntityValid(renderTarget)) {
+        if(HasBgfxContext(renderTarget)) {
+            bgfx::FrameBufferHandle fb = {GetBgfxContextHandle(renderTarget)};
+            if(fb.idx != bgfx::kInvalidHandle) {
+                bgfx::setViewFrameBuffer(viewId, fb);
+            }
+
+        }
+
+        if(HasBgfxOffscreenRenderTarget(renderTarget)) {
+            bgfx::FrameBufferHandle fb = {GetBgfxOffscreenRenderTargetHandle(renderTarget)};
+            if(fb.idx != bgfx::kInvalidHandle) {
+                bgfx::setViewFrameBuffer(viewId, fb);
+            }
+        }
+    }
 
     u8 shaderProfile;
-    switch(bgfx::getRendererType()) {
+    auto rendererType = bgfx::getRendererType();
+    switch(rendererType) {
         case bgfx::RendererType::Direct3D9:
             shaderProfile = ShaderProfile_HLSL_3_0;
             break;

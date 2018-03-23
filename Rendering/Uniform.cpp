@@ -2,12 +2,13 @@
 // Created by Kim Johannsen on 14/01/2018.
 //
 
+#include <Core/String.h>
 #include "Uniform.h"
 
 struct Uniform {
-    Uniform() : UniformArrayCount(1) {}
+    Uniform() : UniformArrayCount(1), UniformName(""), UniformType(0) {}
 
-    StringRef UniformName;
+    String UniformName;
     u32 UniformArrayCount;
     Type UniformType;
 };

@@ -20,15 +20,14 @@ DefineComponentChild(Project, Folder, ProjectSourceFolder)
 DefineComponentChild(Project, Folder, ProjectBuildFolder)
 
 void ScanProjects() {
+    Entity projectRoot = CreateHierarchy(0, "Projects");
     for(auto module = GetNextModule(0); IsModuleValid(module); module = GetNextModule(module)) {
         auto sourceFilePath = GetModuleSourcePath(module);
 
         char projectFolder[PATH_MAX];
-        GetParentFolder(sourceFilePath, projectFolder);
+        GetParentFolder(sourceFilePath, projectFolder, PATH_MAX);
 
-        char path[PATH_MAX];
-        snprintf(path, PATH_MAX, "/Projects/%s", GetModuleName(module));
-        auto project = CreateProject(path);
+        auto project = CreateProject(projectRoot, GetModuleName(module));
         SetFolderPath(GetProjectSourceFolder(project), projectFolder);
         ScanFolder(GetProjectSourceFolder(project));
     }

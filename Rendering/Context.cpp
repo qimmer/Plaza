@@ -5,26 +5,23 @@
 #include <Core/String.h>
 #include "Context.h"
 #include "RenderTarget.h"
+#include <Logic/State.h>
+#include <Input/InputState.h>
 
 
     struct Context {
-        Context() : ContextSize({400, 300}), ContextFullscreen(false) {}
-
         float KeyStates[KEY_MAX];
         v2i CursorPositions[CURSOR_MAX];
         String ContextTitle;
-        v2i ContextSize;
         bool ContextFullscreen, ContextVsync;
     };
 
     DefineComponent(Context)
         Dependency(RenderTarget)
         DefineProperty(StringRef, ContextTitle)
-        DefineProperty(v2i, ContextSize)
     EndComponent()
 
     DefineComponentPropertyReactive(Context, StringRef, ContextTitle)
-    DefineComponentPropertyReactive(Context, v2i, ContextSize)
     DefineComponentPropertyReactive(Context, bool, ContextFullscreen)
     DefineComponentPropertyReactive(Context, bool, ContextVsync)
 
@@ -45,6 +42,23 @@
         GetContext(context)->KeyStates[(int)key] = state;
 
         FireEvent(KeyStateChanged, context, key, old, state);
+
+        for_entity(entity, InputState) {
+            auto stateKey = GetInputStateKey(entity);
+            auto pmKey = GetInputStatePrimaryModifierKey(entity);
+            auto smKey = GetInputStateSecondaryModifierKey(entity);
+            Assert(stateKey < KEY_MAX);
+            Assert(pmKey < KEY_MAX);
+            Assert(smKey < KEY_MAX);
+
+            if(stateKey == key || pmKey == key || smKey == key ) {
+                auto value = GetKeyState(context, stateKey);
+                if(pmKey) value *= GetKeyState(context, pmKey);
+                if(smKey) value *= GetKeyState(context, smKey);
+                value *= GetInputStateStateScale(entity);
+                SetStateValue(entity, value);
+            }
+        }
     }
 
     v2i GetCursorPosition(Entity context, u8 index) {

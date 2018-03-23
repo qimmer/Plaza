@@ -21,14 +21,14 @@
     DefineEvent(SceneNodeSceneChanged, SceneNodeSceneChangedHandler)
 
     Entity GetSceneNodeScene(Entity sceneNode) {
-        if(!HasScene(sceneNode)) {
+        if(!HasSceneNode(sceneNode)) {
             return 0;
         }
 
         return GetSceneNode(sceneNode)->Scene;
     }
 
-    static Entity FindScene(Entity entity) {
+    Entity FindScene(Entity entity) {
         if(HasScene(entity)) {
             return entity;
         }
@@ -40,24 +40,26 @@
         return 0;
     }
 
-    static void SetScene(Entity entity, Entity scene) {
+    void SetScene(Entity entity, Entity scene) {
         auto oldScene = GetSceneNodeScene(entity);
         auto newScene = scene;
 
-        GetSceneNode(entity)->Scene = newScene;
-
         if(newScene != oldScene) {
+            GetSceneNode(entity)->Scene = newScene;
             FireEvent(SceneNodeSceneChanged, entity, oldScene, newScene);
 
-            for(auto child = GetFirstChild(entity); IsEntityValid(child); child = GetSibling(child)) {
-                SetScene(child, scene);
+            for(auto child = GetFirstChild(entity); child; child = GetSibling(child)) {
+                if(HasSceneNode(child)) {
+                    SetScene(child, scene);
+                }
             }
         }
     }
 
     static void OnParentChanged(Entity entity, Entity before, Entity after) {
         if(HasSceneNode(entity)) {
-            SetScene(entity, FindScene(entity));
+            auto scene = FindScene(entity);
+            SetScene(entity, scene);
         }
     }
 
@@ -72,7 +74,7 @@
     static bool ServiceStart() {
         SubscribeParentChanged(OnParentChanged);
         SubscribeSceneNodeAdded(OnSceneNodeAdded);
-        SubscribeSceneNodeAdded(OnSceneNodeRemoved);
+        SubscribeSceneNodeRemoved(OnSceneNodeRemoved);
 
         return true;
     }
@@ -80,7 +82,7 @@
     static bool ServiceStop() {
         UnsubscribeParentChanged(OnParentChanged);
         UnsubscribeSceneNodeAdded(OnSceneNodeAdded);
-        UnsubscribeSceneNodeAdded(OnSceneNodeRemoved);
+        UnsubscribeSceneNodeRemoved(OnSceneNodeRemoved);
 
         return true;
     };

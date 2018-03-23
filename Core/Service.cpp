@@ -14,12 +14,19 @@
         SettingSetter setter;
     };
 
+    typedef void(*SubscriptionHandler)(void *handler);
+
+    struct Subscription {
+        SubscriptionHandler SubscribeHandler, UnsubscribeHandler;
+        void *EventHandler;
+    };
+
     struct ServiceData {
         Handler startFunc, shutdownFunc;
         BoolHandler isRunningFunc;
         String name;
-        Vector<String> settings;
         Vector<Service> dependencies;
+        Vector<Subscription> subscriptions;
     };
 
     Dictionary<String, Setting> SettingsTable;
@@ -36,6 +43,11 @@
 
         if(!IsServiceRunning(service)) {
             auto data = ServiceAt(service);
+
+            for(auto& subscription : data->subscriptions) {
+                subscription.SubscribeHandler(subscription.EventHandler);
+            }
+
             data->startFunc();
         }
     }
@@ -52,6 +64,10 @@
             }
 
             data->shutdownFunc();
+
+            for(auto& subscription : data->subscriptions) {
+                subscription.UnsubscribeHandler(subscription.EventHandler);
+            }
         }
     }
 
@@ -77,31 +93,10 @@
         return data->name.c_str();
     }
 
-    void SetSetting(StringRef setting, StringRef value) {
-        auto it = SettingsTable.find(setting);
-        if(it != SettingsTable.end()) {
-            (*it).second.setter(value);
-        }
-    }
-
-    StringRef GetSetting(StringRef setting) {
-        auto it = SettingsTable.find(setting);
-        if(it != SettingsTable.end()) {
-            return (*it).second.getter();
-        }
-
-        return "";
-    }
-
-    void AddServiceSetting(Service service, StringRef setting, SettingGetter getter, SettingSetter setter) {
-        Setting s;
-        s.getter = getter;
-        s.setter = setter;
-
-        ServiceAt(service)->settings.push_back(setting);
-        SettingsTable[setting] = s;
-    }
-
     void AddServiceDependency(Service service, Service dependency) {
         ServiceAt(service)->dependencies.push_back(dependency);
     }
+
+void AddServiceSubscription(Service service, void *subscribeFunc, void *unsubscribeFunc, void *eventHandler) {
+    ServiceAt(service)->subscriptions.push_back({(SubscriptionHandler)subscribeFunc, (SubscriptionHandler)unsubscribeFunc, eventHandler});
+}

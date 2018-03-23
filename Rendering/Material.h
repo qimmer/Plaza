@@ -8,10 +8,15 @@
 
 #include <Core/Entity.h>
 
+DeclareEnum(RenderState)
+
 DeclareComponent(Material)
 
 DeclareComponentProperty(Material, Entity, MaterialProgram)
-DeclareComponentProperty(Material, u64, MaterialRenderState)
+DeclareComponentProperty(Material, u64, MaterialDepthTest)
+DeclareComponentProperty(Material, u64, MaterialWriteMask)
+DeclareComponentProperty(Material, u64, MaterialMultisampleMode)
+DeclareComponentProperty(Material, u64, MaterialBlendMode)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
 #define RenderState_STATE_RGB_WRITE               UINT64_C(0x0000000000000001) //!< Enable RGB write.
@@ -19,6 +24,7 @@ DeclareComponentProperty(Material, u64, MaterialRenderState)
 #define RenderState_STATE_DEPTH_WRITE             UINT64_C(0x0000000000000004) //!< Enable depth write.
 
 /// Depth test state. When `RenderState_STATE_DEPTH_` is not specified depth test will be disabled.
+#define RenderState_STATE_DEPTH_TEST_NONE         UINT64_C(0x0000000000000000)
 #define RenderState_STATE_DEPTH_TEST_LESS         UINT64_C(0x0000000000000010) //!< Enable depth test, less.
 #define RenderState_STATE_DEPTH_TEST_LEQUAL       UINT64_C(0x0000000000000020) //!< Enable depth test, less or equal.
 #define RenderState_STATE_DEPTH_TEST_EQUAL        UINT64_C(0x0000000000000030) //!< Enable depth test, equal.
@@ -61,22 +67,6 @@ DeclareComponentProperty(Material, u64, MaterialRenderState)
 #define RenderState_STATE_BLEND_INDEPENDENT       UINT64_C(0x0000000400000000) //!< Enable blend independent.
 #define RenderState_STATE_BLEND_ALPHA_TO_COVERAGE UINT64_C(0x0000000800000000) //!< Enable alpha to coverage.
 
-/// Cull state. When `RenderState_STATE_CULL_*` is not specified culling will be disabled.
-#define RenderState_STATE_CULL_CW                 UINT64_C(0x0000001000000000) //!< Cull clockwise triangles.
-#define RenderState_STATE_CULL_CCW                UINT64_C(0x0000002000000000) //!< Cull counter-clockwise triangles.
-#define RenderState_STATE_CULL_SHIFT              36                           //!< Culling mode bit shift.
-#define RenderState_STATE_CULL_MASK               UINT64_C(0x0000003000000000) //!< Culling mode bit mask.
-
-/// See RenderState_STATE_ALPHA_REF(_ref) helper macro.
-#define RenderState_STATE_ALPHA_REF_SHIFT         40                           //!< Alpha reference bit shift.
-#define RenderState_STATE_ALPHA_REF_MASK          UINT64_C(0x0000ff0000000000) //!< Alpha reference bit mask.
-
-#define RenderState_STATE_PT_TRISTRIP             UINT64_C(0x0001000000000000) //!< Tristrip.
-#define RenderState_STATE_PT_LINES                UINT64_C(0x0002000000000000) //!< Lines.
-#define RenderState_STATE_PT_LINESTRIP            UINT64_C(0x0003000000000000) //!< Line strip.
-#define RenderState_STATE_PT_POINTS               UINT64_C(0x0004000000000000) //!< Points.
-#define RenderState_STATE_PT_SHIFT                48                           //!< Primitive type bit shift.
-#define RenderState_STATE_PT_MASK                 UINT64_C(0x0007000000000000) //!< Primitive type bit mask.
 
 /// See RenderState_STATE_POINT_SIZE(_size) helper macro.
 #define RenderState_STATE_POINT_SIZE_SHIFT        52                           //!< Point size bit shift.
@@ -128,6 +118,8 @@ DeclareComponentProperty(Material, u64, MaterialRenderState)
 #define RenderState_STATE_BLEND_EQUATION(_equation) RenderState_STATE_BLEND_EQUATION_SEPARATE(_equation, _equation)
 
 /// Utility predefined blend modes.
+
+#define RenderState_STATE_BLEND_NONE 0
 
 /// Additive blending.
 #define RenderState_STATE_BLEND_ADD (0                                         \

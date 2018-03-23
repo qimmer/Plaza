@@ -1,0 +1,13 @@
+$input v_uv, v_ao_palette, v_normal
+
+#include <common.sh>
+
+SAMPLER2D(s_palette, 0);
+
+void main()
+{
+    vec4 paletteRgba = texture2D(s_palette, vec2(v_ao_palette.y, 0.0f));
+
+    vec4 albedo = paletteRgba;
+    gl_FragColor = albedo; // * v_ao
+}

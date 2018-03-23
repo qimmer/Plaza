@@ -16,4 +16,7 @@ DeclareEvent(ImGuiDraw, EntityHandler);
 void* GetDefaultImGuiContext();
 void RebuildImGuiFonts();
 
+Entity GetImGuiTextureUniform();
+Entity GetImGuiProgram();
+
 #endif //PLAZA_ImGui_H

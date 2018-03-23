@@ -4,102 +4,144 @@
 #include <Core/Types.h>
 #include <Core/Vector.h>
 
+#define MaxPages 4096
+#define PoolPageElements 0xFF
+#define MemoryGuard(G) char G [sizeof(MemoryGuardData)]
+#define AssertGuard(G) Assert(memcmp(G, MemoryGuardData, sizeof(MemoryGuardData)) == 0)
+#define InitGuard(G) memcpy(G, MemoryGuardData, sizeof(MemoryGuardData))
+static const unsigned char MemoryGuardData[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xDE, 0xAD, 0xBE, 0xEF, 0xDE, 0xAD, 0xBE, 0xEF, 0xDE, 0xAD, 0xBE, 0xEF};
+
 template<typename T>
 class Pool
 {
 private:
     struct Entry
     {
-        Entry() : is_occupied(false) {}
+        Entry() : is_occupied(false) {
+			memset(data, 0, sizeof(T));
+            InitGuard(preGuard);
+            InitGuard(postGuard);
+        }
 
         bool is_occupied;
-        T data;
+        MemoryGuard(preGuard);
+        char data[sizeof(T)];
+        MemoryGuard(postGuard);
     };
 
-    Vector<Entry> entries;
-    Vector<size_t> free_indices;
+    FixedVector<Entry*, 128> entryPages;
+    Vector<u32> free_indices;
 public:
-    T& operator[] (size_t index);
-    const T& operator[] (size_t index) const;
-    bool IsValid(size_t index) const;
-    size_t End() const;
+    ~Pool() {
+        for(Entry *page : entryPages) delete[] page;
+    }
+    T& operator[] (u32 index);
+    const T& operator[] (u32 index) const;
+    bool IsValid(u32 index) const;
+    u32 End() const;
 
-    size_t Add();
-    bool Insert(size_t index);
-    bool Remove(size_t index);
+    u32 Add();
+    bool Insert(u32 index);
+    bool Remove(u32 index);
 };
 
 template<typename T>
-T& Pool<T>::operator[](size_t index)
+T& Pool<T>::operator[](u32 index)
 {
-    return this->entries[index].data;
+    Assert(IsValid(index));
+
+    auto page = index & 0xffffff00;
+    index = index & 0x000000ff;
+    auto& data = this->entryPages[page][index];
+    return *(T*)data.data;
 }
 
 template<typename T>
-const T& Pool<T>::operator[](size_t index) const
+const T& Pool<T>::operator[](u32 index) const
 {
-    return this->entries[index].data;
+    Assert(IsValid(index));
+
+    auto page = index & 0xffffff00;
+    index = index & 0x000000ff;
+    const auto& data = this->entryPages[page][index];
+    return *(const T*)data.data;
 }
 
 template<typename T>
-bool Pool<T>::IsValid(size_t index) const
+bool Pool<T>::IsValid(u32 index) const
 {
-    return this->entries.size() > index && this->entries[index].is_occupied;
+    auto page = index & 0xffffff00;
+    index = index & 0x000000ff;
+
+    if(this->entryPages.size() <= page) return false;
+
+    const auto& data = this->entryPages[page][index];
+    AssertGuard(data.preGuard);
+    AssertGuard(data.postGuard);
+    return data.is_occupied;
 }
 
 template<typename T>
-size_t Pool<T>::End() const
+u32 Pool<T>::End() const
 {
-    return this->entries.size();
+    return this->entryPages.size() * PoolPageElements;
 }
 
 template<typename T>
-bool Pool<T>::Insert(size_t index)
+bool Pool<T>::Insert(u32 index)
 {
-    if(this->entries.size() <= index)
+    auto page = index & 0xffffff00;
+    index = index & 0x000000ff;
+
+    Assert(page < MaxPages);
+    if(page >= this->entryPages.size())
     {
-        this->entries.resize(index + 1);
+        this->entryPages.push_back(new Entry[PoolPageElements]);
     }
 
-    if(this->entries[index].is_occupied)
+    if(this->entryPages[page][index].is_occupied)
     {
         return false;
     }
 
-    this->entries[index].is_occupied = true;
+    this->entryPages[page][index].is_occupied = true;
+    memset(this->entryPages[page][index].data, 0, sizeof(T));
+    new (this->entryPages[page][index].data) T();
 
-    for(size_t i = 0; i < this->free_indices.size(); ++i) {
+    for(u32 i = 0; i < this->free_indices.size(); ++i) {
         if(this->free_indices[i] == index) {
             this->free_indices.erase(this->free_indices.begin() + i);
             break;
         }
     }
 
+    AssertGuard(this->entryPages[page][index].preGuard);
+    AssertGuard(this->entryPages[page][index].postGuard);
+
     return true;
 }
 
 template<typename T>
-bool Pool<T>::Remove(size_t index)
+bool Pool<T>::Remove(u32 index)
 {
-    if(this->entries.size() <= index)
+    if(!IsValid(index))
     {
         return false;
     }
 
-    if(!this->entries[index].is_occupied)
-    {
-        return false;
-    }
+    auto page = index & 0xffffff00;
+    index = index & 0x000000ff;
 
-    this->entries[index].is_occupied = false;
-    this->entries[index].data = T();
+    this->entryPages[page][index].is_occupied = false;
+    ((T*)this->entryPages[page][index].data)->~T();
+    memset(this->entryPages[page][index].data, 0, sizeof(T));
     this->free_indices.push_back(index);
     return true;
 }
 
 template<typename T>
-size_t Pool<T>::Add() {
-    size_t index = this->End();
+u32 Pool<T>::Add() {
+    u32 index = this->End();
     if(this->free_indices.size() > 0) {
         index = this->free_indices[this->free_indices.size() - 1];
         this->free_indices.pop_back();

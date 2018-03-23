@@ -16,7 +16,8 @@
                 CommandListClearTargets(ClearTarget_Color | ClearTarget_Depth),
                 CommandListViewport({0, 0, 0, 0}),
                 CommandListViewMatrix(m4x4f_Identity),
-                CommandListProjectionMatrix(m4x4f_Identity)
+                CommandListProjectionMatrix(m4x4f_Identity),
+				CommandListLayer(0)
                 {}
 
         Entity CommandListRenderTarget;

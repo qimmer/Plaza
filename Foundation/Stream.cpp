@@ -79,6 +79,8 @@ bool IsStreamOpen(Entity entity) {
 }
 
 bool StreamOpen(Entity entity, int mode) {
+    Assert(IsEntityValid(entity));
+
     auto data = GetStream(entity);
     if(!data->Protocol.StreamOpenHandler) {
         return false;
@@ -118,6 +120,7 @@ void StreamReadAsync(Entity entity, u64 size, StreamReadAsyncHandler readFinishe
 
 void StreamWriteAsync(Entity entity, u64 size, const void *data, StreamWriteAsyncHandler writeFinishedHandler){
     char *buffer = (char*)malloc(size);
+	Assert(buffer);
     memcpy(buffer, data, size);
     StreamWrite(entity, size, buffer);
     writeFinishedHandler(entity, size);
@@ -147,6 +150,7 @@ void RemoveStreamCompressor(StringRef mimeType) {
 }
 
 StringRef GetStreamResolvedPath(Entity entity) {
+    Assert(IsEntityValid(entity));
     return GetStream(entity)->ResolvedPath.c_str();
 }
 
@@ -261,8 +265,11 @@ static void OnStreamAdded(Entity entity) {
 static bool ServiceStart() {
     SubscribeStreamAdded(OnStreamAdded);
     SubscribeStreamPathChanged(OnStreamPathChanged);
+	return true;
 }
 
 static bool ServiceStop() {
+	UnsubscribeStreamAdded(OnStreamAdded);
     UnsubscribeStreamPathChanged(OnStreamPathChanged);
+	return true;
 }

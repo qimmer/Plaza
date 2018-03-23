@@ -100,6 +100,7 @@ void SetFunctionArguments(Function f, StringRef arguments) {
         *nextComma = '\0';
 
         auto name = strrchr(argument, ' ');
+		Assert(name);
         *name = '\0';
         name++;
 

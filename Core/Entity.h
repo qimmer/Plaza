@@ -49,17 +49,20 @@ bool RemoveDependencyByIndex(Type componentType, Index index);
 void SetComponentAbstract(Type type, bool value);
 bool IsComponentAbstract(Type type);
 
-
 #define InvalidIndex 0xffffffff
+#define ComponentsPerPage 1024
 
 #define DeclareComponent(TYPENAME) \
     DeclareType(TYPENAME)\
-    Entity Create ## TYPENAME(StringRef entityPath);\
+    Entity Create ## TYPENAME(Entity parent, StringRef name);\
     bool Add ## TYPENAME (Entity entity);\
     bool Remove ## TYPENAME (Entity entity); \
     bool Has ## TYPENAME (Entity entity); \
+    struct TYPENAME * Get ## TYPENAME ## ByIndex (Index index);\
+    struct TYPENAME * Get ## TYPENAME (Entity entity);\
     Index GetNum ## TYPENAME (); \
     Entity Get ## TYPENAME ## Entity(Index index);\
+    u64 Get ## TYPENAME ## Index(Entity entity);\
     DeclareEvent(TYPENAME ## Added, EntityHandler) \
     DeclareEvent(TYPENAME ## Removed, EntityHandler) \
     DeclareEvent(TYPENAME ## Changed, EntityHandler)
@@ -73,37 +76,38 @@ bool IsComponentAbstract(Type type);
         TYPENAME data;\
         Entity entity;\
     };\
-    Vector<_data_ ## TYPENAME> TYPENAME ## _data; \
+    u32 _num_ ## TYPENAME = 0;\
+    Pool<_data_ ## TYPENAME> TYPENAME ## _data; \
     Pool<Index> TYPENAME ## _component_indices;\
-    Vector<Type> TYPENAME ## _dependencies;\
-    Vector<Type> TYPENAME ## _extensions;\
+    FixedVector<Type, 128> TYPENAME ## _dependencies;\
+    FixedVector<Type, 128> TYPENAME ## _extensions;\
     Index GetNum ## TYPENAME () {\
-        return TYPENAME ## _data.size();\
+        return _num_ ## TYPENAME;\
     } \
     Entity Get ## TYPENAME ## Entity(Index index) {\
-        Assert(index >= 0 && index < TYPENAME ## _data.size());\
+        Assert(TYPENAME ## _data.IsValid(index));\
         return TYPENAME ## _data[index].entity;\
     }\
     bool Has ## TYPENAME (Entity entity) {\
         Assert(IsEntityValid(entity));\
         auto entityIndex = GetHandleIndex(entity);\
-        return TYPENAME ## _component_indices.End() > entityIndex && TYPENAME ## _component_indices[entityIndex] != InvalidIndex; \
+        return TYPENAME ## _component_indices.IsValid(entityIndex); \
     } \
-    static TYPENAME * Get ## TYPENAME ## ByIndex (Index index) {\
-        Assert(index >= 0 && index < TYPENAME ## _data.size());\
+    struct TYPENAME * Get ## TYPENAME ## ByIndex (Index index) {\
+        Assert(TYPENAME ## _data.IsValid(index));\
         return &TYPENAME ## _data[index].data; \
     }\
     bool Add ## TYPENAME (Entity entity) {\
         Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) {\
-            TYPENAME ## _data.push_back(_data_ ## TYPENAME ());\
-            size_t index = TYPENAME ## _data.size() - 1;\
+            size_t index = _num_ ## TYPENAME;\
+            Assert(!TYPENAME ## _data.IsValid(index));\
+            _num_ ## TYPENAME++;\
+            Assert(TYPENAME ## _data.Insert(index));\
+            _data_ ## TYPENAME * data = &TYPENAME ## _data[index];\
+            data->entity = entity;\
             Index entityIndex = GetHandleIndex(entity); \
-            auto oldSize = TYPENAME ## _component_indices.End(); \
-            TYPENAME ## _component_indices.Insert(entityIndex); \
-            TYPENAME ## _data[index].entity = entity;\
-            auto newSize = TYPENAME ## _component_indices.End(); \
-            for(auto i = oldSize; i < newSize; ++i) TYPENAME ## _component_indices[i] = InvalidIndex; \
+            Assert(TYPENAME ## _component_indices.Insert(entityIndex)); \
             TYPENAME ## _component_indices[entityIndex] = index; \
             for(Index i = 0; i < GetDependencies(TypeOf_ ## TYPENAME ()); ++i) AddComponent(entity, GetDependency(TypeOf_ ## TYPENAME (), i));\
             FireEvent(TYPENAME ## Added, entity);\
@@ -113,18 +117,19 @@ bool IsComponentAbstract(Type type);
         }\
         return false;\
     }\
-    static u64 Get ## TYPENAME ## Index(Entity entity) {\
+    u64 Get ## TYPENAME ## Index(Entity entity) {\
         return TYPENAME ## _component_indices[GetHandleIndex(entity)];\
     }\
-    static TYPENAME * Get ## TYPENAME (Entity entity) {\
-        if(!IsEntityValid(entity)) return NULL;\
+    struct TYPENAME * Get ## TYPENAME (Entity entity) {\
+        Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         Index entityIndex = GetHandleIndex(entity); \
-        return &TYPENAME ## _data[TYPENAME ## _component_indices[entityIndex]].data; \
+        size_t index = TYPENAME ## _component_indices[entityIndex];\
+        return &TYPENAME ## _data[index].data; \
     }\
-    Entity Create ## TYPENAME (StringRef entityPath) { \
-        auto entity  = CreateEntityFromPath(entityPath);\
-        Add ## TYPENAME (entity);\
+    Entity Create ## TYPENAME (Entity parent, StringRef name) { \
+        auto entity  = CreateEntityFromName(parent, name);\
+        if(IsEntityValid(entity)) Add ## TYPENAME (entity);\
         return entity;\
     }\
     bool Remove ## TYPENAME (Entity entity) {\
@@ -133,14 +138,21 @@ bool IsComponentAbstract(Type type);
             for(Index i = 0; i < GetExtensions(TypeOf_ ## TYPENAME ()); ++i) RemoveComponent(entity, GetExtension(TypeOf_ ## TYPENAME (), i));\
             FireEvent(TYPENAME ## Removed, entity);\
             FireEvent(ComponentRemoved, entity, TypeOf_ ## TYPENAME ());\
-            Index deletionEntityIndex = GetHandleIndex(entity); \
-            auto deletionIndex = TYPENAME ## _component_indices[deletionEntityIndex]; \
-            auto lastIndex = TYPENAME ## _data.size() - 1;\
-            Index moveEntityIndex = GetHandleIndex(TYPENAME ## _data[lastIndex].entity); \
-            std::swap(TYPENAME ## _data[deletionIndex], TYPENAME ## _data[lastIndex]);\
-            TYPENAME ## _component_indices[moveEntityIndex] = deletionIndex;\
-            TYPENAME ## _data.pop_back(); \
-            TYPENAME ## _component_indices[deletionEntityIndex] = InvalidIndex; \
+            if(Has ## TYPENAME (entity)) {\
+                Index deletionEntityIndex = GetHandleIndex(entity); \
+                auto deletionIndex = TYPENAME ## _component_indices[deletionEntityIndex]; \
+                auto deletionData = &TYPENAME ## _data[deletionIndex];\
+                auto lastIndex = _num_ ## TYPENAME - 1;\
+                auto lastData = &TYPENAME ## _data[lastIndex];\
+                Index lastEntityIndex = GetHandleIndex(lastData->entity); \
+                if(deletionData != lastData) {\
+                    std::swap(*lastData, *deletionData);\
+                    TYPENAME ## _component_indices[lastEntityIndex] = deletionIndex;\
+                }\
+                _num_ ## TYPENAME--; \
+                TYPENAME ## _component_indices.Remove(deletionEntityIndex); \
+                TYPENAME ## _data.Remove(lastIndex);\
+            }\
             return true;\
         }\
         return false;\
@@ -178,9 +190,13 @@ bool IsComponentAbstract(Type type);
 
 #define DefineComponentProperty(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
     PROPERTYTYPE Get ## PROPERTYNAME (Entity entity) { \
+        Assert(IsEntityValid(entity));\
+        if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         return ApiConvert<PROPERTYTYPE>(Get ## TYPENAME (entity)->PROPERTYNAME); \
     } \
     void Set ##  PROPERTYNAME (Entity entity, PROPERTYTYPE value) { \
+        Assert(IsEntityValid(entity));\
+        if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         auto data = Get ## TYPENAME (entity); \
         data-> PROPERTYNAME = value; \
     }\

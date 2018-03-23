@@ -11,4 +11,6 @@
 DeclareComponent(BgfxContext)
 DeclareService(BgfxContext)
 
+u16 GetBgfxContextHandle(Entity entity);
+
 #endif //PLAZA_BGFXCONTEXT_H

@@ -20,6 +20,7 @@
 #include "VertexAttribute.h"
 #include "SubTexture2D.h"
 #include "VertexDeclaration.h"
+#include "OffscreenRenderTarget.h"
 #include <Foundation/FoundationModule.h>
 
 DefineModule(Rendering)
@@ -28,6 +29,7 @@ DefineModule(Rendering)
     ModuleService(ShaderCompiler)
     ModuleService(Program)
     ModuleService(SubTexture2D)
+    ModuleService(OffscreenRenderTarget)
 
     ModuleType(VertexDeclaration)
     ModuleType(VertexAttribute)

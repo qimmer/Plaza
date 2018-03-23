@@ -39,6 +39,20 @@ void Unload(Entity persistancePoint) {
     GetPersistancePoint(persistancePoint)->Loaded = false;
 }
 
+static void OnPersistancePointAdded(Entity persistancePoint) {
+    // If children exist already, they are referenced to stores entities at this persistance point.
+    // Therefore load these to keep them up to date with the ones on disk.
+    if(IsEntityValid(GetFirstChild(persistancePoint))) {
+        Load(persistancePoint);
+    }
+}
+
+static void OnStreamChanged(Entity persistancePoint) {
+    if(HasPersistancePoint(persistancePoint) && IsEntityValid(GetFirstChild(persistancePoint)) && GetLoaded(persistancePoint)) {
+        Load(persistancePoint);
+    }
+}
+
 static void LoadedChanged(Entity persistancePoint, bool oldValue, bool newValue) {
     if(oldValue != newValue && newValue) {
         Load(persistancePoint);
@@ -46,6 +60,13 @@ static void LoadedChanged(Entity persistancePoint, bool oldValue, bool newValue)
 
     if(oldValue != newValue && !newValue) {
         Unload(persistancePoint);
+    }
+}
+
+static void OnParentChanged(Entity entity, Entity oldParent, Entity newParent) {
+    if(IsEntityValid(newParent) && HasPersistancePoint(newParent)) {
+        auto data = GetPersistancePoint(newParent);
+        if(!data->Loaded && !data->IsLoading) Load(newParent);
     }
 }
 
@@ -122,11 +143,19 @@ void RemoveSerializer(StringRef mimeType) {
 
 
 static bool ServiceStart() {
+    SubscribePersistancePointAdded(OnPersistancePointAdded);
+    SubscribeStreamContentChanged(OnStreamChanged);
+    SubscribeStreamChanged(OnStreamChanged);
     SubscribeLoadedChanged(LoadedChanged);
+    SubscribeParentChanged(OnParentChanged);
     return true;
 }
 
 static bool ServiceStop() {
+    UnsubscribePersistancePointAdded(OnPersistancePointAdded);
+    UnsubscribeStreamContentChanged(OnStreamChanged);
+    UnsubscribeStreamChanged(OnStreamChanged);
     UnsubscribeLoadedChanged(LoadedChanged);
+    UnsubscribeParentChanged(OnParentChanged);
     return true;
 }

@@ -7,6 +7,7 @@
 
 #include <Core/Handle.h>
 #include <Core/Type.h>
+#include <Core/Enum.h>
 
 DeclareHandle(Property)
 
@@ -18,6 +19,7 @@ void* GetPropertyGetter(Property property);
 void* GetPropertySetter(Property property);
 const char * GetPropertyName(Property property);
 PropertyTransferFunc GetPropertyTransferFunc(Property property);
+Enum GetPropertyEnum(Property property);
 
 Property FindPropertyByName(StringRef name);
 
@@ -27,6 +29,7 @@ void SetPropertyGetter(Property property, void* getter);
 void SetPropertySetter(Property property, void *setter);
 void SetPropertyName(Property property, const char * name);
 void SetPropertyTransferFunc(Property property, PropertyTransferFunc func);
+void SetPropertyEnum(Property property, Enum e);
 
 #define DefineProperty(PROPERTYTYPE, PROPERTYNAME) \
         Property prop_ ## PROPERTYNAME = CreateProperty(); \
@@ -36,5 +39,9 @@ void SetPropertyTransferFunc(Property property, PropertyTransferFunc func);
         SetPropertyGetter(prop_ ## PROPERTYNAME, (void*)& Get ## PROPERTYNAME); \
         SetPropertySetter(prop_ ## PROPERTYNAME, (void*)& Set ## PROPERTYNAME); \
         SetPropertyTransferFunc(prop_ ## PROPERTYNAME, Copy ## PROPERTYNAME);
+
+#define DefinePropertyEnum(PROPERTYTYPE, PROPERTYNAME, ENUM) \
+        DefineProperty(PROPERTYTYPE, PROPERTYNAME)\
+        SetPropertyEnum(prop_ ## PROPERTYNAME, EnumOf_ ## ENUM ());
 
 #endif //PLAZA_PROPERTY_H

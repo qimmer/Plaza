@@ -25,13 +25,13 @@ TestResult TestCube()
     SetCommandListClearColor(commandList, {50, 128, 255, 255});
     SetCommandListClearTargets(commandList, ClearTarget_Color);
 
-    SetContextSize(context, {800, 600});
+    SetRenderTargetSize(context, {800, 600});
     SetContextTitle(context, "Cube Test");
 
     SubscribeContextClosing(DestroyEntity);
 
     while(IsEntityValid(context)) {
-        auto size = GetContextSize(context);
+        auto size = GetRenderTargetSize(context);
         SetCommandListViewport(commandList, {0, 0, size.x, size.y});
         AppUpdate();
     }

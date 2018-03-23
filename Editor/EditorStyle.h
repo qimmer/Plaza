@@ -9,4 +9,7 @@
 
 DeclareService(EditorStyle)
 
+struct ImFont * GetMonospaceFont();
+struct ImFont * GetUIFont();
+
 #endif //PLAZA_EDITORSTYLE_H

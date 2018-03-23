@@ -8,6 +8,17 @@
 #include <imgui/imgui.h>
 #include <Foundation/Stream.h>
 
+
+ImFont *UIFont, *MonoFont;
+
+struct ImFont *GetMonospaceFont() {
+    return MonoFont;
+}
+
+struct ImFont *GetUIFont() {
+    return UIFont;
+}
+
 DefineService(EditorStyle)
     ServiceDependency(ImGuiRenderer)
 EndService()
@@ -24,14 +35,15 @@ static bool ServiceStart() {
     config.MergeMode = true;
 
     io.Fonts->Clear();
-    io.Fonts->AddFontFromFileTTF("./Fonts/DroidSans.ttf", 13.0f);
+    UIFont = io.Fonts->AddFontFromFileTTF("./Fonts/DroidSans.ttf", 13.0f);
     io.Fonts->AddFontFromFileTTF("./Fonts/fontawesome-webfont.ttf", 14.0f, &config, awesomeRange);
     io.Fonts->AddFontFromFileTTF("./Fonts/MaterialIcons-Regular.ttf", 14.0f, &config, materialRange);
+    MonoFont = io.Fonts->AddFontFromFileTTF("./Fonts/Courier Prime Code.ttf", 14.0f);
     RebuildImGuiFonts();
 
     return true;
 }
 
 static bool ServiceStop() {
-
+	return false;
 }

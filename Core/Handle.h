@@ -17,7 +17,7 @@ typedef struct {
 #define GetHandleIndex(handle) (((Index *) &handle)[0])
 #define GetHandleGeneration(handle) (((Generation *) &handle)[1])
 
-#define GetHandle(index, generation) ((((Handle)generation) << 32) | index)
+#define GetHandle(index, generation) ((((Handle)generation) << 32) | (index))
 
 #define DeclareHandle(HandleName) \
     extern Vector<Generation> HandleName ## _generations;\
@@ -34,7 +34,7 @@ typedef struct {
         return HandleName ## _generations[index] % 2 != 0;\
     }\
     inline bool Is ## HandleName ## Valid(HandleName handle) {\
-        return handle && HandleName ## _generations[GetHandleIndex(handle)] == GetHandleGeneration(handle);\
+        return handle && HandleName ## _generations.size() > GetHandleIndex(handle) && HandleName ## _generations[GetHandleIndex(handle)] == GetHandleGeneration(handle);\
     }
 
 #define DefineHandle(HandleName, DataTypeName) \
@@ -53,8 +53,15 @@ typedef struct {
     HandleName GetNext ## HandleName (HandleName handle) { \
         auto index = GetHandleIndex(handle); \
         if(index >= HandleName ## _generations.size()) return 0; \
-        if(!handle) return GetHandle(0, HandleName ## _generations[0]); \
+        if(!handle) {\
+            while(!Is ## HandleName ## Occupied(index)) {\
+                index++;\
+                if(index >= HandleName ## _generations.size()) return 0; \
+            }\
+            return GetHandle(index, HandleName ## _generations[index]); \
+        }\
         index++;\
+        if(index >= HandleName ## _generations.size()) return 0; \
         while(!Is ## HandleName ## Occupied (index)) { \
             if(index >= HandleName ## _generations.size()) return 0; \
             index++; \

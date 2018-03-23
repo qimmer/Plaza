@@ -50,4 +50,12 @@ bool CallFunction(Function f, const void *argumentData, void *returnData);
         SetFunctionPtr(func_ ## FUNCTION_NAME, (void*)&FUNCTION_NAME); \
         SetFunctionArguments(func_ ## FUNCTION_NAME, #__VA_ARGS__);
 
+#define DefineExtensionMethod(COMPONENT_TYPE, RETURN_TYPE, FUNCTION_NAME, ...) \
+        Function func_ ## FUNCTION_NAME = CreateFunction(); \
+        SetFunctionContextType(func_ ## FUNCTION_NAME, TypeOf_ ## COMPONENT_TYPE ()); \
+        SetFunctionReturnType(func_ ## FUNCTION_NAME, TypeOf_ ## RETURN_TYPE ()); \
+        SetFunctionName(func_ ## FUNCTION_NAME, #FUNCTION_NAME ); \
+        SetFunctionPtr(func_ ## FUNCTION_NAME, (void*)&FUNCTION_NAME); \
+        SetFunctionArguments(func_ ## FUNCTION_NAME, #__VA_ARGS__);
+
 #endif

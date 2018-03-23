@@ -10,6 +10,8 @@ add_subdirectory(Core)
 add_subdirectory(Foundation)
 add_subdirectory(File)
 add_subdirectory(Test)
+add_subdirectory(Logic)
+add_subdirectory(Input)
 add_subdirectory(Rendering)
 add_subdirectory(Scene)
 add_subdirectory(Scene2D)
@@ -24,7 +26,6 @@ add_subdirectory(SQL)
 add_subdirectory(Json)
 add_subdirectory(StbDecoders)
 #add_subdirectory(Excel)
-add_subdirectory(Voxel)
 
 
 # Plaza Plugins

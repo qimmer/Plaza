@@ -90,7 +90,7 @@ int Compile(StringRef sourceFilePath,
     }
 
     char parentPath[PATH_MAX];
-    GetParentFolder(outputFilePath, parentPath);
+    GetParentFolder(outputFilePath, parentPath, PATH_MAX);
     CreateDirectories(parentPath);
 
     sourceFilePath += 7;
@@ -196,6 +196,8 @@ int Compile(StringRef sourceFilePath,
     auto str = ss.str();
 
     Log(LogChannel_ShaderCompiler, severity, "%s", str.c_str());
+	
+	return 0;
 }
 
 void OnCompile(Entity shader, Entity binaryShader) {
@@ -215,11 +217,11 @@ void OnCompile(Entity shader, Entity binaryShader) {
         GetStreamResolvedPath(shader),
         GetStreamResolvedPath(binaryShader),
         profile,
-        GetStreamResolvedPath(GetParent(shader)));
+        GetStreamResolvedPath(GetShaderDeclaration(shader)));
 
-    bool hasErrors = Compile(
+    bool hasErrors = 0 != Compile(
             GetStreamResolvedPath(shader),
-            GetStreamResolvedPath(GetParent(shader)),
+            GetStreamResolvedPath(GetShaderDeclaration(shader)),
             GetStreamResolvedPath(binaryShader),
             profile,
             GetShaderType(shader));

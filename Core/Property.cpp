@@ -14,6 +14,7 @@ struct PropertyData
     void *setter;
     Type type, owner;
     PropertyTransferFunc transferFunc;
+    Enum e;
 };
 
 DefineHandle(Property, PropertyData)
@@ -75,4 +76,12 @@ PropertyTransferFunc GetPropertyTransferFunc(Property property) {
 
 void SetPropertyTransferFunc(Property property, PropertyTransferFunc func) {
     PropertyAt(property)->transferFunc = func;
+}
+
+Enum GetPropertyEnum(Property property) {
+    return PropertyAt(property)->e;
+}
+
+void SetPropertyEnum(Property property, Enum e) {
+    PropertyAt(property)->e = e;
 }

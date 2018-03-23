@@ -49,8 +49,8 @@ StringRef GetFileExtension(StringRef absolutePath) {
     return extension;
 }
 
-void GetParentFolder(StringRef absolutePath, char *parentFolder) {
-    strcpy(parentFolder, absolutePath);
+void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t bufMax) {
+    strncpy(parentFolder, absolutePath, bufMax);
     auto ptr = strrchr(parentFolder, '/');
     if(!ptr) {
         *parentFolder = 0;
@@ -74,23 +74,23 @@ void ScanFolder(Entity entity) {
             if(ent->d_name[0] == '.') continue;
 
             char entryPath[PATH_MAX];
-            sprintf(entryPath, "%s/%s", GetFolderPath(entity), ent->d_name);
+            snprintf(entryPath, PATH_MAX, "%s/%s", GetFolderPath(entity), ent->d_name);
 
             char entityPath[PATH_MAX];
-            sprintf(entityPath, "%s/%s", GetEntityPath(entity), ent->d_name);
+            snprintf(entityPath, PATH_MAX, "%s/%s", GetEntityPath(entity), ent->d_name);
 
             struct stat ent_stat;
             stat(entryPath, &ent_stat);
 
             switch(ent_stat.st_mode & S_IFMT) {
                 case S_IFDIR:
-                    entryEntity = CreateFolder(entityPath);
+                    entryEntity = CreateFolder(entity, ent->d_name);
                     SetName(entryEntity, ent->d_name);
                     SetParent(entryEntity, entity);
                     SetFolderPath(entryEntity, entryPath);
                     break;
                 case S_IFREG:
-                    entryEntity = CreateStream(entityPath);
+                    entryEntity = CreateStream(entity, ent->d_name);
                     SetName(entryEntity, ent->d_name);
                     SetParent(entryEntity, entity);
                     SetStreamPath(entryEntity, entryPath);

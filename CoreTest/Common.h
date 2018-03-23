@@ -17,24 +17,13 @@ struct Person
 };
 
 DeclareComponent(Person)
-
-void SetPersonName(Entity entity, StringRef name);
-StringRef GetPersonName(Entity entity);
+DeclareComponentProperty(Person, StringRef, PersonName)
 
 DefineComponent(Person)
     DefineProperty(Person, PersonName)
 EndComponent()
 
-void SetPersonName(Entity entity, StringRef name)
-{
-    GetPerson(entity)->PersonName = name;
-}
-
-StringRef GetPersonName(Entity entity)
-{
-    return GetPerson(entity)->PersonName.c_str();
-}
-
+DefineComponentProperty(Person, StringRef, PersonName)
 
 
 #endif //PLAZA_CORETEST_COMMON_H

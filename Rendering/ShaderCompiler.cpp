@@ -14,7 +14,6 @@ DefineEvent(ShaderCompile, ShaderCompileHandler)
 String ShaderIncludeDirectory;
 
 DefineService(ShaderCompiler)
-    ServiceSetting(ShaderIncludeDirectory, SETTING_SHADER_INCLUDE_DIRECTORY)
 EndService()
 
 void SetShaderIncludeDirectory(StringRef value) {

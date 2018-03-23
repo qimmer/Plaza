@@ -7,10 +7,10 @@
 
 #include <Core/Entity.h>
 
+DeclareComponent(Camera3D)
+DeclareService(Camera3D)
 
-    DeclareComponent(Camera3D)
-    DeclareService(Camera3D)
-
-    DeclareComponentPropertyReactive(Camera3D, float, Camera3DFov)
+DeclareComponentPropertyReactive(Camera3D, float, Camera3DFov)
+DeclareComponentPropertyReactive(Camera3D, float, Camera3DAspectRatio)
 
 #endif //PLAZA_CAMERA2D_H

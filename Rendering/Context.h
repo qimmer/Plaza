@@ -16,7 +16,6 @@
     typedef void(*CursorHandler)(Entity context, u8 index, v2i oldState, v2i newState);
 
     DeclareComponentPropertyReactive(Context, StringRef, ContextTitle)
-    DeclareComponentPropertyReactive(Context, v2i, ContextSize)
     DeclareComponentPropertyReactive(Context, bool, ContextFullscreen)
     DeclareComponentPropertyReactive(Context, bool, ContextVsync)
 

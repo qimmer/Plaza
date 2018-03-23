@@ -8,7 +8,6 @@
 #include "File/Folder.h"
 #include "Persistance.h"
 #include "PersistancePoint.h"
-#include "PropertyBinding.h"
 #include <Core/Hierarchy.h>
 #include <Foundation/Visibility.h>
 #include <Core/CoreModule.h>
@@ -18,11 +17,9 @@ DefineModule(Foundation)
     ModuleType(Stream)
     ModuleType(Persistance)
     ModuleType(PersistancePoint)
-    ModuleType(PropertyBinding)
 
     ModuleService(MemoryStream)
-    ModuleService(Hierarchy)
     ModuleService(Stream)
-
+    ModuleService(PersistancePoint)
     ModuleDependency(Core)
 EndModule()

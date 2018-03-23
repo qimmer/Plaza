@@ -12,14 +12,6 @@
     static Entity FirstRoot = 0;
 
     struct Hierarchy {
-        Hierarchy() : Parent(0), FirstChild(0), Sibling(0) {
-            char name[128];
-            ulltoa((unsigned long long)this, name, 10);
-            Name = name;
-            Path = "/";
-            Path += name;
-        }
-
         Entity Parent;
         String Name;
         Entity FirstChild;
@@ -36,27 +28,26 @@
     EndService()
 
     DefineComponentPropertyReactive(Hierarchy, StringRef, Name)
-
     DefineComponentPropertyReactive(Hierarchy, Entity, Parent)
 
-    static StringRef CalculateEntityPath(Entity entity) {
-        static char path[PATH_MAX];
-        static char path2[PATH_MAX];
-        sprintf(path, "");
-        sprintf(path2, "");
+    static void CalculateEntityPath(char *dest, size_t bufMax, Entity entity) {
+        char path[PATH_MAX];
+        char path2[PATH_MAX];
+        snprintf(path, PATH_MAX, "");
+        snprintf(path2, PATH_MAX, "");
 
         while(IsEntityValid(entity)) {
-            sprintf(path2, "/%s%s", GetName(entity), path);
+            snprintf(path2, PATH_MAX, "/%s%s", GetName(entity), path);
             entity = GetParent(entity);
-            strcpy(path, path2);
+            strncpy(path, path2, PATH_MAX);
         }
 
-        return path2;
+        strncpy(dest, path2, bufMax);
     }
 
     static void GetParentPath(char *dest, u32 maxSize, StringRef path) {
         char *lastSep;
-        strcpy(dest, path);
+        strncpy(dest, path, maxSize);
         lastSep = strrchr(dest, '/');
         if(lastSep != NULL) {
             *lastSep = '\0';
@@ -80,7 +71,7 @@
 
     Entity FindChild(Entity parent, StringRef childName) {
         char path[PATH_MAX];
-        sprintf(path, "%s/%s", GetEntityPath(parent), childName);
+        snprintf(path, PATH_MAX, "%s/%s", GetEntityPath(parent), childName);
 
         return FindEntity(path);
     }
@@ -90,6 +81,7 @@
     }
 
     Entity CreateEntityFromPath(StringRef path) {
+        Assert(path);
         if(path[0] != '/') {
             Log(LogChannel_Core, LogSeverity_Error, "Absolute entity path is malformed: %s", path);
             return 0;
@@ -100,22 +92,47 @@
             return existing;
         }
 
-        StringRef name = strrchr(path, '/') + 1;
+        StringRef name = strrchr(path, '/');
         Assert(name);
+		name++;
 
         char parentPath[PATH_MAX];
         GetParentPath(parentPath, PATH_MAX, path);
 
         auto parent = parentPath[0] ? CreateEntityFromPath(parentPath) : 0;
 
-        auto entity = CreateEntity();
-        SetName(entity, name);
-        SetParent(entity, parent);
-
-        //Log(LogChannel_Core, LogSeverity_Info, "Creating %s ...", path);
-
-        return entity;
+        return CreateEntityFromName(parent, name);
     }
+
+Entity CreateEntityFromName(Entity parent, StringRef name) {
+    Assert(name);
+
+    auto nameLen = strlen(name);
+    if(nameLen <= 0) {
+        Log(LogChannel_Core, LogSeverity_Error, "Entity name cannot be empty");
+        return 0;
+    }
+
+    for(auto i = 0; i < nameLen; ++i) {
+        if(name[i] == ':' || name[i] == '/' || name[i] == '\\') {
+            Log(LogChannel_Core, LogSeverity_Error, "Entity name '%s' contains invalid character: '%c'", name, name[i]);
+            return 0;
+        }
+    }
+
+    for_children(child, parent) {
+        Assert(IsEntityValid(child));
+        if(strcmp(GetName(child), name) == 0) {
+            return child;
+        }
+    }
+
+    auto entity = CreateEntity();
+    AddHierarchy(entity);
+    SetName(entity, name);
+    SetParent(entity, parent);
+    return entity;
+}
 
     Entity FindEntity(StringRef path) {
         auto it = EntityPathMap.find(path);
@@ -172,8 +189,10 @@ Entity CopyEntity(Entity templateEntity, StringRef copyPath) {
 }
 
 static void OnNameChanged(Entity entity, StringRef oldName, StringRef newName) {
-    auto newPath = CalculateEntityPath(entity);
+    char newPath[PATH_MAX];
+    CalculateEntityPath(newPath, PATH_MAX, entity);
     auto existingEntity = FindEntity(newPath);
+
     Assert(!IsEntityValid(existingEntity) || existingEntity == entity);
 
     auto data = GetHierarchy(entity);
@@ -189,7 +208,7 @@ static void Detach(Entity entity, Entity parent) {
         if(GetFirstChild(parent) == entity) {
             GetHierarchy(parent)->FirstChild = GetHierarchy(entity)->Sibling;
         } else {
-            for(auto child = GetFirstChild(parent); IsEntityValid(child); child = GetSibling(child)) {
+            for(auto child = GetFirstChild(parent); child; child = GetSibling(child)) {
                 auto sibling = GetSibling(child);
                 if(sibling == entity) {
                     GetHierarchy(child)->Sibling = GetHierarchy(sibling)->Sibling;
@@ -201,7 +220,7 @@ static void Detach(Entity entity, Entity parent) {
         if(FirstRoot == entity) {
             FirstRoot = GetHierarchy(entity)->Sibling;
         } else {
-            for(auto child = FirstRoot; IsEntityValid(child); child = GetSibling(child)) {
+            for(auto child = FirstRoot; child; child = GetSibling(child)) {
                 auto sibling = GetSibling(child);
                 if(sibling == entity) {
                     GetHierarchy(child)->Sibling = GetHierarchy(sibling)->Sibling;
@@ -223,7 +242,7 @@ static void Attach(Entity entity, Entity parent) {
         if(!IsEntityValid(child)) {
             GetHierarchy(parent)->FirstChild = entity;
         } else {
-            while(IsEntityValid(GetSibling(child))) {
+            while(GetSibling(child)) {
                 child = GetSibling(child);
             }
 
@@ -234,7 +253,7 @@ static void Attach(Entity entity, Entity parent) {
         if(!IsEntityValid(child)) {
             FirstRoot = entity;
         } else {
-            while(IsEntityValid(GetSibling(child))) {
+            while(GetSibling(child)) {
                 child = GetSibling(child);
             }
 
@@ -243,7 +262,9 @@ static void Attach(Entity entity, Entity parent) {
     }
 
     auto data = GetHierarchy(entity);
-    data->Path = CalculateEntityPath(entity);
+    char newPath[PATH_MAX];
+    CalculateEntityPath(newPath, PATH_MAX, entity);
+    data->Path = newPath;
     EntityPathMap[data->Path] = entity;
     EntityMap[entity] = data->Path;
 }
@@ -267,7 +288,7 @@ static void OnHierarchyRemoved(Entity entity) {
 
 static void OnHierarchyAdded(Entity entity) {
     char name[32];
-    sprintf(name, "Entity_%d", GetHandleIndex(entity));
+    snprintf(name, 32, "Entity_%ul", GetHandleIndex(entity));
 
     SetName(entity, name);
 

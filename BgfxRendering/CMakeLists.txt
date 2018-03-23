@@ -40,7 +40,7 @@ SET(ex_glfw_inc_dir "${SOURCE_DIR}/include")
 ADD_LIBRARY(glfw STATIC IMPORTED)
 SET_PROPERTY(TARGET glfw PROPERTY IMPORTED_LOCATION "${ex_glfw_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}glfw3${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
-add_library(BgfxRendering BgfxModule.cpp BgfxModule.h BgfxModule.cpp BgfxModule.h BgfxContext.cpp BgfxContext.h BgfxCommandList.cpp BgfxCommandList.h BgfxVertexBuffer.cpp BgfxVertexBuffer.h BgfxIndexBuffer.cpp BgfxIndexBuffer.h BgfxProgram.cpp BgfxProgram.h BgfxBinaryShader.cpp BgfxBinaryShader.h BgfxUniform.cpp BgfxUniform.h BgfxTexture2D.cpp BgfxTexture2D.h BgfxVertexDeclaration.cpp BgfxVertexDeclaration.h)
+add_library(BgfxRendering BgfxModule.cpp BgfxModule.h BgfxModule.cpp BgfxModule.h BgfxContext.cpp BgfxContext.h BgfxCommandList.cpp BgfxCommandList.h BgfxVertexBuffer.cpp BgfxVertexBuffer.h BgfxIndexBuffer.cpp BgfxIndexBuffer.h BgfxProgram.cpp BgfxProgram.h BgfxBinaryShader.cpp BgfxBinaryShader.h BgfxUniform.cpp BgfxUniform.h BgfxTexture2D.cpp BgfxTexture2D.h BgfxVertexDeclaration.cpp BgfxVertexDeclaration.h BgfxOffscreenRenderTarget.cpp BgfxOffscreenRenderTarget.h)
 add_dependencies(BgfxRendering ex_bgfx ex_glfw)
 
 target_include_directories(BgfxRendering PUBLIC ".." ${ex_bgfx_inc_dir} ${ex_glfw_inc_dir})

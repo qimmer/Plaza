@@ -116,6 +116,7 @@ Index AddExtension(Type componentType, Type extensionType) {
     componentTypes[index].extensions.push_back(extensionType);
 
     for(auto entity = GetNextEntity(0); entity; entity = GetNextEntity(entity)) {
+        Assert(IsEntityValid(entity));
         if(!componentTypes[index].hasFunc(entity)) continue;
 
         componentTypes[GetHandleIndex(extensionType)].addFunc(entity);

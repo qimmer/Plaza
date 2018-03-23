@@ -28,7 +28,21 @@ EndService()
 
 static u64 Read(Entity entity, u64 size, void *data) {
     if(!GetFileStream(entity)->fd) return 0;
-    return fread(data, 1, size, GetFileStream(entity)->fd);
+
+    u8 *bytes = (u8*)data;
+    u64 remaining = size;
+    while(remaining) {
+        auto numRead = fread(bytes, 1, remaining, GetFileStream(entity)->fd);
+        if(!numRead) {
+            Log(LogChannel_Core, LogSeverity_Error, "Error reading at offset '%ull' in file '%s'", ftell(GetFileStream(entity)->fd), GetStreamPath(entity));
+            return 0;
+        }
+
+        remaining -= numRead;
+        bytes += numRead;
+    }
+
+    return size;
 }
 
 static u64 Write(Entity entity, u64 size, const void *data) {

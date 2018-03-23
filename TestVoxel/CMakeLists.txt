@@ -13,4 +13,4 @@ configure_file(${PROJECT_SOURCE_DIR}/../ImGui/Shaders/imgui.var ${CMAKE_CURRENT_
 #configure_file(${PROJECT_SOURCE_DIR}/../Bgfx/shaders/shaderlib.sh ${CMAKE_CURRENT_BINARY_DIR}/Shaders/shaderlib.sh COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/Textures/minecraft.png ${CMAKE_CURRENT_BINARY_DIR}/Textures/minecraft.png COPYONLY)
 
-target_link_libraries(TestVoxel Core Foundation Rendering BgfxRendering Editor ImGui Player Scene2D Scene3D Voxel)
+target_link_libraries(TestVoxel Core Foundation Rendering BgfxRendering Editor ImGui Player Scene2D Scene3D)

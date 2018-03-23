@@ -7,6 +7,8 @@
 
 #include <Core/Entity.h>
 
+DeclareEnum(ShaderType)
+
 #define ShaderType_Unknown 0
 #define ShaderType_Vertex 1
 #define ShaderType_Pixel 2
@@ -17,6 +19,7 @@
 
 DeclareComponent(Shader)
 DeclareComponentPropertyReactive(Shader, u8, ShaderType)
+DeclareComponentPropertyReactive(Shader, Entity, ShaderDeclaration)
 
 DeclareService(Shader)
 

@@ -78,7 +78,7 @@ static bool ServiceStart() {
     SubscribeCameraViewportChanged(OnCameraViewportChanged);
     SubscribeCameraRenderTargetChanged(OnCameraRenderTargetChanged);
     SubscribeCamera2DAdded(UpdateProjectionMatrix);
-    SubscribeContextSizeChanged(OnRenderTargetSizeChanged);
+    SubscribeRenderTargetSizeChanged(OnRenderTargetSizeChanged);
     return true;
 }
 
@@ -87,7 +87,7 @@ static bool ServiceStop() {
     UnsubscribeCameraViewportChanged(OnCameraViewportChanged);
     UnsubscribeCameraRenderTargetChanged(OnCameraRenderTargetChanged);
     UnsubscribeCamera2DAdded(UpdateProjectionMatrix);
-    UnsubscribeContextSizeChanged(OnRenderTargetSizeChanged);
+    UnsubscribeRenderTargetSizeChanged(OnRenderTargetSizeChanged);
     return true;
 }
 

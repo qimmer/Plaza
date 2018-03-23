@@ -3,7 +3,7 @@
 #include "MemoryStream.h"
 
 struct MemoryStream {
-    Vector<char> bytes;
+    std::vector<char> bytes;
     s32 offset;
     bool open;
 };

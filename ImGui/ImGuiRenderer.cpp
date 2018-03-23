@@ -30,35 +30,37 @@
 #include <Core/String.h>
 #include <Foundation/Visibility.h>
 #include <Rendering/VertexDeclaration.h>
+#include <Rendering/RenderTarget.h>
 
 using namespace ImGui;
 
-    ImGuiContext *PrimaryImGuiContext = NULL;
+ImGuiContext *PrimaryImGuiContext = NULL;
 
-    struct ImGuiRenderer {
-        ImGuiContext* ImGuiContext;
-        Entity CommandList, VertexBuffer, IndexBuffer;
-        Vector<Entity> Batches;
-        bool ShowMetrics, ShowDemo;
-    };
+struct ImGuiRenderer {
+    ImGuiContext* ImGuiContext;
+    Entity CommandList, VertexBuffer, IndexBuffer;
+    Vector<Entity> Batches;
+    bool ShowMetrics, ShowDemo;
+};
 
-    Entity FontTexture,
-            ImGuiVertexDeclaration,
-            ImGuiTextureUniform,
-            FontTextureUniformState,
-            ImGuiVertexShader,
-            ImGuiPixelShader,
-            ImGuiProgram,
-            FontMaterial,
-            ImGuiDataRoot;
+Entity FontTexture = 0,
+        ImGuiVertexDeclaration = 0,
+        ImGuiTextureUniform = 0,
+        FontTextureUniformState = 0,
+        ImGuiVertexShader = 0,
+        ImGuiPixelShader = 0,
+        ImGuiShaderDeclaration = 0,
+        ImGuiProgram = 0,
+        FontMaterial = 0,
+        ImGuiDataRoot = 0;
 
-    DefineComponent(ImGuiRenderer)
-    EndComponent()
+DefineComponent(ImGuiRenderer)
+EndComponent()
 
-    DefineService(ImGuiRenderer)
-    EndService()
+DefineService(ImGuiRenderer)
+EndService()
 
-    DefineEvent(ImGuiDraw, EntityHandler)
+DefineEvent(ImGuiDraw, EntityHandler)
 
 void *GetDefaultImGuiContext() {
     return PrimaryImGuiContext;
@@ -73,33 +75,36 @@ void RebuildImGuiFonts() {
     io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &textureSize.x, &textureSize.y);
 
     // Create texture with previous stream as data
-    char texPath[PATH_MAX];
-    snprintf(texPath, PATH_MAX, "%s/FontTexture", GetEntityPath(ImGuiDataRoot));
 
-    FontTexture = CreateTexture2D(texPath);
+    FontTexture = CreateTexture2D(ImGuiDataRoot, "FontTexture");
     StreamOpen(FontTexture, StreamMode_Write);
     StreamWrite(FontTexture, textureSize.x * textureSize.y * 4, tex_pixels);
     StreamClose(FontTexture);
     SetTextureSize2D(FontTexture, textureSize);
-    SetTextureFormat(FontTexture, TEXTURE_FORMAT_RGBA8);
+    SetTextureFormat(FontTexture, TextureFormat_RGBA8);
 
-    snprintf(texPath, PATH_MAX, "%s/FontMaterial", GetEntityPath(ImGuiDataRoot));
-    FontMaterial = CreateMaterial(texPath);
+    FontMaterial = CreateMaterial(ImGuiDataRoot, "FontMaterial");
     SetMaterialProgram(FontMaterial, ImGuiProgram);
-    SetMaterialRenderState(FontMaterial, RenderState_STATE_RGB_WRITE |
-                                         RenderState_STATE_ALPHA_WRITE |
-                                         RenderState_STATE_MSAA |
-                                         RenderState_STATE_BLEND_FUNC(RenderState_STATE_BLEND_SRC_ALPHA, RenderState_STATE_BLEND_INV_SRC_ALPHA));
+    SetMaterialMultisampleMode(FontMaterial, RenderState_STATE_MSAA);
+    SetMaterialBlendMode(FontMaterial, RenderState_STATE_BLEND_FUNC(RenderState_STATE_BLEND_SRC_ALPHA, RenderState_STATE_BLEND_INV_SRC_ALPHA));
+    SetMaterialWriteMask(FontMaterial, RenderState_STATE_RGB_WRITE | RenderState_STATE_ALPHA_WRITE);
+    SetMaterialDepthTest(FontMaterial, RenderState_STATE_DEPTH_TEST_NONE);
 
-
-    snprintf(texPath, PATH_MAX, "%s/FontTextureUniformState", GetEntityPath(FontMaterial));
-    FontTextureUniformState = CreateUniformState(texPath);
+    FontTextureUniformState = CreateUniformState(FontMaterial, "TextureState");
     SetUniformStateUniform(FontTextureUniformState, ImGuiTextureUniform);
     SetUniformStateTexture(FontTextureUniformState, FontTexture);
 
     io.Fonts->SetTexID((void*)(size_t)GetHandleIndex(FontMaterial));
     io.Fonts->ClearTexData();
 
+}
+
+Entity GetImGuiTextureUniform() {
+    return ImGuiTextureUniform;
+}
+
+Entity GetImGuiProgram() {
+    return ImGuiProgram;
 };
 
     static void InitializeKeyMapping();
@@ -114,16 +119,11 @@ void RebuildImGuiFonts() {
 
         InitializeKeyMapping();
 
-        char path[PATH_MAX];
-        snprintf(path, PATH_MAX, "%s/.ImGuiCommandList", GetEntityPath(context));
-        data->CommandList = CreateCommandList(path);
+        data->CommandList = CreateCommandList(context, ".ImGuiCommandList");
         SetCommandListLayer(data->CommandList, 245 + GetImGuiRendererIndex(context));
 
-        snprintf(path, PATH_MAX, "%s/ImGuiVertexBuffer", GetEntityPath(data->CommandList));
-        data->VertexBuffer = CreateVertexBuffer(path);
-
-        snprintf(path, PATH_MAX, "%s/ImGuiIndexBuffer", GetEntityPath(data->CommandList));
-        data->IndexBuffer = CreateIndexBuffer(path);
+        data->VertexBuffer = CreateVertexBuffer(data->CommandList, "ImGuiVertexBuffer");
+        data->IndexBuffer = CreateIndexBuffer(data->CommandList, "ImGuiIndexBuffer");
 
         SetVertexBufferDeclaration(data->VertexBuffer, ImGuiVertexDeclaration);
 
@@ -163,18 +163,14 @@ void RebuildImGuiFonts() {
         data->Batches.resize(numBatches);
 
         for(int i = oldSize; i < numBatches; ++i) {
-            char path[PATH_MAX];
-
-            snprintf(path, PATH_MAX, "%s/Batch_%i", GetEntityPath(commandList), i);
-            data->Batches[i] = CreateBatch(path);
-
-            snprintf(path, PATH_MAX, "%s/Mesh", GetEntityPath(data->Batches[i]));
-            auto mesh = CreateMesh(path);
+            char name[PATH_MAX];
+            snprintf(name, PATH_MAX, "Batch_%i", i);
+            data->Batches[i] = CreateBatch(commandList, name);
+            auto mesh = CreateMesh(data->Batches[i], "Mesh");
             SetMeshVertexBuffer(mesh, data->VertexBuffer);
             SetMeshIndexBuffer(mesh, data->IndexBuffer);
-            SetMeshPrimitiveType(mesh, PrimitiveType_TRIANGLES);
+            SetMeshCullMode(mesh, RenderState_STATE_CULL_NONE);
 
-            SetBatchMaterial(data->Batches[i], FontMaterial);
             SetBatchMesh(data->Batches[i], mesh);
         }
 
@@ -238,7 +234,7 @@ void RebuildImGuiFonts() {
         SetCurrentContext(GetImGuiRenderer(context)->ImGuiContext);
         ImGuiIO& io = GetIO();
 
-        auto contextSize = GetContextSize(context);
+        auto contextSize = GetRenderTargetSize(context);
         auto mousePosition = GetCursorPosition(context, 0);
 
         io.DisplaySize = ImVec2(contextSize.x, contextSize.y);
@@ -293,7 +289,7 @@ void RebuildImGuiFonts() {
         SetCommandListViewMatrix(data->CommandList, viewMatrix);
         SetCommandListClearTargets(data->CommandList, ClearTarget_Depth);
         SetCommandListClearDepth(data->CommandList, 0.0f);
-        SetCommandListForceOrder(data->CommandList, true);
+        SetCommandListForceOrder(data->CommandList, false);
         SetCommandListRenderTarget(data->CommandList, context);
         SetCommandListViewport(data->CommandList, {0, 0, contextSize.x, contextSize.y});
 
@@ -316,52 +312,44 @@ void RebuildImGuiFonts() {
 
 
     static void InitializeProgram() {
-        char path[PATH_MAX];
-
-        snprintf(path, PATH_MAX, "%s/Program", GetEntityPath(ImGuiDataRoot));
-        ImGuiProgram = CreateProgram(path);
-
-        snprintf(path, PATH_MAX, "%s/VertexShader", GetEntityPath(ImGuiProgram));
-        ImGuiVertexShader = CreateShader(path);
-
-        snprintf(path, PATH_MAX, "%s/PixelShader", GetEntityPath(ImGuiProgram));
-        ImGuiPixelShader = CreateShader(path);
-
-        snprintf(path, PATH_MAX, "%s/TextureUniform", GetEntityPath(ImGuiDataRoot));
-        ImGuiTextureUniform = CreateUniform(path);
+        ImGuiProgram = CreateProgram(ImGuiDataRoot, "Program");
+        ImGuiVertexShader = CreateShader(ImGuiProgram, "VertexShader");
+        ImGuiShaderDeclaration = CreateStream(ImGuiProgram, "ShaderDeclaration");
+        ImGuiPixelShader = CreateShader(ImGuiProgram, "PixelShader");
+        ImGuiTextureUniform = CreateUniform(ImGuiDataRoot, "TextureUniform");
 
         SetStreamPath(ImGuiVertexShader, "res://imgui/shaders/imgui.vs");
         SetStreamPath(ImGuiPixelShader, "res://imgui/shaders/imgui.ps");
-        SetStreamPath(ImGuiProgram, "res://imgui/shaders/imgui.var");
+        SetStreamPath(ImGuiShaderDeclaration, "res://imgui/shaders/imgui.var");
 
         SetShaderType(ImGuiVertexShader, ShaderType_Vertex);
+        SetShaderDeclaration(ImGuiVertexShader, ImGuiShaderDeclaration);
+
         SetShaderType(ImGuiPixelShader, ShaderType_Pixel);
+        SetShaderDeclaration(ImGuiPixelShader, ImGuiShaderDeclaration);
 
         SetUniformName(ImGuiTextureUniform, "s_tex");
         SetUniformType(ImGuiTextureUniform, TypeOf_Entity());
         SetUniformArrayCount(ImGuiTextureUniform, 1);
+
+        SetVertexShader(ImGuiProgram, ImGuiVertexShader);
+        SetPixelShader(ImGuiProgram, ImGuiPixelShader);
     }
 
     static void InitializeVertexDeclaration() {
-        char path[PATH_MAX];
-
-        snprintf(path, PATH_MAX, "%s/VertexDeclaration", GetEntityPath(ImGuiDataRoot));
-        ImGuiVertexDeclaration = CreateVertexDeclaration(path);
+        ImGuiVertexDeclaration = CreateVertexDeclaration(ImGuiDataRoot, "VertexDeclaration");
 
         Entity attribute;
 
-        snprintf(path, PATH_MAX, "%s/Position", GetEntityPath(ImGuiVertexDeclaration));
-        attribute = CreateVertexAttribute(path);
+        attribute = CreateVertexAttribute(ImGuiVertexDeclaration, "Position");
         SetVertexAttributeType(attribute, TypeOf_v2f());
         SetVertexAttributeUsage(attribute, VertexAttributeUsage_Position);
 
-        snprintf(path, PATH_MAX, "%s/TexCoord", GetEntityPath(ImGuiVertexDeclaration));
-        attribute = CreateVertexAttribute(path);
+        attribute = CreateVertexAttribute(ImGuiVertexDeclaration, "TexCoord");
         SetVertexAttributeType(attribute, TypeOf_v2f());
         SetVertexAttributeUsage(attribute, VertexAttributeUsage_TexCoord0);
 
-        snprintf(path, PATH_MAX, "%s/Color", GetEntityPath(ImGuiVertexDeclaration));
-        attribute = CreateVertexAttribute(path);
+        attribute = CreateVertexAttribute(ImGuiVertexDeclaration, "Color");
         SetVertexAttributeType(attribute, TypeOf_rgba8());
         SetVertexAttributeUsage(attribute, VertexAttributeUsage_Color0);
         SetVertexAttributeNormalize(attribute, true);
@@ -402,7 +390,7 @@ void RebuildImGuiFonts() {
         ImGui::GetIO();
         PrimaryImGuiContext = ImGui::GetCurrentContext();
 
-        ImGuiDataRoot = CreateHierarchy("/.ImGui");
+        ImGuiDataRoot = CreateHierarchy(0, ".ImGui");
 
         InitializeProgram();
         InitializeFontTexture();

@@ -13,6 +13,7 @@
 #include "BgfxProgram.h"
 #include "BgfxBinaryShader.h"
 #include "BgfxVertexDeclaration.h"
+#include "BgfxOffscreenRenderTarget.h"
 
 
 DefineModule(BgfxRendering)
@@ -25,6 +26,7 @@ DefineModule(BgfxRendering)
         ModuleService(BgfxIndexBuffer)
         ModuleService(BgfxBinaryShader)
         ModuleService(BgfxProgram)
+        ModuleService(BgfxOffscreenRenderTarget)
 
         ModuleType(BgfxCommandList)
         ModuleType(BgfxContext)
@@ -35,6 +37,7 @@ DefineModule(BgfxRendering)
         ModuleType(BgfxIndexBuffer)
         ModuleType(BgfxBinaryShader)
         ModuleType(BgfxProgram)
+        ModuleType(BgfxOffscreenRenderTarget)
 
 #ifdef BGFXRENDERING_WITH_SHADER_COMPILER
         ModuleService(BgfxShaderCompiler)

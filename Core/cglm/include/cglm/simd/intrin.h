@@ -9,9 +9,9 @@
 #define cglm_intrin_h
 
 #if defined( _WIN32 )
-#  if (defined(_M_AMD64) || defined(_M_X64)) || _M_IX86_FP == 2
+#  if ((defined(_M_AMD64) || defined(_M_X64)) || _M_IX86_FP == 2) && !defined(__SSE2__)
 #    define __SSE2__
-#  elif _M_IX86_FP == 1
+#  elif (_M_IX86_FP == 1) && !defined(__SSE__)
 #    define __SSE__
 #  endif
 #endif

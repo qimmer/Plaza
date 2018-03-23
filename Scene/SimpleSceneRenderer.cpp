@@ -18,102 +18,99 @@
 #include <Rendering/RenderTarget.h>
 #include "SimpleSceneRenderer.h"
 
+struct SimpleSceneRenderer {
+    Entity CommandList;
+};
 
-    struct SimpleSceneRenderer {
-        Entity CommandList;
-    };
+DefineComponent(SimpleSceneRenderer)
+    Dependency(Camera)
+EndComponent()
 
-    DefineComponent(SimpleSceneRenderer)
-        Dependency(Camera)
-    EndComponent()
+DefineService(SimpleSceneRenderer)
+EndService()
 
-    DefineService(SimpleSceneRenderer)
-    EndService()
+static void UpdateBatches(Entity sceneRenderer) {
+    auto data = GetSimpleSceneRenderer(sceneRenderer);
 
-    static void UpdateBatches(Entity sceneRenderer) {
-        auto data = GetSimpleSceneRenderer(sceneRenderer);
+    // First, prepare command list
+    auto commandList = data->CommandList;
+    auto renderTarget = GetCameraRenderTarget(sceneRenderer);
+    auto viewport = GetCameraViewport(sceneRenderer);
 
-        // First, prepare command list
-        auto commandList = data->CommandList;
-        auto renderTarget = GetCameraRenderTarget(sceneRenderer);
-        auto viewport = GetCameraViewport(sceneRenderer);
+    bool shouldRender = IsEntityValid(renderTarget) && HasRenderTarget(renderTarget);
+    SetHidden(commandList, !shouldRender);
+    if(!shouldRender) {
+        return;
+    }
 
-        bool shouldRender = IsEntityValid(renderTarget) && HasRenderTarget(renderTarget);
-        SetHidden(commandList, !shouldRender);
-        if(!shouldRender) {
-            return;
+    auto size = GetRenderTargetSize(renderTarget);
+    viewport.x *= size.x;
+    viewport.y *= size.y;
+    viewport.z *= size.x;
+    viewport.w *= size.y;
+
+    SetCommandListViewport(commandList, {(int)viewport.x, (int)viewport.y, (int)viewport.z, (int)viewport.w});
+    SetCommandListClearColor(commandList, GetCameraClearColor(sceneRenderer));
+    SetCommandListRenderTarget(commandList, GetCameraRenderTarget(sceneRenderer));
+    SetCommandListClearDepth(commandList, 1.0f);
+    SetCommandListClearTargets(commandList, (GetCameraClear(sceneRenderer) ? ClearTarget_Color : 0) | ClearTarget_Depth);
+    SetCommandListViewMatrix(commandList, GetCameraViewMatrix(sceneRenderer));
+    SetCommandListProjectionMatrix(commandList, GetCameraProjectionMatrix(sceneRenderer));
+    SetCommandListLayer(commandList, GetCameraLayer(sceneRenderer));
+
+    auto batch = GetFirstChild(data->CommandList);
+    auto batchIndex = 0;
+    auto scene = GetSceneNodeScene(sceneRenderer);
+    for(auto i = 0; i < GetNumMeshInstance(); ++i) {
+        auto meshInstance = GetMeshInstanceEntity(i);
+        auto meshInstanceScene = GetSceneNodeScene(meshInstance);
+        if(!meshInstanceScene || meshInstanceScene != scene || (HasVisibility(meshInstance) && GetHidden(meshInstance))) continue;
+
+        if(!IsEntityValid(batch)) {
+            char name[PATH_MAX];
+            snprintf(name, PATH_MAX, "Batch_%i", batchIndex);
+            batch = CreateBatch(data->CommandList, name);
         }
 
-        auto size = GetRenderTargetSize(renderTarget);
-        viewport.x *= size.x;
-        viewport.y *= size.y;
-        viewport.z *= size.x;
-        viewport.w *= size.y;
+        SetBatchMaterial(batch, GetMeshInstanceMaterial(meshInstance));
+        SetBatchMesh(batch, GetMeshInstanceMesh(meshInstance));
+        SetBatchWorldMatrix(batch, GetGlobalTransform(meshInstance));
 
-        SetCommandListViewport(commandList, {(int)viewport.x, (int)viewport.y, (int)viewport.z, (int)viewport.w});
-        SetCommandListClearColor(commandList, GetCameraClearColor(sceneRenderer));
-        SetCommandListRenderTarget(commandList, GetCameraRenderTarget(sceneRenderer));
-        SetCommandListClearDepth(commandList, 0.0f);
-        SetCommandListClearTargets(commandList, (GetCameraClear(sceneRenderer) ? ClearTarget_Color : 0) | ClearTarget_Depth);
-        SetCommandListViewMatrix(commandList, GetCameraViewMatrix(sceneRenderer));
-        SetCommandListProjectionMatrix(commandList, GetCameraProjectionMatrix(sceneRenderer));
-        SetCommandListLayer(commandList, GetCameraLayer(sceneRenderer));
-
-        auto batch = GetFirstChild(data->CommandList);
-        auto batchIndex = 0;
-        auto scene = GetSceneNodeScene(sceneRenderer);
-        for(auto i = 0; i < GetNumMeshInstance(); ++i) {
-            auto meshInstance = GetMeshInstanceEntity(i);
-            auto meshInstanceScene = GetSceneNodeScene(meshInstance);
-            if(!meshInstanceScene || meshInstanceScene != scene) continue;
-
-            if(!IsEntityValid(batch)) {
-                char path[PATH_MAX];
-                snprintf(path, PATH_MAX, "%s/Batch_%i", GetEntityPath(data->CommandList), batchIndex);
-                batch = CreateBatch(path);
-            }
-
-            SetBatchMaterial(batch, GetMeshInstanceMaterial(meshInstance));
-            SetBatchMesh(batch, GetMeshInstanceMesh(meshInstance));
-            SetBatchWorldMatrix(batch, GetGlobalTransform(meshInstance));
-
-            batch = GetSibling(batch);
-            batchIndex++;
-        }
+        batch = GetSibling(batch);
+        batchIndex++;
     }
+}
 
-    static void OnAppUpdate(double deltaTime) {
-        for(auto i = 0; i < GetNumSimpleSceneRenderer(); ++i) {
-            UpdateBatches(GetSimpleSceneRendererEntity(i));
-        }
+static void OnAppUpdate(double deltaTime) {
+    for(auto i = 0; i < GetNumSimpleSceneRenderer(); ++i) {
+        UpdateBatches(GetSimpleSceneRendererEntity(i));
     }
+}
 
-    static void OnSimpleRendererAdded(Entity entity) {
-        char path[PATH_MAX];
-        snprintf(path, PATH_MAX, "%s/CommandList", GetEntityPath(entity));
-        GetSimpleSceneRenderer(entity)->CommandList = CreateCommandList(path);
-    }
+static void OnSimpleRendererAdded(Entity entity) {
+    GetSimpleSceneRenderer(entity)->CommandList = CreateCommandList(entity, "SimpleSceneRenderer_CommandList");
+}
 
-    static void OnSimpleRendererRemoved(Entity entity) {
-        DestroyEntity(GetSimpleSceneRenderer(entity)->CommandList);
-    }
+static void OnSimpleRendererRemoved(Entity entity) {
+    DestroyEntity(GetSimpleSceneRenderer(entity)->CommandList);
+}
 
-    static bool ServiceStart() {
-        SubscribeSimpleSceneRendererAdded(OnSimpleRendererAdded);
-        SubscribeSimpleSceneRendererRemoved(OnSimpleRendererRemoved);
-        SubscribeAppUpdate(OnAppUpdate);
+static bool ServiceStart() {
+    SubscribeSimpleSceneRendererAdded(OnSimpleRendererAdded);
+    SubscribeSimpleSceneRendererRemoved(OnSimpleRendererRemoved);
+    SubscribeAppUpdate(OnAppUpdate);
 
-        AddExtension(TypeOf_Camera(), TypeOf_SimpleSceneRenderer());
+    AddExtension(TypeOf_Camera(), TypeOf_SimpleSceneRenderer());
 
-        return true;
-    }
+    return true;
+}
 
-    static bool ServiceStop() {
-        RemoveExtension(TypeOf_Camera(), TypeOf_SimpleSceneRenderer());
+static bool ServiceStop() {
+    RemoveExtension(TypeOf_Camera(), TypeOf_SimpleSceneRenderer());
 
-        UnsubscribeAppUpdate(OnAppUpdate);
-        UnsubscribeSimpleSceneRendererAdded(OnSimpleRendererAdded);
-        UnsubscribeSimpleSceneRendererRemoved(OnSimpleRendererRemoved);
+    UnsubscribeAppUpdate(OnAppUpdate);
+    UnsubscribeSimpleSceneRendererAdded(OnSimpleRendererAdded);
+    UnsubscribeSimpleSceneRendererRemoved(OnSimpleRendererRemoved);
 
-        return true;
-    }
+    return true;
+}

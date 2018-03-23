@@ -3,15 +3,17 @@
 //
 
 #include "BgfxTexture2D.h"
+#include "BgfxOffscreenRenderTarget.h"
 #include <bgfx/bgfx.h>
 #include <Foundation/Stream.h>
 #include <Rendering/Texture.h>
+#include <Rendering/OffscreenRenderTarget.h>
 #include <Rendering/Texture2D.h>
 
 struct BgfxTexture2D {
     BgfxTexture2D() :
             handle(BGFX_INVALID_HANDLE),
-            size(0), invalidated(true) {}
+            size(0), flag(0), invalidated(true) {}
 
     bgfx::TextureHandle handle;
     u32 size, flag;
@@ -58,6 +60,8 @@ static bool ServiceStop() {
 }
 
 u16 GetBgfxTexture2DHandle(Entity entity) {
+    if(!IsEntityValid(entity)) return bgfx::kInvalidHandle;
+
     auto data = GetBgfxTexture2D(entity);
 
     if(data->invalidated) {
@@ -81,8 +85,21 @@ u16 GetBgfxTexture2DHandle(Entity entity) {
                 data->handle = BGFX_INVALID_HANDLE;
             }
 
-
             data->handle = bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag, bgfx::copy(buffer, info.storageSize));
+
+            for_entity(renderTarget, BgfxOffscreenRenderTarget) {
+                if(GetRenderTargetTexture0(renderTarget) == entity ||
+                        GetRenderTargetTexture1(renderTarget) == entity ||
+                        GetRenderTargetTexture2(renderTarget) == entity ||
+                        GetRenderTargetTexture3(renderTarget) == entity ||
+                        GetRenderTargetTexture4(renderTarget) == entity ||
+                        GetRenderTargetTexture5(renderTarget) == entity ||
+                        GetRenderTargetTexture6(renderTarget) == entity ||
+                        GetRenderTargetTexture7(renderTarget) == entity) {
+                    FireEvent(OffscreenRenderTargetChanged, renderTarget);
+                    break;
+                }
+            }
         } else {
             bgfx::updateTexture2D(data->handle, 0, 0, 0, 0, dimensions.x, dimensions.y, bgfx::copy(buffer, info.storageSize));
         }

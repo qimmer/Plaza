@@ -6,12 +6,16 @@
 #include <Rendering/RenderingModule.h>
 #include <BgfxRendering/BgfxModule.h>
 #include <ImGui/ImGuiModule.h>
+#include <Editor/Tools/FirstPersonCamera.h>
 #include "EditorModule.h"
 #include "MainMenu.h"
-#include "FileExplorer.h"
-#include "EntityExplorer.h"
+#include "Editor/ToolWindows/FileExplorer.h"
+#include "Editor/ToolWindows/EntityExplorer.h"
 #include "PropertyEditor.h"
 #include "EditorStyle.h"
+#include "Editor/Editors/SceneEditor.h"
+#include "Editor/Editors/CodeEditor.h"
+#include "EditorStandardCommands.h"
 
 
 DefineModule(Editor)
@@ -19,9 +23,17 @@ DefineModule(Editor)
         ModuleDependency(Rendering)
         ModuleDependency(ImGui)
 
+        ModuleType(SceneEditor)
+        ModuleType(CodeEditor)
+
+        ModuleService(EditorStandardCommands)
         ModuleService(EditorStyle)
         ModuleService(MainMenu)
         ModuleService(FileExplorer)
         ModuleService(EntityExplorer)
         ModuleService(PropertyEditor)
+        ModuleService(SceneEditor)
+        ModuleService(CodeEditor)
+
+        ModuleService(FirstPersonCameraTool)
     EndModule()

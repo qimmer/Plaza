@@ -16,7 +16,7 @@
 struct BgfxVertexBuffer {
     BgfxVertexBuffer() :
             staticHandle(BGFX_INVALID_HANDLE),
-            dynamicHandle(BGFX_INVALID_HANDLE), invalidated(true) {}
+            dynamicHandle(BGFX_INVALID_HANDLE), invalidated(true), size(0) {}
 
     bgfx::VertexBufferHandle staticHandle;
     bgfx::DynamicVertexBufferHandle dynamicHandle;

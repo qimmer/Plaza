@@ -25,11 +25,8 @@ void SetServiceFunctions(Service service, Handler startFunc, Handler shutdownFun
 void SetServiceName(Service service, const char *name);
 const char * GetServiceName(Service service);
 
-void SetSetting(StringRef tag, StringRef value);
-StringRef GetSetting(StringRef tag);
-
 void AddServiceDependency(Service service, Service dependency);
-void AddServiceSetting(Service service, StringRef setting, SettingGetter getter, SettingSetter setter);
+void AddServiceSubscription(Service service, void *subscribeFunc, void *unsubscribeFunc, void *eventHandler);
 
 #define DeclareService(SERVICE) \
     DeclareEvent(SERVICE ## Started, Handler)\
@@ -72,10 +69,9 @@ void AddServiceSetting(Service service, StringRef setting, SettingGetter getter,
         return service; \
     }
 
+#define Subscribe(EVENT, HANDLER) Unsubscribe ## EVENT (HANDLER); AddServiceSubscription(service, (void*)Subscribe ## EVENT, (void*)Unsubscribe ## EVENT,(void*) HANDLER);
+
 #define ServiceDependency(DEPENDENCYSERVICE) \
     AddServiceDependency(service, ServiceOf_ ## DEPENDENCYSERVICE ());
-
-#define ServiceSetting(SETTING, TAG) \
-    AddServiceSetting(service, TAG, &Get ## SETTING, &Set ## SETTING);
 
 #endif //PLAZA_SERVICE_H

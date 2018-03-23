@@ -11,10 +11,9 @@
 #include <Core/Types.h>
 #include <climits>
 #include <Core/Dictionary.h>
+#include <Core/String.h>
 #include "PropertyEditor.h"
 #include "Selection.h"
-
-static Dictionary<Type, bool> SectionOpened;
 
 #define DefinePrimitiveImGuiDrawer(TYPE, INTERMEDIATETYPE, DRAWFUNC) \
     static void Draw ## TYPE(Property property) {\
@@ -31,244 +30,323 @@ static Dictionary<Type, bool> SectionOpened;
         }\
     }
 
+#define DefinePrimitiveImGuiDrawerEnum(TYPE, INTERMEDIATETYPE, DRAWFUNC) \
+    static void Draw ## TYPE(Property property) {\
+        char id[128];\
+        sprintf(id, "##%llu", property);\
+        typedef TYPE(*Getter)(Entity entity);\
+        typedef void(*Setter)(Entity entity, TYPE value);\
+        auto actualValue = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));\
+        INTERMEDIATETYPE value = (INTERMEDIATETYPE)actualValue;\
+        u64 enumValue = (u64)actualValue;\
+        auto e = GetPropertyEnum(property);\
+        if(IsEnumValid(e)) {\
+            if(GetEnumCombinable(e)) {\
+                DrawFlag(property, e, &enumValue);\
+            } else {\
+                DrawEnum(property, e, &enumValue);\
+            }\
+            if(actualValue != enumValue) {\
+                for(auto i = 0; i < GetNumSelection(); ++i) {\
+                    ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), (TYPE)enumValue);\
+                }\
+            }\
+        } else {\
+            if(DRAWFUNC) {\
+                for(auto i = 0; i < GetNumSelection(); ++i) {\
+                    ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), (TYPE)value);\
+                }\
+            }\
+        }\
+    }
+
 #define HandleDraw(TYPE) \
     if(propertyType == TypeOf_ ## TYPE ()) {\
         Draw ## TYPE (property);\
     } do {} while(false)
 
+static Dictionary<Type, bool> SectionOpened;
 
-    DefineService(PropertyEditor)
-    EndService()
+static void DrawEnum(Property p, Enum e, u64 *value) {
+    FixedVector<StringRef, 128> elements;
 
-    static bool Visible = true;
-    static const char *ComponentContextMenuId = "ComponentContextMenu";
+    char id[128];\
+    sprintf(id, "##%llu", p);\
 
-    bool GetPropertyEditorVisible() {
-        return Visible;
+    auto numFlags = GetEnumFlags(e);
+    int flagIndex = 0;
+    for(auto i = 0; i < numFlags; ++i) {
+        if(GetEnumFlagValue(e, i) == *value) {
+            flagIndex = i;
+        }
+
+        elements.push_back(GetEnumFlagName(e, i));
     }
 
-    void SetPropertyEditorVisible(bool value) {
-        Visible = value;
+    if(ImGui::Combo(id, &flagIndex, elements.data(), elements.size())) {
+
+        *value = GetEnumFlagValue(e, flagIndex);
     }
+}
 
-    DefinePrimitiveImGuiDrawer(bool, bool, ImGui::Checkbox(id, &value))
-    DefinePrimitiveImGuiDrawer(float, float, ImGui::InputFloat(id, &value, 0.0f, 0.0f, -1, ImGuiInputTextFlags_EnterReturnsTrue))
-    DefinePrimitiveImGuiDrawer(double, float, ImGui::InputFloat(id, &value, 0.0f, 0.0f, -1, ImGuiInputTextFlags_EnterReturnsTrue))
-    DefinePrimitiveImGuiDrawer(u8, int, ImGui::SliderInt(id, &value, 0, UINT8_MAX))
-    DefinePrimitiveImGuiDrawer(u16, int, ImGui::SliderInt(id, &value, 0, UINT16_MAX))
-    DefinePrimitiveImGuiDrawer(u32, int, ImGui::InputInt(id, &value, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
-    DefinePrimitiveImGuiDrawer(u64, int, ImGui::InputInt(id, &value, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
-    DefinePrimitiveImGuiDrawer(s8, int, ImGui::SliderInt(id, &value, INT8_MIN, INT8_MAX))
-    DefinePrimitiveImGuiDrawer(s16, int, ImGui::SliderInt(id, &value, INT16_MIN, INT16_MAX))
-    DefinePrimitiveImGuiDrawer(s32, int, ImGui::InputInt(id, &value, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
-    DefinePrimitiveImGuiDrawer(s64, int, ImGui::InputInt(id, &value, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+static void DrawFlag(Property p, Enum e, u64 *value) {
+    FixedVector<StringRef, 128> elements;
 
-    DefinePrimitiveImGuiDrawer(v2f, v2f, ImGui::InputFloat2(id, &value.x, -1, ImGuiInputTextFlags_EnterReturnsTrue))
-    DefinePrimitiveImGuiDrawer(v3f, v3f, ImGui::InputFloat3(id, &value.x, -1, ImGuiInputTextFlags_EnterReturnsTrue))
-    DefinePrimitiveImGuiDrawer(v4f, v4f, ImGui::InputFloat4(id, &value.x, -1, ImGuiInputTextFlags_EnterReturnsTrue))
+    auto numFlags = GetEnumFlags(e);
+    int flagIndex = 0;
+    for(auto i = 0; i < numFlags; ++i) {
+        char id[128];\
+        sprintf(id, "%s##%llu%d", GetEnumFlagName(e, i), p, i);\
 
-    DefinePrimitiveImGuiDrawer(v2i, v2i, ImGui::InputInt2(id, &value.x, ImGuiInputTextFlags_EnterReturnsTrue))
-    DefinePrimitiveImGuiDrawer(v3i, v3i, ImGui::InputInt3(id, &value.x, ImGuiInputTextFlags_EnterReturnsTrue))
-    DefinePrimitiveImGuiDrawer(v4i, v4i, ImGui::InputInt4(id, &value.x, ImGuiInputTextFlags_EnterReturnsTrue))
+        auto flagValue = GetEnumFlagValue(e, i);
+        auto intValue = *value;
 
-    DefinePrimitiveImGuiDrawer(rgba32, rgba32, ImGui::ColorEdit4(id, &value.r))
-    DefinePrimitiveImGuiDrawer(rgb32, rgb32, ImGui::ColorEdit3(id, &value.r))
+        bool isSet = intValue & flagValue;
+        bool pressed = ImGui::Checkbox(id, &isSet);
+        if (pressed)
+        {
+            if (isSet)
+                intValue |= flagValue;
+            else
+                intValue &= ~flagValue;
 
-    static void DrawEntity(Property property) {
-        typedef Entity(*Getter)(Entity entity);
-        typedef void(*Setter)(Entity entity, Entity value);
-        auto value = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
+            *value = intValue;
+        }
+    }
+}
 
-        char id[512];
+DefineService(PropertyEditor)
+EndService()
 
-        if(IsEntityValid(value)) {
-            if(HasHierarchy(value)) {
-                sprintf(id, "%s", GetEntityPath(value));
-            } else {
-                sprintf(id, "Entity_%d", GetHandleIndex(value));
-            }
+static bool Visible = true;
+static const char *ComponentContextMenuId = "ComponentContextMenu";
+
+bool GetPropertyEditorVisible() {
+    return Visible;
+}
+
+void SetPropertyEditorVisible(bool value) {
+    Visible = value;
+}
+
+DefinePrimitiveImGuiDrawer(bool, bool, ImGui::Checkbox(id, &value))
+DefinePrimitiveImGuiDrawer(float, float, ImGui::InputFloat(id, &value, 0.0f, 0.0f, -1, ImGuiInputTextFlags_EnterReturnsTrue))
+DefinePrimitiveImGuiDrawer(double, float, ImGui::InputFloat(id, &value, 0.0f, 0.0f, -1, ImGuiInputTextFlags_EnterReturnsTrue))
+DefinePrimitiveImGuiDrawerEnum(u8, int, ImGui::SliderInt(id, &value, 0, UINT8_MAX))
+DefinePrimitiveImGuiDrawerEnum(u16, int, ImGui::SliderInt(id, &value, 0, UINT16_MAX))
+DefinePrimitiveImGuiDrawerEnum(u32, int, ImGui::InputInt(id, &value, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+DefinePrimitiveImGuiDrawerEnum(u64, int, ImGui::InputInt(id, &value, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+DefinePrimitiveImGuiDrawer(s8, int, ImGui::SliderInt(id, &value, INT8_MIN, INT8_MAX))
+DefinePrimitiveImGuiDrawer(s16, int, ImGui::SliderInt(id, &value, INT16_MIN, INT16_MAX))
+DefinePrimitiveImGuiDrawer(s32, int, ImGui::InputInt(id, &value, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+DefinePrimitiveImGuiDrawer(s64, int, ImGui::InputInt(id, &value, 1, 100, ImGuiInputTextFlags_EnterReturnsTrue))
+
+DefinePrimitiveImGuiDrawer(v2f, v2f, ImGui::InputFloat2(id, &value.x, -1, ImGuiInputTextFlags_EnterReturnsTrue))
+DefinePrimitiveImGuiDrawer(v3f, v3f, ImGui::InputFloat3(id, &value.x, -1, ImGuiInputTextFlags_EnterReturnsTrue))
+DefinePrimitiveImGuiDrawer(v4f, v4f, ImGui::InputFloat4(id, &value.x, -1, ImGuiInputTextFlags_EnterReturnsTrue))
+
+DefinePrimitiveImGuiDrawer(v2i, v2i, ImGui::InputInt2(id, &value.x, ImGuiInputTextFlags_EnterReturnsTrue))
+DefinePrimitiveImGuiDrawer(v3i, v3i, ImGui::InputInt3(id, &value.x, ImGuiInputTextFlags_EnterReturnsTrue))
+DefinePrimitiveImGuiDrawer(v4i, v4i, ImGui::InputInt4(id, &value.x, ImGuiInputTextFlags_EnterReturnsTrue))
+
+DefinePrimitiveImGuiDrawer(rgba32, rgba32, ImGui::ColorEdit4(id, &value.r))
+DefinePrimitiveImGuiDrawer(rgb32, rgb32, ImGui::ColorEdit3(id, &value.r))
+
+static void DrawEntity(Property property) {
+    typedef Entity(*Getter)(Entity entity);
+    typedef void(*Setter)(Entity entity, Entity value);
+    auto value = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
+
+    char id[512];
+
+    if(IsEntityValid(value)) {
+        if(HasHierarchy(value)) {
+            snprintf(id, 512, "%s", GetEntityPath(value));
         } else {
-            sprintf(id, "<None>");
+            snprintf(id, 512, "Entity_%ul", GetHandleIndex(value));
         }
-
-        ImGui::PushID(property);
-        ImGui::Text("%s", id);
-        ImGui::PopID();
-
-        if(ImGui::BeginDragDropTarget()) {
-            if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(GetTypeName(TypeOf_Entity()))) {
-                if(payload->Delivery) {
-                    for(auto i = 0; i < GetNumSelection(); ++i) {
-                        ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), *((Entity*)payload->Data));
-                    }
-                }
-            }
-            ImGui::EndDragDropTarget();
-        }
+    } else {
+        sprintf(id, "<None>");
     }
 
-    static void Drawm4x4f(Property property) {
-        char idx[32], idy[32], idz[32], idw[32];
-        sprintf(idx, "##%llu_x", property);
-        sprintf(idy, "##%llu_y", property);
-        sprintf(idz, "##%llu_z", property);
-        sprintf(idw, "##%llu_w", property);
+    ImGui::PushID(property);
+    ImGui::Text("%s", id);
+    ImGui::PopID();
 
-        typedef m4x4f(*Getter)(Entity entity);
-        typedef void(*Setter)(Entity entity, m4x4f value);
-        auto value = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
-        if(ImGui::InputFloat4(idx, &value.x.x)
-           || ImGui::InputFloat4(idy, &value.y.x)
-           || ImGui::InputFloat4(idz, &value.z.x)
-           || ImGui::InputFloat4(idw, &value.w.x)) {
-
-            for(auto i = 0; i < GetNumSelection(); ++i) {
-                ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), value);
-            }
-        }
-    }
-    static void DrawStringRef(Property property) {
-        char id[128];
-        char buf[PATH_MAX];
-        sprintf(id, "##%llu", property);
-        typedef StringRef(*Getter)(Entity entity);
-        typedef void(*Setter)(Entity entity, StringRef value);
-        strcpy(buf, ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0)));
-        if(ImGui::InputText(id, buf, PATH_MAX, ImGuiInputTextFlags_EnterReturnsTrue)) {
-            for(auto i = 0; i < GetNumSelection(); ++i) {
-                ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), buf);
-            }
-        }
-    }
-
-    static void DrawType(Property property) {
-        char id[128];
-        sprintf(id, "##%llu", property);
-        typedef Type(*Getter)(Entity entity);
-        typedef void(*Setter)(Entity entity, Type value);
-        auto value = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
-        if(ImGui::BeginButtonDropDown(id, {50, 20})) {
-            for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
-                if(ImGui::MenuItem(GetTypeName(type))) {
-                    for(auto i = 0; i < GetNumSelection(); ++i) {
-                        ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), type);
-                    }
-                }
-            }
-            ImGui::EndButtonDropDown();
-        }
-    }
-
-    static void Drawrgba8(Property property) {
-        char id[128];
-        sprintf(id, "##%llu", property);
-        typedef rgba8(*Getter)(Entity entity);
-        typedef void(*Setter)(Entity entity, rgba8 value);
-        auto v = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
-        rgba32 rgba = { (float)v.r / 255.0f, (float)v.g / 255.0f, (float)v.b / 255.0f, (float)v.a / 255.0f };
-        if(ImGui::ColorEdit4(id, &rgba.r)) {
-            for(auto i = 0; i < GetNumSelection(); ++i) {
-                ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), {(u8)(rgba.r * 255.0f), (u8)(rgba.g * 255.0f), (u8)(rgba.b * 255.0f), (u8)(rgba.a * 255.0f)});
-            }
-        }
-    }
-
-    static void Drawrgb8(Property property) {
-        char id[128];
-        sprintf(id, "##%llu", property);
-        typedef rgba8(*Getter)(Entity entity);
-        typedef void(*Setter)(Entity entity, rgba8 value);
-        auto v = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
-        rgb32 rgba = { (float)v.r / 255.0f, (float)v.g / 255.0f, (float)v.b / 255.0f };
-
-        if(ImGui::ColorEdit3(id, &rgba.r)) {
-            for(auto i = 0; i < GetNumSelection(); ++i) {
-                ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), {(u8)(rgba.r * 255.0f), (u8)(rgba.g * 255.0f), (u8)(rgba.b * 255.0f) });
-            }
-        }
-    }
-
-    static void Draw(Entity context) {
-        if(ImGui::Begin("Property Editor", &Visible)) {
-            for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
-                bool showType = false;
+    if(ImGui::BeginDragDropTarget()) {
+        if(const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(GetTypeName(TypeOf_Entity()))) {
+            if(payload->Delivery) {
                 for(auto i = 0; i < GetNumSelection(); ++i) {
-                    if(HasComponent(GetSelectionEntity(i), type)) {
-                        showType = true;
-                    }
+                    ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), *((Entity*)payload->Data));
                 }
+            }
+        }
+        ImGui::EndDragDropTarget();
+    }
+}
 
-                if(!showType) continue;
+static void Drawm4x4f(Property property) {
+    char idx[32], idy[32], idz[32], idw[32];
+    sprintf(idx, "##%llu_x", property);
+    sprintf(idy, "##%llu_y", property);
+    sprintf(idz, "##%llu_z", property);
+    sprintf(idw, "##%llu_w", property);
 
-                if(ImGui::CollapsingHeader(GetTypeName(type), ImGuiTreeNodeFlags_DefaultOpen)) {
-                    ImGui::Columns(2, GetTypeName(type));
+    typedef m4x4f(*Getter)(Entity entity);
+    typedef void(*Setter)(Entity entity, m4x4f value);
+    auto value = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
+    if(ImGui::InputFloat4(idx, &value.x.x)
+        || ImGui::InputFloat4(idy, &value.y.x)
+        || ImGui::InputFloat4(idz, &value.z.x)
+        || ImGui::InputFloat4(idw, &value.w.x)) {
 
-                    for(auto property = GetNextProperty(0); IsPropertyValid(property); property = GetNextProperty(property)) {
-                        if(GetPropertyOwner(property) != type) {
-                            continue;
-                        }
+        for(auto i = 0; i < GetNumSelection(); ++i) {
+            ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), value);
+        }
+    }
+}
+static void DrawStringRef(Property property) {
+    char id[128];
+    char buf[PATH_MAX];
+    sprintf(id, "##%llu", property);
+    typedef StringRef(*Getter)(Entity entity);
+    typedef void(*Setter)(Entity entity, StringRef value);
+    strcpy(buf, ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0)));
+    if(ImGui::InputText(id, buf, PATH_MAX, ImGuiInputTextFlags_EnterReturnsTrue)) {
+        for(auto i = 0; i < GetNumSelection(); ++i) {
+            ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), buf);
+        }
+    }
+}
 
-                        auto propertyType = GetPropertyType(property);
+static void DrawType(Property property) {
+    char id[128];
+    sprintf(id, "##%llu", property);
+    typedef Type(*Getter)(Entity entity);
+    typedef void(*Setter)(Entity entity, Type value);
+    auto value = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
+    if(ImGui::BeginButtonDropDown(id, {50, 20})) {
+        for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
+            if(ImGui::MenuItem(GetTypeName(type))) {
+                for(auto i = 0; i < GetNumSelection(); ++i) {
+                    ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), type);
+                }
+            }
+        }
+        ImGui::EndButtonDropDown();
+    }
+}
 
-                        ImGui::Text("%s", GetPropertyName(property));
-                        ImGui::NextColumn();
+static void Drawrgba8(Property property) {
+    char id[128];
+    sprintf(id, "##%llu", property);
+    typedef rgba8(*Getter)(Entity entity);
+    typedef void(*Setter)(Entity entity, rgba8 value);
+    auto v = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
+    rgba32 rgba = { (float)v.r / 255.0f, (float)v.g / 255.0f, (float)v.b / 255.0f, (float)v.a / 255.0f };
+    if(ImGui::ColorEdit4(id, &rgba.r)) {
+        for(auto i = 0; i < GetNumSelection(); ++i) {
+            ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), {(u8)(rgba.r * 255.0f), (u8)(rgba.g * 255.0f), (u8)(rgba.b * 255.0f), (u8)(rgba.a * 255.0f)});
+        }
+    }
+}
 
-                        ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+static void Drawrgb8(Property property) {
+    char id[128];
+    sprintf(id, "##%llu", property);
+    typedef rgba8(*Getter)(Entity entity);
+    typedef void(*Setter)(Entity entity, rgba8 value);
+    auto v = ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0));
+    rgb32 rgba = { (float)v.r / 255.0f, (float)v.g / 255.0f, (float)v.b / 255.0f };
 
-                        HandleDraw(float);
-                        HandleDraw(double);
-                        HandleDraw(bool);
-                        HandleDraw(StringRef);
-                        HandleDraw(u8);
-                        HandleDraw(u16);
-                        HandleDraw(u32);
-                        HandleDraw(u64);
-                        HandleDraw(s8);
-                        HandleDraw(s16);
-                        HandleDraw(s32);
-                        HandleDraw(s64);
-                        HandleDraw(v2f);
-                        HandleDraw(v3f);
-                        HandleDraw(v4f);
-                        HandleDraw(v2i);
-                        HandleDraw(v3i);
-                        HandleDraw(v4i);
-                        HandleDraw(m4x4f);
-                        HandleDraw(rgba8);
-                        HandleDraw(rgba32);
-                        HandleDraw(rgb8);
-                        HandleDraw(rgb32);
-                        HandleDraw(Entity);
-                        HandleDraw(Type);
+    if(ImGui::ColorEdit3(id, &rgba.r)) {
+        for(auto i = 0; i < GetNumSelection(); ++i) {
+            ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), {(u8)(rgba.r * 255.0f), (u8)(rgba.g * 255.0f), (u8)(rgba.b * 255.0f) });
+        }
+    }
+}
 
-                        ImGui::PopItemWidth();
-
-                        ImGui::NextColumn();
-                    }
-
-                    ImGui::Columns(1);
+static void Draw(Entity context) {
+    if(ImGui::Begin("Property Editor", &Visible)) {
+        for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
+            bool showType = false;
+            for(auto i = 0; i < GetNumSelection(); ++i) {
+                if(HasComponent(GetSelectionEntity(i), type)) {
+                    showType = true;
                 }
             }
 
+            if(!showType) continue;
+
+            if(ImGui::CollapsingHeader(GetTypeName(type), ImGuiTreeNodeFlags_DefaultOpen)) {
+                ImGui::Columns(2, GetTypeName(type));
+
+                for(auto property = GetNextProperty(0); IsPropertyValid(property); property = GetNextProperty(property)) {
+                    if(GetPropertyOwner(property) != type) {
+                        continue;
+                    }
+
+                    auto propertyType = GetPropertyType(property);
+
+                    ImGui::Text("%s", GetPropertyName(property));
+                    ImGui::NextColumn();
+
+                    ImGui::PushItemWidth(ImGui::GetContentRegionAvailWidth());
+
+                    HandleDraw(float);
+                    HandleDraw(double);
+                    HandleDraw(bool);
+                    HandleDraw(StringRef);
+                    HandleDraw(u8);
+                    HandleDraw(u16);
+                    HandleDraw(u32);
+                    HandleDraw(u64);
+                    HandleDraw(s8);
+                    HandleDraw(s16);
+                    HandleDraw(s32);
+                    HandleDraw(s64);
+                    HandleDraw(v2f);
+                    HandleDraw(v3f);
+                    HandleDraw(v4f);
+                    HandleDraw(v2i);
+                    HandleDraw(v3i);
+                    HandleDraw(v4i);
+                    HandleDraw(m4x4f);
+                    HandleDraw(rgba8);
+                    HandleDraw(rgba32);
+                    HandleDraw(rgb8);
+                    HandleDraw(rgb32);
+                    HandleDraw(Entity);
+                    HandleDraw(Type);
+
+                    ImGui::PopItemWidth();
+
+                    ImGui::NextColumn();
+                }
+
+                ImGui::Columns(1);
+            }
         }
 
-        if (ImGui::BeginPopup(ComponentContextMenuId)) {
-            //ImGui::ComponentContextMenu();
-            ImGui::EndPopup();
-        }
-
-        ImGui::End();
     }
 
-    static bool ServiceStart() {
-        SubscribeImGuiDraw(Draw);
-        return true;
+    if (ImGui::BeginPopup(ComponentContextMenuId)) {
+        //ImGui::ComponentContextMenu();
+        ImGui::EndPopup();
     }
 
-    static bool ServiceStop() {
-        UnsubscribeImGuiDraw(Draw);
-        return true;
-    }
+    ImGui::End();
+}
+
+static bool ServiceStart() {
+    SubscribeImGuiDraw(Draw);
+    return true;
+}
+
+static bool ServiceStop() {
+    UnsubscribeImGuiDraw(Draw);
+    return true;
+}
 
 
 void ImGui::ComponentContextMenu(Type componentType) {

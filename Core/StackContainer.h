@@ -35,7 +35,7 @@ public:
 
     // For the straight up copy c-tor, we can share storage.
     StackAllocator(const StackAllocator<T, stack_capacity>& rhs)
-            : std::allocator<T>(), isAllocated(false) {
+            : std::allocator<T>(), isAllocated(false), magicNumberStart(magic), magicNumberEnd(magic) {
 
     }
     // ISO C++ requires the following constructor to be defined,
@@ -51,15 +51,17 @@ public:
     StackAllocator(const StackAllocator<U, other_capacity>& other) {
         magicNumberStart = magicNumberEnd = magic;
     }
-    explicit StackAllocator() {
+    explicit StackAllocator() :
+		isAllocated(false), magicNumberStart(magic), magicNumberEnd(magic){
     }
     // Actually do the allocation. Use the stack buffer if nobody has used it yet
     // and the size requested fits. Otherwise, fall through to the standard
     // allocator.
     pointer allocate(size_type n, void* hint = 0) {
+		assert(magicNumberStart == magicNumberEnd == magic);
         assert(n <= stack_capacity);
         assert(magicNumberStart == magic && magicNumberEnd == magic && !isAllocated);
-        memset(stack_buffer_, 0, n);
+        memset(stack_buffer_, 0xFE, n);
         isAllocated = true;
         return (pointer)stack_buffer_;
     }
@@ -68,6 +70,7 @@ public:
     void deallocate(pointer p, size_type n) {
         assert(magicNumberStart == magic && magicNumberEnd == magic && isAllocated);
         isAllocated = false;
+		assert(magicNumberStart == magicNumberEnd == magic);
     }
 private:
     unsigned long long magicNumberStart;

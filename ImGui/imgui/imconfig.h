@@ -6,6 +6,11 @@
 
 #pragma once
 
+#define NO_IMGUIVARIOUSCONTROLS_ANIMATEDIMAGE
+#define NO_IMGUITABWINDOW
+#define NO_IMGUIPANELMANAGER
+#define NO_IMGUIVARIOUSCONTROLS
+
 //---- Define assertion handler. Defaults to calling assert().
 //#define IM_ASSERT(_EXPR)  MyAssert(_EXPR)
 
@@ -17,7 +22,7 @@
 //#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
 //---- Include imgui_user.h at the end of imgui.h
-//#define IMGUI_INCLUDE_IMGUI_USER_H
+#define IMGUI_INCLUDE_IMGUI_USER_H
 
 //---- Don't implement default handlers for Windows (so as not to link with OpenClipboard() and others Win32 functions)
 //#define IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS

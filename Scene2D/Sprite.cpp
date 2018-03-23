@@ -51,19 +51,12 @@ static void InitializeSpriteMesh() {
     v2f posTopLeft = {-0.5f, -0.5f};
     v2f posBottomRight = {0.5f, 0.5f};
 
-    char path[PATH_MAX];
-    snprintf(path, PATH_MAX, "%s/Mesh", GetEntityPath(SpriteRoot));
-    SpriteMesh = CreateMesh(path);
-
-    char vbpath[PATH_MAX];
-    snprintf(vbpath, PATH_MAX, "%s/VertexBuffer", GetEntityPath(SpriteRoot));
-    SpriteVertexBuffer = CreateVertexBuffer(vbpath);
+    SpriteMesh = CreateMesh(SpriteRoot, "Mesh");
+    SpriteVertexBuffer = CreateVertexBuffer(SpriteRoot, "VertexBuffer");
     SetVertexBufferDeclaration(SpriteVertexBuffer, SpriteVertexDeclaration);
     SetMeshVertexBuffer(SpriteMesh, SpriteVertexBuffer);
 
-    char ibpath[PATH_MAX];
-    snprintf(ibpath, PATH_MAX, "%s/IndexBuffer", GetEntityPath(SpriteRoot));
-    SpriteIndexBuffer = CreateIndexBuffer(ibpath);
+    SpriteIndexBuffer = CreateIndexBuffer(SpriteRoot, "IndexBuffer");
     SetMeshIndexBuffer(SpriteMesh, SpriteIndexBuffer);
 
     SpriteVertex vts[] = {
@@ -88,47 +81,36 @@ static void InitializeSpriteMesh() {
 }
 
 static void InitializeSpriteVertexDeclaration() {
-    char declPath[PATH_MAX];
-    char posPath[PATH_MAX];
-    char texPath[PATH_MAX];
+    SpriteVertexDeclaration = CreateVertexDeclaration(SpriteRoot, "VertexDeclaration");
 
-    snprintf(declPath, PATH_MAX, "%s/VertexDeclaration", GetEntityPath(SpriteRoot));
-    snprintf(posPath, PATH_MAX, "%s/Position", declPath);
-    snprintf(texPath, PATH_MAX, "%s/TexCoord", declPath);
-
-    SpriteVertexDeclaration = CreateVertexDeclaration(declPath);
-
-    auto positionAttribute = CreateVertexAttribute(posPath);
+    auto positionAttribute = CreateVertexAttribute(SpriteVertexDeclaration, "Position");
     SetVertexAttributeUsage(positionAttribute, VertexAttributeUsage_Position);
     SetVertexAttributeType(positionAttribute, TypeOf_v2f());
 
-    auto uvAttribute = CreateVertexAttribute(texPath);
+    auto uvAttribute = CreateVertexAttribute(SpriteVertexDeclaration, "TexCoord");
     SetVertexAttributeUsage(uvAttribute, VertexAttributeUsage_TexCoord0);
     SetVertexAttributeType(uvAttribute, TypeOf_v2f());
 }
 
 static void InitializeSpriteProgram() {
-    char programPath[PATH_MAX];
-    char vsPath[PATH_MAX];
-    char psPath[PATH_MAX];
-    char ufPath[PATH_MAX];
-
-    snprintf(programPath, PATH_MAX, "%s/Program", GetEntityPath(SpriteRoot));
-    snprintf(vsPath, PATH_MAX, "%s/VertexShader", programPath);
-    snprintf(psPath, PATH_MAX, "%s/PixelShader", programPath);
-    snprintf(ufPath, PATH_MAX, "%s/TextureUniform", GetEntityPath(SpriteRoot));
-
-    SpriteProgram = CreateProgram(programPath);
-    auto VertexShader = CreateShader(vsPath);
-    auto PixelShader = CreateShader(psPath);
-    SpriteTextureUniform = CreateUniform(ufPath);
+    SpriteProgram = CreateProgram(SpriteRoot, "Program");
+    auto VertexShader = CreateShader(SpriteProgram, "VertexShader");
+    auto PixelShader = CreateShader(SpriteProgram, "PixelShader");
+    auto ShaderDeclaration = CreateStream(SpriteProgram, "ShaderDeclaration");
+    SpriteTextureUniform = CreateUniform(SpriteRoot, "TextureUniform");
 
     SetStreamPath(VertexShader, "res://scene2d/shaders/sprite.vs");
     SetStreamPath(PixelShader, "res://scene2d/shaders/sprite.ps");
-    SetStreamPath(SpriteProgram, "res://scene2d/shaders/sprite.var");
+    SetStreamPath(ShaderDeclaration, "res://scene2d/shaders/sprite.var");
 
     SetShaderType(VertexShader, ShaderType_Vertex);
+    SetShaderDeclaration(VertexShader, ShaderDeclaration);
+
     SetShaderType(PixelShader, ShaderType_Pixel);
+    SetShaderDeclaration(PixelShader, ShaderDeclaration);
+
+    SetVertexShader(SpriteProgram, VertexShader);
+    SetPixelShader(SpriteProgram, PixelShader);
 
     SetUniformName(SpriteTextureUniform, "s_tex");
     SetUniformType(SpriteTextureUniform, TypeOf_Entity());
@@ -136,7 +118,7 @@ static void InitializeSpriteProgram() {
 }
 
 static bool ServiceStart() {
-    SpriteRoot = CreateHierarchy("/.Sprite");
+    SpriteRoot = CreateHierarchy(0, ".sprite");
 
     InitializeSpriteProgram();
     InitializeSpriteVertexDeclaration();

@@ -6,9 +6,6 @@
 #include "VertexAttribute.h"
 
 struct VertexAttribute {
-    VertexAttribute() {
-        memset(this, 0, sizeof(VertexAttribute));
-    }
     Type VertexAttributeType;
     u8 VertexAttributeUsage;
     bool VertexAttributeNormalize, VertexAttributeAsInt;

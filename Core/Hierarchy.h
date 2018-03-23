@@ -25,6 +25,7 @@ bool IsEntityDecendant(Entity entity, Entity parent);
 
 StringRef GetEntityPath(Entity entity);
 Entity CreateEntityFromPath(StringRef path);
+Entity CreateEntityFromName(Entity parent, StringRef name);
 
 Entity FindChild(Entity parent, StringRef childName);
 Entity FindEntity(StringRef path);
@@ -39,9 +40,7 @@ Entity CopyEntity(Entity templateEntity, StringRef copyPath);
         Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         if(!IsEntityValid(Get ## TYPENAME (entity)->PROPERTYNAME)) { \
-            char path[PATH_MAX];\
-            snprintf(path, PATH_MAX, "%s/" #PROPERTYNAME, GetEntityPath(entity));\
-            Get ## TYPENAME (entity)->PROPERTYNAME = Create ## CHILDCOMPONENTTYPE (path); \
+            Get ## TYPENAME (entity)->PROPERTYNAME = Create ## CHILDCOMPONENTTYPE (entity, #PROPERTYNAME); \
         }\
         return Get ## TYPENAME (entity)->PROPERTYNAME; \
     }
