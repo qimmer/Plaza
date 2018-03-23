@@ -143,12 +143,12 @@ static void CreateCubeVertices() {
         cubeFaceVertexNormalsVs[i*6 + 4] = {normals[ 3].x, normals[ 3].y, normals[ 3].z, uvs[3].y};
         cubeFaceVertexNormalsVs[i*6 + 5] = {normals[ 0].x, normals[ 0].y, normals[ 0].z, uvs[0].y};
 
-        cubeVertices[i*6 + 0] = {{0, 0, 0, i*6 + 0}, 0, 0, 255};
-        cubeVertices[i*6 + 1] = {{0, 0, 0, i*6 + 1}, 0, 0, 255};
-        cubeVertices[i*6 + 2] = {{0, 0, 0, i*6 + 2}, 0, 0, 255};
-        cubeVertices[i*6 + 3] = {{0, 0, 0, i*6 + 3}, 0, 0, 255};
-        cubeVertices[i*6 + 4] = {{0, 0, 0, i*6 + 4}, 0, 0, 255};
-        cubeVertices[i*6 + 5] = {{0, 0, 0, i*6 + 5}, 0, 0, 255};
+        cubeVertices[i*6 + 0] = {{0, 0, 0, (u8)(i*6 + 0)}, 0, 0, 255};
+        cubeVertices[i*6 + 1] = {{0, 0, 0, (u8)(i*6 + 1)}, 0, 0, 255};
+        cubeVertices[i*6 + 2] = {{0, 0, 0, (u8)(i*6 + 2)}, 0, 0, 255};
+        cubeVertices[i*6 + 3] = {{0, 0, 0, (u8)(i*6 + 3)}, 0, 0, 255};
+        cubeVertices[i*6 + 4] = {{0, 0, 0, (u8)(i*6 + 4)}, 0, 0, 255};
+        cubeVertices[i*6 + 5] = {{0, 0, 0, (u8)(i*6 + 5)}, 0, 0, 255};
     }
 
     CubeMesh = CreateMesh(VoxelDataRoot, "CubeMesh");
@@ -312,10 +312,10 @@ static void GenerateVertices(const Voxel *voxels, v3i bufferSize, v3i start, v3i
                         for(auto faceVertexIndex = 0; faceVertexIndex < 6; ++faceVertexIndex) {
                             verticesBuffer[vertexCount++] = {
                                 {
-                                    voxelPosition.x,
-                                    voxelPosition.y,
-                                    voxelPosition.z,
-                                    face * 6 + faceVertexIndex,
+                                        (u8)voxelPosition.x,
+                                        (u8)voxelPosition.y,
+                                        (u8)voxelPosition.z,
+                                        (u8)(face * 6 + faceVertexIndex),
                                 },
                                 centerVoxel,
                                 0,

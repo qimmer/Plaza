@@ -19,7 +19,7 @@ static struct scheduler Scheduler;
 
 #define MAX_THREADS 64
 
-static FixedVector<u64, MAX_THREADS> threadIds;
+static Vector<u64> threadIds;
 static int mainThread = 0;
 
 struct Task {

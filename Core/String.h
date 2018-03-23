@@ -16,6 +16,6 @@
 using String = std::string;
 
 template<>
-const char * ApiConvert(const String& str);
+const char * ApiConvert(const String* str);
 
 #endif //PLAZA_STRING_H

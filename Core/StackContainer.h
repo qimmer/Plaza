@@ -58,10 +58,8 @@ public:
     // and the size requested fits. Otherwise, fall through to the standard
     // allocator.
     pointer allocate(size_type n, void* hint = 0) {
-		assert(magicNumberStart == magicNumberEnd == magic);
         assert(n <= stack_capacity);
-        assert(magicNumberStart == magic && magicNumberEnd == magic && !isAllocated);
-        memset(stack_buffer_, 0xFE, n);
+        assert(magicNumberStart == magic && magicNumberEnd == magic);
         isAllocated = true;
         return (pointer)stack_buffer_;
     }
@@ -70,7 +68,6 @@ public:
     void deallocate(pointer p, size_type n) {
         assert(magicNumberStart == magic && magicNumberEnd == magic && isAllocated);
         isAllocated = false;
-		assert(magicNumberStart == magicNumberEnd == magic);
     }
 private:
     unsigned long long magicNumberStart;

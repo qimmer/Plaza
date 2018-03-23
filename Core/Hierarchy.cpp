@@ -288,7 +288,7 @@ static void OnHierarchyRemoved(Entity entity) {
 
 static void OnHierarchyAdded(Entity entity) {
     char name[32];
-    snprintf(name, 32, "Entity_%ul", GetHandleIndex(entity));
+    snprintf(name, 32, "Entity_%i", GetHandleIndex(entity));
 
     SetName(entity, name);
 

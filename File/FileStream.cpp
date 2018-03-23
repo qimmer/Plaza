@@ -34,7 +34,7 @@ static u64 Read(Entity entity, u64 size, void *data) {
     while(remaining) {
         auto numRead = fread(bytes, 1, remaining, GetFileStream(entity)->fd);
         if(!numRead) {
-            Log(LogChannel_Core, LogSeverity_Error, "Error reading at offset '%ull' in file '%s'", ftell(GetFileStream(entity)->fd), GetStreamPath(entity));
+            Log(LogChannel_Core, LogSeverity_Error, "Error reading at offset '%llu' in file '%s'", ftell(GetFileStream(entity)->fd), GetStreamPath(entity));
             return 0;
         }
 

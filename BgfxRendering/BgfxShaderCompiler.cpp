@@ -164,7 +164,7 @@ int Compile(StringRef sourceFilePath,
     char command[4096];
     snprintf(command,
              4096,
-             "shaderc -f \"%s\" -o \"%s\" -p %s -i \"%s\" --type %s --platform %s --varyingdef \"%s\" -O3",
+             "./shaderc -f \"%s\" -o \"%s\" -p %s -i \"%s\" --type %s --platform %s --varyingdef \"%s\" -O3",
             sourceFilePath,
             outputFilePath,
             profile,

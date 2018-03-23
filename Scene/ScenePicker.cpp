@@ -24,6 +24,7 @@
 #include <Rendering/Material.h>
 #include <Rendering/Program.h>
 #include "ScenePicker.h"
+#include <algorithm>
 
 struct ScenePicker {
     Entity CommandList, RenderTarget, RenderTexture;
@@ -64,7 +65,7 @@ static Entity GetPickProgramForVertexShader(Entity originalProgram) {
     auto programIndex = GetProgramIndex(originalProgram);
 
     if(PickPrograms.size() <= programIndex || !IsEntityValid(PickPrograms[programIndex])) {
-        PickPrograms.resize(std::max(PickPrograms.size(), programIndex + 1));
+        PickPrograms.resize(std::max(PickPrograms.size(), (size_t)programIndex + 1));
         PickPrograms[programIndex] = CreatePickProgramForVertexShader(originalProgram);
     }
 

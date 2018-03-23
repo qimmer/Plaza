@@ -78,7 +78,7 @@ static bool ReadChunk(Entity stream, Entity parent, v3i* chunkSizeStore, u32 *ch
             rgba8 *colors = (rgba8*)chunkData.data();
             for(auto i = 0; i < 256; ++i) {
                 char name[16];
-                itoa(i, name, 10);
+                snprintf(name, 16, "%d", i);
 
                 auto voxelColor = CreateVoxelColor(*currentPalette, name);
                 SetVoxelColorColor(voxelColor, colors[i]);

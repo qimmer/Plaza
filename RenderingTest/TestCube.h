@@ -19,8 +19,8 @@ TestResult TestCube()
 {
     InitializeModule(ModuleOf_BgfxRendering());
 
-    auto context = CreateContext("/CubeContext");
-    auto commandList = CreateCommandList("/CubeContext/CommandList");
+    auto context = CreateContext(0, "CubeContext");
+    auto commandList = CreateCommandList(0, "CubeContext/CommandList");
 
     SetCommandListClearColor(commandList, {50, 128, 255, 255});
     SetCommandListClearTargets(commandList, ClearTarget_Color);

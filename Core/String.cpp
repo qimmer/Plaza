@@ -10,11 +10,9 @@
 #include <cstring>
 #include <memory>
 
-static std::vector<String> buffer;
-
 template<>
-const char * ApiConvert(const String& str) {
-    return str.c_str();
+const char * ApiConvert(const String* str) {
+    return str->c_str();
 }
 
 

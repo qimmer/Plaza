@@ -17,7 +17,7 @@ TestResult TestFile()
 {
     InitializeModule(ModuleOf_Foundation());
 
-    auto file = CreateStream("/testStream");
+    auto file = CreateStream(0, "testStream");
     SetStreamPath(file, "file://test.bin");
 
     // Test write

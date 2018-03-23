@@ -61,13 +61,13 @@ static bool ServiceStop() {
 u16 GetBgfxIndexBufferHandle(Entity entity) {
     auto data = GetBgfxIndexBuffer(entity);
     if(data->invalidated) {
-        if(!StreamOpen(entity, StreamMode_Read)) return BGFX_INVALID_HANDLE;
+        if(!StreamOpen(entity, StreamMode_Read)) return bgfx::kInvalidHandle;
         StreamSeek(entity, StreamSeek_End);
         auto size = StreamTell(entity);
 
         if(size == 0) {
             StreamClose(entity);
-            return BGFX_INVALID_HANDLE;
+            return bgfx::kInvalidHandle;
         }
 
         auto buffer = malloc(size);

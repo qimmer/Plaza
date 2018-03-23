@@ -79,8 +79,8 @@ bool IsComponentAbstract(Type type);
     u32 _num_ ## TYPENAME = 0;\
     Pool<_data_ ## TYPENAME> TYPENAME ## _data; \
     Pool<Index> TYPENAME ## _component_indices;\
-    FixedVector<Type, 128> TYPENAME ## _dependencies;\
-    FixedVector<Type, 128> TYPENAME ## _extensions;\
+    Vector<Type> TYPENAME ## _dependencies;\
+    Vector<Type> TYPENAME ## _extensions;\
     Index GetNum ## TYPENAME () {\
         return _num_ ## TYPENAME;\
     } \
@@ -174,7 +174,7 @@ bool IsComponentAbstract(Type type);
     auto data = Get ## TYPENAME (entity); \
     auto old = data-> PROPERTYNAME; \
     data-> PROPERTYNAME = NEWVALUE; \
-    FireEvent(EVENT, entity, ApiConvert<PROPERTYTYPE>(old), NEWVALUE); \
+    FireEvent(EVENT, entity, ApiConvert<PROPERTYTYPE>(&old), NEWVALUE); \
     FireEvent(TYPENAME ## Changed, entity); \
     FireEvent(ComponentChanged, entity, TypeOf_ ## TYPENAME ())
 
@@ -192,7 +192,7 @@ bool IsComponentAbstract(Type type);
     PROPERTYTYPE Get ## PROPERTYNAME (Entity entity) { \
         Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
-        return ApiConvert<PROPERTYTYPE>(Get ## TYPENAME (entity)->PROPERTYNAME); \
+        return ApiConvert<PROPERTYTYPE>(&Get ## TYPENAME (entity)->PROPERTYNAME); \
     } \
     void Set ##  PROPERTYNAME (Entity entity, PROPERTYTYPE value) { \
         Assert(IsEntityValid(entity));\
@@ -207,7 +207,7 @@ bool IsComponentAbstract(Type type);
     PROPERTYTYPE Get ## PROPERTYNAME (Entity entity) { \
         Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
-        return ApiConvert<PROPERTYTYPE>(Get ## TYPENAME (entity)->PROPERTYNAME); \
+        return ApiConvert<PROPERTYTYPE>(&Get ## TYPENAME (entity)->PROPERTYNAME); \
     } \
     void Set ##  PROPERTYNAME (Entity entity, PROPERTYTYPE value) { \
         Assert(IsEntityValid(entity));\

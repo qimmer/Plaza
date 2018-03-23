@@ -145,7 +145,7 @@ void ImGui::EntityContextMenu() {
             AddComponent(newEntity, type);
 
             char name[PATH_MAX];
-            sprintf(name, "%s_%lu", GetTypeName(type), GetHandleIndex(newEntity));
+            sprintf(name, "%s_%iu", GetTypeName(type), GetHandleIndex(newEntity));
 
             SetName(newEntity, name);
 

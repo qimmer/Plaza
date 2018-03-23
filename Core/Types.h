@@ -2,14 +2,14 @@
 #define PLAZA_TYPES_H
 
 #if defined(_MSC_VER)
-#  define ALIGN(X) /* __declspec(align(X)) */
+#  define ALIGN(X) __declspec(align(X))
 #else
 #  define ALIGN(X) __attribute((aligned(X)))
 #endif
 
 template<typename T1, typename T2>
-T1 ApiConvert(const T2& value) {
-    return (T1)value;
+T1 ApiConvert(const T2* value) {
+    return (T1)(*value);
 };
 
 typedef const char* StringRef;

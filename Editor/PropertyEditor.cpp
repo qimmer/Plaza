@@ -74,6 +74,7 @@ static void DrawEnum(Property p, Enum e, u64 *value) {
     sprintf(id, "##%llu", p);\
 
     auto numFlags = GetEnumFlags(e);
+    Assert(numFlags < 128);
     int flagIndex = 0;
     for(auto i = 0; i < numFlags; ++i) {
         if(GetEnumFlagValue(e, i) == *value) {
@@ -93,6 +94,7 @@ static void DrawFlag(Property p, Enum e, u64 *value) {
     FixedVector<StringRef, 128> elements;
 
     auto numFlags = GetEnumFlags(e);
+    Assert(numFlags < 128);
     int flagIndex = 0;
     for(auto i = 0; i < numFlags; ++i) {
         char id[128];\
@@ -163,7 +165,7 @@ static void DrawEntity(Property property) {
         if(HasHierarchy(value)) {
             snprintf(id, 512, "%s", GetEntityPath(value));
         } else {
-            snprintf(id, 512, "Entity_%ul", GetHandleIndex(value));
+            snprintf(id, 512, "Entity_%u", GetHandleIndex(value));
         }
     } else {
         sprintf(id, "<None>");

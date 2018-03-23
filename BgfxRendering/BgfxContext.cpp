@@ -35,6 +35,9 @@
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <cfloat>
+#include <Rendering/RenderTarget.h>
+#include <Rendering/VertexDeclaration.h>
+#include <Rendering/OffscreenRenderTarget.h>
 
 #ifdef __APPLE__
 extern "C" {
@@ -270,7 +273,7 @@ static void OnBgfxContextAdded(Entity entity) {
         pd.session = NULL;
         bgfx::setPlatformData(pd);
 #ifdef __APPLE__
-        bgfx::init(bgfx::RendererType::Metal);
+        bgfx::init(bgfx::RendererType::OpenGL);
 #endif
 
 #ifdef WIN32

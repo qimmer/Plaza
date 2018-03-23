@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 
         // App Modules
         ModuleOf_Player(),
-        //ModuleOf_Editor(),
+        ModuleOf_Editor(),
 
         ModuleOf_Rendering(),
         ModuleOf_Scene(),
