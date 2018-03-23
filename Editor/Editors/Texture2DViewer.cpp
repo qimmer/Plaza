@@ -2,12 +2,12 @@
 // Created by Kim Johannsen on 22-03-2018.
 //
 
-#include <imgui/imgui.h>
-#include <Foundation/Stream.h>
-#include <Rendering/Texture2D.h>
-#include <ImGui/ImGuiRenderer.h>
-#include <Rendering/Material.h>
-#include <Rendering/UniformState.h>
+#include "../../ImGui/imgui/imgui.h"
+#include "../../Foundation/Stream.h"
+#include "../../Rendering/Texture2D.h"
+#include "../../ImGui/ImGuiRenderer.h"
+#include "../../Rendering/Material.h"
+#include "../../Rendering/UniformState.h"
 #include "Texture2DViewer.h"
 
 struct Texture2DViewer {

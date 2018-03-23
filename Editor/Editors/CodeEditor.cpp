@@ -4,8 +4,8 @@
 
 #include <ImGui/ImGuiRenderer.h>
 #include "CodeEditor.h"
-#include "EditorStandardCommands.h"
-#include "EditorStyle.h"
+#include "Editor/EditorStandardCommands.h"
+#include "Editor/EditorStyle.h"
 #include <imgui/imgui.h>
 #include <Foundation/Stream.h>
 #include <Core/String.h>

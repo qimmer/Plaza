@@ -93,42 +93,33 @@ static void Draw(Entity context) {
 }
 
 static void OnAdded(Entity sceneEditor) {
-    String editorPath = GetEntityPath(sceneEditor);
     auto data = GetSceneEditor(sceneEditor);
-    char name[PATH_MAX];
 
-    snprintf(name, PATH_MAX, "%s/Plane", editorPath.c_str());
-    data->Plane = CreateMeshInstance(name);
+    data->Plane = CreateMeshInstance(sceneEditor, "Plane");
 
-    snprintf(name, PATH_MAX, "%s/ColorTexture", editorPath.c_str());
-    data->ColorTexture = CreateTexture2D(name);
+    data->ColorTexture = CreateTexture2D(sceneEditor, "ColorTexture");
     SetTextureFlag(data->ColorTexture, TextureFlag_RT | TextureFlag_MAG_POINT | TextureFlag_MIN_POINT);
     SetTextureFormat(data->ColorTexture, TextureFormat_RGBA8);
 
-    snprintf(name, PATH_MAX, "%s/DepthTexture", editorPath.c_str());
-    data->DepthTexture = CreateTexture2D(name);
+    data->DepthTexture = CreateTexture2D(sceneEditor, "DepthTexture");
     SetTextureFlag(data->DepthTexture, TextureFlag_RT | TextureFlag_MAG_POINT | TextureFlag_MIN_POINT);
     SetTextureFormat(data->DepthTexture, TextureFormat_D32);
 
-    snprintf(name, PATH_MAX, "%s/RenderTarget", editorPath.c_str());
-    data->RenderTarget = CreateOffscreenRenderTarget(name);
+    data->RenderTarget = CreateOffscreenRenderTarget(sceneEditor, "RenderTarget");
     SetRenderTargetTexture0(data->RenderTarget, data->ColorTexture);
     SetRenderTargetTexture1(data->RenderTarget, data->DepthTexture);
     SetRenderTargetSize(data->RenderTarget, {400, 300});
 
-    snprintf(name, PATH_MAX, "%s/RenderTargetMaterial", editorPath.c_str());
-    data->RenderTargetMaterial = CreateMaterial(name);
+    data->RenderTargetMaterial = CreateMaterial(sceneEditor, "RenderTargetMaterial");
     SetMaterialProgram(data->RenderTargetMaterial, GetImGuiProgram());
     SetMaterialDepthTest(data->RenderTargetMaterial, RenderState_STATE_DEPTH_TEST_NONE);
     SetMaterialBlendMode(data->RenderTargetMaterial, RenderState_STATE_BLEND_NORMAL);
 
-    snprintf(name, PATH_MAX, "%s/RenderTargetMaterial/TextureUniformState", editorPath.c_str());
-    auto textureState = CreateUniformState(name);
+    auto textureState = CreateUniformState(data->RenderTargetMaterial, "TextureState");
     SetUniformStateUniform(textureState, GetImGuiTextureUniform());
     SetUniformStateTexture(textureState, data->ColorTexture);
 
-    snprintf(name, PATH_MAX, "%s/Camera", editorPath.c_str());
-    data->Camera = CreateCamera3D(name);
+    data->Camera = CreateCamera3D(sceneEditor, "Camera");
     SetCameraRenderTarget(data->Camera, data->RenderTarget);
     SetCameraClear(data->Camera, true);
     SetCameraNearClip(data->Camera, 0.1f);

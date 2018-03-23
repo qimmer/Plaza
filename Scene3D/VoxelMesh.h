@@ -5,10 +5,16 @@
 #ifndef PLAZA_VOXELMESH_H
 #define PLAZA_VOXELMESH_H
 
+#include <Core/Entity.h>
 
-class VoxelMesh {
+DeclareComponent(VoxelMesh)
+DeclareService(VoxelMesh)
 
-};
+DeclareComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshChunk)
+DeclareComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshPalette)
 
+Entity GetVoxelProgram();
+Entity GetVoxelPaletteTextureUniform();
+Entity GetVoxelDataRoot();
 
 #endif //PLAZA_VOXELMESH_H
