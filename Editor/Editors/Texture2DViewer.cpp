@@ -26,7 +26,12 @@ static void OnAdded(Entity viewer) {
     auto data = GetTexture2DViewer(viewer);
 
     data->Texture2DViewerMaterial = CreateMaterial(viewer, "Material");
+    SetMaterialProgram(data->Texture2DViewerMaterial, GetImGuiProgram());
+    SetMaterialDepthTest(data->Texture2DViewerMaterial, RenderState_STATE_DEPTH_TEST_NONE);
+    SetMaterialBlendMode(data->Texture2DViewerMaterial, RenderState_STATE_BLEND_NORMAL);
+
     data->Texture2DViewerTextureUniformState = CreateUniformState(data->Texture2DViewerMaterial, "TextureState");
+    SetUniformStateUniform(data->Texture2DViewerTextureUniformState, GetImGuiTextureUniform());
 }
 
 static void OnChanged(Entity viewer) {

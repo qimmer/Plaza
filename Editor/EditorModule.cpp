@@ -7,6 +7,7 @@
 #include <BgfxRendering/BgfxModule.h>
 #include <ImGui/ImGuiModule.h>
 #include <Editor/Tools/FirstPersonCamera.h>
+#include <Editor/Editors/Texture2DViewer.h>
 #include "EditorModule.h"
 #include "MainMenu.h"
 #include "Editor/ToolWindows/FileExplorer.h"
@@ -25,6 +26,7 @@ DefineModule(Editor)
 
         ModuleType(SceneEditor)
         ModuleType(CodeEditor)
+        ModuleType(Texture2DViewer)
 
         ModuleService(EditorStandardCommands)
         ModuleService(EditorStyle)
@@ -34,6 +36,7 @@ DefineModule(Editor)
         ModuleService(PropertyEditor)
         ModuleService(SceneEditor)
         ModuleService(CodeEditor)
+        ModuleService(Texture2DViewer)
 
         ModuleService(FirstPersonCameraTool)
     EndModule()

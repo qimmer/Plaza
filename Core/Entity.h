@@ -125,6 +125,7 @@ bool IsComponentAbstract(Type type);
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         Index entityIndex = GetHandleIndex(entity); \
         size_t index = TYPENAME ## _component_indices[entityIndex];\
+        Assert(TYPENAME ## _data.IsValid(index));\
         return &TYPENAME ## _data[index].data; \
     }\
     Entity Create ## TYPENAME (Entity parent, StringRef name) { \

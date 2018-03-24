@@ -6,7 +6,7 @@ SAMPLER2D(s_palette, 0);
 
 void main()
 {
-    vec4 paletteRgba = texture2D(s_palette, vec2(v_ao_palette.y, 0.0f));
+    vec4 paletteRgba = texture2D(s_palette, vec2(v_ao_palette.y, 0.5f));
 
     vec4 albedo = paletteRgba;
     gl_FragColor = albedo; // * v_ao

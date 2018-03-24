@@ -8,9 +8,12 @@
 #include <Rendering/Texture.h>
 #include <Rendering/Texture2D.h>
 #include <Foundation/Stream.h>
+#include <Foundation/AppLoop.h>
 #include "VoxelPalette.h"
 #include "VoxelColor.h"
 #include "VoxelMesh.h"
+
+static Set<Entity> invalidatedPalettes;
 
 struct VoxelPalette {
     Entity VoxelPaletteTextureUniformState;
@@ -24,22 +27,35 @@ EndComponent()
 DefineType(Voxel)
 EndType()
 
+static void UpdatePalette(Entity palette) {
+    auto data = GetVoxelPalette(palette);
+    Assert(StreamOpen(data->VoxelPaletteTexture, StreamMode_Write));
+    for(auto voxelColor = GetFirstChild(palette); voxelColor; voxelColor = GetSibling(voxelColor)) {
+        if(HasVoxelColor(voxelColor)) {
+            auto rgba = GetVoxelColorColor(voxelColor);
+            auto offset = (u32)GetVoxelColorValue(voxelColor) * 4;
+            StreamSeek(data->VoxelPaletteTexture, offset);
+            StreamWrite(data->VoxelPaletteTexture, 4, &rgba);
+        }
+    }
+    StreamClose(data->VoxelPaletteTexture);
+}
+
 static void OnVoxelColorChanged(Entity voxelColor) {
     auto parent = GetParent(voxelColor);
     if(IsEntityValid(parent) && HasVoxelPalette(parent)) {
-        auto data = GetVoxelPalette(parent);
-        auto rgba = GetVoxelColorColor(voxelColor);
-
-        Assert(StreamOpen(data->VoxelPaletteTexture, StreamMode_Read));
-        StreamSeek(data->VoxelPaletteTexture, GetVoxelColorValue(voxelColor) * 4);
-        StreamWrite(data->VoxelPaletteTexture, 4, &rgba);
-        StreamClose(data->VoxelPaletteTexture);
+        invalidatedPalettes.insert(parent);
     }
 }
 
 static void OnParentChanged(Entity voxelColor, Entity oldPalette, Entity newPalette) {
-    if(HasVoxelColor(voxelColor) && IsEntityValid(newPalette) && HasVoxelPalette(newPalette)) {
-        OnVoxelColorChanged(voxelColor);
+    if(HasVoxelColor(voxelColor)) {
+        if(IsEntityValid(oldPalette) && HasVoxelPalette(oldPalette)) {
+            invalidatedPalettes.insert(oldPalette);
+        }
+        if(IsEntityValid(newPalette) && HasVoxelPalette(newPalette)) {
+            invalidatedPalettes.insert(newPalette);
+        }
     }
 }
 
@@ -52,7 +68,6 @@ static void OnAdded(Entity voxelPalette) {
     auto tex = CreateTexture2D(voxelPalette, "ColorsTexture");
     SetTextureSize2D(tex, {256, 1});
     SetTextureFormat(tex, TextureFormat_RGBA8);
-    SetTextureFlag(tex, TextureFlag_MIN_POINT | TextureFlag_MAG_POINT);
 
     SetUniformStateTexture(us, tex);
 
@@ -62,11 +77,19 @@ static void OnAdded(Entity voxelPalette) {
     SetMaterialProgram(voxelPalette, GetVoxelProgram());
 }
 
+static void OnAppUpdate(double deltaTime) {
+    for(auto palette : invalidatedPalettes) {
+        UpdatePalette(palette);
+    }
+    invalidatedPalettes.clear();
+}
+
 DefineService(VoxelPalette)
     ServiceDependency(VoxelMesh)
     Subscribe(VoxelColorChanged, OnVoxelColorChanged)
     Subscribe(ParentChanged, OnParentChanged)
     Subscribe(VoxelPaletteAdded, OnAdded)
+    Subscribe(AppUpdate, OnAppUpdate)
 EndService()
 
 static bool ServiceStart() {

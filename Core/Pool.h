@@ -4,39 +4,48 @@
 #include <Core/Types.h>
 #include <Core/Vector.h>
 #include <algorithm>
+#include <memory>
 
 #define MaxPages 4096
-#define PoolPageElements 0xFF
+#define PoolPageElements 256
+
+#ifdef POOL_MEM_GUARD
 #define MemoryGuard(G) char G [16]
 #define AssertGuard(G) Assert(memcmp(G, MemoryGuardData, 16) == 0)
 #define InitGuard(G) memcpy(G, MemoryGuardData, 16)
-static const unsigned char MemoryGuardData[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xDE, 0xAD, 0xBE, 0xEF, 0xDE, 0xAD, 0xBE, 0xEF, 0xDE, 0xAD, 0xBE, 0xEF};
+static const char *MemoryGuardData = "DeadBeefDeadBif";
+#endif
 
 template<typename T>
-class Pool
+class ALIGN(alignof(T)) Pool
 {
 private:
+    T default_value;
+
     struct ALIGN(alignof(T)) Entry {
         Entry() : is_occupied(0) {
+#ifdef POOL_MEM_GUARD
             InitGuard(preGuard);
             InitGuard(postGuard);
+#endif
         }
-
+#ifdef POOL_MEM_GUARD
         MemoryGuard(preGuard);
-        char data[sizeof(T)];
+#endif
+        T data;
+#ifdef POOL_MEM_GUARD
         MemoryGuard(postGuard);
+#endif
         u32 is_occupied;
     };
-    struct Alloc {
-        void *originalAllocation;
-        Entry *alignedAllocation;
-    };
 
-    Vector<Alloc> entryPages;
+    Vector<Vector<Entry>> entryPages;
     Vector<u32> free_indices;
 public:
-    ~Pool() {
-        for(auto page : entryPages) free(page.originalAllocation);
+    Pool() {
+        this->default_value.~T();
+        memset(&this->default_value, 0, sizeof(T));
+        new (&this->default_value) T();
     }
     T& operator[] (u32 index);
     const T& operator[] (u32 index) const;
@@ -51,36 +60,46 @@ public:
 template<typename T>
 T& Pool<T>::operator[](u32 index)
 {
-    Assert(IsValid(index));
-
-    auto page = index & 0xffffff00;
+    auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
-    auto& data = this->entryPages[page].alignedAllocation[index];
-    return *(T*)data.data;
+
+    auto& entry = this->entryPages[page][index];
+    Assert(entry.is_occupied);
+#ifdef POOL_MEM_GUARD
+    AssertGuard(entry.preGuard);
+    AssertGuard(entry.postGuard);
+#endif
+    return entry.data;
 }
 
 template<typename T>
 const T& Pool<T>::operator[](u32 index) const
 {
-    Assert(IsValid(index));
-
-    auto page = index & 0xffffff00;
+    auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
-    const auto& data = this->entryPages[page].alignedAllocation[index];
-    return *(const T*)data.data;
+
+    const auto& entry = this->entryPages[page][index];
+    Assert(entry.is_occupied);
+#ifdef POOL_MEM_GUARD
+    AssertGuard(entry.preGuard);
+    AssertGuard(entry.postGuard);
+#endif
+    return entry.data;
 }
 
 template<typename T>
 bool Pool<T>::IsValid(u32 index) const
 {
-    auto page = index & 0xffffff00;
+    auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
 
     if(this->entryPages.size() <= page) return false;
 
-    const auto& data = this->entryPages[page].alignedAllocation[index];
+    const auto& data = this->entryPages[page][index];
+#ifdef POOL_MEM_GUARD
     AssertGuard(data.preGuard);
     AssertGuard(data.postGuard);
+#endif
     return data.is_occupied;
 }
 
@@ -93,38 +112,36 @@ u32 Pool<T>::End() const
 template<typename T>
 bool Pool<T>::Insert(u32 index)
 {
-    auto page = index & 0xffffff00;
+    auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
 
-    Assert(page < MaxPages);
     if(page >= this->entryPages.size())
     {
-        auto alignment = std::max((size_t)alignof(T), (size_t)16);
-        size_t allocSize = PoolPageElements*sizeof(Entry) + alignment;
-        void* allocation = malloc(allocSize);
-        auto alignedAllocation = (Entry*)std::align(alignment, PoolPageElements*sizeof(Entry), allocation, allocSize);
-        for(auto i = 0; i < PoolPageElements; ++i) {
-            new (&alignedAllocation[i]) Entry();
+        for(auto i = this->entryPages.size(); i <= page; ++i) {
+            this->entryPages.push_back(Vector<Entry>(PoolPageElements));
         }
-        this->entryPages.push_back({allocation, alignedAllocation});
     }
 
-    if(this->entryPages[page].alignedAllocation[index].is_occupied)
+    auto& entry = this->entryPages[page][index];
+    if(entry.is_occupied)
     {
         return false;
     }
 
-    this->entryPages[page].alignedAllocation[index].is_occupied = true;
-    memset(this->entryPages[page].alignedAllocation[index].data, 0, sizeof(T));
-    new (&this->entryPages[page].alignedAllocation[index].data[0]) T();
+    entry.is_occupied = true;
+    entry.data = this->default_value;
+
     for(u32 i = 0; i < this->free_indices.size(); ++i) {
         if(this->free_indices[i] == index) {
             this->free_indices.erase(this->free_indices.begin() + i);
             break;
         }
     }
-    AssertGuard(this->entryPages[page].alignedAllocation[index].preGuard);
-    AssertGuard(this->entryPages[page].alignedAllocation[index].postGuard);
+
+#ifdef POOL_MEM_GUARD
+    AssertGuard(entry.preGuard);
+    AssertGuard(entry.postGuard);
+#endif
 
     return true;
 }
@@ -132,17 +149,18 @@ bool Pool<T>::Insert(u32 index)
 template<typename T>
 bool Pool<T>::Remove(u32 index)
 {
-    if(!IsValid(index))
-    {
-        return false;
-    }
-
-    auto page = index & 0xffffff00;
+    auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
 
-    this->entryPages[page].alignedAllocation[index].is_occupied = false;
-    ((T*)this->entryPages[page].alignedAllocation[index].data)->~T();
-    memset(this->entryPages[page].alignedAllocation[index].data, 0, sizeof(T));
+    if(this->entryPages.size() <= page) return false;
+
+    auto& data = this->entryPages[page][index];
+
+    if(!data.is_occupied) return false;
+
+    data.is_occupied = false;
+    data.data = this->default_value;
+
     this->free_indices.push_back(index);
     return true;
 }

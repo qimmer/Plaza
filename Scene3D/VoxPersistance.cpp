@@ -60,7 +60,7 @@ static bool ReadChunk(Entity stream, Entity parent, v3i* chunkSizeStore, u32 *ch
     }
 
     if(header.chunkSize > 0) {
-        Vector<char> chunkData(header.chunkSize);
+        static Vector<char> chunkData(header.chunkSize);
         chunkData.resize(header.chunkSize);
 
         if(StreamRead(stream, header.chunkSize, chunkData.data()) != header.chunkSize) {
@@ -112,7 +112,7 @@ static bool ReadChunk(Entity stream, Entity parent, v3i* chunkSizeStore, u32 *ch
         } else if(memcmp(header.chunkType, "RGBA", 4) == 0) {
 
         } else {
-            Log(LogChannel_Core, LogSeverity_Warning, "Unknown VOX chunk '%c%c%c%c'. Skipping %d bytes.", header.chunkType[0], header.chunkType[1], header.chunkType[2], header.chunkType[3], header.chunkSize);
+            //Log(LogChannel_Core, LogSeverity_Warning, "Unknown VOX chunk '%c%c%c%c'. Skipping %d bytes.", header.chunkType[0], header.chunkType[1], header.chunkType[2], header.chunkType[3], header.chunkSize);
         }
     }
 

@@ -68,7 +68,7 @@
 static Dictionary<Type, bool> SectionOpened;
 
 static void DrawEnum(Property p, Enum e, u64 *value) {
-    FixedVector<StringRef, 128> elements;
+    Vector<StringRef> elements;
 
     char id[128];\
     sprintf(id, "##%llu", p);\
@@ -91,7 +91,7 @@ static void DrawEnum(Property p, Enum e, u64 *value) {
 }
 
 static void DrawFlag(Property p, Enum e, u64 *value) {
-    FixedVector<StringRef, 128> elements;
+    Vector<StringRef> elements;
 
     auto numFlags = GetEnumFlags(e);
     Assert(numFlags < 128);

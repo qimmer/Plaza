@@ -18,7 +18,7 @@ void main()
 
     v_normal = voxel_face_vertex_normals_vs[vertex_index].xyz;
     v_uv = vec2(voxel_face_vertex_positions_us[vertex_index].w, voxel_face_vertex_normals_vs[vertex_index].w);
-    v_ao_palette = vec2(ao, float(paletteIndex) / 256.0f);
+    v_ao_palette = vec2(ao, floor(float(paletteIndex)) / 256.0f);
 
     gl_Position = mul(u_modelViewProj, vec4(position, 1.0));
 }
