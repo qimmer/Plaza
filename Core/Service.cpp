@@ -7,18 +7,25 @@
 #include "Pool.h"
 #include "String.h"
 #include "Dictionary.h"
+#include "Entity.h"
 
 
-    struct Setting {
+struct Setting {
         SettingGetter getter;
         SettingSetter setter;
     };
 
-    typedef void(*SubscriptionHandler)(void *handler);
+    typedef void(*SubscriptionHandler)(Entity context, void *handler);
 
     struct Subscription {
         SubscriptionHandler SubscribeHandler, UnsubscribeHandler;
         void *EventHandler;
+    };
+
+    struct ServiceEntity {
+        Entity *handlePtr;
+        EntityHandler initializeFunc;
+        String name;
     };
 
     struct ServiceData {
@@ -27,6 +34,7 @@
         String name;
         Vector<Service> dependencies;
         Vector<Subscription> subscriptions;
+        Vector<ServiceEntity> entities;
     };
 
     Dictionary<String, Setting> SettingsTable;
@@ -45,7 +53,15 @@
             auto data = ServiceAt(service);
 
             for(auto& subscription : data->subscriptions) {
-                subscription.SubscribeHandler(subscription.EventHandler);
+                subscription.SubscribeHandler(0, subscription.EventHandler);
+            }
+
+            for(auto& serviceEntity : data->entities) {
+                char entityPath[PATH_MAX];
+                snprintf(entityPath, PATH_MAX, "/.%s/%s", data->name.c_str(), serviceEntity.name.c_str());
+
+                *serviceEntity.handlePtr = CreateEntityFromPath(entityPath);
+                if(serviceEntity.initializeFunc) serviceEntity.initializeFunc(*serviceEntity.handlePtr);
             }
 
             data->startFunc();
@@ -65,8 +81,12 @@
 
             data->shutdownFunc();
 
+            for(auto& serviceEntity : data->entities) {
+                if(IsEntityValid(*serviceEntity.handlePtr)) DestroyEntity(*serviceEntity.handlePtr);
+            }
+
             for(auto& subscription : data->subscriptions) {
-                subscription.UnsubscribeHandler(subscription.EventHandler);
+                subscription.UnsubscribeHandler(0, subscription.EventHandler);
             }
         }
     }
@@ -99,4 +119,8 @@
 
 void AddServiceSubscription(Service service, void *subscribeFunc, void *unsubscribeFunc, void *eventHandler) {
     ServiceAt(service)->subscriptions.push_back({(SubscriptionHandler)subscribeFunc, (SubscriptionHandler)unsubscribeFunc, eventHandler});
+}
+
+void AddServiceEntity(Service service, u64 *handlePtr, void *initializeFunc, StringRef name) {
+    ServiceAt(service)->entities.push_back({(Entity*)handlePtr, (EntityHandler)initializeFunc, name});
 }

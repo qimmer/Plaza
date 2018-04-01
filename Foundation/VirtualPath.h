@@ -10,8 +10,8 @@
 
 DeclareComponent(VirtualPath)
 
-DeclareComponentProperty(VirtualPath, StringRef, VirtualPathTrigger)
-DeclareComponentProperty(VirtualPath, StringRef, VirtualPathDestination)
+DeclareComponentPropertyReactive(VirtualPath, StringRef, VirtualPathTrigger)
+DeclareComponentPropertyReactive(VirtualPath, StringRef, VirtualPathDestination)
 
 void ResolveVirtualPath(StringRef virtualPath, char *resolvedPath);
 

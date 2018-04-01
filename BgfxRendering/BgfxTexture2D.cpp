@@ -23,9 +23,6 @@ struct BgfxTexture2D {
 DefineComponent(BgfxTexture2D)
 EndComponent()
 
-DefineService(BgfxTexture2D)
-EndService()
-
 static void OnChanged(Entity entity) {
     if(HasBgfxTexture2D(entity)) {
         GetBgfxTexture2D(entity)->invalidated = true;
@@ -41,23 +38,13 @@ void OnTexture2DRemoved(Entity entity) {
     }
 }
 
-static bool ServiceStart() {
-    SubscribeBgfxTexture2DRemoved(OnTexture2DRemoved);
-    SubscribeTextureChanged(OnChanged);
-    SubscribeTexture2DChanged(OnChanged);
-    SubscribeStreamChanged(OnChanged);
-    SubscribeStreamContentChanged(OnChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeBgfxTexture2DRemoved(OnTexture2DRemoved);
-    UnsubscribeTextureChanged(OnChanged);
-    UnsubscribeTexture2DChanged(OnChanged);
-    UnsubscribeStreamChanged(OnChanged);
-    UnsubscribeStreamContentChanged(OnChanged);
-    return true;
-}
+DefineService(BgfxTexture2D)
+        Subscribe(BgfxTexture2DRemoved, OnTexture2DRemoved)
+        Subscribe(TextureChanged, OnChanged)
+        Subscribe(Texture2DChanged, OnChanged)
+        Subscribe(StreamChanged, OnChanged)
+        Subscribe(StreamContentChanged, OnChanged)
+EndService()
 
 u16 GetBgfxTexture2DHandle(Entity entity) {
     if(!IsEntityValid(entity)) return bgfx::kInvalidHandle;
@@ -85,7 +72,11 @@ u16 GetBgfxTexture2DHandle(Entity entity) {
                 data->handle = BGFX_INVALID_HANDLE;
             }
 
-            data->handle = bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag, bgfx::copy(buffer, info.storageSize));
+            if(flag & TextureFlag_READ_BACK || flag & TextureFlag_RT) {
+                data->handle = bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag);
+            } else {
+                data->handle = bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag, bgfx::copy(buffer, info.storageSize));
+            }
 
             for_entity(renderTarget, BgfxOffscreenRenderTarget) {
                 if(GetRenderTargetTexture0(renderTarget) == entity ||

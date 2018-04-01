@@ -9,7 +9,7 @@
 
 DeclareComponent(UniformState)
 
-DeclareComponentProperty(UniformState, Entity, UniformStateUniform);
+DeclareComponentPropertyReactive(UniformState, Entity, UniformStateUniform);
 DeclareComponentProperty(UniformState, m4x4f, UniformStateMat4);
 DeclareComponentProperty(UniformState, v4f, UniformStateVec4);
 DeclareComponentProperty(UniformState, Entity, UniformStateTexture);

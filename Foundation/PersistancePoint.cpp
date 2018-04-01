@@ -19,9 +19,6 @@ DefineComponent(PersistancePoint)
     DefineMethod(void, Save, Entity entity)
 EndComponent()
 
-DefineService(PersistancePoint)
-EndService()
-
 DefineComponentPropertyReactive(PersistancePoint, bool, Loaded)
 
 DefineEvent(LoadStarted, EntityHandler)
@@ -141,21 +138,10 @@ void RemoveSerializer(StringRef mimeType) {
     Serializers.erase(mimeType);
 }
 
-
-static bool ServiceStart() {
-    SubscribePersistancePointAdded(OnPersistancePointAdded);
-    SubscribeStreamContentChanged(OnStreamChanged);
-    SubscribeStreamChanged(OnStreamChanged);
-    SubscribeLoadedChanged(LoadedChanged);
-    SubscribeParentChanged(OnParentChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribePersistancePointAdded(OnPersistancePointAdded);
-    UnsubscribeStreamContentChanged(OnStreamChanged);
-    UnsubscribeStreamChanged(OnStreamChanged);
-    UnsubscribeLoadedChanged(LoadedChanged);
-    UnsubscribeParentChanged(OnParentChanged);
-    return true;
-}
+DefineService(PersistancePoint)
+        Subscribe(PersistancePointAdded, OnPersistancePointAdded)
+        Subscribe(StreamContentChanged, OnStreamChanged)
+        Subscribe(StreamChanged, OnStreamChanged)
+        Subscribe(LoadedChanged, LoadedChanged)
+        Subscribe(ParentChanged, OnParentChanged)
+EndService()

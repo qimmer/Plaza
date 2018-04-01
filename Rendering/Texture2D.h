@@ -11,4 +11,6 @@ DeclareComponent(Texture2D)
 
 DeclareComponentPropertyReactive(Texture2D, v2i, TextureSize2D)
 
+DeclareService(Texture2D)
+
 #endif //PLAZA_TEXTURE2D_H

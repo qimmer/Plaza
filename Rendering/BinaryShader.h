@@ -25,5 +25,6 @@ DeclareComponent(BinaryShader)
 
 DeclareComponentPropertyReactive(BinaryShader, Entity, SourceShader)
 DeclareComponentPropertyReactive(BinaryShader, u8, BinaryShaderProfile)
+DeclareComponentPropertyReactive(BinaryShader, Entity, BinaryShaderVariation)
 
 #endif //PLAZA_BINARYSHADER_H

@@ -22,12 +22,15 @@
 #include "VertexDeclaration.h"
 #include "OffscreenRenderTarget.h"
 #include <Foundation/FoundationModule.h>
+#include <Input/InputModule.h>
 
 DefineModule(Rendering)
     ModuleDependency(Foundation)
-    ModuleService(Shader)
+    ModuleDependency(Input)
+
     ModuleService(ShaderCompiler)
     ModuleService(Program)
+    ModuleService(Texture2D)
     ModuleService(SubTexture2D)
     ModuleService(OffscreenRenderTarget)
 

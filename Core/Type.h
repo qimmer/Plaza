@@ -6,16 +6,19 @@
 #include <Core/Delegate.h>
 
 #define DefineType(TYPENAME) \
+    void _InitType_ ## TYPENAME(Type *handle);\
     Type TypeOf_ ## TYPENAME () { \
         static Type type = 0; \
-        if(!type) { \
-            type = CreateType(); \
-            SetTypeName(type, #TYPENAME);\
-            SetTypeSize(type, sizeof(TYPENAME));
+        if(!type) _InitType_ ## TYPENAME(&type); \
+        return type;\
+    }\
+    void _InitType_ ## TYPENAME(Type *handle) {\
+        auto type = CreateType(); \
+        *handle = type;\
+        SetTypeName(*handle, #TYPENAME);\
+        SetTypeSize(*handle, sizeof(TYPENAME));\
 
 #define EndType() \
-        } \
-        return type; \
     }
 
 #define DeclareType(TYPENAME) Type TypeOf_ ## TYPENAME ();

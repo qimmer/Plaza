@@ -6,17 +6,11 @@
 #define PLAZA_MAINMENU_H
 
 #include <Core/Service.h>
+#include <Core/Entity.h>
 
 DeclareService(MainMenu)
 
-void MainMenuPush(Service service, StringRef text);
-void MainMenuPop();
-void MainMenuItem(StringRef text, Handler func);
-void MainMenuSeparator();
-
-#define PushMenu(TEXT) MainMenuPush(service, TEXT);
-#define PopMenu() MainMenuPop();
-#define MenuItem(TEXT, FUNCTION)
-#define MenuSeparator()
+DeclareComponent(MainMenu)
+DeclareComponentPropertyReactive(MainMenu, Entity, MainMenuVisibilityState)
 
 #endif //PLAZA_MAINMENU_H

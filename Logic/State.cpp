@@ -9,7 +9,7 @@ struct State {
 };
 
 DefineComponent(State)
-    DefineProperty(float, StateValue)
+    DefinePropertyReactive(float, StateValue)
 EndComponent()
 
 DefineComponentPropertyReactive(State, float, StateValue)

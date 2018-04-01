@@ -8,8 +8,11 @@
 #include <Core/Entity.h>
 
 DeclareComponent(Program)
-DeclareComponentPropertyReactive(Program, Entity, VertexShader);
-DeclareComponentPropertyReactive(Program, Entity, PixelShader);
+DeclareComponentPropertyReactive(Program, Entity, ProgramBinaryVertexShader);
+DeclareComponentPropertyReactive(Program, Entity, ProgramBinaryPixelShader);
+
+Entity ResolveProgram(Entity vertexShader, Entity pixelShader, u8 profile, Entity shaderVariation);
+
 DeclareService(Program)
 
 #endif //PLAZA_PROGRAM_H

@@ -26,9 +26,6 @@ DefineComponent(SimpleSceneRenderer)
     Dependency(Camera)
 EndComponent()
 
-DefineService(SimpleSceneRenderer)
-EndService()
-
 static void UpdateBatches(Entity sceneRenderer) {
     auto data = GetSimpleSceneRenderer(sceneRenderer);
 
@@ -95,22 +92,8 @@ static void OnSimpleRendererRemoved(Entity entity) {
     DestroyEntity(GetSimpleSceneRenderer(entity)->CommandList);
 }
 
-static bool ServiceStart() {
-    SubscribeSimpleSceneRendererAdded(OnSimpleRendererAdded);
-    SubscribeSimpleSceneRendererRemoved(OnSimpleRendererRemoved);
-    SubscribeAppUpdate(OnAppUpdate);
-
-    AddExtension(TypeOf_Camera(), TypeOf_SimpleSceneRenderer());
-
-    return true;
-}
-
-static bool ServiceStop() {
-    RemoveExtension(TypeOf_Camera(), TypeOf_SimpleSceneRenderer());
-
-    UnsubscribeAppUpdate(OnAppUpdate);
-    UnsubscribeSimpleSceneRendererAdded(OnSimpleRendererAdded);
-    UnsubscribeSimpleSceneRendererRemoved(OnSimpleRendererRemoved);
-
-    return true;
-}
+DefineService(SimpleSceneRenderer)
+        Subscribe(SimpleSceneRendererAdded, OnSimpleRendererAdded)
+        Subscribe(SimpleSceneRendererRemoved, OnSimpleRendererRemoved)
+        Subscribe(AppUpdate, OnAppUpdate)
+EndService()

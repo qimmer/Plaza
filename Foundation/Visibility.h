@@ -8,8 +8,8 @@
 #include <Core/Entity.h>
 
 
-    DeclareComponent(Visibility)
-    DeclareComponentProperty(Visibility, bool, Hidden)
+DeclareComponent(Visibility)
+DeclareComponentPropertyReactive(Visibility, bool, Hidden)
 
 
 #endif //PLAZA_VISIBILITY_H

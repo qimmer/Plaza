@@ -17,10 +17,6 @@
 #include <Rendering/RenderTarget.h>
 #include "PlayerContext.h"
 
-
-    DefineService(PlayerContext)
-    EndService()
-
     Entity PlayerContext = 0, RuntimeFolder = 0;
 
     Entity GetPlayerContext() {
@@ -84,18 +80,17 @@
             DestroyEntity(PlayerContext);
         }
     }
-    static bool ServiceStart() {
+    static void OnServiceStart(Service service) {
         PlayerContext = CreateContext(0, "PlayerContext");
         SetRenderTargetSize(PlayerContext, {800, 600});
-
-        SubscribeContextClosing(OnContextClosing);
-
-        return true;
     }
 
-    static bool ServiceStop() {
-        UnsubscribeContextClosing(OnContextClosing);
+    static void OnServiceStop(Service service){
         DestroyEntity(PlayerContext);
-
-        return true;
     }
+
+DefineService(PlayerContext)
+    Subscribe(ContextClosing, OnContextClosing)
+    Subscribe(PlayerContextStarted, OnServiceStart)
+        Subscribe(PlayerContextStopped, OnServiceStop)
+EndService()

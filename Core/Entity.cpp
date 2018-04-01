@@ -31,9 +31,6 @@ DefineType(Entity)
     DefineMethod(bool, IsComponent, Type componentType)
 EndType()
 
-DefineService(Entity)
-EndService()
-
 DefineEvent(ComponentAdded, ComponentHandler)
 DefineEvent(ComponentRemoved, ComponentHandler)
 DefineEvent(ComponentChanged, ComponentHandler)
@@ -201,16 +198,10 @@ static void OnEntityDestroy(Entity entity) {
     }
 }
 
-static bool ServiceStart() {
-    SubscribeEntityDestroyed(OnEntityDestroy);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeEntityDestroyed(OnEntityDestroy);
-    return true;
-}
-
 Dictionary<Type, Vector<ComponentHandler>> OnComponentAdded;
 Dictionary<Type, Vector<ComponentHandler>> OnComponentRemoved;
 Dictionary<Property, Vector<PropertyChangedHandler>> OnPropertyChanged;
+
+DefineService(Entity)
+        Subscribe(EntityDestroyed, OnEntityDestroy)
+EndService()

@@ -8,11 +8,8 @@
 #include <Core/Service.h>
 #include <Core/Entity.h>
 
+DeclareComponent(BgfxCommandList)
 
-    DeclareComponent(BgfxCommandList)
-    DeclareService(BgfxCommandList)
-
-    void RenderCommandList(Entity commandList, unsigned char viewId);
-
+void RenderCommandList(Entity commandList, unsigned char viewId);
 
 #endif //PLAZA_BGFXCOMMANDLIST_H

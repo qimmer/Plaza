@@ -22,7 +22,7 @@
     StringRef GetPersonName(Entity entity);
 
     DefineComponent(Person)
-        DefineProperty(Person, PersonName)
+        DefinePropertyReactive(Person, PersonName)
     EndComponent()
 
     void SetPersonName(Entity entity, StringRef name)

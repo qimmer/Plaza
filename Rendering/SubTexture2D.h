@@ -10,9 +10,9 @@
 DeclareComponent(SubTexture2D)
 DeclareService(SubTexture2D)
 
-DeclareComponentProperty(SubTexture2D, v2i, SubTexture2DOffset)
-DeclareComponentProperty(SubTexture2D, v2i, SubTexture2DSize)
-DeclareComponentProperty(SubTexture2D, Entity, SubTexture2DTexture)
+DeclareComponentPropertyReactive(SubTexture2D, v2i, SubTexture2DOffset)
+DeclareComponentPropertyReactive(SubTexture2D, v2i, SubTexture2DSize)
+DeclareComponentPropertyReactive(SubTexture2D, Entity, SubTexture2DTexture)
 
 Entity GetSubTexture2DUvOffsetScaleUniform();
 

@@ -74,7 +74,8 @@ static void OnAdded(Entity voxelPalette) {
     data->VoxelPaletteTextureUniformState = us;
     data->VoxelPaletteTexture = tex;
 
-    SetMaterialProgram(voxelPalette, GetVoxelProgram());
+    SetMaterialVertexShader(voxelPalette, GetVoxelVertexShader());
+    SetMaterialPixelShader(voxelPalette, GetVoxelPixelShader());
 }
 
 static void OnAppUpdate(double deltaTime) {
@@ -91,12 +92,3 @@ DefineService(VoxelPalette)
     Subscribe(VoxelPaletteAdded, OnAdded)
     Subscribe(AppUpdate, OnAppUpdate)
 EndService()
-
-static bool ServiceStart() {
-
-    return true;
-}
-
-static bool ServiceStop() {
-    return true;
-}

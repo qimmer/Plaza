@@ -25,10 +25,6 @@ DefineComponent(Folder)
     Dependency(Hierarchy)
 EndComponent()
 
-DefineService(Folder)
-    ServiceDependency(Stream)
-EndService()
-
 DefineComponentPropertyReactive(Folder, StringRef, FolderPath)
 
 StringRef GetCurrentWorkingDirectory() {
@@ -106,6 +102,7 @@ void ScanFolder(Entity entity) {
 #undef GetHandle
 #include <windows.h>
 #include <shlwapi.h>
+#undef CreateService
 #endif
 
 bool CreateDirectories(StringRef fullPath) {
@@ -223,18 +220,9 @@ static void OnFolderRemoved(Entity entity) {
 
 }
 
-static bool ServiceStart() {
-    SubscribeFolderAdded(OnFolderAdded);
-    SubscribeFolderRemoved(OnFolderRemoved);
-    SubscribeFolderPathChanged(OnFolderPathChanged);
-
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeFolderAdded(OnFolderAdded);
-    UnsubscribeFolderRemoved(OnFolderRemoved);
-    UnsubscribeFolderPathChanged(OnFolderPathChanged);
-
-    return true;
-}
+DefineService(Folder)
+        ServiceDependency(Stream)
+        Subscribe(FolderAdded, OnFolderAdded)
+        Subscribe(FolderRemoved, OnFolderRemoved)
+        Subscribe(FolderPathChanged, OnFolderPathChanged)
+EndService()

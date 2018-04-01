@@ -18,14 +18,14 @@ struct OffscreenRenderTarget {
 };
 
 DefineComponent(OffscreenRenderTarget)
-    DefineProperty(Entity, RenderTargetTexture0)
-    DefineProperty(Entity, RenderTargetTexture1)
-    DefineProperty(Entity, RenderTargetTexture2)
-    DefineProperty(Entity, RenderTargetTexture3)
-    DefineProperty(Entity, RenderTargetTexture4)
-    DefineProperty(Entity, RenderTargetTexture5)
-    DefineProperty(Entity, RenderTargetTexture6)
-    DefineProperty(Entity, RenderTargetTexture7)
+    DefinePropertyReactive(Entity, RenderTargetTexture0)
+    DefinePropertyReactive(Entity, RenderTargetTexture1)
+    DefinePropertyReactive(Entity, RenderTargetTexture2)
+    DefinePropertyReactive(Entity, RenderTargetTexture3)
+    DefinePropertyReactive(Entity, RenderTargetTexture4)
+    DefinePropertyReactive(Entity, RenderTargetTexture5)
+    DefinePropertyReactive(Entity, RenderTargetTexture6)
+    DefinePropertyReactive(Entity, RenderTargetTexture7)
 EndComponent()
 
 DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture0)
@@ -36,9 +36,6 @@ DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTextu
 DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture5)
 DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture6)
 DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture7)
-
-DefineService(OffscreenRenderTarget)
-EndService()
 
 static void OnChanged(Entity entity) {
     auto data = GetOffscreenRenderTarget(entity);
@@ -69,14 +66,7 @@ static void OnRenderTargetSizeChanged(Entity entity, v2i oldSize, v2i newSize) {
     if(HasOffscreenRenderTarget(entity)) OnChanged(entity);
 }
 
-static bool ServiceStart() {
-    SubscribeRenderTargetSizeChanged(OnRenderTargetSizeChanged);
-    SubscribeOffscreenRenderTargetChanged(OnChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeRenderTargetSizeChanged(OnRenderTargetSizeChanged);
-    UnsubscribeOffscreenRenderTargetChanged(OnChanged);
-    return true;
-}
+DefineService(OffscreenRenderTarget)
+        Subscribe(RenderTargetSizeChanged, OnRenderTargetSizeChanged)
+        Subscribe(OffscreenRenderTargetChanged, OnChanged)
+EndService()

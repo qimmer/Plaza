@@ -14,9 +14,6 @@ DefineComponent(MemoryStream)
     Dependency(Stream)
 EndComponent()
 
-DefineService(MemoryStream)
-EndService()
-
 static u64 Read(Entity entity, u64 size, void *data) {
     auto streamData = GetMemoryStream(entity);
     size = std::min((u64)streamData->bytes.size() - streamData->offset, size);
@@ -68,7 +65,7 @@ static bool IsOpen(Entity entity) {
     return GetMemoryStream(entity)->open;
 }
 
-static bool ServiceStart() {
+static void OnServiceStart(Service service) {
     StreamProtocol p {
         AddMemoryStream,
         RemoveMemoryStream,
@@ -82,12 +79,13 @@ static bool ServiceStart() {
     };
 
     AddStreamProtocol(ProtocolIdentifier, &p);
-
-    return true;
 }
 
-static bool ServiceStop() {
+static void OnServiceStop(Service service){
     RemoveStreamProtocol(ProtocolIdentifier);
-
-    return true;
 }
+
+DefineService(MemoryStream)
+    Subscribe(MemoryStreamStarted, OnServiceStart)
+    Subscribe(MemoryStreamStopped, OnServiceStop)
+EndService()

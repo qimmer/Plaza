@@ -26,7 +26,8 @@ static void OnAdded(Entity viewer) {
     auto data = GetTexture2DViewer(viewer);
 
     data->Texture2DViewerMaterial = CreateMaterial(viewer, "Material");
-    SetMaterialProgram(data->Texture2DViewerMaterial, GetImGuiProgram());
+    SetMaterialVertexShader(data->Texture2DViewerMaterial, GetImGuiVertexShader());
+    SetMaterialPixelShader(data->Texture2DViewerMaterial, GetImGuiPixelShader());
     SetMaterialDepthTest(data->Texture2DViewerMaterial, RenderState_STATE_DEPTH_TEST_NONE);
     SetMaterialBlendMode(data->Texture2DViewerMaterial, RenderState_STATE_BLEND_NORMAL);
 
@@ -44,6 +45,11 @@ static void Draw(Entity context) {
         auto data = GetTexture2DViewer(viewer);
         auto texture = GetTexture2DViewerTexture(viewer);
 
+        if(!IsEntityValid(texture) || !HasTexture2D(texture)) {
+            DestroyEntity(viewer);
+            continue;
+        }
+
         bool show = true;
         char title[PATH_MAX];
         snprintf(title, PATH_MAX, "%s##%llu", GetEntityPath(texture), viewer);
@@ -59,16 +65,8 @@ static void Draw(Entity context) {
     }
 }
 
-static bool ServiceStart() {
-    return true;
-}
-
-static bool ServiceStop() {
-    return true;
-}
-
 DefineComponent(Texture2DViewer)
-        DefineProperty(Entity, Texture2DViewerTexture)
+        DefinePropertyReactive(Entity, Texture2DViewerTexture)
         DefineExtensionMethod(Texture2D, void, ViewTexture, Entity entity)
 EndComponent()
 

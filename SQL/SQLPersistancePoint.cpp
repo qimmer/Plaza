@@ -12,11 +12,3 @@ EndComponent()
 DefineService(SQLPersistancePoint)
 
 EndService()
-
-static bool ServiceStart() {
-    return true;
-}
-
-static bool ServiceStop() {
-    return true;
-}

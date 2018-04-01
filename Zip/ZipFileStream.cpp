@@ -13,12 +13,3 @@
     DefineService(ZipFileStream)
 
     EndService()
-
-    static bool ServiceStart() {
-        return true;
-    }
-
-    static bool ServiceStop() {
-        return true;
-    }
-}

@@ -13,10 +13,10 @@ struct VertexAttribute {
 
 DefineComponent(VertexAttribute)
     Dependency(Hierarchy)
-    DefineProperty(Type, VertexAttributeType)
-    DefineProperty(u8, VertexAttributeUsage)
-    DefineProperty(bool, VertexAttributeNormalize)
-    DefineProperty(bool, VertexAttributeAsInt)
+    DefinePropertyReactive(Type, VertexAttributeType)
+    DefinePropertyReactive(u8, VertexAttributeUsage)
+    DefinePropertyReactive(bool, VertexAttributeNormalize)
+    DefinePropertyReactive(bool, VertexAttributeAsInt)
 EndComponent()
 
 DefineComponentPropertyReactive(VertexAttribute, Type, VertexAttributeType)

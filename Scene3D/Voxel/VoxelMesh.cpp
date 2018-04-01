@@ -19,7 +19,7 @@
 #include "../Core/Entity.h"
 #include <cglm/cglm.h>
 
-Entity VoxelDataRoot = 0, VoxelProgram = 0, VoxelVertexDeclaration = 0, CubeMesh = 0, VoxelPaletteTextureUniform = 0;
+Entity VoxelDataRoot = 0, VoxelVertexShader = 0, VoxelPixelShader = 0, VoxelVertexDeclaration = 0, CubeMesh = 0, VoxelPaletteTextureUniform = 0;
 Entity ChunkSizeSizeZUniform = 0, FaceVertexPositionsUsUniform = 0, FaceVertexNormalsVsUniform = 0, PaletteColorUniform = 0, PaletteUvOffsetUniform = 0, PaletteUvSizeUniform = 0;
 
 struct VoxelMesh {
@@ -34,19 +34,12 @@ struct VoxelVertex {
 
 DefineComponent(VoxelMesh)
     Dependency(Mesh)
-    DefineProperty(Entity, VoxelMeshChunk)
-    DefineProperty(Entity, VoxelMeshPalette)
+    DefinePropertyReactive(Entity, VoxelMeshChunk)
+    DefinePropertyReactive(Entity, VoxelMeshPalette)
 EndComponent()
 
 DefineComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshChunk)
 DefineComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshPalette)
-
-DefineService(VoxelMesh)
-EndService()
-
-Entity GetVoxelProgram() {
-    return VoxelProgram;
-}
 
 Entity GetVoxelDataRoot() {
     return VoxelDataRoot;
@@ -163,63 +156,52 @@ static void CreateCubeVertices() {
 
 }
 
-static Entity CreateVoxelProgram() {
-    auto program = CreateProgram(VoxelDataRoot, "Program");
+void InitializeVoxelRoot(Entity entity) {
+    CreateCubeVertices();
 
-    auto shaderDeclaration = CreateShader(program, "ShaderDeclaration");
+    VoxelVertexDeclaration = CreateVertexDeclaration(entity, "VertexDeclaration");
+    auto pos = CreateVertexAttribute(VoxelVertexDeclaration, "Position");
+    SetVertexAttributeType(pos, TypeOf_rgba8());
+    SetVertexAttributeAsInt(pos, true);
+    SetVertexAttributeNormalize(pos, false);
+    SetVertexAttributeUsage(pos, VertexAttributeUsage_Position);
 
-    auto vertexShader = CreateShader(program, "VertexShader");
-    SetShaderType(vertexShader, ShaderType_Vertex);
-    SetShaderDeclaration(vertexShader, shaderDeclaration);
+    auto texCoord = CreateVertexAttribute(VoxelVertexDeclaration, "TexCoord");
+    SetVertexAttributeType(texCoord, TypeOf_rgba8());
+    SetVertexAttributeAsInt(texCoord, true);
+    SetVertexAttributeNormalize(texCoord, false);
+    SetVertexAttributeUsage(texCoord, VertexAttributeUsage_TexCoord0);
 
-    auto pixelShader = CreateShader(program, "PixelShader");
-    SetShaderType(pixelShader, ShaderType_Pixel);
-    SetShaderDeclaration(pixelShader, shaderDeclaration);
-
-    SetStreamPath(vertexShader, "res://voxel/shaders/voxel.vs");
-    SetStreamPath(pixelShader, "res://voxel/shaders/voxel.ps");
+    auto shaderDeclaration = CreateStream(entity, "ShaderDeclaration");
     SetStreamPath(shaderDeclaration, "res://voxel/shaders/voxel.var");
 
-    SetVertexShader(program, vertexShader);
-    SetPixelShader(program, pixelShader);
+    VoxelVertexShader = CreateShader(entity, "VertexShader");
+    SetShaderType(VoxelVertexShader, ShaderType_Vertex);
+    SetShaderDeclaration(VoxelVertexShader, shaderDeclaration);
+    SetStreamPath(VoxelVertexShader, "res://voxel/shaders/voxel.vs");
 
-    FaceVertexPositionsUsUniform = CreateUniform(program, "VertexPositionsUsUniform");
+    VoxelPixelShader = CreateShader(entity, "PixelShader");
+    SetShaderType(VoxelPixelShader, ShaderType_Pixel);
+    SetShaderDeclaration(VoxelPixelShader, shaderDeclaration);
+    SetStreamPath(VoxelPixelShader, "res://voxel/shaders/voxel.ps");
+
+    FaceVertexPositionsUsUniform = CreateUniform(entity, "VertexPositionsUsUniform");
     SetUniformName(FaceVertexPositionsUsUniform, "voxel_face_vertex_positions_us");
     SetUniformType(FaceVertexPositionsUsUniform, TypeOf_v4f());
     SetUniformArrayCount(FaceVertexPositionsUsUniform, 36);
     SetUniformStateUniform(FaceVertexPositionsUsUniform, FaceVertexPositionsUsUniform);
     SetUniformStateState(FaceVertexPositionsUsUniform, sizeof(v4f) * 36, cubeFaceVertexPositionsUs);
 
-    FaceVertexNormalsVsUniform = CreateUniform(program, "VertexNormalsVsUniform");
+    FaceVertexNormalsVsUniform = CreateUniform(entity, "VertexNormalsVsUniform");
     SetUniformName(FaceVertexNormalsVsUniform, "voxel_face_vertex_normals_vs");
     SetUniformType(FaceVertexNormalsVsUniform, TypeOf_v4f());
     SetUniformArrayCount(FaceVertexNormalsVsUniform, 36);
     SetUniformStateUniform(FaceVertexNormalsVsUniform, FaceVertexNormalsVsUniform);
     SetUniformStateState(FaceVertexNormalsVsUniform, sizeof(v4f) * 36, cubeFaceVertexNormalsVs);
 
-    VoxelPaletteTextureUniform = CreateUniform(program, "VoxelPaletteTextureUniform");
+    VoxelPaletteTextureUniform = CreateUniform(entity, "VoxelPaletteTextureUniform");
     SetUniformType(VoxelPaletteTextureUniform, TypeOf_Entity());
     SetUniformName(VoxelPaletteTextureUniform, "s_palette");
-
-    return program;
-}
-
-Entity CreateVoxelVertexDeclaration() {
-
-    auto vd = CreateVertexDeclaration(VoxelDataRoot, "VertexDeclaration");
-    auto pos = CreateVertexAttribute(vd, "Position");
-    SetVertexAttributeType(pos, TypeOf_rgba8());
-    SetVertexAttributeAsInt(pos, true);
-    SetVertexAttributeNormalize(pos, false);
-    SetVertexAttributeUsage(pos, VertexAttributeUsage_Position);
-
-    auto texCoord = CreateVertexAttribute(vd, "TexCoord");
-    SetVertexAttributeType(texCoord, TypeOf_rgba8());
-    SetVertexAttributeAsInt(texCoord, true);
-    SetVertexAttributeNormalize(texCoord, false);
-    SetVertexAttributeUsage(texCoord, VertexAttributeUsage_TexCoord0);
-
-    return vd;
 }
 
 static void GenerateVertices(const Voxel *voxels, v3i bufferSize, v3i start, v3i end, u32 *vertexCountOut, Entity stream) {
@@ -383,29 +365,20 @@ static void OnVoxelMeshAdded(Entity voxelMesh) {
     SetVertexBufferDeclaration(vb, VoxelVertexDeclaration);
 }
 
-static bool ServiceStart() {
-    SubscribeVoxelMeshAdded(OnVoxelMeshAdded);
-    SubscribeVoxelPaletteChanged(OnVoxelPaletteChanged);
-    SubscribeVoxelChunkChanged(OnVoxelChunkChanged);
-    SubscribeVoxelMeshChanged(RegenerateVoxelMesh);
-    SubscribeStreamContentChanged(OnVoxelChunkChanged);
-    SubscribeStreamChanged(OnVoxelChunkChanged);
+DefineService(VoxelMesh)
+    Subscribe(VoxelMeshAdded, OnVoxelMeshAdded)
+    Subscribe(VoxelPaletteChanged, OnVoxelPaletteChanged)
+    Subscribe(VoxelChunkChanged, OnVoxelChunkChanged)
+    Subscribe(VoxelMeshChanged, RegenerateVoxelMesh)
+    Subscribe(StreamContentChanged, OnVoxelChunkChanged)
+    Subscribe(StreamChanged, OnVoxelChunkChanged)
+    ServiceEntity(VoxelDataRoot, InitializeVoxelRoot)
+EndService()
 
-    VoxelDataRoot = CreateEntityFromName(0, ".voxel");
-    VoxelVertexDeclaration = CreateVoxelVertexDeclaration();
-    CreateCubeVertices();
-    VoxelProgram = CreateVoxelProgram();
-
-    return true;
+Entity GetVoxelVertexShader() {
+    return VoxelVertexShader;
 }
 
-static bool ServiceStop() {
-    UnsubscribeVoxelMeshAdded(OnVoxelMeshAdded);
-    UnsubscribeVoxelPaletteChanged(OnVoxelPaletteChanged);
-    UnsubscribeVoxelChunkChanged(OnVoxelChunkChanged);
-    UnsubscribeVoxelMeshChanged(RegenerateVoxelMesh);
-    UnsubscribeStreamContentChanged(OnVoxelChunkChanged);
-    UnsubscribeStreamChanged(OnVoxelChunkChanged);
-
-    return true;
+Entity GetVoxelPixelShader() {
+    return VoxelPixelShader;
 }

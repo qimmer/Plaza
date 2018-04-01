@@ -30,7 +30,7 @@ void InitializeModule(Module module) {
             InitializeModule(dependency);
         }
 
-        Log(LogChannel_Core, LogSeverity_Info, "Initializing %s ...", GetModuleName(module));
+        Log(LogChannel_Core, LogSeverity_Info, "Registering Module '%s' ...", GetModuleName(module));
 
         for(auto service : data->services) {
             StartService(service);
@@ -43,7 +43,7 @@ void ShutdownModule(Module module) {
     auto data = ModuleAt(module);
 
     if(IsModuleInitialized(module)) {
-        Log(LogChannel_Core, LogSeverity_Info, "Shutting down %s ...", GetModuleName(module));
+        Log(LogChannel_Core, LogSeverity_Info, "Unregistering Module '%s' ...", GetModuleName(module));
 
         for(auto dependee = GetNextModule(0); IsModuleValid(dependee); dependee = GetNextModule(dependee)) {
             auto& dependencies = ModuleAt(dependee)->dependencies;

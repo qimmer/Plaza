@@ -12,9 +12,6 @@
 #include <Core/Pool.h>
 #include <Core/Type.h>
 
-DefineService(FunctionCallService)
-EndService()
-
 static DCCallVM *CallVM = 0;
 static DCstruct *Struct_v2i, *Struct_v3i, *Struct_v4i, *Struct_v2f, *Struct_v3f, *Struct_v4f, *Struct_m3x3f, *Struct_m4x4f;
 
@@ -220,7 +217,7 @@ bool CallFunction(Function f, const void *argumentData, void *returnData) {
     return true;
 }
 
-static bool ServiceStart() {
+static void OnServiceStart(Service service) {
     CallVM = dcNewCallVM(4096);
     dcMode(CallVM, DC_CALL_C_DEFAULT);
     dcReset(CallVM);
@@ -256,11 +253,9 @@ static bool ServiceStart() {
     Struct_m4x4f = dcNewStruct(1, 16);
     dcStructField(Struct_m4x4f, DC_SIGCHAR_FLOAT, 16, 4*4);
     dcCloseStruct(Struct_m4x4f);
-
-    return true;
 }
 
-static bool ServiceStop() {
+static void OnServiceStop(Service service){
     dcFreeStruct(Struct_v2i);
     dcFreeStruct(Struct_v3i);
     dcFreeStruct(Struct_v4i);
@@ -271,5 +266,9 @@ static bool ServiceStop() {
     dcFreeStruct(Struct_m4x4f);
     dcFree(CallVM);
     CallVM = 0;
-    return true;
 }
+
+DefineService(FunctionCallService)
+        Subscribe(FunctionCallServiceStarted, OnServiceStart)
+        Subscribe(FunctionCallServiceStopped, OnServiceStop)
+EndService()

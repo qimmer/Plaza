@@ -12,7 +12,7 @@ struct RenderTarget {
 };
 
 DefineComponent(RenderTarget)
-    DefineProperty(v2i, RenderTargetSize)
+    DefinePropertyReactive(v2i, RenderTargetSize)
 EndComponent()
 
 DefineComponentPropertyReactive(RenderTarget, v2i, RenderTargetSize)

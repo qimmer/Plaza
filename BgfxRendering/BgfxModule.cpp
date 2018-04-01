@@ -17,7 +17,6 @@
 
 
 DefineModule(BgfxRendering)
-        ModuleService(BgfxCommandList)
         ModuleService(BgfxContext)
         ModuleService(BgfxUniform)
         ModuleService(BgfxTexture2D)

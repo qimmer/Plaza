@@ -29,14 +29,11 @@ struct SceneEditor {
 };
 
 DefineComponent(SceneEditor)
-    DefineProperty(Entity, SceneEditorScene)
+    DefinePropertyReactive(Entity, SceneEditorScene)
     DefineExtensionMethod(Scene, void, EditScene, Entity entity)
 EndComponent()
 
 DefineComponentPropertyReactive(SceneEditor, Entity, SceneEditorScene)
-
-DefineService(SceneEditor)
-EndService()
 
 void EditScene(Entity scene) {
     char editorPath[PATH_MAX];
@@ -111,7 +108,8 @@ static void OnAdded(Entity sceneEditor) {
     SetRenderTargetSize(data->RenderTarget, {400, 300});
 
     data->RenderTargetMaterial = CreateMaterial(sceneEditor, "RenderTargetMaterial");
-    SetMaterialProgram(data->RenderTargetMaterial, GetImGuiProgram());
+    SetMaterialVertexShader(data->RenderTargetMaterial, GetImGuiVertexShader());
+    SetMaterialPixelShader(data->RenderTargetMaterial, GetImGuiPixelShader());
     SetMaterialDepthTest(data->RenderTargetMaterial, RenderState_STATE_DEPTH_TEST_NONE);
     SetMaterialBlendMode(data->RenderTargetMaterial, RenderState_STATE_BLEND_NORMAL);
 
@@ -150,18 +148,9 @@ static void OnSceneEditorSceneChanged(Entity sceneEditor, Entity oldScene, Entit
     SetScene(data->Plane, newScene);
 }
 
-static bool ServiceStart() {
-    SubscribeImGuiDraw(Draw);
-    SubscribeSceneEditorAdded(OnAdded);
-    SubscribeSceneEditorRemoved(OnRemoved);
-    SubscribeSceneEditorSceneChanged(OnSceneEditorSceneChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeImGuiDraw(Draw);
-    UnsubscribeSceneEditorAdded(OnAdded);
-    UnsubscribeSceneEditorRemoved(OnRemoved);
-    UnsubscribeSceneEditorSceneChanged(OnSceneEditorSceneChanged);
-    return true;
-}
+DefineService(SceneEditor)
+        Subscribe(ImGuiDraw, Draw)
+        Subscribe(SceneEditorAdded, OnAdded)
+        Subscribe(SceneEditorRemoved, OnRemoved)
+        Subscribe(SceneEditorSceneChanged, OnSceneEditorSceneChanged)
+EndService()

@@ -12,12 +12,16 @@ struct PropertyData
     std::string name;
     void *getter;
     void *setter;
+    void *subscribeFunc;
+    void *unsubscribeFunc;
     Type type, owner;
     PropertyTransferFunc transferFunc;
     Enum e;
 };
 
 DefineHandle(Property, PropertyData)
+DefineType(Property)
+EndType()
 
 static Dictionary<String, Property> PropertyTable;
 
@@ -84,4 +88,12 @@ Enum GetPropertyEnum(Property property) {
 
 void SetPropertyEnum(Property property, Enum e) {
     PropertyAt(property)->e = e;
+}
+
+void SetPropertyChangedUnsubscribeFunc(Property property, void *func) {
+    PropertyAt(property)->subscribeFunc = func;
+}
+
+void SetPropertyChangedSubscribeFunc(Property property, void *func) {
+    PropertyAt(property)->unsubscribeFunc = func;
 }

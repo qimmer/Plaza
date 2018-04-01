@@ -9,6 +9,7 @@
 #define SCHED_UINT_PTR uintptr_t
 #define SCHED_IMPLEMENTATION
 #define SCHED_STATIC
+#undef SCHED_MIN
 #include <mmx/sched.h>
 
 #undef CreateService
@@ -37,9 +38,6 @@ EndComponent()
 DefineComponentProperty(Task, TaskFunction, TaskFunction)
 DefineComponentProperty(Task, bool, TaskFinished)
 DefineComponentProperty(Task, u32, TaskResult)
-
-DefineService(TaskScheduler)
-EndService()
 
 static void TaskFunc(void* taskIndexPtr, struct scheduler*, struct sched_task_partition, sched_uint thread_num) {
     auto task = GetTaskEntity((size_t)taskIndexPtr);
@@ -103,7 +101,7 @@ static void OnUpdate(double deltaTime) {
     }
 }
 
-static bool ServiceStart() {
+static void OnServiceStart(Service service) {
     memset(threadIds.data(), 0, sizeof(u64) * MAX_THREADS);
 
     mainThread = GetCurrentThreadIndex();
@@ -112,16 +110,15 @@ static bool ServiceStart() {
     SchedulerMemory = calloc(NeededSchedulerMemory, 1);
     scheduler_start(&Scheduler, SchedulerMemory);
 
-    SubscribeAppUpdate(OnUpdate);
-
-    return true;
 }
 
-static bool ServiceStop() {
-    UnsubscribeAppUpdate(OnUpdate);
-
+static void OnServiceStop(Service service){
     scheduler_stop(&Scheduler, 0);
     free(SchedulerMemory);
-
-    return true;
 }
+
+DefineService(TaskScheduler)
+    Subscribe(TaskSchedulerStarted, OnServiceStart)
+    Subscribe(TaskSchedulerStopped, OnServiceStop)
+    Subscribe(AppUpdate, OnUpdate)
+EndService()

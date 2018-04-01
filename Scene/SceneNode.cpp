@@ -15,9 +15,6 @@
         Abstract()
     EndComponent()
 
-    DefineService(SceneNode)
-    EndService()
-
     DefineEvent(SceneNodeSceneChanged, SceneNodeSceneChangedHandler)
 
     Entity GetSceneNodeScene(Entity sceneNode) {
@@ -71,18 +68,8 @@
         SetScene(entity, 0);
     }
 
-    static bool ServiceStart() {
-        SubscribeParentChanged(OnParentChanged);
-        SubscribeSceneNodeAdded(OnSceneNodeAdded);
-        SubscribeSceneNodeRemoved(OnSceneNodeRemoved);
-
-        return true;
-    }
-
-    static bool ServiceStop() {
-        UnsubscribeParentChanged(OnParentChanged);
-        UnsubscribeSceneNodeAdded(OnSceneNodeAdded);
-        UnsubscribeSceneNodeRemoved(OnSceneNodeRemoved);
-
-        return true;
-    };
+DefineService(SceneNode)
+        Subscribe(ParentChanged, OnParentChanged)
+        Subscribe(SceneNodeAdded, OnSceneNodeAdded)
+        Subscribe(SceneNodeRemoved, OnSceneNodeRemoved)
+EndService()

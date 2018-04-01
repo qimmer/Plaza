@@ -17,6 +17,7 @@ void* GetDefaultImGuiContext();
 void RebuildImGuiFonts();
 
 Entity GetImGuiTextureUniform();
-Entity GetImGuiProgram();
+Entity GetImGuiVertexShader();
+Entity GetImGuiPixelShader();
 
 #endif //PLAZA_ImGui_H

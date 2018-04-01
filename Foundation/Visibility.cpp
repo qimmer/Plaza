@@ -6,15 +6,15 @@
 #include <Foundation/Visibility.h>
 
 
-    struct Visibility {
-        Visibility() : Hidden(false) {}
+struct Visibility {
+    Visibility() : Hidden(false) {}
 
-        bool Hidden;
-    };
+    bool Hidden;
+};
 
-    DefineComponent(Visibility)
-        DefineProperty(bool, Hidden)
-    EndComponent()
+DefineComponent(Visibility)
+    DefinePropertyReactive(bool, Hidden)
+EndComponent()
 
-    DefineComponentProperty(Visibility, bool, Hidden)
+DefineComponentPropertyReactive(Visibility, bool, Hidden)
 

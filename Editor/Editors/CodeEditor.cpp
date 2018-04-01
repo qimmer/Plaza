@@ -135,22 +135,16 @@ static void OnCodeEditorChanged(Entity sceneEditor) {
     }
 }
 
-static bool ServiceStart() {
+static void OnServiceStart(Service service) {
     ImGuiCe::CodeEditor::ImFonts[0] =
             ImGuiCe::CodeEditor::ImFonts[1] =
             ImGuiCe::CodeEditor::ImFonts[2] =
             ImGuiCe::CodeEditor::ImFonts[3] =
             GetMonospaceFont();
-    return true;
 }
-
-static bool ServiceStop() {
-    return true;
-}
-
 
 DefineComponent(CodeEditor)
-        DefineProperty(Entity, CodeEditorStream)
+        DefinePropertyReactive(Entity, CodeEditorStream)
         DefineExtensionMethod(Stream, void, EditCode, Entity entity)
 EndComponent()
 
@@ -164,4 +158,5 @@ DefineService(CodeEditor)
         Subscribe(CodeEditorChanged, OnCodeEditorChanged)
         Subscribe(StreamChanged, OnStreamChanged)
         Subscribe(StreamContentChanged, OnStreamChanged)
+    Subscribe(CodeEditorStarted, OnServiceStart)
 EndService()

@@ -129,9 +129,6 @@
         writer.EndArray();\
     } else
 
-DefineService(JsonPersistance)
-EndService()
-
 DeclareGetSet(u8)
 DeclareGetSet(u16)
 DeclareGetSet(u32)
@@ -338,20 +335,21 @@ static bool DeserializeJson(Entity persistancePoint) {
     return true;
 }
 
-static bool ServiceStart() {
+static void OnServiceStart(Service service) {
     Serializer s {
         SerializeJson,
         DeserializeJson
     };
     AddFileType(".json", "application/json");
     AddSerializer("application/json", &s);
-
-    return true;
 }
 
-static bool ServiceStop() {
+static void OnServiceStop(Service service){
     RemoveFileType(".json");
     RemoveSerializer("application/json");
-
-    return true;
 }
+
+DefineService(JsonPersistance)
+    Subscribe(JsonPersistanceStarted, OnServiceStart)
+    Subscribe(JsonPersistanceStopped, OnServiceStop)
+EndService()

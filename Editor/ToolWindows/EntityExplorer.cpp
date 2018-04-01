@@ -11,23 +11,21 @@
 #include <Core/String.h>
 #include <Foundation/PersistancePoint.h>
 #include <Foundation/Persistance.h>
+#include <Editor/EditorView.h>
 #include "EntityExplorer.h"
 #include "Editor/Selection.h"
 
-DefineService(EntityExplorer)
-EndService()
+struct EntityExplorer {
 
-static bool Visible = true, DrawHidden = false, DrawFromRoot = false;
+};
+
+DefineComponent(EntityExplorer)
+    Dependency(EditorView)
+EndComponent()
+
+static bool DrawHidden = false, DrawFromRoot = false;
 static Entity Root = 0;
 static const char *EntityContextMenuId = "EntityExplorerContextMenu";
-
-bool GetEntityExplorerVisible() {
-    return Visible;
-}
-
-void SetEntityExplorerVisible(bool value) {
-    Visible = value;
-}
 
 static void DrawEntry(Entity entry, int level) {
     if(HasHierarchy(entry) && (GetName(entry)[0] != '.' || DrawHidden)) {
@@ -79,42 +77,27 @@ static void DrawEntry(Entity entry, int level) {
     }
 }
 
-static void Draw(Entity context) {
-    if(ImGui::Begin("Entity Explorer", &Visible)) {
-        ImGui::Checkbox("Draw Hidden Entities", &DrawHidden);
+static void Draw(Entity view) {
+    ImGui::Checkbox("Draw Hidden Entities", &DrawHidden);
 
-        if(ImGui::IsWindowHovered()) {
-            if(ImGui::IsMouseReleased(1)) {
-                ImGui::OpenPopup(EntityContextMenuId);
-            }
-
-            if(ImGui::IsMouseReleased(0) && !ImGui::GetIO().KeyCtrl && !ImGui::IsMouseDragging(0)) {
-                DeselectAll();
-            }
+    if(ImGui::IsWindowHovered()) {
+        if(ImGui::IsMouseReleased(1)) {
+            ImGui::OpenPopup(EntityContextMenuId);
         }
 
-        if (ImGui::BeginPopup(EntityContextMenuId)) {
-            ImGui::EntityContextMenu();
-            ImGui::EndPopup();
+        if(ImGui::IsMouseReleased(0) && !ImGui::GetIO().KeyCtrl && !ImGui::IsMouseDragging(0)) {
+            DeselectAll();
         }
-
-        for_children(entity, 0) {
-            DrawEntry(entity, 0);
-        }
-
     }
 
-    ImGui::End();
-}
+    if (ImGui::BeginPopup(EntityContextMenuId)) {
+        ImGui::EntityContextMenu();
+        ImGui::EndPopup();
+    }
 
-static bool ServiceStart() {
-    SubscribeImGuiDraw(Draw);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeImGuiDraw(Draw);
-    return true;
+    for_children(entity, 0) {
+        DrawEntry(entity, 0);
+    }
 }
 
 static Type SelectComponentMenu() {
@@ -239,3 +222,11 @@ void ImGui::EntityContextMenu() {
         }
     }
 }
+
+static void OnAdded(Entity entity) {
+    SetEditorViewDrawFunction(entity, Draw);
+}
+
+DefineService(EntityExplorer)
+    Subscribe(EntityExplorerAdded, OnAdded)
+EndService()

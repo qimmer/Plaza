@@ -26,12 +26,12 @@ struct MeshInstance {
 DefineComponent(MeshInstance)
     Dependency(Transform)
     Dependency(SceneNode)
-    DefineProperty(Entity, MeshInstanceMesh)
-    DefineProperty(Entity, MeshInstanceMaterial)
-    DefinePropertyEnum(u8, MeshInstanceLayer, Layer)
+    DefinePropertyReactive(Entity, MeshInstanceMesh)
+    DefinePropertyReactive(Entity, MeshInstanceMaterial)
+    DefinePropertyReactiveEnum(u8, MeshInstanceLayer, Layer)
 EndComponent()
 
-DefineComponentProperty(MeshInstance, Entity, MeshInstanceMesh)
-DefineComponentProperty(MeshInstance, Entity, MeshInstanceMaterial)
-DefineComponentProperty(MeshInstance, u8, MeshInstanceLayer)
+DefineComponentPropertyReactive(MeshInstance, Entity, MeshInstanceMesh)
+DefineComponentPropertyReactive(MeshInstance, Entity, MeshInstanceMaterial)
+DefineComponentPropertyReactive(MeshInstance, u8, MeshInstanceLayer)
 

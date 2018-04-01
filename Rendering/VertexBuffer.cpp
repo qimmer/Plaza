@@ -17,8 +17,8 @@ struct VertexBuffer {
 
 DefineComponent(VertexBuffer)
     Dependency(Stream)
-    DefineProperty(Entity, VertexBufferDeclaration)
-    DefineProperty(bool, VertexBufferDynamic)
+    DefinePropertyReactive(Entity, VertexBufferDeclaration)
+    DefinePropertyReactive(bool, VertexBufferDynamic)
 EndComponent()
 
 DefineComponentPropertyReactive(VertexBuffer, Entity, VertexBufferDeclaration)

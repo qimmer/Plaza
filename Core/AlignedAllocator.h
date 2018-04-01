@@ -38,7 +38,7 @@ public:
     }
 
     inline pointer allocate (size_type n) {
-        return (pointer)_aligned_malloc(n*sizeof(value_type), N);
+        return (pointer)_aligned_malloc(std::max(n*sizeof(value_type), N), N);
     }
 
     inline void deallocate (pointer p, size_type) {

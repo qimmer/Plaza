@@ -12,9 +12,6 @@ DefineComponent(VertexDeclaration)
     Dependency(Hierarchy)
 EndComponent()
 
-DefineService(VertexDeclaration)
-EndService()
-
 u32 GetVertexStride(Entity vertexDeclaration) {
     u32 stride = 0;
     for(auto attribute = GetFirstChild(vertexDeclaration); IsEntityValid(attribute); attribute = GetSibling(attribute)) {
@@ -34,14 +31,7 @@ static void OnChanged(Entity entity) {
     }
 }
 
-static bool ServiceStart() {
-    SubscribeVertexAttributeChanged(OnChanged);
-    SubscribeVertexAttributeRemoved(OnChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeVertexAttributeChanged(OnChanged);
-    UnsubscribeVertexAttributeRemoved(OnChanged);
-    return true;
-}
+DefineService(VertexDeclaration)
+        Subscribe(VertexAttributeChanged, OnChanged)
+        Subscribe(VertexAttributeRemoved, OnChanged)
+EndService()

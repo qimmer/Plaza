@@ -27,9 +27,6 @@ struct BgfxVertexBuffer {
 DefineComponent(BgfxVertexBuffer)
 EndComponent()
 
-DefineService(BgfxVertexBuffer)
-EndService()
-
 static void OnChanged(Entity entity) {
     if(HasBgfxVertexBuffer(entity)) {
         GetBgfxVertexBuffer(entity)->invalidated = true;
@@ -43,22 +40,6 @@ void OnVertexBufferRemoved(Entity entity) {
         bgfx::destroy(data->staticHandle);
         data->staticHandle = BGFX_INVALID_HANDLE;
     }
-}
-
-static bool ServiceStart() {
-    SubscribeBgfxVertexBufferRemoved(OnVertexBufferRemoved);
-    SubscribeVertexBufferChanged(OnChanged);
-    SubscribeStreamChanged(OnChanged);
-    SubscribeStreamContentChanged(OnChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeBgfxVertexBufferRemoved(OnVertexBufferRemoved);
-    UnsubscribeVertexBufferChanged(OnChanged);
-    UnsubscribeStreamChanged(OnChanged);
-    UnsubscribeStreamContentChanged(OnChanged);
-    return true;
 }
 
 u16 GetBgfxVertexBufferHandle(Entity entity) {
@@ -127,3 +108,9 @@ u16 GetBgfxVertexBufferHandle(Entity entity) {
     }
 }
 
+DefineService(BgfxVertexBuffer)
+        Subscribe(BgfxVertexBufferRemoved, OnVertexBufferRemoved)
+        Subscribe(VertexBufferChanged, OnChanged)
+        Subscribe(StreamChanged, OnChanged)
+        Subscribe(StreamContentChanged, OnChanged)
+EndService()

@@ -8,12 +8,15 @@
 #include <Core/Vector.h>
 #include <Core/Service.h>
 #include <Core/Function.h>
+#include <Core/Delegate.h>
 
 DeclareHandle(Entity)
 DeclareType(Entity)
 
 typedef void(*EntityHandler)(Entity entity);
 typedef bool(*EntityBoolHandler)(Entity entity);
+typedef float(*EntityFloatHandler)(Entity entity);
+typedef u32(*EntityU32Handler)(Entity entity);
 typedef void(*ComponentHandler)(Entity entity, Type componentType);
 typedef void(*PropertyChangedHandler)(Entity entity, Type componentType, Property property);
 
@@ -89,7 +92,6 @@ bool IsComponentAbstract(Type type);
         return TYPENAME ## _data[index].entity;\
     }\
     bool Has ## TYPENAME (Entity entity) {\
-        Assert(IsEntityValid(entity));\
         auto entityIndex = GetHandleIndex(entity);\
         return TYPENAME ## _component_indices.IsValid(entityIndex); \
     } \
@@ -98,7 +100,6 @@ bool IsComponentAbstract(Type type);
         return &TYPENAME ## _data[index].data; \
     }\
     bool Add ## TYPENAME (Entity entity) {\
-        Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) {\
             size_t index = _num_ ## TYPENAME;\
             Assert(!TYPENAME ## _data.IsValid(index));\
@@ -121,12 +122,9 @@ bool IsComponentAbstract(Type type);
         return TYPENAME ## _component_indices[GetHandleIndex(entity)];\
     }\
     struct TYPENAME * Get ## TYPENAME (Entity entity) {\
-        Assert(IsEntityValid(entity));\
+        auto entityIndex = GetHandleIndex(entity);\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
-        Index entityIndex = GetHandleIndex(entity); \
-        size_t index = TYPENAME ## _component_indices[entityIndex];\
-        Assert(TYPENAME ## _data.IsValid(index));\
-        return &TYPENAME ## _data[index].data; \
+        return &TYPENAME ## _data[TYPENAME ## _component_indices[entityIndex]].data; \
     }\
     Entity Create ## TYPENAME (Entity parent, StringRef name) { \
         auto entity  = CreateEntityFromName(parent, name);\
@@ -143,6 +141,7 @@ bool IsComponentAbstract(Type type);
                 Index deletionEntityIndex = GetHandleIndex(entity); \
                 auto deletionIndex = TYPENAME ## _component_indices[deletionEntityIndex]; \
                 auto deletionData = &TYPENAME ## _data[deletionIndex];\
+                deletionData->entity = 0;\
                 auto lastIndex = _num_ ## TYPENAME - 1;\
                 auto lastData = &TYPENAME ## _data[lastIndex];\
                 Index lastEntityIndex = GetHandleIndex(lastData->entity); \
@@ -191,12 +190,10 @@ bool IsComponentAbstract(Type type);
 
 #define DefineComponentProperty(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
     PROPERTYTYPE Get ## PROPERTYNAME (Entity entity) { \
-        Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         return ApiConvert<PROPERTYTYPE>(&Get ## TYPENAME (entity)->PROPERTYNAME); \
     } \
     void Set ##  PROPERTYNAME (Entity entity, PROPERTYTYPE value) { \
-        Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         auto data = Get ## TYPENAME (entity); \
         data-> PROPERTYNAME = value; \
@@ -206,12 +203,10 @@ bool IsComponentAbstract(Type type);
 #define DefineComponentPropertyReactive(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
     DefineEvent(PROPERTYNAME ## Changed, PROPERTYNAME ## ChangedHandler) \
     PROPERTYTYPE Get ## PROPERTYNAME (Entity entity) { \
-        Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         return ApiConvert<PROPERTYTYPE>(&Get ## TYPENAME (entity)->PROPERTYNAME); \
     } \
     void Set ##  PROPERTYNAME (Entity entity, PROPERTYTYPE value) { \
-        Assert(IsEntityValid(entity));\
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         SetAndNotify(TYPENAME, PROPERTYTYPE, PROPERTYNAME, PROPERTYNAME ## Changed, value); \
     }\
@@ -221,6 +216,13 @@ bool IsComponentAbstract(Type type);
         auto num ## COMPONENTTYPE ## VARNAME = GetNum ## COMPONENTTYPE();\
         Entity VARNAME = 0;\
         for(auto COMPONENTTYPE_i = 0; (COMPONENTTYPE_i < num ## COMPONENTTYPE ## VARNAME) && (VARNAME = Get ## COMPONENTTYPE ## Entity(COMPONENTTYPE_i)); ++COMPONENTTYPE_i)
+
+#define for_entity_data(VARNAME, DATANAME, COMPONENTTYPE) \
+        auto num ## COMPONENTTYPE ## VARNAME = GetNum ## COMPONENTTYPE();\
+        Entity VARNAME = 0;\
+        COMPONENTTYPE *DATANAME = 0;\
+        for(auto COMPONENTTYPE_i = 0; (COMPONENTTYPE_i < num ## COMPONENTTYPE ## VARNAME) && (VARNAME = COMPONENTTYPE ## _data[COMPONENTTYPE_i].entity) && (DATANAME = & COMPONENTTYPE ## _data [COMPONENTTYPE_i].data); ++COMPONENTTYPE_i)
+
 
 #include <Core/Hierarchy.h>
 

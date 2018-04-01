@@ -3,15 +3,22 @@
 //
 
 #include "Texture2D.h"
+#include "Texture.h"
 
 struct Texture2D {
     v2i TextureSize2D;
 };
 
 DefineComponent(Texture2D)
-    DefineProperty(v2i, TextureSize2D)
+    DefinePropertyReactive(v2i, TextureSize2D)
 EndComponent()
 
 DefineComponentPropertyReactive(Texture2D, v2i, TextureSize2D)
 
+static void OnTexture2DChanged(Entity texture) {
+    FireEvent(TextureChanged, texture);
+}
 
+DefineService(Texture2D)
+    Subscribe(Texture2DChanged, OnTexture2DChanged)
+EndService()

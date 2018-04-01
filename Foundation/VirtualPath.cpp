@@ -10,13 +10,13 @@ struct VirtualPath {
 };
 
 DefineComponent(VirtualPath)
-    DefineProperty(StringRef, VirtualPathTrigger)
-    DefineProperty(StringRef, VirtualPathDestination)
+    DefinePropertyReactive(StringRef, VirtualPathTrigger)
+    DefinePropertyReactive(StringRef, VirtualPathDestination)
 EndComponent()
 
 
-DefineComponentProperty(VirtualPath, StringRef, VirtualPathTrigger)
-DefineComponentProperty(VirtualPath, StringRef, VirtualPathDestination)
+DefineComponentPropertyReactive(VirtualPath, StringRef, VirtualPathTrigger)
+DefineComponentPropertyReactive(VirtualPath, StringRef, VirtualPathDestination)
 
 void ResolveVirtualPath(StringRef virtualPath, char *resolvedPath) {
     auto len = strlen(virtualPath);

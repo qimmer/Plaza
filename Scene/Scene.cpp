@@ -6,7 +6,6 @@
 
 
     struct Scene {
-
     };
 
     DefineComponent(Scene)

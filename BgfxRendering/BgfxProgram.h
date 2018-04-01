@@ -11,6 +11,6 @@
 DeclareComponent(BgfxProgram)
 DeclareService(BgfxProgram)
 
-u16 GetBgfxProgramHandle(Entity entity, u8 shaderProfile);
+u16 GetBgfxProgramHandle(Entity entity);
 
 #endif //PLAZA_BGFXPROGRAM_H

@@ -3,6 +3,7 @@
 //
 
 #include <Core/Debug.h>
+#include <Core/Delegate.h>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -11,6 +12,8 @@
 #include <unistd.h>
 #include <signal.h>
 #endif
+
+DeclareEvent(LogMessageReceived, LogHandler)
 
 DefineEvent(LogMessageReceived, LogHandler)
 
@@ -27,11 +30,9 @@ void Log(int channel, int severity, StringRef format, ...) {
             break;
         case LogSeverity_Error:
             snprintf(buffer, 4096, "Error:   ");
-            //DebuggerBreak();
             break;
         case LogSeverity_Fatal:
             snprintf(buffer, 4096, "Fatal:   ");
-            DebuggerBreak();
             break;
     }
 
@@ -45,6 +46,10 @@ void Log(int channel, int severity, StringRef format, ...) {
     printf("%s", buffer);
 
     FireEvent(LogMessageReceived, channel, severity, buffer);
+
+    if(severity > LogSeverity_Error) {
+        DebuggerBreak();
+    }
 }
 
 void DebuggerBreak() {

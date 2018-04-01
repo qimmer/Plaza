@@ -3,7 +3,7 @@ project(Json)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Logic State.cpp State.h MultiState.cpp MultiState.h ConditionalState.cpp ConditionalState.h ToggleState.cpp ToggleState.h LogicModule.cpp LogicModule.h StateBinding.cpp StateBinding.h)
+add_library(Logic State.cpp State.h MultiState.cpp MultiState.h ConditionalState.cpp ConditionalState.h ToggleState.cpp ToggleState.h LogicModule.cpp LogicModule.h PropertyState.cpp PropertyState.h InvertState.cpp InvertState.h)
 
 target_include_directories(Logic PUBLIC "..")
 

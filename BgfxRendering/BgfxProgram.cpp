@@ -10,25 +10,19 @@
 #include <Rendering/ShaderCompiler.h>
 #include <Foundation/Stream.h>
 #include <Rendering/BinaryShader.h>
+#include <Rendering/ShaderVariation.h>
 
 #define ShaderProfile_Max 32
+#define ShaderVariation_Max 32
 
 struct BgfxProgram {
-    BgfxProgram() {
-        for(auto i = 0; i < ShaderProfile_Max;++i) {
-            handle[i] = BGFX_INVALID_HANDLE;
-            invalidated[i] = true;
-        }
-    }
-    bgfx::ProgramHandle handle[ShaderProfile_Max];
-    bool invalidated[ShaderProfile_Max];
+    BgfxProgram() : handle(BGFX_INVALID_HANDLE) {}
+
+    bgfx::ProgramHandle handle;
 };
 
 DefineComponent(BgfxProgram)
 EndComponent()
-
-DefineService(BgfxProgram)
-EndService()
 
 static bool IsVertexShader(Entity entity) {
     return HasShader(entity) && GetShaderType(entity) == ShaderType_Vertex;
@@ -41,65 +35,67 @@ static bool IsPixelShader(Entity entity) {
 void OnProgramRemoved(Entity entity) {
     auto data = GetBgfxProgram(entity);
 
-    for(auto i = 0; i < ShaderProfile_Max; ++i) {
-        if(bgfx::isValid(data->handle[i])) {
-            bgfx::destroy(data->handle[i]);
-            data->handle[i] = BGFX_INVALID_HANDLE;
-        }
+    if (bgfx::isValid(data->handle)) {
+        bgfx::destroy(data->handle);
+        data->handle = BGFX_INVALID_HANDLE;
     }
 }
 
 static void OnChanged(Entity entity) {
     if(HasBgfxProgram(entity)) {
         auto data = GetBgfxProgram(entity);
-        for(auto i = 0; i < ShaderProfile_Max; ++i) {
-            data->invalidated[i] = true;
+
+        if (bgfx::isValid(data->handle)) {
+            bgfx::destroy(data->handle);
+            data->handle = BGFX_INVALID_HANDLE;
+        }
+    }
+
+    if(HasBinaryShader(entity)) {
+        for_entity(program, BgfxProgram) {
+            auto data = GetBgfxProgram(entity);
+
+            if(GetProgramBinaryVertexShader(program) == entity ||
+                GetProgramBinaryPixelShader(program) == entity) {
+                if (bgfx::isValid(data->handle)) {
+                    bgfx::destroy(data->handle);
+                    data->handle = BGFX_INVALID_HANDLE;
+                }
+            }
         }
     }
 }
 
-static bool ServiceStart() {
-    SubscribeBgfxProgramRemoved(OnProgramRemoved);
-    SubscribeProgramChanged(OnChanged);
-    return true;
-}
+DefineService(BgfxProgram)
+        Subscribe(BgfxProgramRemoved, OnProgramRemoved)
+        Subscribe(ProgramChanged, OnChanged)
+EndService()
 
-static bool ServiceStop() {
-    UnsubscribeBgfxProgramRemoved(OnProgramRemoved);
-    UnsubscribeProgramChanged(OnChanged);
-    return true;
-}
-
-u16 GetBgfxProgramHandle(Entity entity, u8 shaderProfile) {
-    Assert(shaderProfile < ShaderProfile_Max);
-
+u16 GetBgfxProgramHandle(Entity entity) {
     auto data = GetBgfxProgram(entity);
-    if(data->invalidated[shaderProfile]) {
-        // Eventually free old buffers
-        if(bgfx::isValid(data->handle[shaderProfile])) {
-            bgfx::destroy(data->handle[shaderProfile]);
-            data->handle[shaderProfile] = BGFX_INVALID_HANDLE;
+
+    if(data->handle.idx == bgfx::kInvalidHandle) {
+        auto binaryVertexShader = GetProgramBinaryVertexShader(entity);
+        auto binaryPixelShader = GetProgramBinaryPixelShader(entity);
+
+        if(!IsEntityValid(binaryVertexShader) || !IsEntityValid(binaryPixelShader)) {
+            return bgfx::kInvalidHandle;
         }
-
-        auto vertexShader = GetVertexShader(entity);
-        auto pixelShader = GetPixelShader(entity);
-
-        if(!IsEntityValid(vertexShader) || !IsEntityValid(pixelShader)) return bgfx::kInvalidHandle;
-
-        auto binaryVertexShader = GetBinaryShader(vertexShader, shaderProfile);
-        auto binaryPixelShader = GetBinaryShader(pixelShader, shaderProfile);
-
-        if(!IsEntityValid(binaryVertexShader) || !IsEntityValid(binaryPixelShader)) return bgfx::kInvalidHandle;
 
         auto vertexShaderHandle = GetBgfxBinaryShaderHandle(binaryVertexShader);
         auto pixelShaderHandle = GetBgfxBinaryShaderHandle(binaryPixelShader);
 
-        if(vertexShaderHandle == bgfx::kInvalidHandle || pixelShaderHandle == bgfx::kInvalidHandle) return bgfx::kInvalidHandle;
+        if(vertexShaderHandle == bgfx::kInvalidHandle || pixelShaderHandle == bgfx::kInvalidHandle) {
+            return bgfx::kInvalidHandle;
+        }
 
-        data->handle[shaderProfile] = bgfx::createProgram(bgfx::ShaderHandle {vertexShaderHandle}, bgfx::ShaderHandle {pixelShaderHandle});
-        data->invalidated[shaderProfile] = false;
+        data->handle = bgfx::createProgram(bgfx::ShaderHandle {vertexShaderHandle}, bgfx::ShaderHandle {pixelShaderHandle});
+
+        if(data->handle.idx == bgfx::kInvalidHandle) {
+            Log(LogChannel_Core, LogSeverity_Error, "Could not create program handle. Check that vertex shader and pixel shader varyings are matching.");
+        }
     }
 
-    return data->handle[shaderProfile].idx;
+    return data->handle.idx;
 }
 

@@ -22,13 +22,16 @@ EndEnum()
 struct BinaryShader {
     Entity SourceShader;
     u8 BinaryShaderProfile;
+    Entity BinaryShaderVariation;
 };
 
 DefineComponent(BinaryShader)
     Dependency(Stream)
     DefinePropertyEnum(u8, BinaryShaderProfile, ShaderProfile)
-    DefineProperty(Entity, SourceShader)
+    DefinePropertyReactive(Entity, BinaryShaderVariation)
+    DefinePropertyReactive(Entity, SourceShader)
 EndComponent()
 
 DefineComponentPropertyReactive(BinaryShader, Entity, SourceShader)
 DefineComponentPropertyReactive(BinaryShader, u8, BinaryShaderProfile)
+DefineComponentPropertyReactive(BinaryShader, Entity, BinaryShaderVariation)

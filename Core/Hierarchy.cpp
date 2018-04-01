@@ -20,12 +20,9 @@
     };
 
     DefineComponent(Hierarchy)
-        DefineProperty(StringRef, Name)
-        DefineProperty(Entity, Parent)
+        DefinePropertyReactive(StringRef, Name)
+        DefinePropertyReactive(Entity, Parent)
     EndComponent()
-
-    DefineService(Hierarchy)
-    EndService()
 
     DefineComponentPropertyReactive(Hierarchy, StringRef, Name)
     DefineComponentPropertyReactive(Hierarchy, Entity, Parent)
@@ -295,21 +292,9 @@ static void OnHierarchyAdded(Entity entity) {
     Attach(entity, 0); // Attach to hierarchy as a root entity
 }
 
-static bool ServiceStart() {
-    SubscribeParentChanged(OnParentChanged);
-    SubscribeNameChanged(OnNameChanged);
-    SubscribeHierarchyAdded(OnHierarchyAdded);
-    SubscribeHierarchyRemoved(OnHierarchyRemoved);
-
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeParentChanged(OnParentChanged);
-    UnsubscribeNameChanged(OnNameChanged);
-    UnsubscribeHierarchyAdded(OnHierarchyAdded);
-    UnsubscribeHierarchyRemoved(OnHierarchyRemoved);
-
-    return true;
-}
-
+DefineService(Hierarchy)
+        Subscribe(ParentChanged, OnParentChanged)
+        Subscribe(NameChanged, OnNameChanged)
+        Subscribe(HierarchyAdded, OnHierarchyAdded)
+        Subscribe(HierarchyRemoved, OnHierarchyRemoved)
+EndService()

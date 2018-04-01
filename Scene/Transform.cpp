@@ -21,12 +21,9 @@ struct Transform {
 
 DefineComponent(Transform)
     Dependency(Hierarchy)
-    DefineProperty(m4x4f, LocalTransform)
-    DefineProperty(m4x4f, GlobalTransform)
+    DefinePropertyReactive(m4x4f, LocalTransform)
+    DefinePropertyReactive(m4x4f, GlobalTransform)
 EndComponent()
-
-DefineService(TransformUpdateService)
-EndService()
 
 DefineComponentPropertyReactive(Transform, m4x4f, GlobalTransform)
 DefineComponentPropertyReactive(Transform, m4x4f, LocalTransform)
@@ -99,16 +96,8 @@ static void OnAppUpdate(double deltaTime) {
     UpdateTransforms();
 }
 
-static bool ServiceStart() {
-    SubscribeAppUpdate(OnAppUpdate);
-    SubscribeGlobalTransformChanged(OnGlobalInvalidated);
-    SubscribeLocalTransformChanged(OnLocalInvalidated);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeAppUpdate(OnAppUpdate);
-    UnsubscribeGlobalTransformChanged(OnGlobalInvalidated);
-    UnsubscribeLocalTransformChanged(OnLocalInvalidated);
-    return true;
-}
+DefineService(TransformUpdateService)
+        Subscribe(AppUpdate, OnAppUpdate)
+        Subscribe(GlobalTransformChanged, OnGlobalInvalidated)
+        Subscribe(LocalTransformChanged, OnLocalInvalidated)
+EndService()

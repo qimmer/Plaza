@@ -19,9 +19,6 @@ struct BgfxOffscreenRenderTarget {
 DefineComponent(BgfxOffscreenRenderTarget)
 EndComponent()
 
-DefineService(BgfxOffscreenRenderTarget)
-EndService()
-
 static void OnChanged(Entity entity) {
     if(HasBgfxOffscreenRenderTarget(entity)) {
         GetBgfxOffscreenRenderTarget(entity)->invalidated = true;
@@ -35,18 +32,6 @@ void OnOffscreenRenderTargetRemoved(Entity entity) {
         bgfx::destroy(data->handle);
         data->handle = BGFX_INVALID_HANDLE;
     }
-}
-
-static bool ServiceStart() {
-    SubscribeBgfxOffscreenRenderTargetRemoved(OnOffscreenRenderTargetRemoved);
-    SubscribeOffscreenRenderTargetChanged(OnChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeBgfxOffscreenRenderTargetRemoved(OnOffscreenRenderTargetRemoved);
-    UnsubscribeOffscreenRenderTargetChanged(OnChanged);
-    return true;
 }
 
 u16 GetBgfxOffscreenRenderTargetHandle(Entity entity) {
@@ -78,3 +63,7 @@ u16 GetBgfxOffscreenRenderTargetHandle(Entity entity) {
     return data->handle.idx;
 }
 
+DefineService(BgfxOffscreenRenderTarget)
+        Subscribe(BgfxOffscreenRenderTargetRemoved, OnOffscreenRenderTargetRemoved)
+        Subscribe(OffscreenRenderTargetChanged, OnChanged)
+EndService()

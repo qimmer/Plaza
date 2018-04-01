@@ -26,11 +26,8 @@ static Dictionary<String, StreamCompressor> Compressors;
 static Dictionary<String, String> FileExtensionMimeTypes;
 
 DefineComponent(Stream)
-    DefineProperty(StringRef, StreamPath)
+    DefinePropertyReactive(StringRef, StreamPath)
 EndComponent()
-
-DefineService(Stream)
-EndService()
 
 DefineComponentPropertyReactive(Stream, StringRef, StreamPath)
 
@@ -262,14 +259,8 @@ static void OnStreamAdded(Entity entity) {
     sprintf(path, "memory://%llu.bin", entity);
     SetStreamPath(entity, path);
 }
-static bool ServiceStart() {
-    SubscribeStreamAdded(OnStreamAdded);
-    SubscribeStreamPathChanged(OnStreamPathChanged);
-	return true;
-}
 
-static bool ServiceStop() {
-	UnsubscribeStreamAdded(OnStreamAdded);
-    UnsubscribeStreamPathChanged(OnStreamPathChanged);
-	return true;
-}
+DefineService(Stream)
+        Subscribe(StreamAdded, OnStreamAdded)
+        Subscribe(StreamPathChanged, OnStreamPathChanged)
+EndService()

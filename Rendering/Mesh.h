@@ -19,13 +19,13 @@
 
 DeclareComponent(Mesh)
 
-DeclareComponentProperty(Mesh, Entity, MeshVertexBuffer)
-DeclareComponentProperty(Mesh, Entity, MeshIndexBuffer)
-DeclareComponentProperty(Mesh, u32, MeshStartVertex)
-DeclareComponentProperty(Mesh, u32, MeshStartIndex)
-DeclareComponentProperty(Mesh, u32, MeshNumIndices)
-DeclareComponentProperty(Mesh, u32, MeshNumVertices)
-DeclareComponentProperty(Mesh, u64, MeshPrimitiveType)
-DeclareComponentProperty(Mesh, u64, MeshCullMode)
+DeclareComponentPropertyReactive(Mesh, Entity, MeshVertexBuffer)
+DeclareComponentPropertyReactive(Mesh, Entity, MeshIndexBuffer)
+DeclareComponentPropertyReactive(Mesh, u32, MeshStartVertex)
+DeclareComponentPropertyReactive(Mesh, u32, MeshStartIndex)
+DeclareComponentPropertyReactive(Mesh, u32, MeshNumIndices)
+DeclareComponentPropertyReactive(Mesh, u32, MeshNumVertices)
+DeclareComponentPropertyReactive(Mesh, u64, MeshPrimitiveType)
+DeclareComponentPropertyReactive(Mesh, u64, MeshCullMode)
 
 #endif //PLAZA_MESH_H

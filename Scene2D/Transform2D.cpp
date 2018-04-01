@@ -16,14 +16,11 @@ struct Transform2D {
 
 DefineComponent(Transform2D)
     Dependency(Transform)
-    DefineProperty(v2f, Position2D)
-    DefineProperty(v2f, Scale2D)
-    DefineProperty(float, Rotation2D)
-    DefineProperty(float, Distance2D)
+    DefinePropertyReactive(v2f, Position2D)
+    DefinePropertyReactive(v2f, Scale2D)
+    DefinePropertyReactive(float, Rotation2D)
+    DefinePropertyReactive(float, Distance2D)
 EndComponent()
-
-DefineService(Transform2D)
-EndService()
 
 DefineComponentPropertyReactive(Transform2D, v2f, Position2D)
 DefineComponentPropertyReactive(Transform2D, float, Rotation2D)
@@ -56,19 +53,9 @@ static void OnFloatChanged(Entity entity, float oldValue, float newValue) {
     UpdateLocalTransform(entity);
 }
 
-static bool ServiceStart() {
-    SubscribePosition2DChanged(Onv2fChanged);
-    SubscribeScale2DChanged(Onv2fChanged);
-    SubscribeRotation2DChanged(OnFloatChanged);
-    SubscribeDistance2DChanged(OnFloatChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribePosition2DChanged(Onv2fChanged);
-    UnsubscribeScale2DChanged(Onv2fChanged);
-    UnsubscribeRotation2DChanged(OnFloatChanged);
-    UnsubscribeDistance2DChanged(OnFloatChanged);
-    return true;
-}
-
+DefineService(Transform2D)
+        Subscribe(Position2DChanged, Onv2fChanged)
+        Subscribe(Scale2DChanged, Onv2fChanged)
+        Subscribe(Rotation2DChanged, OnFloatChanged)
+        Subscribe(Distance2DChanged, OnFloatChanged)
+EndService()

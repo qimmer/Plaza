@@ -20,8 +20,11 @@ struct BgfxBinaryShader {
 DefineComponent(BgfxBinaryShader)
 EndComponent()
 
-DefineService(BgfxBinaryShader)
-EndService()
+static void OnChanged(Entity entity) {
+    if(HasBgfxBinaryShader(entity)) {
+        GetBgfxBinaryShader(entity)->invalidated = true;
+    }
+}
 
 u16 GetBgfxBinaryShaderHandle(Entity entity) {
     auto data = GetBgfxBinaryShader(entity);
@@ -38,21 +41,22 @@ u16 GetBgfxBinaryShaderHandle(Entity entity) {
             size = StreamTell(entity);
         }
 
-        if(size == 0) {
-            StreamClose(entity);
-            CompileShader(GetSourceShader(entity), entity);
-            return bgfx::kInvalidHandle;
-        }
-
-        auto buffer = malloc(size);
-        StreamSeek(entity, 0);
-        StreamRead(entity, size, buffer);
-        StreamClose(entity);
-
-        data->handle = bgfx::createShader(bgfx::copy(buffer, size));
-        free(buffer);
-
         data->invalidated = false;
+
+        if(size == 0) {
+            Log(LogChannel_Core, LogSeverity_Error, "Binary shader data empty. Trying to compile ...");
+            CompileShader(entity);
+            return bgfx::kInvalidHandle;
+        } else {
+            auto buffer = malloc(size);
+            StreamSeek(entity, 0);
+            StreamRead(entity, size, buffer);
+            StreamClose(entity);
+
+            data->handle = bgfx::createShader(bgfx::copy(buffer, size));
+            if(data->handle.idx == bgfx::kInvalidHandle) Log(LogChannel_Core, LogSeverity_Error, "Could not create binary shader handle.");
+            free(buffer);
+        }
     }
 
     return data->handle.idx;
@@ -67,14 +71,10 @@ void OnBinaryShaderRemoved(Entity entity) {
     }
 }
 
-
-static bool ServiceStart() {
-    SubscribeBgfxBinaryShaderRemoved(OnBinaryShaderRemoved);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeBgfxBinaryShaderRemoved(OnBinaryShaderRemoved);
-    return true;
-}
-
+DefineService(BgfxBinaryShader)
+        Subscribe(BgfxBinaryShaderRemoved, OnBinaryShaderRemoved)
+        Subscribe(BinaryShaderChanged, OnChanged)
+        Subscribe(BgfxBinaryShaderChanged, OnChanged)
+        Subscribe(StreamChanged, OnChanged)
+        Subscribe(StreamContentChanged, OnChanged)
+EndService()

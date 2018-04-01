@@ -12,11 +12,12 @@ DeclareEnum(RenderState)
 
 DeclareComponent(Material)
 
-DeclareComponentProperty(Material, Entity, MaterialProgram)
-DeclareComponentProperty(Material, u64, MaterialDepthTest)
-DeclareComponentProperty(Material, u64, MaterialWriteMask)
-DeclareComponentProperty(Material, u64, MaterialMultisampleMode)
-DeclareComponentProperty(Material, u64, MaterialBlendMode)
+DeclareComponentPropertyReactive(Material, Entity, MaterialVertexShader)
+DeclareComponentPropertyReactive(Material, Entity, MaterialPixelShader)
+DeclareComponentPropertyReactive(Material, u64, MaterialDepthTest)
+DeclareComponentPropertyReactive(Material, u64, MaterialWriteMask)
+DeclareComponentPropertyReactive(Material, u64, MaterialMultisampleMode)
+DeclareComponentPropertyReactive(Material, u64, MaterialBlendMode)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
 #define RenderState_STATE_RGB_WRITE               UINT64_C(0x0000000000000001) //!< Enable RGB write.

@@ -14,11 +14,8 @@ struct Camera2D {
 
 DefineComponent(Camera2D)
     Dependency(Camera)
-    DefineProperty(float, Camera2DPixelsPerUnit)
+    DefinePropertyReactive(float, Camera2DPixelsPerUnit)
 EndComponent()
-
-DefineService(Camera2D)
-EndService()
 
 DefineComponentPropertyReactive(Camera2D, float, Camera2DPixelsPerUnit)
 
@@ -73,21 +70,10 @@ static void OnRenderTargetSizeChanged(Entity entity, v2i oldValue, v2i newValue)
     }
 }
 
-static bool ServiceStart() {
-    SubscribeCamera2DPixelsPerUnitChanged(OnCamera2DPixelsPerUnitChanged);
-    SubscribeCameraViewportChanged(OnCameraViewportChanged);
-    SubscribeCameraRenderTargetChanged(OnCameraRenderTargetChanged);
-    SubscribeCamera2DAdded(UpdateProjectionMatrix);
-    SubscribeRenderTargetSizeChanged(OnRenderTargetSizeChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeCamera2DPixelsPerUnitChanged(OnCamera2DPixelsPerUnitChanged);
-    UnsubscribeCameraViewportChanged(OnCameraViewportChanged);
-    UnsubscribeCameraRenderTargetChanged(OnCameraRenderTargetChanged);
-    UnsubscribeCamera2DAdded(UpdateProjectionMatrix);
-    UnsubscribeRenderTargetSizeChanged(OnRenderTargetSizeChanged);
-    return true;
-}
-
+DefineService(Camera2D)
+        Subscribe(Camera2DPixelsPerUnitChanged, OnCamera2DPixelsPerUnitChanged)
+        Subscribe(CameraViewportChanged, OnCameraViewportChanged)
+        Subscribe(CameraRenderTargetChanged, OnCameraRenderTargetChanged)
+        Subscribe(Camera2DAdded, UpdateProjectionMatrix)
+        Subscribe(RenderTargetSizeChanged, OnRenderTargetSizeChanged)
+EndService()

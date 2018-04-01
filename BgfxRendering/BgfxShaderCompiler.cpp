@@ -19,6 +19,7 @@
 #include <Foundation/Stream.h>
 #include <File/Folder.h>
 #include <Core/Base64.h>
+#include <Rendering/ShaderVariation.h>
 
 static const StringRef shaderTypes[] = {
     "",
@@ -54,27 +55,12 @@ private:
     std::stringstream stream;
 };
 
-DefineService(BgfxShaderCompiler)
-    ServiceDependency(ShaderCompiler)
-EndService()
-
-void GetBinaryShaderFilePath(Entity binaryShader, char *out) {
-    u64 hash = std::hash<std::string>()(GetEntityPath(binaryShader));
-    u8 bytes[9];
-    memcpy(bytes, &hash, sizeof(u64));
-    bytes[8] = GetBinaryShaderProfile(binaryShader);
-
-    s8 encodedFileName[128];
-    Base64Encode(bytes, 9, encodedFileName);
-
-    sprintf(out, "res://shadercache/%s.bin", encodedFileName);
-}
-
 int Compile(StringRef sourceFilePath,
              StringRef varyingDefFilePath,
              StringRef outputFilePath,
              u8 shaderProfile,
-             u8 shaderType) {
+             u8 shaderType,
+             StringRef defines) {
     if(!strlen(sourceFilePath) ||
             !strlen(varyingDefFilePath) ||
             !strlen(outputFilePath) ||
@@ -161,10 +147,12 @@ int Compile(StringRef sourceFilePath,
     FILE *fpipe;
     char c = 0;
 
+    auto hasDefines = defines != 0 && strlen(defines) > 0;
+
     char command[4096];
     snprintf(command,
              4096,
-             "%s -f \"%s\" -o \"%s\" -p %s -i \"%s\" --type %s --platform %s --varyingdef \"%s\" -O3",
+             "%s -f \"%s\" -o \"%s\" -p %s -i \"%s\" --type %s --platform %s --varyingdef \"%s\" -O3 %s %s",
 #ifdef WIN32
             "shaderc",
 #else
@@ -176,7 +164,9 @@ int Compile(StringRef sourceFilePath,
             GetShaderIncludeDirectory(),
             shaderTypes[shaderType],
             platform,
-            varyingDefFilePath);
+            varyingDefFilePath,
+             hasDefines ? "--define" : "",
+             hasDefines ? defines : "");
 
     if (0 == (fpipe = (FILE*)popen(command, "r")))
     {
@@ -205,17 +195,18 @@ int Compile(StringRef sourceFilePath,
 	return 0;
 }
 
-void OnCompile(Entity shader, Entity binaryShader) {
+void OnCompile(Entity binaryShader) {
 
     //ErrorRedirector errors(std::cerr);
     //ErrorRedirector output(std::cout);
 
     auto profile = GetBinaryShaderProfile(binaryShader);
+    auto shader = GetSourceShader(binaryShader);
 
-    char binaryPath[PATH_MAX];
-    GetBinaryShaderFilePath(binaryShader, binaryPath);
-
-    SetStreamPath(binaryShader, binaryPath);
+    if(!IsEntityValid(shader)) {
+        Log(LogChannel_Core, LogSeverity_Info, "Compilation of shader '%s' failed as no shader source is set.", GetStreamResolvedPath(binaryShader));
+        return;
+    }
 
     Log(LogChannel_Core, LogSeverity_Info, "Compiling %s shader '%s' to '%s' with profile '%d' using program (varying def) '%s' ...",
         shaderTypes[GetShaderType(shader)],
@@ -224,23 +215,25 @@ void OnCompile(Entity shader, Entity binaryShader) {
         profile,
         GetStreamResolvedPath(GetShaderDeclaration(shader)));
 
+    auto shaderVariation = GetBinaryShaderVariation(binaryShader);
+    StringRef shaderVariationDefines = NULL;
+    if(IsEntityValid(shaderVariation)) {
+        shaderVariationDefines = GetShaderVariationDefines(shaderVariation);
+    }
+
     bool hasErrors = 0 != Compile(
             GetStreamResolvedPath(shader),
             GetStreamResolvedPath(GetShaderDeclaration(shader)),
             GetStreamResolvedPath(binaryShader),
             profile,
-            GetShaderType(shader));
+            GetShaderType(shader),
+            shaderVariationDefines);
 
     FireEvent(ShaderCompilerFinished, hasErrors, "");
+    FireEvent(StreamContentChanged, binaryShader);
 }
 
-
-static bool ServiceStart() {
-    SubscribeShaderCompile(OnCompile);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeShaderCompile(OnCompile);
-    return true;
-}
+DefineService(BgfxShaderCompiler)
+        ServiceDependency(ShaderCompiler)
+        Subscribe(ShaderCompile, OnCompile)
+EndService()

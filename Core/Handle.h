@@ -31,10 +31,11 @@ typedef struct {
     DeclareEvent(HandleName ## Created, HandleName ## Handler) \
     DeclareEvent(HandleName ## Destroyed, HandleName ## Handler)\
     inline bool Is ## HandleName ## Occupied(Index index) {\
-        return HandleName ## _generations[index] % 2 != 0;\
+        return HandleName ## _generations.size() > index && HandleName ## _generations[index] % 2 != 0;\
     }\
     inline bool Is ## HandleName ## Valid(HandleName handle) {\
-        return handle && HandleName ## _generations.size() > GetHandleIndex(handle) && HandleName ## _generations[GetHandleIndex(handle)] == GetHandleGeneration(handle);\
+        auto index = GetHandleIndex(handle);\
+        return handle && HandleName ## _generations.size() > index && HandleName ## _generations[index] == GetHandleGeneration(handle);\
     }
 
 #define DefineHandle(HandleName, DataTypeName) \

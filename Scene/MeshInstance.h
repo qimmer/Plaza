@@ -20,8 +20,8 @@ DeclareEnum(Layer)
 
 DeclareComponent(MeshInstance)
 
-DeclareComponentProperty(MeshInstance, Entity, MeshInstanceMesh)
-DeclareComponentProperty(MeshInstance, Entity, MeshInstanceMaterial)
-DeclareComponentProperty(MeshInstance, u8, MeshInstanceLayer)
+DeclareComponentPropertyReactive(MeshInstance, Entity, MeshInstanceMesh)
+DeclareComponentPropertyReactive(MeshInstance, Entity, MeshInstanceMaterial)
+DeclareComponentPropertyReactive(MeshInstance, u8, MeshInstanceLayer)
 
 #endif //PLAZA_MESHINSTANCE_H

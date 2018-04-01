@@ -16,4 +16,6 @@
     DeclareComponentPropertyReactive(Transform3D, v4f, RotationQuat3D)
     DeclareComponentPropertyReactive(Transform3D, v3f, Scale3D)
 
+void Move3D(Entity transform, v3f direction, bool relativeToRotation);
+
 #endif //PLAZA_TRANSFORM3D_H

@@ -10,6 +10,8 @@
 #include <Core/Hierarchy.h>
 #include <Core/Dictionary.h>
 #include <Foundation/MemoryStream.h>
+#include <Foundation/AppLoop.h>
+#include "FileWatcher/FileWatcher.h"
 
 #define ProtocolIdentifier "file"
 
@@ -17,14 +19,35 @@ struct FileStream {
     FileStream() : fd(NULL) {}
 
     FILE *fd;
+    FW::WatchID watchID;
 };
 
 DefineComponent(FileStream)
     Dependency(Stream)
 EndComponent()
 
-DefineService(FileStream)
-EndService()
+static FW::FileWatcher fileWatcher;
+
+class UpdateListener : public FW::FileWatchListener
+{
+public:
+    UpdateListener() {}
+    void handleFileAction(FW::WatchID watchid, const FW::String& dir, const FW::String& filename,
+                          FW::Action action)
+    {
+        if(action == FW::Actions::Modified) {
+            for_entity(fileStream, FileStream) {
+                auto data = GetFileStream(fileStream);
+                if(data->watchID == watchid) {
+                    FireEvent(StreamContentChanged, fileStream);
+                    break;
+                }
+            }
+        }
+    }
+};
+
+static UpdateListener listener;
 
 static u64 Read(Entity entity, u64 size, void *data) {
     if(!GetFileStream(entity)->fd) return 0;
@@ -77,7 +100,7 @@ static bool Open(Entity entity, int modeFlag) {
     }
 
     auto nativePath = GetStreamResolvedPath(entity);
-    if(memcmp(nativePath, "file://", 7) != 0) {
+    if(strlen(nativePath) < 7 || memcmp(nativePath, "file://", 7) != 0) {
         Log(LogChannel_Core, LogSeverity_Error, "%s", "File stream has wrong protocol identifier.");
         return false;
     }
@@ -102,7 +125,7 @@ static bool IsOpen(Entity entity) {
     return data->fd;
 }
 
-static bool ServiceStart() {
+static void OnServiceStart(Service service) {
     StreamProtocol p {
             AddFileStream,
             RemoveFileStream,
@@ -116,12 +139,55 @@ static bool ServiceStart() {
     };
 
     AddStreamProtocol(ProtocolIdentifier, &p);
-
-    return true;
 }
 
-static bool ServiceStop() {
+static void OnServiceStop(Service service){
     RemoveStreamProtocol(ProtocolIdentifier);
-
-    return true;
 }
+
+static void OnStreamPathChanged(Entity stream, StringRef oldPath, StringRef newPath) {
+    if(HasFileStream(stream)) {
+        auto data = GetFileStream(stream);
+        fileWatcher.removeWatch(data->watchID);
+
+        auto nativePath = GetStreamResolvedPath(stream);
+        if(strlen(nativePath) < 7 || memcmp(nativePath, "file://", 7) != 0) {
+            return;
+        }
+
+        nativePath += 7; // Remove 'file://'
+
+        char parentFolder[PATH_MAX];
+        GetParentFolder(nativePath, parentFolder, PATH_MAX);
+        data->watchID = fileWatcher.addWatch(parentFolder, &listener, false);
+    }
+}
+
+static void OnFileStreamAdded(Entity stream) {
+    OnStreamPathChanged(stream, "", GetStreamResolvedPath(stream));
+}
+
+static void OnFileStreamRemoved(Entity stream) {
+    auto data = GetFileStream(stream);
+    fileWatcher.removeWatch(data->watchID);
+}
+
+static void OnAppUpdate(double deltaTime) {
+    static double timeSinceUpdate = 0.0;
+    timeSinceUpdate += deltaTime;
+
+    if(timeSinceUpdate > 1.0) {
+        timeSinceUpdate = 0.0;
+
+        fileWatcher.update();
+    }
+}
+
+DefineService(FileStream)
+    Subscribe(AppUpdate, OnAppUpdate)
+    Subscribe(StreamPathChanged, OnStreamPathChanged)
+    Subscribe(FileStreamAdded, OnFileStreamAdded)
+    Subscribe(FileStreamRemoved, OnFileStreamRemoved)
+    Subscribe(FileStreamStarted, OnServiceStart)
+    Subscribe(FileStreamStopped, OnServiceStop)
+EndService()

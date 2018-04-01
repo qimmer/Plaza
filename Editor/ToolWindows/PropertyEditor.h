@@ -7,10 +7,8 @@
 
 #include <Core/Service.h>
 
+DeclareComponent(PropertyEditor)
 DeclareService(PropertyEditor)
-
-bool GetPropertyEditorVisible();
-void SetPropertyEditorVisible(bool value);
 
 namespace ImGui {
     void ComponentContextMenu(Type componentType);

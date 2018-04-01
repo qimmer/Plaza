@@ -18,13 +18,13 @@ struct UniformState {
 };
 
 DefineComponent(UniformState)
-    DefineProperty(Entity, UniformStateUniform)
+    DefinePropertyReactive(Entity, UniformStateUniform)
     DefineProperty(v4f, UniformStateVec4)
     DefineProperty(Entity, UniformStateTexture)
     DefineProperty(u8, UniformStateStage)
 EndComponent()
 
-DefineComponentProperty(UniformState, Entity, UniformStateUniform);
+DefineComponentPropertyReactive(UniformState, Entity, UniformStateUniform);
 DefineComponentProperty(UniformState, m4x4f, UniformStateMat4);
 DefineComponentProperty(UniformState, v4f, UniformStateVec4);
 DefineComponentProperty(UniformState, Entity, UniformStateTexture);

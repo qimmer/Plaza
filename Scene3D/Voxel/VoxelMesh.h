@@ -13,7 +13,8 @@ DeclareService(VoxelMesh)
 DeclareComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshChunk)
 DeclareComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshPalette)
 
-Entity GetVoxelProgram();
+Entity GetVoxelVertexShader();
+Entity GetVoxelPixelShader();
 Entity GetVoxelPaletteTextureUniform();
 Entity GetVoxelDataRoot();
 

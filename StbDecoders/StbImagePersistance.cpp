@@ -15,9 +15,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-DefineService(StbImagePersistance)
-EndService()
-
 static bool SerializeImage(Entity entity) {
     return false;
 }
@@ -82,7 +79,7 @@ static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
     return pixelData != NULL;
 }
 
-static bool ServiceStart() {
+static void OnServiceStart(Service service) {
     Serializer s {
         SerializeImage,
         DeserializeImage
@@ -94,14 +91,15 @@ static bool ServiceStart() {
     AddFileType(".png", "image/png");
     AddSerializer("image/png", &s);
     AddStreamCompressor("image/png", &c);
-
-    return true;
 }
 
-static bool ServiceStop() {
+static void OnServiceStop(Service service){
     RemoveFileType(".png");
     RemoveSerializer("image/png");
     RemoveStreamCompressor("image/png");
-
-    return true;
 }
+
+DefineService(StbImagePersistance)
+    Subscribe(StbImagePersistanceStarted, OnServiceStart)
+    Subscribe(StbImagePersistanceStopped, OnServiceStop)
+EndService()

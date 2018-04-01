@@ -11,7 +11,7 @@ DeclareComponent(Batch)
 
 DeclareComponentProperty(Batch, v4i, BatchScissor)
 DeclareComponentProperty(Batch, Entity, BatchMaterial)
-DeclareComponentProperty(Batch, Entity, BatchProgram)
+DeclareComponentProperty(Batch, Entity, BatchShaderVariation)
 DeclareComponentProperty(Batch, Entity, BatchMesh)
 DeclareComponentProperty(Batch, m4x4f, BatchWorldMatrix)
 

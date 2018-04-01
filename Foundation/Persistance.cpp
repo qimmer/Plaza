@@ -12,11 +12,9 @@ struct Persistance {
 
 DefineComponent(Persistance)
     Dependency(Hierarchy)
-    DefineProperty(Entity, EntityPersistancePoint)
+    DefinePropertyReactive(Entity, EntityPersistancePoint)
 EndComponent()
 
-DefineService(Persistance)
-EndService()
 
 DefineComponentPropertyReactive(Persistance, Entity, EntityPersistancePoint)
 
@@ -36,14 +34,7 @@ static void OnParentChanged(Entity entity, Entity oldParent, Entity newParent) {
     }
 }
 
-static bool ServiceStart() {
-    SubscribeEntityPersistancePointChanged(OnEntityPersistancePointChanged);
-    SubscribeParentChanged(OnParentChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeEntityPersistancePointChanged(OnEntityPersistancePointChanged);
-    UnsubscribeParentChanged(OnParentChanged);
-    return false;
-}
+DefineService(Persistance)
+        Subscribe(EntityPersistancePointChanged, OnEntityPersistancePointChanged)
+        Subscribe(ParentChanged, OnParentChanged)
+EndService()

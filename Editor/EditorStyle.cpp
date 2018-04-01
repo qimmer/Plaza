@@ -19,11 +19,7 @@ struct ImFont *GetUIFont() {
     return UIFont;
 }
 
-DefineService(EditorStyle)
-    ServiceDependency(ImGuiRenderer)
-EndService()
-
-static bool ServiceStart() {
+static void OnServiceStart(Service service) {
     ImGui::SetCurrentContext((ImGuiContext*)GetDefaultImGuiContext());
 
     ImGuiIO& io = ImGui::GetIO();
@@ -40,10 +36,9 @@ static bool ServiceStart() {
     io.Fonts->AddFontFromFileTTF("./Fonts/MaterialIcons-Regular.ttf", 14.0f, &config, materialRange);
     MonoFont = io.Fonts->AddFontFromFileTTF("./Fonts/Courier Prime Code.ttf", 14.0f);
     RebuildImGuiFonts();
-
-    return true;
 }
 
-static bool ServiceStop() {
-	return false;
-}
+DefineService(EditorStyle)
+        ServiceDependency(ImGuiRenderer)
+        Subscribe(EditorStyleStarted, OnServiceStart)
+EndService()

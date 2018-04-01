@@ -5,6 +5,7 @@
 #include <Logic/State.h>
 #include <Rendering/Context.h>
 #include "InputState.h"
+#include "Key.h"
 
 struct InputState {
     InputState() : InputStateStateScale(1.0f), InputStateKey(0), InputStatePrimaryModifierKey(0), InputStateSecondaryModifierKey(0) {
@@ -38,10 +39,10 @@ DefineEvent(CommandReleased, EntityHandler)
 
 DefineComponent(InputState)
     Dependency(State)
-    DefineProperty(u16, InputStateKey)
-    DefineProperty(u16, InputStatePrimaryModifierKey)
-    DefineProperty(u16, InputStateSecondaryModifierKey)
-    DefineProperty(float, InputStateStateScale)
+    DefinePropertyReactiveEnum(u16, InputStateKey, Key)
+    DefinePropertyReactiveEnum(u16, InputStatePrimaryModifierKey, Key)
+    DefinePropertyReactiveEnum(u16, InputStateSecondaryModifierKey, Key)
+    DefinePropertyReactive(float, InputStateStateScale)
 EndComponent()
 
 DefineComponentPropertyReactive(InputState, u16, InputStateKey)
@@ -53,11 +54,3 @@ DefineService(InputState)
     Subscribe(StateValueChanged, OnStateValueChanged)
     Subscribe(InputStateChanged, OnChanged)
 EndService()
-
-static bool ServiceStart() {
-    return true;
-}
-
-static bool ServiceStop() {
-    return true;
-}

@@ -12,14 +12,14 @@ struct VoxelColor {
 };
 
 DefineComponent(VoxelColor)
-    DefineProperty(Voxel, VoxelColorValue)
-    DefineProperty(rgba8, VoxelColorColor)
-    DefineProperty(Entity, VoxelColorSubTextureNX)
-    DefineProperty(Entity, VoxelColorSubTexturePX)
-    DefineProperty(Entity, VoxelColorSubTextureNY)
-    DefineProperty(Entity, VoxelColorSubTexturePY)
-    DefineProperty(Entity, VoxelColorSubTextureNZ)
-    DefineProperty(Entity, VoxelColorSubTexturePZ)
+    DefinePropertyReactive(Voxel, VoxelColorValue)
+    DefinePropertyReactive(rgba8, VoxelColorColor)
+    DefinePropertyReactive(Entity, VoxelColorSubTextureNX)
+    DefinePropertyReactive(Entity, VoxelColorSubTexturePX)
+    DefinePropertyReactive(Entity, VoxelColorSubTextureNY)
+    DefinePropertyReactive(Entity, VoxelColorSubTexturePY)
+    DefinePropertyReactive(Entity, VoxelColorSubTextureNZ)
+    DefinePropertyReactive(Entity, VoxelColorSubTexturePZ)
 EndComponent()
 
 DefineComponentPropertyReactive(VoxelColor, Voxel, VoxelColorValue)

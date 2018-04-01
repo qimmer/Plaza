@@ -7,9 +7,12 @@
 #include "RenderTarget.h"
 #include <Logic/State.h>
 #include <Input/InputState.h>
+#include <cfloat>
+#include <math.h>
+#include <Input/Key.h>
 
 
-    struct Context {
+struct Context {
         float KeyStates[KEY_MAX];
         v2i CursorPositions[CURSOR_MAX];
         String ContextTitle;
@@ -18,7 +21,7 @@
 
     DefineComponent(Context)
         Dependency(RenderTarget)
-        DefineProperty(StringRef, ContextTitle)
+        DefinePropertyReactive(StringRef, ContextTitle)
     EndComponent()
 
     DefineComponentPropertyReactive(Context, StringRef, ContextTitle)
@@ -39,6 +42,11 @@
         Assert(key < KEY_MAX);
 
         auto old = GetContext(context)->KeyStates[(int)key];
+
+        if(fabsf(state - old) < FLT_EPSILON) {
+            return;
+        }
+
         GetContext(context)->KeyStates[(int)key] = state;
 
         FireEvent(KeyStateChanged, context, key, old, state);

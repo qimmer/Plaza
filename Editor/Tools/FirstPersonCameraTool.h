@@ -5,8 +5,6 @@
 #ifndef PLAZA_FIRSTPERSONCAMERA_H
 #define PLAZA_FIRSTPERSONCAMERA_H
 
-#include <Core/Service.h>
-
 DeclareService(FirstPersonCameraTool)
 
 #endif //PLAZA_FIRSTPERSONCAMERA_H

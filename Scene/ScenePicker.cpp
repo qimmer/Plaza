@@ -25,62 +25,49 @@
 #include <Rendering/Program.h>
 #include "ScenePicker.h"
 #include <algorithm>
+#include <Rendering/UniformState.h>
+#include <Foundation/Stream.h>
+#include <Rendering/Uniform.h>
+#include <Core/Types.h>
+#include <Rendering/ShaderVariation.h>
 
 struct ScenePicker {
-    Entity CommandList, RenderTarget, RenderTexture;
-    bool ScenePickerActive;
+    ScenePicker() : ScenePickerFov(0.5f) {}
+
+    Entity CommandList, RenderTarget, RenderTexture, BlitTexture, DepthTexture;
     v2f ScenePickerViewportLocation;
     u8 ScenePickerLayers;
+    float ScenePickerFov;
+    Entity ScenePickerPickedEntity;
 };
 
 DefineComponent(ScenePicker)
     Dependency(Camera)
-    DefineProperty(bool, ScenePickerActive)
-    DefineProperty(v2f, ScenePickerViewportLocation)
+    DefinePropertyReactive(v2f, ScenePickerViewportLocation)
     DefinePropertyEnum(u8, ScenePickerLayers, Layer)
+    DefinePropertyReactive(Entity, ScenePickerPickedEntity)
 EndComponent()
 
-DefineService(ScenePicker)
-EndService()
-
-DefineComponentPropertyReactive(ScenePicker, bool, ScenePickerActive)
 DefineComponentPropertyReactive(ScenePicker, v2f, ScenePickerViewportLocation)
 DefineComponentPropertyReactive(ScenePicker, u8, ScenePickerLayers)
+DefineComponentPropertyReactive(ScenePicker, Entity, ScenePickerPickedEntity)
 
-Vector<Entity> PickPrograms;
+Entity PickingRoot, PickIdUniform, PickShaderVariation;
 
-static void OnProgramUpdated(Entity originalProgram);
+static void OnReadback(Entity sourceTexture, Entity blitTexture, const u8* data) {
+    Entity pickedEntity = 0;
+    auto scenePicker = GetParent(sourceTexture);
+    if(HasScenePicker(scenePicker)) {
+        auto entityIndex = *((const u32*)data);
+        if(entityIndex > 0) {
+            auto entity = GetEntityFromIndex(entityIndex);
+            if(IsEntityValid(entity)) {
+                pickedEntity = entity;
+            }
+        }
 
-static Entity CreatePickProgramForVertexShader(Entity originalProgram) {
-    auto programIndex = GetProgramIndex(originalProgram);
-
-    char name[PATH_MAX];
-    snprintf(name, PATH_MAX, "/.picking/PickPrograms/%llu", programIndex);
-    auto program = CreateEntityFromPath(name);
-    OnProgramUpdated(originalProgram);
-    return program;
-}
-
-static Entity GetPickProgramForVertexShader(Entity originalProgram) {
-    auto programIndex = GetProgramIndex(originalProgram);
-
-    if(PickPrograms.size() <= programIndex || !IsEntityValid(PickPrograms[programIndex])) {
-        PickPrograms.resize(std::max(PickPrograms.size(), (size_t)programIndex + 1));
-        PickPrograms[programIndex] = CreatePickProgramForVertexShader(originalProgram);
+        SetScenePickerPickedEntity(scenePicker, pickedEntity);
     }
-
-    return PickPrograms[programIndex];
-}
-
-static void OnProgramUpdated(Entity originalProgram) {
-    auto pickProgram = GetPickProgramForVertexShader(originalProgram);
-    auto vs = GetVertexShader(pickProgram);
-
-}
-
-
-Entity GetPickedEntity(Entity scenePicker) {
-    return 0;
 }
 
 static void UpdateBatches(Entity scenePicker) {
@@ -88,28 +75,47 @@ static void UpdateBatches(Entity scenePicker) {
 
     // First, prepare command list
     auto commandList = data->CommandList;
-    v4f viewport = {0, 0, 1, 1};
-
-    bool shouldRender = data->ScenePickerActive;
-    SetHidden(commandList, !shouldRender);
-    if(!shouldRender) {
-        return;
-    }
 
     auto size = GetRenderTargetSize(data->RenderTarget);
-    viewport.x *= size.x;
-    viewport.y *= size.y;
-    viewport.z *= size.x;
-    viewport.w *= size.y;
 
-    SetCommandListViewport(commandList, {(int)viewport.x, (int)viewport.y, (int)viewport.z, (int)viewport.w});
+    SetCommandListViewport(commandList, {0, 0, size.x, size.y});
     SetCommandListClearColor(commandList, {255, 255, 255, 255});
     SetCommandListRenderTarget(commandList, data->RenderTarget);
     SetCommandListClearDepth(commandList, 1.0f);
     SetCommandListClearTargets(commandList, ClearTarget_Color | ClearTarget_Depth);
-    SetCommandListViewMatrix(commandList, GetCameraViewMatrix(scenePicker));
-    SetCommandListProjectionMatrix(commandList, GetCameraProjectionMatrix(scenePicker));
-    SetCommandListLayer(commandList, GetCameraLayer(scenePicker));
+    SetCommandListLayer(commandList, GetCameraLayer(scenePicker) + 1);
+
+    TextureReadback(data->RenderTexture, OnReadback);
+
+    m4x4f pickViewMatrix, pickProjectionMatrix, lookMatrix;
+    auto pickOrigin = GetCameraPickRayPoint(scenePicker, data->ScenePickerViewportLocation, 0.0f);
+    auto pickEnd = GetCameraPickRayPoint(scenePicker, data->ScenePickerViewportLocation, 1.0f);
+    v4f pickUp = {0.0f, 1.0f, 0.0f, 0.0f};
+    v4f pickDir = {
+        pickEnd.x - pickOrigin.x,
+        pickEnd.y - pickOrigin.y,
+        pickEnd.z - pickOrigin.z,
+        0.0f
+    };
+    glm_vec_normalize(&pickDir.x);
+    v4f pickRight = {0.0f, 0.0f, 0.0f, 0.0f};
+    glm_vec_cross(&pickDir.x, &pickUp.x, &pickRight.x);
+
+    m4x4f pickCameraWorld = {
+        {-pickRight.x, -pickRight.y, -pickRight.z, 0.0f},
+        pickUp,
+        pickDir,
+        {pickOrigin.x, pickOrigin.y, pickOrigin.z, 1.0f}
+    };
+
+    glm_mat4_inv((vec4*)&pickCameraWorld, (vec4*) &pickViewMatrix);
+
+    glm_perspective(glm_rad(data->ScenePickerFov), 1.0f, 0.1f, 100.0f, (vec4*)&pickProjectionMatrix);
+    vec3 scale = {1.0f, 1.0f, -1.0f};
+    glm_scale((vec4*)&pickProjectionMatrix.x, scale);
+
+    SetCommandListViewMatrix(commandList, pickViewMatrix);
+    SetCommandListProjectionMatrix(commandList, pickProjectionMatrix);
 
     auto batch = GetFirstChild(data->CommandList);
     auto batchIndex = 0;
@@ -123,11 +129,25 @@ static void UpdateBatches(Entity scenePicker) {
             char name[PATH_MAX];
             snprintf(name, PATH_MAX, "Batch_%i", batchIndex);
             batch = CreateBatch(data->CommandList, name);
+            auto state = CreateUniformState(batch, "IdState");
+            SetUniformStateUniform(state, PickIdUniform);
         }
 
-        SetBatchMaterial(batch, GetMeshInstanceMaterial(meshInstance));
+        auto material = GetMeshInstanceMaterial(meshInstance);
+
+        SetBatchMaterial(batch, material);
+        SetBatchShaderVariation(batch, PickShaderVariation);
         SetBatchMesh(batch, GetMeshInstanceMesh(meshInstance));
         SetBatchWorldMatrix(batch, GetGlobalTransform(meshInstance));
+
+        auto meshInstanceIndex = GetHandleIndex(meshInstance);
+        auto *idComponents = (u8*)&meshInstanceIndex;
+        SetUniformStateVec4(GetFirstChild(batch), {
+            (float)idComponents[0] / 255.0f,
+            (float)idComponents[1] / 255.0f,
+            (float)idComponents[2] / 255.0f,
+            (float)idComponents[3] / 255.0f
+        });
 
         batch = GetSibling(batch);
         batchIndex++;
@@ -145,25 +165,46 @@ static void OnScenePickerAdded(Entity entity) {
 
     data->CommandList = CreateCommandList(entity, "ScenePicker_CommandList");
     data->RenderTarget = CreateOffscreenRenderTarget(entity, "ScenePicker_RenderTarget");
+
     data->RenderTexture = CreateTexture2D(entity, "ScenePicker_RenderTexture");
+    SetTextureFormat(data->RenderTexture, TextureFormat_RGBA8);
+    SetTextureFlag(data->RenderTexture, TextureFlag_MIN_POINT | TextureFlag_MAG_POINT | TextureFlag_MIP_POINT | TextureFlag_U_CLAMP | TextureFlag_V_CLAMP | TextureFlag_RT);
+
+    data->DepthTexture = CreateTexture2D(entity, "ScenePicker_DepthTexture");
+    SetTextureFormat(data->DepthTexture, TextureFormat_D24S8);
+    SetTextureFlag(data->DepthTexture, TextureFlag_MIN_POINT | TextureFlag_MAG_POINT | TextureFlag_MIP_POINT | TextureFlag_U_CLAMP | TextureFlag_V_CLAMP | TextureFlag_RT);
+
+    data->BlitTexture = CreateTexture2D(entity, "ScenePicker_BlitTexture");
+    SetTextureFormat(data->BlitTexture, TextureFormat_RGBA8);
+    SetTextureFlag(data->BlitTexture, TextureFlag_MIN_POINT | TextureFlag_MAG_POINT | TextureFlag_MIP_POINT | TextureFlag_U_CLAMP | TextureFlag_V_CLAMP | TextureFlag_BLIT_DST | TextureFlag_READ_BACK);
+    SetTextureSize2D(data->BlitTexture, {1, 1});
+
+    SetRenderTargetTexture0(data->RenderTarget, data->RenderTexture);
+    SetRenderTargetTexture1(data->RenderTarget, data->DepthTexture);
+    SetRenderTargetSize(data->RenderTarget, {1, 1});
+
+    SetTextureReadbackTarget(data->RenderTexture, data->BlitTexture);
 }
 
-static void OnSimpleRendererRemoved(Entity entity) {
+static void OnScenePickerRemoved(Entity entity) {
     DestroyEntity(GetScenePicker(entity)->CommandList);
+    DestroyEntity(GetScenePicker(entity)->RenderTarget);
+    DestroyEntity(GetScenePicker(entity)->RenderTexture);
+    DestroyEntity(GetScenePicker(entity)->BlitTexture);
 }
 
-static bool ServiceStart() {
-    SubscribeScenePickerAdded(OnScenePickerAdded);
-    SubscribeScenePickerRemoved(OnSimpleRendererRemoved);
-    SubscribeAppUpdate(OnAppUpdate);
+static void InitializePickRoot(Entity entity) {
+    PickIdUniform = CreateUniform(entity, "PickIdUniform");
+    SetUniformName(PickIdUniform, "pickId");
+    SetUniformType(PickIdUniform, TypeOf_v4f());
 
-    return true;
+    PickShaderVariation = CreateShaderVariation(entity, "PickShaderVariation");
+    SetShaderVariationDefines(PickShaderVariation, "PICK");
 }
 
-static bool ServiceStop() {
-    UnsubscribeAppUpdate(OnAppUpdate);
-    UnsubscribeScenePickerAdded(OnScenePickerAdded);
-    UnsubscribeScenePickerRemoved(OnSimpleRendererRemoved);
-
-    return true;
-}
+DefineService(ScenePicker)
+    Subscribe(ScenePickerAdded, OnScenePickerAdded)
+    Subscribe(ScenePickerRemoved, OnScenePickerRemoved)
+    Subscribe(AppUpdate, OnAppUpdate)
+    ServiceEntity(PickingRoot, InitializePickRoot)
+EndService()

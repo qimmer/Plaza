@@ -23,15 +23,13 @@ struct SpriteVertex {
 };
 
 static Entity SpriteVertexDeclaration,
-        SpriteProgram,
+        SpriteVertexShader,
+        SpritePixelShader,
         SpriteTextureUniform,
         SpriteVertexBuffer,
         SpriteIndexBuffer,
         SpriteMesh,
         SpriteRoot;
-
-DefineService(Sprite)
-EndService()
 
 Entity GetSpriteTextureUniform() {
     return SpriteTextureUniform;
@@ -41,23 +39,18 @@ Entity GetSpriteMesh() {
     return SpriteMesh;
 }
 
-Entity GetSpriteProgram() {
-    return SpriteProgram;
-}
-
-static void InitializeSpriteMesh() {
+static void CreateSpriteMesh(Entity entity) {
     v2f uvTopLeft = {0.0f, 1.0f};
     v2f uvBottomRight = {1.0f, 0.0f};
     v2f posTopLeft = {-0.5f, -0.5f};
     v2f posBottomRight = {0.5f, 0.5f};
 
-    SpriteMesh = CreateMesh(SpriteRoot, "Mesh");
-    SpriteVertexBuffer = CreateVertexBuffer(SpriteRoot, "VertexBuffer");
+    SpriteVertexBuffer = CreateVertexBuffer(entity, "VertexBuffer");
     SetVertexBufferDeclaration(SpriteVertexBuffer, SpriteVertexDeclaration);
-    SetMeshVertexBuffer(SpriteMesh, SpriteVertexBuffer);
+    SetMeshVertexBuffer(entity, SpriteVertexBuffer);
 
-    SpriteIndexBuffer = CreateIndexBuffer(SpriteRoot, "IndexBuffer");
-    SetMeshIndexBuffer(SpriteMesh, SpriteIndexBuffer);
+    SpriteIndexBuffer = CreateIndexBuffer(entity, "IndexBuffer");
+    SetMeshIndexBuffer(entity, SpriteIndexBuffer);
 
     SpriteVertex vts[] = {
         {{posTopLeft.x, posTopLeft.y}, {uvTopLeft.x, uvTopLeft.y}},
@@ -68,8 +61,8 @@ static void InitializeSpriteMesh() {
 
     u16 idx[] = {0, 1, 2, 2, 3, 0};
 
-    SetMeshNumVertices(SpriteMesh, 4);
-    SetMeshNumIndices(SpriteMesh, 6);
+    SetMeshNumVertices(entity, 4);
+    SetMeshNumIndices(entity, 6);
 
     Assert(StreamOpen(SpriteVertexBuffer, StreamMode_Write));
     StreamWrite(SpriteVertexBuffer, sizeof(SpriteVertex) * 4, vts);
@@ -80,55 +73,37 @@ static void InitializeSpriteMesh() {
     StreamClose(SpriteIndexBuffer);
 }
 
-static void InitializeSpriteVertexDeclaration() {
-    SpriteVertexDeclaration = CreateVertexDeclaration(SpriteRoot, "VertexDeclaration");
+static void InitializeSpriteRoot(Entity entity) {
+    SpriteVertexDeclaration = CreateVertexDeclaration(entity, "VertexDeclaration");
 
-    auto positionAttribute = CreateVertexAttribute(SpriteVertexDeclaration, "Position");
+    auto positionAttribute = CreateVertexAttribute(entity, "Position");
     SetVertexAttributeUsage(positionAttribute, VertexAttributeUsage_Position);
     SetVertexAttributeType(positionAttribute, TypeOf_v2f());
 
-    auto uvAttribute = CreateVertexAttribute(SpriteVertexDeclaration, "TexCoord");
+    auto uvAttribute = CreateVertexAttribute(entity, "TexCoord");
     SetVertexAttributeUsage(uvAttribute, VertexAttributeUsage_TexCoord0);
     SetVertexAttributeType(uvAttribute, TypeOf_v2f());
-}
 
-static void InitializeSpriteProgram() {
-    SpriteProgram = CreateProgram(SpriteRoot, "Program");
-    auto VertexShader = CreateShader(SpriteProgram, "VertexShader");
-    auto PixelShader = CreateShader(SpriteProgram, "PixelShader");
-    auto ShaderDeclaration = CreateStream(SpriteProgram, "ShaderDeclaration");
-    SpriteTextureUniform = CreateUniform(SpriteRoot, "TextureUniform");
+    auto shaderDeclaration = CreateStream(entity, "ShaderDeclaration");
+    SetStreamPath(shaderDeclaration, "res://scene2d/shaders/sprite.var");
 
-    SetStreamPath(VertexShader, "res://scene2d/shaders/sprite.vs");
-    SetStreamPath(PixelShader, "res://scene2d/shaders/sprite.ps");
-    SetStreamPath(ShaderDeclaration, "res://scene2d/shaders/sprite.var");
+    SpriteVertexShader = CreateShader(entity, "VertexShader");
+    SetStreamPath(SpriteVertexShader, "res://scene2d/shaders/sprite.vs");
+    SetShaderType(SpriteVertexShader, ShaderType_Vertex);
+    SetShaderDeclaration(SpriteVertexShader, shaderDeclaration);
 
-    SetShaderType(VertexShader, ShaderType_Vertex);
-    SetShaderDeclaration(VertexShader, ShaderDeclaration);
+    SpritePixelShader = CreateShader(entity, "PixelShader");
+    SetStreamPath(SpritePixelShader, "res://scene2d/shaders/sprite.ps");
+    SetShaderType(SpritePixelShader, ShaderType_Pixel);
+    SetShaderDeclaration(SpritePixelShader, shaderDeclaration);
 
-    SetShaderType(PixelShader, ShaderType_Pixel);
-    SetShaderDeclaration(PixelShader, ShaderDeclaration);
-
-    SetVertexShader(SpriteProgram, VertexShader);
-    SetPixelShader(SpriteProgram, PixelShader);
-
+    SpriteTextureUniform = CreateUniform(entity, "TextureUniform");
     SetUniformName(SpriteTextureUniform, "s_tex");
     SetUniformType(SpriteTextureUniform, TypeOf_Entity());
     SetUniformArrayCount(SpriteTextureUniform, 1);
+
+    CreateSpriteMesh(entity);
 }
-
-static bool ServiceStart() {
-    SpriteRoot = CreateHierarchy(0, ".sprite");
-
-    InitializeSpriteProgram();
-    InitializeSpriteVertexDeclaration();
-    InitializeSpriteMesh();
-
-    return true;
-}
-
-static bool ServiceStop() {
-    DestroyEntity(SpriteRoot);
-
-    return true;
-}
+DefineService(Sprite)
+        ServiceEntity(SpriteRoot, InitializeSpriteRoot)
+EndService()

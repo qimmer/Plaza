@@ -27,51 +27,55 @@ const char * GetServiceName(Service service);
 
 void AddServiceDependency(Service service, Service dependency);
 void AddServiceSubscription(Service service, void *subscribeFunc, void *unsubscribeFunc, void *eventHandler);
+void AddServiceEntity(Service service, u64 *handlePtr, void* initializeFunc, StringRef name);
 
 #define DeclareService(SERVICE) \
-    DeclareEvent(SERVICE ## Started, Handler)\
-    DeclareEvent(SERVICE ## Stopped, Handler)\
-    void Start ## SERVICE (); \
-    void Stop ## SERVICE(); \
+    DeclareEvent(SERVICE ## Started, ServiceHandler)\
+    DeclareEvent(SERVICE ## Stopped, ServiceHandler)\
     bool Is ## SERVICE ## Running(); \
     Service ServiceOf_ ## SERVICE ();
 
 #define DefineService(SERVICE) \
-    DefineEvent(SERVICE ## Started, Handler)\
-    DefineEvent(SERVICE ## Stopped, Handler)\
+    DefineEvent(SERVICE ## Started, ServiceHandler)\
+    DefineEvent(SERVICE ## Stopped, ServiceHandler)\
     bool SERVICE ## _is_started = false; \
-    static bool ServiceStart(); \
-    static bool ServiceStop(); \
     void Start ## SERVICE () { \
-        if(!Is ## SERVICE ## Running() && ServiceStart()) { \
+        if(!Is ## SERVICE ## Running()) { \
             SERVICE ## _is_started = true; \
-            Log(LogChannel_Core, LogSeverity_Info, "Starting %s ...", #SERVICE);\
-            FireEvent(SERVICE ## Started);\
+            Log(LogChannel_Core, LogSeverity_Info, "    Starting Service '%s' ...", #SERVICE);\
+            auto service = ServiceOf_ ## SERVICE ();\
+            FireEvent(SERVICE ## Started, service);\
         }\
     } \
     void Stop ## SERVICE() { \
-        if(Is ## SERVICE ## Running() && ServiceStop()) { \
+        if(Is ## SERVICE ## Running()) { \
             SERVICE ## _is_started = false; \
-            Log(LogChannel_Core, LogSeverity_Info, "Stopping %s ...", #SERVICE);\
-            FireEvent(SERVICE ## Stopped);\
+            Log(LogChannel_Core, LogSeverity_Info, "    Stopping Service '%s' ...", #SERVICE);\
+            auto service = ServiceOf_ ## SERVICE ();\
+            FireEvent(SERVICE ## Stopped, service);\
         }\
     } \
     bool Is ## SERVICE ## Running() { return SERVICE ## _is_started; } \
+    Service _InitService_ ## SERVICE();\
     Service ServiceOf_ ## SERVICE () { \
         static Service service = 0; \
-        if(!service) { \
-            service = CreateService(); \
-            SetServiceName(service, #SERVICE); \
-            SetServiceFunctions(service, &Start ## SERVICE, &Stop ## SERVICE, &Is ## SERVICE ## Running);
+        if(!service) service = _InitService_ ## SERVICE ();\
+        return service;\
+    }\
+    Service _InitService_ ## SERVICE() { \
+        auto _service = CreateService(); \
+        SetServiceName(_service, #SERVICE); \
+        SetServiceFunctions(_service, &Start ## SERVICE, &Stop ## SERVICE, &Is ## SERVICE ## Running);
 
 #define EndService() \
-        } \
-        return service; \
+        return _service; \
     }
 
-#define Subscribe(EVENT, HANDLER) Unsubscribe ## EVENT (HANDLER); AddServiceSubscription(service, (void*)Subscribe ## EVENT, (void*)Unsubscribe ## EVENT,(void*) HANDLER);
+#define Subscribe(EVENT, HANDLER) Unsubscribe ## EVENT (0, HANDLER); AddServiceSubscription(_service, (void*)Subscribe ## EVENT, (void*)Unsubscribe ## EVENT,(void*) HANDLER);
+
+#define ServiceEntity(ENTITY, ENTITYINITIALIZEFUNC) AddServiceEntity(_service, &ENTITY, (void*)ENTITYINITIALIZEFUNC, #ENTITY);
 
 #define ServiceDependency(DEPENDENCYSERVICE) \
-    AddServiceDependency(service, ServiceOf_ ## DEPENDENCYSERVICE ());
+    AddServiceDependency(_service, ServiceOf_ ## DEPENDENCYSERVICE ());
 
 #endif //PLAZA_SERVICE_H

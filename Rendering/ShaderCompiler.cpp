@@ -13,9 +13,6 @@ DefineEvent(ShaderCompile, ShaderCompileHandler)
 
 String ShaderIncludeDirectory;
 
-DefineService(ShaderCompiler)
-EndService()
-
 void SetShaderIncludeDirectory(StringRef value) {
     ShaderIncludeDirectory = value;
 }
@@ -24,20 +21,18 @@ StringRef GetShaderIncludeDirectory() {
     return ShaderIncludeDirectory.c_str();
 }
 
-void CompileShader(Entity shader, Entity binaryShader) {
-    FireEvent(ShaderCompile, shader, binaryShader);
+void CompileShader(Entity binaryShader) {
+    FireEvent(ShaderCompile, binaryShader);
 }
 
-static bool ServiceStart() {
+static void OnServiceStart(Service service) {
     char cwd[PATH_MAX];
     getcwd(cwd, PATH_MAX);
     strcat(cwd, "/Shaders");
 
     ShaderIncludeDirectory = cwd;
-
-    return true;
 }
 
-static bool ServiceStop() {
-    return true;
-}
+DefineService(ShaderCompiler)
+        Subscribe(ShaderCompilerStarted, OnServiceStart)
+EndService()

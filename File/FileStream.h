@@ -7,6 +7,7 @@
 
 #include <Core/Entity.h>
 
+DeclareComponent(FileStream)
 DeclareService(FileStream)
 
 #endif //PLAZA_FILESTREAM_H

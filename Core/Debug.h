@@ -6,7 +6,6 @@
 #define PLAZA_DEBUG_H
 
 #include <Core/Types.h>
-#include <Core/Delegate.h>
 
 #define Assert(x) if(!(x)) { Log( LogChannel_Core, LogSeverity_Fatal, "Assertion failed at line %d in %s: %s", __LINE__, __FILE__, #x ); DebuggerBreak(); exit(-1); } do{} while(false)
 
@@ -21,7 +20,5 @@ typedef void(*LogHandler)(int channel, int severity, StringRef format);
 
 void Log(int channel, int severity, StringRef format, ...);
 void DebuggerBreak();
-
-DeclareEvent(LogMessageReceived, LogHandler)
 
 #endif //PLAZA_DEBUG_H

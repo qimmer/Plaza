@@ -3,12 +3,10 @@
 //
 
 #include <Rendering/Context.h>
+#include <Input/Key.h>
 #include "EditorStandardCommands.h"
 
-Entity NewCommand, OpenCommand, SaveCommand, CloseCommand, CutCommand, CopyCommand, PasteCommand, DeleteCommand, QuitCommand;
-
-DefineService(EditorStandardCommands)
-EndService()
+Entity NewCommand, OpenCommand, SaveCommand, CloseCommand, CutCommand, CopyCommand, PasteCommand, DeleteCommand, QuitCommand, ToggleEditor;
 
 Entity GetNewCommand() {
     return NewCommand;
@@ -46,7 +44,11 @@ Entity GetQuitCommand() {
     return QuitCommand;
 }
 
-static bool ServiceStart() {
+Entity GetToggleEditorCommand() {
+    return ToggleEditor;
+}
+
+static void OnServiceStart(Service service) {
     Entity editorRoot = CreateHierarchy(0, ".editor");
     Entity root = CreateHierarchy(editorRoot, "StandardCommands");
     
@@ -80,10 +82,8 @@ static bool ServiceStart() {
     SetInputStateKey(DeleteCommand, KEY_DELETE);
 
     PasteCommand = CreateInputState(root, "Quit");
-
-    return true;
 }
 
-static bool ServiceStop() {
-    return true;
-}
+DefineService(EditorStandardCommands)
+        Subscribe(EditorStandardCommandsStarted, OnServiceStart)
+EndService()

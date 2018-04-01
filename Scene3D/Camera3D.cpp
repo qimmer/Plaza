@@ -14,12 +14,9 @@
     };
 
     DefineComponent(Camera3D)
-        DefineProperty(float, Camera3DFov)
-        DefineProperty(float, Camera3DAspectRatio)
+        DefinePropertyReactive(float, Camera3DFov)
+        DefinePropertyReactive(float, Camera3DAspectRatio)
     EndComponent()
-
-    DefineService(Camera3D)
-    EndService()
 
     DefineComponentPropertyReactive(Camera3D, float, Camera3DFov)
 DefineComponentPropertyReactive(Camera3D, float, Camera3DAspectRatio)
@@ -52,23 +49,11 @@ DefineComponentPropertyReactive(Camera3D, float, Camera3DAspectRatio)
         UpdateProjectionMatrix(entity);
     }
 
-    static bool ServiceStart() {
-        SubscribeCamera3DAdded(OnCamera3DAdded);
-        SubscribeCameraNearClipChanged(OnCamera3DFovChanged);
-        SubscribeCameraFarClipChanged(OnCamera3DFovChanged);
-        SubscribeCamera3DFovChanged(OnCamera3DFovChanged);
-        SubscribeCamera3DAspectRatioChanged(OnCamera3DFovChanged);
-        SubscribeCameraViewportChanged(OnCameraViewportChanged);
-        return true;
-    }
-
-    static bool ServiceStop() {
-        UnsubscribeCamera3DAdded(OnCamera3DAdded);
-        UnsubscribeCameraNearClipChanged(OnCamera3DFovChanged);
-        UnsubscribeCameraFarClipChanged(OnCamera3DFovChanged);
-        UnsubscribeCamera3DFovChanged(OnCamera3DFovChanged);
-        UnsubscribeCamera3DAspectRatioChanged(OnCamera3DFovChanged);
-        UnsubscribeCameraViewportChanged(OnCameraViewportChanged);
-        return true;
-    }
-
+DefineService(Camera3D)
+        Subscribe(Camera3DAdded, OnCamera3DAdded)
+        Subscribe(CameraNearClipChanged, OnCamera3DFovChanged)
+        Subscribe(CameraFarClipChanged, OnCamera3DFovChanged)
+        Subscribe(Camera3DFovChanged, OnCamera3DFovChanged)
+        Subscribe(Camera3DAspectRatioChanged, OnCamera3DFovChanged)
+        Subscribe(CameraViewportChanged, OnCameraViewportChanged)
+EndService()

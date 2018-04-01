@@ -18,9 +18,6 @@ struct BgfxUniform {
 DefineComponent(BgfxUniform)
 EndComponent()
 
-DefineService(BgfxUniform)
-EndService()
-
 void OnUniformRemoved(Entity entity) {
     auto data = GetBgfxUniform(entity);
 
@@ -34,20 +31,6 @@ static void OnChanged(Entity entity) {
     if(HasBgfxUniform(entity)) {
         GetBgfxUniform(entity)->invalidated = true;
     }
-}
-
-static bool ServiceStart() {
-    SubscribeBgfxUniformRemoved(OnUniformRemoved);
-    SubscribeUniformChanged(OnChanged);
-
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeBgfxUniformRemoved(OnUniformRemoved);
-    UnsubscribeUniformChanged(OnChanged);
-
-    return true;
 }
 
 u16 GetBgfxUniformHandle(Entity entity) {
@@ -85,3 +68,7 @@ u16 GetBgfxUniformHandle(Entity entity) {
     return data->handle.idx;
 }
 
+DefineService(BgfxUniform)
+        Subscribe(BgfxUniformRemoved, OnUniformRemoved)
+        Subscribe(UniformChanged, OnChanged)
+EndService()

@@ -3,6 +3,7 @@
 
 #include <Core/Types.h>
 #include <Core/Vector.h>
+#include <Core/Debug.h>
 #include <algorithm>
 #include <memory>
 
@@ -91,7 +92,7 @@ template<typename T>
 bool Pool<T>::IsValid(u32 index) const
 {
     auto page = (index & 0xffffff00) >> 8;
-    index = index & 0xff;
+    index &= 0xff;
 
     if(this->entryPages.size() <= page) return false;
 
@@ -115,6 +116,7 @@ bool Pool<T>::Insert(u32 index)
     auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
 
+    Assert(page < 1024);
     if(page >= this->entryPages.size())
     {
         for(auto i = this->entryPages.size(); i <= page; ++i) {

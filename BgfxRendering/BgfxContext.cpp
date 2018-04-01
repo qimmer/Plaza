@@ -54,6 +54,8 @@ extern "C" {
 #include <Rendering/VertexDeclaration.h>
 #include <Rendering/RenderTarget.h>
 #include <Rendering/OffscreenRenderTarget.h>
+#include <Rendering/Texture.h>
+#include <Input/Key.h>
 
 #undef CreateService
 extern "C" {
@@ -61,7 +63,15 @@ extern "C" {
 }
 #endif
 
+struct BgfxTextureReadbackRequest {
+    u8* readbackBuffer;
+    Entity sourceTexture, blitTexture;
+    u64 readbackFrame;
+    TextureReadbackHandler handler;
+};
+
 struct BgfxContext {
+    Vector<BgfxTextureReadbackRequest> pendingReadbackRequests;
     GLFWwindow *window;
     bgfx::FrameBufferHandle fb;
     int debugFlags;
@@ -71,9 +81,6 @@ DefineComponent(BgfxContext)
     ExtensionOf(Context)
 EndComponent()
 
-DefineService(BgfxContext)
-EndService()
-
 u16 GetBgfxContextHandle(Entity entity) {
     return GetBgfxContext(entity)->fb.idx;
 }
@@ -81,6 +88,44 @@ u16 GetBgfxContextHandle(Entity entity) {
 static u32 NumContexts = 0;
 static Entity PrimaryContext = 0;
 static double timeSinceLastPoll = FLT_MAX;
+
+static void OnTextureReadbackInitiated(Entity texture, TextureReadbackHandler handler) {
+    if(!IsEntityValid(GetTextureReadbackTarget(texture))) return;
+
+    for_entity(context, BgfxContext) {
+        auto data = GetBgfxContext(context);
+
+        auto alreadyPending = false;
+        for(auto& request : data->pendingReadbackRequests) {
+            if(request.sourceTexture == texture) {
+                alreadyPending = true;
+                break;
+            }
+        }
+
+        if(!alreadyPending) {
+            data->pendingReadbackRequests.push_back(BgfxTextureReadbackRequest());
+
+            auto& req = data->pendingReadbackRequests[data->pendingReadbackRequests.size() - 1];
+            req.sourceTexture = texture;
+            req.blitTexture = GetTextureReadbackTarget(texture);
+            req.handler = handler;
+
+            auto size = GetTextureSize2D(req.blitTexture);
+
+            bgfx::TextureInfo info;
+            bgfx::calcTextureSize(info, size.x, size.y, 1, false, false, 1, (bgfx::TextureFormat::Enum)GetTextureFormat(req.blitTexture));
+
+            req.readbackBuffer = (u8*)calloc(info.storageSize, 1);
+
+            auto blitSourceHandle = GetBgfxTexture2DHandle(texture);
+            auto blitDestHandle = GetBgfxTexture2DHandle(req.blitTexture);
+
+            bgfx::blit(0, {blitDestHandle}, 0, 0, {blitSourceHandle});
+            req.readbackFrame = bgfx::readTexture({blitDestHandle}, req.readbackBuffer);
+        }
+    }
+}
 
 static void OnAppUpdate(double deltaTime) {
     timeSinceLastPoll += deltaTime;
@@ -122,12 +167,23 @@ static void OnAppUpdate(double deltaTime) {
         RenderCommandList(entity, viewId);
     }
 
-    bgfx::frame();
+    auto frame = bgfx::frame();
 
-    for(auto i = 0; i < numContexts; ++i) {
-        auto entity = GetBgfxContextEntity(i);
-        if(glfwWindowShouldClose(GetBgfxContextByIndex(i)->window)) {
-            FireEvent(ContextClosing, entity);
+    for_entity(context, BgfxContext) {
+        auto data = GetBgfxContext(context);
+
+        for(auto i = 0; i < data->pendingReadbackRequests.size(); ++i) {
+            auto& req = data->pendingReadbackRequests[i];
+            if(req.readbackFrame < frame) {
+                req.handler(req.sourceTexture, req.blitTexture, req.readbackBuffer);
+                free(req.readbackBuffer);
+                data->pendingReadbackRequests.erase(data->pendingReadbackRequests.begin() + i);
+                --i;
+            }
+        }
+
+        if(glfwWindowShouldClose(data->window)) {
+            FireEvent(ContextClosing, context);
         }
     }
 }
@@ -236,11 +292,6 @@ static void OnBgfxContextAdded(Entity entity) {
 
     if(NumContexts == 1) {
         glfwInit();
-        SubscribeAppUpdate(OnAppUpdate);
-        SubscribeRenderTargetSizeChanged(OnContextResized);
-        SubscribeContextTitleChanged(OnContextTitleChanged);
-        SubscribeContextVsyncChanged(OnContextFlagChanged);
-        SubscribeContextFullscreenChanged(OnContextFlagChanged);
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -321,11 +372,6 @@ static void OnBgfxContextRemoved(Entity entity) {
     glfwDestroyWindow(data->window);
 
     if(NumContexts == 1) {
-        UnsubscribeRenderTargetSizeChanged(OnContextResized);
-        UnsubscribeAppUpdate(OnAppUpdate);
-        UnsubscribeContextTitleChanged(OnContextTitleChanged);
-        UnsubscribeContextVsyncChanged(OnContextFlagChanged);
-        UnsubscribeContextFullscreenChanged(OnContextFlagChanged);
         glfwTerminate();
 
         PrimaryContext = 0;
@@ -348,18 +394,16 @@ static void OnContextRemoved(Entity entity) {
     NumContexts--;
 }
 
-static bool ServiceStart() {
-    SubscribeContextAdded(OnContextAdded);
-    SubscribeBgfxContextAdded(OnBgfxContextAdded);
-    SubscribeContextRemoved(OnContextRemoved);
-    SubscribeBgfxContextRemoved(OnBgfxContextRemoved);
-    return true;
-}
+DefineService(BgfxContext)
+    Subscribe(ContextAdded, OnContextAdded)
+    Subscribe(BgfxContextAdded, OnBgfxContextAdded)
+    Subscribe(ContextRemoved, OnContextRemoved)
+    Subscribe(BgfxContextRemoved, OnBgfxContextRemoved)
+    Subscribe(TextureReadbackInitiated, OnTextureReadbackInitiated)
 
-static bool ServiceStop() {
-    UnsubscribeContextAdded(OnContextAdded);
-    UnsubscribeBgfxContextAdded(OnBgfxContextAdded);
-    UnsubscribeContextRemoved(OnContextRemoved);
-    UnsubscribeBgfxContextRemoved(OnBgfxContextRemoved);
-    return true;
-}
+    Subscribe(AppUpdate, OnAppUpdate)
+    Subscribe(RenderTargetSizeChanged, OnContextResized)
+    Subscribe(ContextTitleChanged, OnContextTitleChanged)
+    Subscribe(ContextVsyncChanged, OnContextFlagChanged)
+    Subscribe(ContextFullscreenChanged, OnContextFlagChanged)
+EndService()

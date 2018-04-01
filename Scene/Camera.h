@@ -13,6 +13,7 @@ DeclareService(Camera)
 
     DeclareComponentPropertyReactive(Camera, m4x4f, CameraViewMatrix)
     DeclareComponentPropertyReactive(Camera, m4x4f, CameraProjectionMatrix)
+    DeclareComponentPropertyReactive(Camera, m4x4f, CameraInvViewProjectionMatrix)
     DeclareComponentPropertyReactive(Camera, rgba8, CameraClearColor)
     DeclareComponentPropertyReactive(Camera, v4f, CameraViewport)
     DeclareComponentPropertyReactive(Camera, bool, CameraClear)
@@ -20,5 +21,7 @@ DeclareService(Camera)
     DeclareComponentPropertyReactive(Camera, Entity, CameraRenderTarget)
     DeclareComponentPropertyReactive(Camera, float, CameraNearClip)
     DeclareComponentPropertyReactive(Camera, float, CameraFarClip)
+
+v3f GetCameraPickRayPoint(Entity camera, v2f viewportOffset, float d);
 
 #endif //PLAZA_CAMERA_H

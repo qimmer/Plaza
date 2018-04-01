@@ -9,7 +9,7 @@ ExternalProject_Add(ex_bgfx
         GIT_REPOSITORY "https://github.com/JoshuaBrookover/bgfx.cmake.git"
         GIT_TAG "master"
         UPDATE_COMMAND ""
-        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_BUILD_EXAMPLES=OFF;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=Release;-DBGFX_CONFIG_DEBUG=OFF")
+        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_BUILD_EXAMPLES=ON;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=Release;-DBGFX_CONFIG_DEBUG=OFF")
 
 ExternalProject_Get_Property(ex_bgfx BINARY_DIR)
 ExternalProject_Get_Property(ex_bgfx SOURCE_DIR)

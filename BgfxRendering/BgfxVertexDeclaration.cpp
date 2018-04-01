@@ -19,24 +19,15 @@ struct BgfxVertexDeclaration {
 DefineComponent(BgfxVertexDeclaration)
 EndComponent()
 
-DefineService(BgfxVertexDeclaration)
-EndService()
-
 static void OnChanged(Entity entity) {
     if(HasBgfxVertexDeclaration(entity)) {
         GetBgfxVertexDeclaration(entity)->invalidated = true;
     }
 }
 
-static bool ServiceStart() {
-    SubscribeVertexDeclarationChanged(OnChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeVertexDeclarationChanged(OnChanged);
-    return true;
-}
+DefineService(BgfxVertexDeclaration)
+        Subscribe(VertexDeclarationChanged, OnChanged)
+EndService()
 
 void* GetBgfxVertexDeclarationHandle(Entity entity) {
     auto data = GetBgfxVertexDeclaration(entity);

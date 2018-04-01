@@ -14,9 +14,9 @@ struct Uniform {
 };
 
 DefineComponent(Uniform)
-    DefineProperty(StringRef, UniformName)
-    DefineProperty(u32, UniformArrayCount)
-    DefineProperty(Type, UniformType)
+    DefinePropertyReactive(StringRef, UniformName)
+    DefinePropertyReactive(u32, UniformArrayCount)
+    DefinePropertyReactive(Type, UniformType)
 EndComponent()
 
 DefineComponentPropertyReactive(Uniform, StringRef, UniformName)

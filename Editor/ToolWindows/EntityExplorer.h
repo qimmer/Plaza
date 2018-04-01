@@ -8,6 +8,7 @@
 #include <Core/Service.h>
 
 DeclareService(EntityExplorer)
+DeclareComponent(EntityExplorer)
 
 namespace ImGui {
     void EntityContextMenu();

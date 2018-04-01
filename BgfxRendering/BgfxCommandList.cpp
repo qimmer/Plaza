@@ -18,6 +18,7 @@
 #include <Rendering/Texture2D.h>
 #include <Rendering/BinaryShader.h>
 #include <Rendering/Context.h>
+#include <Rendering/Program.h>
 #include "BgfxCommandList.h"
 #include "BgfxVertexBuffer.h"
 #include "BgfxIndexBuffer.h"
@@ -33,9 +34,6 @@ struct BgfxCommandList {
 
 DefineComponent(BgfxCommandList)
 EndComponent()
-
-DefineService(BgfxCommandList)
-EndService()
 
 unsigned long RGBA2DWORD(int iR, int iG, int iB, int iA)
 {
@@ -101,14 +99,9 @@ void RenderBatch(u32 viewId, Entity entity, u8 shaderProfile) {
 
     if(!IsEntityValid(mesh) || !IsEntityValid(material)) return;
 
-    auto program = GetMaterialProgram(material);
+    auto program = ResolveProgram(GetMaterialVertexShader(material), GetMaterialPixelShader(material), shaderProfile, GetBatchShaderVariation(entity));
     auto vertexBuffer = GetMeshVertexBuffer(mesh);
     auto indexBuffer = GetMeshIndexBuffer(mesh);
-
-    auto programOverride = GetBatchProgram(entity);
-    if(IsEntityValid(programOverride)) {
-        program = programOverride;
-    }
 
     if(!IsEntityValid(program) ||
        !IsEntityValid(vertexBuffer) ||
@@ -119,7 +112,7 @@ void RenderBatch(u32 viewId, Entity entity, u8 shaderProfile) {
 
     auto vertexDeclaration = GetVertexBufferDeclaration(vertexBuffer);
 
-    auto programHandle = GetBgfxProgramHandle(program, shaderProfile);
+    auto programHandle = GetBgfxProgramHandle(program);
     if(GetBgfxVertexBufferHandle(vertexBuffer) == bgfx::kInvalidHandle ||
        programHandle == bgfx::kInvalidHandle ||
             (IsEntityValid(indexBuffer) && GetBgfxIndexBufferHandle(indexBuffer) == bgfx::kInvalidHandle )) return;
@@ -131,7 +124,7 @@ void RenderBatch(u32 viewId, Entity entity, u8 shaderProfile) {
                            GetMeshCullMode(mesh) |
                            GetMeshPrimitiveType(mesh));
 
-    if(scissor.x < scissor.z && scissor.y < scissor.w) {
+    if(scissor.z > 0 && scissor.w > 0) {
         bgfx::setScissor(scissor.x, scissor.y, scissor.z, scissor.w);
     }
 
@@ -163,11 +156,23 @@ void RenderBatch(u32 viewId, Entity entity, u8 shaderProfile) {
         SetUniformState(uniformState);
     }
 
+    for(auto uniformState = GetFirstChild(entity); uniformState; uniformState = GetSibling(uniformState)) {
+        if(!HasUniformState(uniformState)) continue;
+
+        SetUniformState(uniformState);
+    }
+
     bgfx::submit(viewId, bgfx::ProgramHandle {programHandle});
 }
 
 void RenderCommandList(Entity entity, unsigned char viewId) {
     if(HasVisibility(entity) && GetHidden(entity)) return;
+
+    for_entity(uniform, Uniform) {
+        if(!HasUniformState(uniform)) continue;
+
+        SetUniformState(uniform);
+    }
 
     auto viewport = GetCommandListViewport(entity);
 
@@ -206,7 +211,7 @@ void RenderCommandList(Entity entity, unsigned char viewId) {
             shaderProfile = ShaderProfile_HLSL_5_0;
             break;
         case bgfx::RendererType::OpenGL:
-            shaderProfile = ShaderProfile_GLSL_4_1;
+            shaderProfile = ShaderProfile_GLSL_2_1;
             break;
         case bgfx::RendererType::Metal:
             shaderProfile = ShaderProfile_Metal_OSX;
@@ -228,19 +233,15 @@ void RenderCommandList(Entity entity, unsigned char viewId) {
 
     bgfx::touch(viewId);
 
+    for(auto uniformState = GetFirstChild(entity); uniformState; uniformState = GetSibling(uniformState)) {
+        if(!HasUniformState(uniformState)) continue;
+
+        SetUniformState(uniformState);
+    }
+
     for(auto batch = GetFirstChild(entity); IsEntityValid(batch); batch = GetSibling(batch)) {
         if(!HasBatch(batch)) continue;
 
         RenderBatch(viewId, batch, shaderProfile);
     }
-}
-
-static bool ServiceStart() {
-
-    return true;
-}
-
-static bool ServiceStop() {
-
-    return true;
 }

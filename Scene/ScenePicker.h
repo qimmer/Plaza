@@ -10,10 +10,8 @@
 DeclareComponent(ScenePicker)
 DeclareService(ScenePicker)
 
-DeclareComponentPropertyReactive(ScenePicker, bool, ScenePickerActive)
 DeclareComponentPropertyReactive(ScenePicker, u8, ScenePickerLayers)
 DeclareComponentPropertyReactive(ScenePicker, v2f, ScenePickerViewportLocation)
-
-Entity GetPickedEntity(Entity scenePicker);
+DeclareComponentPropertyReactive(ScenePicker, Entity, ScenePickerPickedEntity)
 
 #endif //PLAZA_ScenePicker_H

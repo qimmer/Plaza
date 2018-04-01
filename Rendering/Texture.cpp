@@ -133,6 +133,8 @@ DefineEnum(TextureFlag, true)
     DefineFlag(TextureFlag_READ_BACK) //!< Texture will be used for read back from GPU.
 EndEnum()
 
+DefineEvent(TextureReadbackInitiated, TextureReadbackInitiatedHandler)
+
 struct Texture {
     Texture() : TextureMipLevels(1), TextureFlag(TextureFlag_NONE), TextureFormat(0), TextureDynamic(false) {}
 
@@ -140,17 +142,23 @@ struct Texture {
     u16 TextureFormat;
     bool TextureDynamic;
     u8 TextureMipLevels;
+    Entity TextureReadbackTarget;
 };
 
 DefineComponent(Texture)
     Dependency(Stream)
     DefinePropertyEnum(u16, TextureFormat, TextureFormat)
     DefinePropertyEnum(u32, TextureFlag, TextureFlag)
-    DefineProperty(bool, TextureDynamic)
-    DefineProperty(u8, TextureMipLevels)
+    DefinePropertyReactive(bool, TextureDynamic)
+    DefinePropertyReactive(u8, TextureMipLevels)
 EndComponent()
 
 DefineComponentPropertyReactive(Texture, u32, TextureFlag)
 DefineComponentPropertyReactive(Texture, u16, TextureFormat)
 DefineComponentPropertyReactive(Texture, bool, TextureDynamic)
 DefineComponentPropertyReactive(Texture, u8, TextureMipLevels)
+DefineComponentPropertyReactive(Texture, Entity, TextureReadbackTarget)
+
+void TextureReadback(Entity texture, TextureReadbackHandler handler) {
+    FireEvent(TextureReadbackInitiated, texture, handler);
+}

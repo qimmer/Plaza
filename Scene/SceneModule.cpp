@@ -10,6 +10,8 @@
 #include "Scene.h"
 #include "Transform.h"
 #include "SimpleSceneRenderer.h"
+#include "ScenePicker.h"
+#include "MousePicker.h"
 
 
 DefineModule(Scene)
@@ -19,6 +21,8 @@ DefineModule(Scene)
         ModuleService(SimpleSceneRenderer)
         ModuleService(TransformUpdateService)
         ModuleService(Camera)
+        ModuleService(ScenePicker)
+        ModuleService(MousePicker)
 
         ModuleType(Camera)
         ModuleType(MeshInstance)
@@ -26,4 +30,6 @@ DefineModule(Scene)
         ModuleType(SceneNode)
         ModuleType(Transform)
         ModuleType(SimpleSceneRenderer)
+        ModuleType(ScenePicker)
+        ModuleType(MousePicker)
     EndModule()

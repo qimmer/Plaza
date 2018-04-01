@@ -11,9 +11,9 @@ struct Material {
                  MaterialWriteMask(RenderState_STATE_RGB_WRITE | RenderState_STATE_ALPHA_WRITE |RenderState_STATE_DEPTH_WRITE),
                  MaterialMultisampleMode(RenderState_STATE_MSAA),
                  MaterialBlendMode(RenderState_STATE_BLEND_NONE),
-				 MaterialProgram(0) {}
+                 MaterialVertexShader(0), MaterialPixelShader(0) {}
 
-    Entity MaterialProgram;
+    Entity MaterialVertexShader, MaterialPixelShader;
     u64 MaterialDepthTest, MaterialWriteMask, MaterialMultisampleMode, MaterialBlendMode;
 };
 
@@ -55,16 +55,18 @@ EndEnum()
 
 DefineComponent(Material)
     Dependency(Hierarchy)
-    DefineProperty(Entity, MaterialProgram)
-    DefinePropertyEnum(u64, MaterialDepthTest, DepthTest)
-    DefinePropertyEnum(u64, MaterialWriteMask, WriteMask)
-    DefinePropertyEnum(u64, MaterialMultisampleMode, MultisampleMode)
-    DefinePropertyEnum(u64, MaterialBlendMode, BlendMode)
+    DefinePropertyReactive(Entity, MaterialVertexShader)
+    DefinePropertyReactive(Entity, MaterialPixelShader)
+    DefinePropertyReactiveEnum(u64, MaterialDepthTest, DepthTest)
+    DefinePropertyReactiveEnum(u64, MaterialWriteMask, WriteMask)
+    DefinePropertyReactiveEnum(u64, MaterialMultisampleMode, MultisampleMode)
+    DefinePropertyReactiveEnum(u64, MaterialBlendMode, BlendMode)
 EndComponent()
 
-DefineComponentProperty(Material, Entity, MaterialProgram)
-DefineComponentProperty(Material, u64, MaterialDepthTest)
-DefineComponentProperty(Material, u64, MaterialWriteMask)
-DefineComponentProperty(Material, u64, MaterialMultisampleMode)
-DefineComponentProperty(Material, u64, MaterialBlendMode)
+DefineComponentPropertyReactive(Material, Entity, MaterialVertexShader)
+DefineComponentPropertyReactive(Material, Entity, MaterialPixelShader)
+DefineComponentPropertyReactive(Material, u64, MaterialDepthTest)
+DefineComponentPropertyReactive(Material, u64, MaterialWriteMask)
+DefineComponentPropertyReactive(Material, u64, MaterialMultisampleMode)
+DefineComponentPropertyReactive(Material, u64, MaterialBlendMode)
 

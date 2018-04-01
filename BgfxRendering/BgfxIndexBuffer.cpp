@@ -24,9 +24,6 @@ struct BgfxIndexBuffer {
 DefineComponent(BgfxIndexBuffer)
 EndComponent()
 
-DefineService(BgfxIndexBuffer)
-EndService()
-
 void OnIndexBufferRemoved(Entity entity) {
     auto data = GetBgfxIndexBuffer(entity);
 
@@ -42,21 +39,12 @@ static void OnChanged(Entity entity) {
     }
 }
 
-static bool ServiceStart() {
-    SubscribeBgfxIndexBufferRemoved(OnIndexBufferRemoved);
-    SubscribeIndexBufferChanged(OnChanged);
-    SubscribeStreamChanged(OnChanged);
-    SubscribeStreamContentChanged(OnChanged);
-    return true;
-}
-
-static bool ServiceStop() {
-    UnsubscribeBgfxIndexBufferRemoved(OnIndexBufferRemoved);
-    UnsubscribeIndexBufferChanged(OnChanged);
-    UnsubscribeStreamChanged(OnChanged);
-    UnsubscribeStreamContentChanged(OnChanged);
-    return true;
-}
+DefineService(BgfxIndexBuffer)
+        Subscribe(BgfxIndexBufferRemoved, OnIndexBufferRemoved)
+        Subscribe(IndexBufferChanged, OnChanged)
+        Subscribe(StreamChanged, OnChanged)
+        Subscribe(StreamContentChanged, OnChanged)
+EndService()
 
 u16 GetBgfxIndexBufferHandle(Entity entity) {
     auto data = GetBgfxIndexBuffer(entity);

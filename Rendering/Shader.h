@@ -21,8 +21,4 @@ DeclareComponent(Shader)
 DeclareComponentPropertyReactive(Shader, u8, ShaderType)
 DeclareComponentPropertyReactive(Shader, Entity, ShaderDeclaration)
 
-DeclareService(Shader)
-
-Entity GetBinaryShader(Entity shader, u8 profile);
-
 #endif //PLAZA_SHADER_H
