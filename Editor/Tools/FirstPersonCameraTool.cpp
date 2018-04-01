@@ -3,7 +3,7 @@
 //
 
 #include <Core/Entity.h>
-#include <Input/State.h>
+#include <Input/InputState.h>
 #include <Rendering/Context.h>
 #include <Editor/Editors/SceneEditor.h>
 #include <Logic/State.h>
@@ -11,49 +11,63 @@
 #include "FirstPersonCameraTool.h"
 #include <cglm/cglm.h>
 #include <Foundation/AppLoop.h>
+#include <Input/InputState.h>
+#include <Input/Key.h>
 
-static void OnServiceStart() {
+static Entity
+    ActivateInputState,
+    ForwardInputState,
+    BackInputState,
+    LeftInputState,
+    RightInputState,
+    UpInputState,
+    DownInputState,
+    LookLeftInputState,
+    LookRightInputState,
+    LookUpInputState,
+    LookDownInputState;
+
+static void OnServiceStart(Service service) {
     auto editorRoot = CreateHierarchy(0, ".editor");
     auto root = CreateHierarchy(editorRoot, "InputBindings");
     
-    ActivateState = CreateState(root, "FpsActivate");
-    ForwardState = CreateState(root, "FpsForward");
-    BackState = CreateState(root, "FpsBack");
-    LeftState = CreateState(root, "FpsLeft");
-    RightState = CreateState(root, "FpsRight");
-    UpState = CreateState(root, "FpsUp");
-    DownState = CreateState(root, "FpsDown");
-    LookLeftState = CreateState(root, "FpsLookLeft");
-    LookRightState = CreateState(root, "FpsLookRight");
-    LookUpState = CreateState(root, "FpsLookUp");
-    LookDownState = CreateState(root, "FpsLookDown");
+    ActivateInputState = CreateState(root, "FpsActivate");
+    ForwardInputState = CreateState(root, "FpsForward");
+    BackInputState = CreateState(root, "FpsBack");
+    LeftInputState = CreateState(root, "FpsLeft");
+    RightInputState = CreateState(root, "FpsRight");
+    UpInputState = CreateState(root, "FpsUp");
+    DownInputState = CreateState(root, "FpsDown");
+    LookLeftInputState = CreateState(root, "FpsLookLeft");
+    LookRightInputState = CreateState(root, "FpsLookRight");
+    LookUpInputState = CreateState(root, "FpsLookUp");
+    LookDownInputState = CreateState(root, "FpsLookDown");
 
-    SetStateKey(ActivateState, MOUSEBUTTON_1);
-    SetStateKey(ForwardState, KEY_W);
-    SetStateKey(BackState, KEY_S);
-    SetStateKey(LeftState, KEY_A);
-    SetStateKey(RightState, KEY_D);
-    SetStateKey(UpState, KEY_E);
-    SetStateKey(DownState, KEY_Q);
-    SetStateKey(LookLeftState, MOUSE_LEFT);
-    SetStateKey(LookRightState, MOUSE_RIGHT);
-    SetStateKey(LookUpState, MOUSE_UP);
-    SetStateKey(LookDownState, MOUSE_DOWN);
+    SetInputStateKey(ActivateInputState, MOUSEBUTTON_1);
+    SetInputStateKey(ForwardInputState, KEY_W);
+    SetInputStateKey(BackInputState, KEY_S);
+    SetInputStateKey(LeftInputState, KEY_A);
+    SetInputStateKey(RightInputState, KEY_D);
+    SetInputStateKey(UpInputState, KEY_E);
+    SetInputStateKey(DownInputState, KEY_Q);
+    SetInputStateKey(LookLeftInputState, MOUSE_LEFT);
+    SetInputStateKey(LookRightInputState, MOUSE_RIGHT);
+    SetInputStateKey(LookUpInputState, MOUSE_UP);
+    SetInputStateKey(LookDownInputState, MOUSE_DOWN);
 
-    SetStateStateScale(LookLeftState, 0.25f);
-    SetStateStateScale(LookRightState, 0.25f);
-    SetStateStateScale(LookUpState, 0.25f);
-    SetStateStateScale(LookDownState, 0.25f);
+    SetInputStateStateScale(LookLeftInputState, 0.25f);
+    SetInputStateStateScale(LookRightInputState, 0.25f);
+    SetInputStateStateScale(LookUpInputState, 0.25f);
+    SetInputStateStateScale(LookDownInputState, 0.25f);
 
-    SetStateStateScale(ForwardState, 10.0f);
-    SetStateStateScale(BackState, 10.0f);
-    SetStateStateScale(LeftState, 10.0f);
-    SetStateStateScale(RightState, 10.0f);
-    SetStateStateScale(UpState, 10.0f);
-    SetStateStateScale(DownState, 10.0f);
+    SetInputStateStateScale(ForwardInputState, 10.0f);
+    SetInputStateStateScale(BackInputState, 10.0f);
+    SetInputStateStateScale(LeftInputState, 10.0f);
+    SetInputStateStateScale(RightInputState, 10.0f);
+    SetInputStateStateScale(UpInputState, 10.0f);
+    SetInputStateStateScale(DownInputState, 10.0f);
 }
 
 DefineService(FirstPersonCameraTool)
-        Subscribe(AppUpdate, OnUpdate)
         Subscribe(FirstPersonCameraToolStarted, OnServiceStart)
 EndService()

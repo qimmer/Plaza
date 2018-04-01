@@ -16,7 +16,7 @@
 #include "VoxelPalette.h"
 #include "VoxelChunk.h"
 
-#include "../Core/Entity.h"
+#include "Core/Entity.h"
 #include <cglm/cglm.h>
 
 Entity VoxelDataRoot = 0, VoxelVertexShader = 0, VoxelPixelShader = 0, VoxelVertexDeclaration = 0, CubeMesh = 0, VoxelPaletteTextureUniform = 0;
