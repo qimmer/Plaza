@@ -6,7 +6,7 @@
 #define PLAZA_ALIGNEDALLOCATOR_H
 
 #include <stdlib.h>
-#include <malloc.h>
+#include <memory.h>
 
 template <typename T, std::size_t N = 16>
 class AlignedAllocator {
@@ -38,11 +38,18 @@ public:
     }
 
     inline pointer allocate (size_type n) {
-        return (pointer)_aligned_malloc(std::max(n*sizeof(value_type), N), N);
+        void *mem = malloc( n + (N-1) + sizeof(void*) );
+        assert(mem && "Error allocating memory");
+
+        char *amem = ((char*)mem) + sizeof(void*);
+        amem += N - ((size_t)amem & (N - 1));
+
+        ((void**)amem)[-1] = mem;
+        return (pointer)amem;
     }
 
     inline void deallocate (pointer p, size_type) {
-        _aligned_free (p);
+        free( ((void**)p)[-1] );
     }
 
     inline void construct (pointer p, const value_type & wert) {

@@ -114,13 +114,12 @@ template<typename T>
 bool Pool<T>::Insert(u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
-    index = index & 0xff;
+    index &= 0xff;
 
-    Assert(page < 1024);
     if(page >= this->entryPages.size())
     {
         for(auto i = this->entryPages.size(); i <= page; ++i) {
-            this->entryPages.push_back(Vector<Entry>(PoolPageElements));
+            this->entryPages.emplace_back(Vector<Entry>(PoolPageElements));
         }
     }
 

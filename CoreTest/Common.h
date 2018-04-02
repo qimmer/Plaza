@@ -20,7 +20,7 @@ DeclareComponent(Person)
 DeclareComponentProperty(Person, StringRef, PersonName)
 
 DefineComponent(Person)
-    DefinePropertyReactive(Person, PersonName)
+    DefineProperty(Person, PersonName)
 EndComponent()
 
 DefineComponentProperty(Person, StringRef, PersonName)

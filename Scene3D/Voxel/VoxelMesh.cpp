@@ -162,14 +162,10 @@ void InitializeVoxelRoot(Entity entity) {
     VoxelVertexDeclaration = CreateVertexDeclaration(entity, "VertexDeclaration");
     auto pos = CreateVertexAttribute(VoxelVertexDeclaration, "Position");
     SetVertexAttributeType(pos, TypeOf_rgba8());
-    SetVertexAttributeAsInt(pos, true);
-    SetVertexAttributeNormalize(pos, false);
     SetVertexAttributeUsage(pos, VertexAttributeUsage_Position);
 
     auto texCoord = CreateVertexAttribute(VoxelVertexDeclaration, "TexCoord");
     SetVertexAttributeType(texCoord, TypeOf_rgba8());
-    SetVertexAttributeAsInt(texCoord, true);
-    SetVertexAttributeNormalize(texCoord, false);
     SetVertexAttributeUsage(texCoord, VertexAttributeUsage_TexCoord0);
 
     auto shaderDeclaration = CreateStream(entity, "ShaderDeclaration");

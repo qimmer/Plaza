@@ -38,6 +38,8 @@
 #include <Rendering/RenderTarget.h>
 #include <Rendering/VertexDeclaration.h>
 #include <Rendering/OffscreenRenderTarget.h>
+#include <Rendering/Texture.h>
+#include <Input/Key.h>
 
 #ifdef __APPLE__
 extern "C" {
@@ -324,7 +326,7 @@ static void OnBgfxContextAdded(Entity entity) {
         pd.session = NULL;
         bgfx::setPlatformData(pd);
 #ifdef __APPLE__
-        bgfx::init(bgfx::RendererType::OpenGL);
+        bgfx::init(bgfx::RendererType::Metal);
 #endif
 
 #ifdef WIN32

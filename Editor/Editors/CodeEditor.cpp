@@ -13,7 +13,7 @@
 
 struct CodeEditor {
     Entity CodeEditorStream;
-    ImString CodeBuffer;
+    //ImString CodeBuffer;
     bool Invalidated, Active;
 };
 
@@ -28,7 +28,7 @@ static void SaveCode(Entity codeEditor) {
         return;
     }
 
-    StreamWrite(data->CodeEditorStream, data->CodeBuffer.size(), data->CodeBuffer.c_str());
+    //StreamWrite(data->CodeEditorStream, data->CodeBuffer.size(), data->CodeBuffer.c_str());
     StreamClose(data->CodeEditorStream);
 }
 
@@ -72,9 +72,9 @@ static void Draw(Entity context) {
             ImGuiID id = 0;
 
             ImGui::PushFont(GetMonospaceFont());
-            if(ImGui::InputTextWithSyntaxHighlighting(id, data->CodeBuffer, ImGuiCe::LANG_GLSL, size)) {
+            /*if(ImGui::InputTextWithSyntaxHighlighting(id, data->CodeBuffer, ImGuiCe::LANG_GLSL, size)) {
                 data->Invalidated = true;
-            }
+            }*/
             ImGui::PopFont();
 
         }
@@ -127,7 +127,7 @@ static void OnCodeEditorChanged(Entity sceneEditor) {
 
         buffer.push_back('\0');
 
-        data->CodeBuffer = buffer.data();
+//        data->CodeBuffer = buffer.data();
 
         StreamClose(data->CodeEditorStream);
 

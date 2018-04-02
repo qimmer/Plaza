@@ -99,7 +99,7 @@ namespace FW
 			int fd = open(name.c_str(), O_RDONLY | O_EVTONLY);
 
 			if(fd == -1)
-				throw FileNotFoundException(name);
+				return;
 			
 			++mChangeListCount;
 			
@@ -130,7 +130,7 @@ namespace FW
 			target.udata = &tempEntry;
 			KEvent* ke = (KEvent*)bsearch(&target, &mChangeList, mChangeListCount + 1, sizeof(KEvent), comparator);
 			if(!ke)
-				throw FileNotFoundException(name);
+				return;
 
 			tempEntry.mFilename = 0;
 			
@@ -236,7 +236,7 @@ namespace FW
 			// scan directory and call addFile(name, false) on each file
 			DIR* dir = opendir(mDirName.c_str());
 			if(!dir)
-				throw FileNotFoundException(mDirName);
+				return;
 			
 			struct dirent* entry;
 			struct stat attrib;
