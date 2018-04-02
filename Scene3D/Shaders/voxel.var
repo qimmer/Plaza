@@ -1,5 +1,5 @@
-vec4 a_xyz_vindex : POSITION;
-vec4 a_palette_ao_height : TEXCOORD0;
+vec4 a_xyz_vindex : COLOR0;
+vec4 a_palette_ao_height : COLOR1;
 
 vec2 v_uv : TEXCOORD0;
 vec2 v_ao_palette : TEXCOORD1;

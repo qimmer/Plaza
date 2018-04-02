@@ -167,7 +167,7 @@ static void OnScenePickerAdded(Entity entity) {
     data->RenderTarget = CreateOffscreenRenderTarget(entity, "ScenePicker_RenderTarget");
 
     data->RenderTexture = CreateTexture2D(entity, "ScenePicker_RenderTexture");
-    SetTextureFormat(data->RenderTexture, TextureFormat_RGBA8);
+    SetTextureFormat(data->RenderTexture, TextureFormat_BGRA8);
     SetTextureFlag(data->RenderTexture, TextureFlag_MIN_POINT | TextureFlag_MAG_POINT | TextureFlag_MIP_POINT | TextureFlag_U_CLAMP | TextureFlag_V_CLAMP | TextureFlag_RT);
 
     data->DepthTexture = CreateTexture2D(entity, "ScenePicker_DepthTexture");
@@ -175,7 +175,7 @@ static void OnScenePickerAdded(Entity entity) {
     SetTextureFlag(data->DepthTexture, TextureFlag_MIN_POINT | TextureFlag_MAG_POINT | TextureFlag_MIP_POINT | TextureFlag_U_CLAMP | TextureFlag_V_CLAMP | TextureFlag_RT);
 
     data->BlitTexture = CreateTexture2D(entity, "ScenePicker_BlitTexture");
-    SetTextureFormat(data->BlitTexture, TextureFormat_RGBA8);
+    SetTextureFormat(data->BlitTexture, TextureFormat_BGRA8);
     SetTextureFlag(data->BlitTexture, TextureFlag_MIN_POINT | TextureFlag_MAG_POINT | TextureFlag_MIP_POINT | TextureFlag_U_CLAMP | TextureFlag_V_CLAMP | TextureFlag_BLIT_DST | TextureFlag_READ_BACK);
     SetTextureSize2D(data->BlitTexture, {1, 1});
 

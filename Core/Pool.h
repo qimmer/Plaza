@@ -40,7 +40,7 @@ private:
         u32 is_occupied;
     };
 
-    Vector<Vector<Entry>> entryPages;
+    Vector<Vector<Entry, PoolPageElements>, 1> entryPages;
     Vector<u32> free_indices;
 public:
     Pool() {
@@ -119,7 +119,7 @@ bool Pool<T>::Insert(u32 index)
     if(page >= this->entryPages.size())
     {
         for(auto i = this->entryPages.size(); i <= page; ++i) {
-            this->entryPages.emplace_back(Vector<Entry>(PoolPageElements));
+            this->entryPages.emplace_back(Vector<Entry, PoolPageElements>(PoolPageElements));
         }
     }
 

@@ -21,7 +21,8 @@ SET_PROPERTY(TARGET dyncall PROPERTY IMPORTED_LOCATION "${ex_dyncall_lib_dir}/dy
 ExternalProject_Add(ex_eastl
         GIT_REPOSITORY "https://github.com/electronicarts/EASTL.git"
         UPDATE_COMMAND ""
-        INSTALL_COMMAND "")
+        INSTALL_COMMAND ""
+        CMAKE_ARGS "${CMAKE_ARGS};-DCMAKE_BUILD_TYPE=Release")
 
 ExternalProject_Get_Property(ex_eastl BINARY_DIR)
 ExternalProject_Get_Property(ex_eastl SOURCE_DIR)
@@ -36,5 +37,5 @@ add_library(Core Entity.cpp Entity.h Types.h Type.h Pool.h Handle.h Function.h D
 add_dependencies(Core ex_dyncall ex_eastl)
 
 target_link_libraries(Core PUBLIC dyncall eastl)
-target_include_directories(Core PUBLIC ".." "cglm/include" ${ex_dyncall_inc_dir} ${ex_eastl_inc_dir})
-target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions")
+target_include_directories(Core PUBLIC ".." "cglm/include" ${ex_dyncall_inc_dir} ${ex_eastl_inc_dir} "${ex_eastl_inc_dir}/../test/packages/EABase/include/Common")
+target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions" "-std=c++14")

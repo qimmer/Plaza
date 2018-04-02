@@ -5,18 +5,16 @@
 #ifndef PLAZA_VECTOR_H
 #define PLAZA_VECTOR_H
 
-#include <vector>
+#include <EASTL/vector.h>
+#include <EASTL/fixed_vector.h>
+#include <EASTL/unordered_set.h>
+#include <EASTL/set.h>
+
 #include <Core/StackContainer.h>
-#include <unordered_set>
-#include <set>
-#include <limits>
-#include <memory.h>
 #include <Core/AlignedAllocator.h>
 
-#define ArenaSize 4096
-
-template<typename T> using Vector = std::vector<T/*, AlignedAllocator<T, alignof(T)>*/>;
-template<typename T> using Set = std::unordered_set<T, std::hash<T>, std::equal_to<T>/*, AlignedAllocator<T, alignof(T)>*/>;
-template<typename T, typename Comparator = std::less<T>> using OrderedSet = std::set<T, Comparator/*, AlignedAllocator<T, alignof(T)>*/>;
+template<typename T, size_t fixedCapacity = 128> using Vector = eastl::vector<T>;
+template<typename T> using Set = eastl::unordered_set<T, std::hash<T>, std::equal_to<T>>;
+template<typename T, typename Comparator = std::less<T>> using OrderedSet = eastl::set<T, Comparator>;
 
 #endif //PLAZA_VECTOR_H
