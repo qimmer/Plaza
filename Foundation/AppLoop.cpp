@@ -12,6 +12,8 @@
 #include <windows.h>
 
 static double PCFreq = 0.0;
+static const double FixedUpdateInterval = 1.0 / 30.0;
+static double ScreenScanInterval = 1.0 / 60.0;
 
 double GetTimeSinceStart()
 {
@@ -48,17 +50,39 @@ double GetTimeSinceStart()
     return (double)(mach_absolute_time() * s_timebase_info.numer) / (kOneMillion * s_timebase_info.denom);
 }
 #endif
-static double deltaTime = 0.0;
+static double deltaTime = 0.0, timeSinceLastFixedUpdate = 0.0, timeSinceLastScreenScanUpdate = 0.0;
 
 DefineEvent(AppUpdate, AppUpdateHandler)
+DefineEvent(AppFixedUpdate, AppUpdateHandler)
+DefineEvent(AppScreenScanUpdate, AppUpdateHandler)
+
+void SetScreenScanInterval(double interval) {
+    ScreenScanInterval = interval;
+}
+
+double GetScreenScanInterval() {
+    return ScreenScanInterval;
+}
 
 void AppUpdate() {
     auto startTime = GetTimeSinceStart();
     FireEvent(AppUpdate, deltaTime);
     deltaTime = GetTimeSinceStart() - startTime;
-}
 
-double GetDeltaTime() {
-    return deltaTime;
-}
+    timeSinceLastFixedUpdate += deltaTime;
+    timeSinceLastScreenScanUpdate += deltaTime;
 
+    if(timeSinceLastFixedUpdate >= FixedUpdateInterval) {
+        auto deltaFixedTime = timeSinceLastFixedUpdate;
+        timeSinceLastFixedUpdate = 0.0;
+
+        FireEvent(AppFixedUpdate, deltaFixedTime);
+    }
+
+    if(timeSinceLastScreenScanUpdate >= ScreenScanInterval) {
+        auto deltaFixedTime = timeSinceLastScreenScanUpdate;
+        timeSinceLastScreenScanUpdate = 0.0;
+
+        FireEvent(AppScreenScanUpdate, deltaFixedTime);
+    }
+}

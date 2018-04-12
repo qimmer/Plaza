@@ -318,9 +318,14 @@ static bool DeserializeJson(Entity persistancePoint) {
             }
         }
 
-        std::istringstream is(componentList);
-        String componentName;
-        while(std::getline(is, componentName, ';')) {
+        String element;
+        size_t start = 0;
+        while(start < componentList.length()) {
+            auto nextSep = componentList.find(';', start);
+            if(nextSep == String::npos) nextSep = componentList.length();
+            auto componentName = componentList.substr(start, nextSep - start);
+            start = nextSep + 1;
+
             auto componentType = FindTypeByName(componentName.c_str());
             if(!IsTypeValid(componentType)) {
                 Log(LogChannel_Core, LogSeverity_Warning, "Unknown component type in JSON: %s", componentName.c_str());

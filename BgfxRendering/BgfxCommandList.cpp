@@ -41,19 +41,24 @@ unsigned long RGBA2DWORD(int iR, int iG, int iB, int iA)
 }
 
 static void SetUniformState(Entity uniformState) {
+    static Type typeOfEntity = TypeOf_Entity();
+    static m4x4f state[32];
+
     auto uniform = GetUniformStateUniform(uniformState);
     if(IsEntityValid(uniform) && HasUniform(uniform)) {
         auto uniformType = GetUniformType(uniform);
-        auto handle = bgfx::UniformHandle{GetBgfxUniformHandle(uniform)};
 
         if(IsTypeValid(uniformType)) {
-            if(uniformType != TypeOf_Entity()) {
-                m4x4f state[32];
-                GetUniformStateState(uniformState, sizeof(m4x4f)*32, state);
+            auto uniformSize = GetTypeSize(uniformType);
+            auto uniformArrayCount = GetUniformArrayCount(uniform);
+
+            auto handle = bgfx::UniformHandle{GetBgfxUniformHandle(uniform)};
+
+            if(uniformType != typeOfEntity) {
                 bgfx::setUniform(
                         handle,
-                        &state,
-                        GetUniformArrayCount(uniform));
+                        GetUniformStateStateRaw(uniformState),
+                        uniformArrayCount);
             } else {
                 auto texture = GetUniformStateTexture(uniformState);
                 if(IsEntityValid(texture)) {
@@ -217,7 +222,6 @@ void RenderCommandList(Entity entity, unsigned char viewId) {
             shaderProfile = ShaderProfile_Metal_OSX;
             break;
         default:
-            Log(LogChannel_Core, LogSeverity_Error, "Unsupported renderer type");
             return;
             break;
     }

@@ -36,6 +36,6 @@ add_library(Core Entity.cpp Entity.h Types.h Type.h Pool.h Handle.h Function.h D
 
 add_dependencies(Core ex_dyncall ex_eastl)
 
-target_link_libraries(Core PUBLIC dyncall eastl)
+target_link_libraries(Core PRIVATE dyncall eastl)
 target_include_directories(Core PUBLIC ".." "cglm/include" ${ex_dyncall_inc_dir} ${ex_eastl_inc_dir} "${ex_eastl_inc_dir}/../test/packages/EABase/include/Common")
 target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions" "-std=c++14")

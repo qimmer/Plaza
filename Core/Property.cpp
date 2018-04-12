@@ -16,6 +16,8 @@ struct PropertyData
     void *unsubscribeFunc;
     Type type, owner;
     PropertyTransferFunc transferFunc;
+    GenericGetterFunc genericGetter;
+    GenericSetterFunc genericSetter;
     Enum e;
 };
 
@@ -23,7 +25,7 @@ DefineHandle(Property, PropertyData)
 DefineType(Property)
 EndType()
 
-static Dictionary<String, Property> PropertyTable;
+static Dictionary<Property> PropertyTable;
 
 Type GetPropertyType(Property property) {
     return PropertyAt(property)->type;
@@ -35,6 +37,14 @@ void *GetPropertyGetter(Property property) {
 
 void *GetPropertySetter(Property property) {
     return PropertyAt(property)->setter;
+}
+
+GenericGetterFunc GetPropertyGenericGetter(Property property) {
+    return PropertyAt(property)->genericGetter;
+}
+
+GenericSetterFunc GetPropertyGenericSetter(Property property) {
+    return PropertyAt(property)->genericSetter;
 }
 
 const char * GetPropertyName(Property property) {
@@ -51,6 +61,14 @@ void SetPropertyGetter(Property property, void *getter) {
 
 void SetPropertySetter(Property property, void *setter) {
     PropertyAt(property)->setter = setter;
+}
+
+void SetPropertyGenericGetter(Property property, GenericGetterFunc getter) {
+    PropertyAt(property)->genericGetter = getter;
+}
+
+void SetPropertyGenericSetter(Property property, GenericSetterFunc setter) {
+    PropertyAt(property)->genericSetter = setter;
 }
 
 void SetPropertyName(Property property, const char * name) {

@@ -37,7 +37,7 @@ struct Setting {
         Vector<ServiceEntity> entities;
     };
 
-    Dictionary<String, Setting> SettingsTable;
+    Dictionary<Setting> SettingsTable;
 
     DefineHandle(Service, ServiceData)
 
@@ -45,7 +45,10 @@ struct Setting {
     DefineEvent(ServiceStopped, ServiceHandler)
 
     void StartService(Service service) {
-        for(auto dependency : ServiceAt(service)->dependencies) {
+        Assert(IsServiceValid(service));
+
+        auto data = ServiceAt(service);
+        for(auto dependency : data->dependencies) {
             StartService(dependency);
         }
 

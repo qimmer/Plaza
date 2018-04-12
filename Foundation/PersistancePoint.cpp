@@ -9,7 +9,7 @@ struct PersistancePoint {
     bool Loaded, IsLoading, IsSaving;
 };
 
-static Dictionary<String, Serializer> Serializers;
+static Dictionary<Serializer> Serializers;
 
 DefineComponent(PersistancePoint)
     Dependency(Stream)

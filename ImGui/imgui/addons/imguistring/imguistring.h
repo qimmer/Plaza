@@ -1,7 +1,7 @@
 #ifndef IMGUISTRING_H_
 #define IMGUISTRING_H_
 
-#include <imgui.h>
+#include <ImGui/imgui/imgui.h>
 #include <string.h> //strlen
 
 

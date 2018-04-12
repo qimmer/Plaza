@@ -32,7 +32,6 @@ typedef u64 Entity;
     void Subscribe ## EVENTNAME (Entity entity, FUNCTIONTYPE func) { \
         auto index = GetHandleIndex(entity) + 1;\
         if(!entity) index = 0;\
-        Unsubscribe ## EVENTNAME(entity, func);\
         _ ## EVENTNAME ## Handlers[index].push_back(func); \
     }\
     void Unsubscribe ## EVENTNAME (Entity entity, FUNCTIONTYPE func) { \

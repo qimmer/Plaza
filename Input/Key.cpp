@@ -128,6 +128,7 @@ DefineEnum(Key, false)
     DefineFlag(KEY_RIGHT_ALT)
     DefineFlag(KEY_RIGHT_SUPER)
     DefineFlag(KEY_MENU)
+    DefineFlag(KEY_WINDOW_CLOSE)
 
     DefineFlag(MOUSEBUTTON_0)
     DefineFlag(MOUSEBUTTON_1)

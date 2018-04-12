@@ -1,6 +1,13 @@
 //
 // Created by Kim Johannsen on 13/01/2018.
 //
+#include <direct.h>
+
+#ifdef WIN32
+#include <shlwapi.h>
+#undef GetHandle
+#undef CreateService
+#endif
 
 #include <Core/String.h>
 #include <Core/Dictionary.h>
@@ -21,9 +28,9 @@ struct Stream {
     bool InvalidationPending;
 };
 
-static Dictionary<String, StreamProtocol> Protocols;
-static Dictionary<String, StreamCompressor> Compressors;
-static Dictionary<String, String> FileExtensionMimeTypes;
+static Dictionary<StreamProtocol> Protocols;
+static Dictionary<StreamCompressor> Compressors;
+static Dictionary<String> FileExtensionMimeTypes;
 
 DefineComponent(Stream)
     DefinePropertyReactive(StringRef, StreamPath)
@@ -200,6 +207,99 @@ u64 StreamCompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, 
     // no decompressor, just use raw data
     StreamSeek(entity, uncompressedOffset);
     return StreamWrite(entity, uncompressedSize, uncompressedData);
+}
+
+
+StringRef GetFileName(StringRef absolutePath) {
+    auto fileName = strrchr(absolutePath, '/');
+    if(!fileName) return absolutePath;
+    return fileName + 1;
+}
+
+StringRef GetFileExtension(StringRef absolutePath) {
+    auto extension = strrchr(absolutePath, '.');
+    if(!extension) return "";
+    return extension;
+}
+
+void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t bufMax) {
+    strncpy(parentFolder, absolutePath, bufMax);
+    auto ptr = strrchr(parentFolder, '/');
+    if(!ptr) {
+        *parentFolder = 0;
+        return;
+    }
+
+    parentFolder[ptr - parentFolder] = '\0';
+}
+
+StringRef GetCurrentWorkingDirectory() {
+    static char path[PATH_MAX];
+    getcwd(path, PATH_MAX);
+    return path;
+}
+
+void CleanupPath(char* messyPath) {
+    char *dest = messyPath;
+    auto protocolLocation = strstr(messyPath, "://");
+
+    if(protocolLocation) {
+        messyPath = protocolLocation + 3;
+    }
+
+#ifdef WIN32
+    auto isRelative = ::PathIsRelativeA(messyPath) || messyPath[0] == '/';
+#else
+    auto isRelative = messyPath[0] != '/';
+#endif
+
+    String absolutePath = messyPath;
+    if(isRelative) {
+        absolutePath = GetCurrentWorkingDirectory();
+        absolutePath += "/";
+        absolutePath += messyPath;
+    }
+
+    std::replace(absolutePath.begin(), absolutePath.end(), '\\', '/');
+
+    Vector<String> pathElements;
+    pathElements.clear();
+    String element;
+    size_t start = 0;
+    while(start < absolutePath.length()) {
+        auto nextSep = absolutePath.find('/', start);
+        if(nextSep == String::npos) nextSep = absolutePath.length();
+        auto element = absolutePath.substr(start, nextSep - start);
+        start = nextSep + 1;
+
+        if(element.length() == 0) {
+            // nothing in this element
+            continue;
+        } else if(element.length() > 1 && element.compare(element.length() - 2, 2, "..") == 0) {
+            // parent directory identifier
+            pathElements.pop_back();
+        } else if(element.compare(element.length() - 1, 1, ".") == 0) {
+            // current directory identifier
+            continue;
+        } else {
+            pathElements.push_back(element);
+        }
+    }
+
+    String combined = "file://";
+
+#ifndef WIN32
+    os << "/";
+#endif
+
+    for(auto i = 0; i < pathElements.size(); ++i) {
+        combined.append(pathElements[i]);
+        if(i < pathElements.size() - 1) {
+            combined.append("/");
+        }
+    }
+
+    strcpy(dest, combined.c_str());
 }
 
 static void OnStreamPathChanged(Entity entity, StringRef oldValue, StringRef newValue) {

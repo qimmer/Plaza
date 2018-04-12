@@ -6,7 +6,7 @@
 #include <Core/Dictionary.h>
 #include <map>
 
-    static Dictionary<String, Entity> EntityPathMap;
+    static Dictionary<Entity> EntityPathMap;
     std::map<Entity, String> EntityMap;
 
     static Entity FirstRoot = 0;
@@ -237,12 +237,14 @@ static void Attach(Entity entity, Entity parent) {
     if(IsEntityValid(parent)) {
         auto child = GetFirstChild(parent);
         if(!IsEntityValid(child)) {
+            Assert(parent != entity);
             GetHierarchy(parent)->FirstChild = entity;
         } else {
             while(GetSibling(child)) {
                 child = GetSibling(child);
             }
 
+            Assert(child != entity);
             GetHierarchy(child)->Sibling = entity;
         }
     } else {
@@ -254,6 +256,7 @@ static void Attach(Entity entity, Entity parent) {
                 child = GetSibling(child);
             }
 
+            Assert(child != entity);
             GetHierarchy(child)->Sibling = entity;
         }
     }
@@ -284,11 +287,6 @@ static void OnHierarchyRemoved(Entity entity) {
 }
 
 static void OnHierarchyAdded(Entity entity) {
-    char name[32];
-    snprintf(name, 32, "Entity_%i", GetHandleIndex(entity));
-
-    SetName(entity, name);
-
     Attach(entity, 0); // Attach to hierarchy as a root entity
 }
 

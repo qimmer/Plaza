@@ -16,21 +16,24 @@ struct Context {
         float KeyStates[KEY_MAX];
         v2i CursorPositions[CURSOR_MAX];
         String ContextTitle;
-        bool ContextFullscreen, ContextVsync;
+        bool ContextFullscreen, ContextVsync, ContextGrabMouse;
     };
 
     DefineComponent(Context)
         Dependency(RenderTarget)
         DefinePropertyReactive(StringRef, ContextTitle)
+        DefinePropertyReactive(bool, ContextFullscreen)
+        DefinePropertyReactive(bool, ContextVsync)
+        DefinePropertyReactive(bool, ContextGrabMouse)
     EndComponent()
 
     DefineComponentPropertyReactive(Context, StringRef, ContextTitle)
     DefineComponentPropertyReactive(Context, bool, ContextFullscreen)
     DefineComponentPropertyReactive(Context, bool, ContextVsync)
+    DefineComponentPropertyReactive(Context, bool, ContextGrabMouse)
 
     DefineEvent(KeyStateChanged, KeyHandler)
     DefineEvent(CursorPositionChanged, CursorHandler)
-    DefineEvent(ContextClosing, EntityHandler)
     DefineEvent(CharacterPressed, CharHandler)
 
     float GetKeyState(Entity context, u16 key) {

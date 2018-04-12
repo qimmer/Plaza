@@ -21,5 +21,6 @@ DefineModule(Foundation)
     ModuleService(MemoryStream)
     ModuleService(Stream)
     ModuleService(PersistancePoint)
+
     ModuleDependency(Core)
 EndModule()

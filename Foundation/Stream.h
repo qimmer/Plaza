@@ -74,6 +74,13 @@ void RemoveStreamCompressor(StringRef mimeType);
 void AddFileType(StringRef fileExtension, StringRef mimeType);
 void RemoveFileType(StringRef fileExtension);
 
+char GetPathSeparator();
+void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t maxBuf);
+StringRef GetFileName(StringRef absolutePath);
+StringRef GetFileExtension(StringRef absolutePath);
+void CleanupPath(char* messyPath);
+StringRef GetCurrentWorkingDirectory();
+
 DeclareEvent(StreamContentChanged, EntityHandler)
 
 #define StreamSeek_End UINT32_MAX

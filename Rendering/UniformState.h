@@ -17,6 +17,6 @@ DeclareComponentProperty(UniformState, u8, UniformStateStage);
 
 void SetUniformStateState(Entity entity, u64 size, const void *data);
 void GetUniformStateState(Entity entity, u64 size, void *data);
-
+void* GetUniformStateStateRaw(Entity entity);
 
 #endif //PLAZA_UNIFORMSTATE_H

@@ -7,7 +7,6 @@
 
 #include <Core/Module.h>
 
-
-    DeclareModule(Scene2D)
+DeclareModule(Scene2D)
 
 #endif //PLAZA_SCENE2DMODULE_H

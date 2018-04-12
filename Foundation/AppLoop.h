@@ -10,9 +10,13 @@
 typedef void(*AppUpdateHandler)(double deltaTime);
 
 void AppUpdate();
-double GetDeltaTime();
 double GetTimeSinceStart();
 
+void SetScreenScanInterval(double interval);
+double GetScreenScanInterval();
+
 DeclareEvent(AppUpdate, AppUpdateHandler)
+DeclareEvent(AppFixedUpdate, AppUpdateHandler)
+DeclareEvent(AppScreenScanUpdate, AppUpdateHandler)
 
 #endif //PLAZA_APPLOOP_H

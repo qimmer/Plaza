@@ -134,6 +134,8 @@ enum
     KEY_RIGHT_SUPER      =   347,
     KEY_MENU            =     348,
 
+    KEY_WINDOW_CLOSE    =     350,
+
     MOUSEBUTTON_0 = 400,
     MOUSEBUTTON_1 = 401,
     MOUSEBUTTON_2 = 402,

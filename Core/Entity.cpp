@@ -198,9 +198,9 @@ static void OnEntityDestroy(Entity entity) {
     }
 }
 
-Dictionary<Type, Vector<ComponentHandler>> OnComponentAdded;
-Dictionary<Type, Vector<ComponentHandler>> OnComponentRemoved;
-Dictionary<Property, Vector<PropertyChangedHandler>> OnPropertyChanged;
+Lookup<Type, Vector<ComponentHandler>> OnComponentAdded;
+Lookup<Type, Vector<ComponentHandler>> OnComponentRemoved;
+Lookup<Property, Vector<PropertyChangedHandler>> OnPropertyChanged;
 
 DefineService(Entity)
         Subscribe(EntityDestroyed, OnEntityDestroy)

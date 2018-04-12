@@ -2,7 +2,7 @@
 // Created by Kim Johannsen on 22-03-2018.
 //
 
-#include "../../ImGui/imgui/imgui.h"
+#include "ImGui/imgui/imgui.h"
 #include "../../Foundation/Stream.h"
 #include "../../Rendering/Texture2D.h"
 #include "../../ImGui/ImGuiRenderer.h"

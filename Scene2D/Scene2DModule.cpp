@@ -11,12 +11,12 @@
 #include "Sprite.h"
 
 DefineModule(Scene2D)
-ModuleDependency(Scene)
+    ModuleDependency(Scene)
 
-ModuleService(Camera2D)
-ModuleService(Sprite)
-ModuleService(Transform2D)
+    ModuleService(Camera2D)
+    ModuleService(Sprite)
+    ModuleService(Transform2D)
 
-ModuleType(Camera2D)
-ModuleType(Transform2D)
+    ModuleType(Camera2D)
+    ModuleType(Transform2D)
 EndModule()

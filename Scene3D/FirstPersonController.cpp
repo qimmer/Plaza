@@ -6,6 +6,7 @@
 #include <Logic/State.h>
 #include <Core/cglm/include/cglm/util.h>
 #include <Foundation/AppLoop.h>
+#include <cglm/cglm.h>
 #include "FirstPersonController.h"
 #include "Transform3D.h"
 
@@ -96,13 +97,17 @@ static void OnUpdate(double deltaTime) {
                     0.0f
                 };
 
+                auto oldEuler = euler;
+
                 euler.x += rotateDelta.x;
                 euler.y += rotateDelta.y;
                 euler.z = 0.0f;
 
                 euler.x = glm_max(glm_min(euler.x, 89.0f), -89.0f);
 
-                SetRotationEuler3D(camera, euler);
+                if(glm_vec_distance(&oldEuler.x, &euler.x) > FLT_EPSILON) {
+                    SetRotationEuler3D(camera, euler);
+                }
             }
 
             if(IsEntityValid(data->FirstPersonDownState) &&

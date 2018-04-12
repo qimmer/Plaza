@@ -13,11 +13,15 @@ DeclareHandle(Property)
 DeclareType(Property)
 
 typedef void(*PropertyTransferFunc)(Handle src, Handle dst);
+typedef void(*GenericGetterFunc)(Handle handle, void *dataOut);
+typedef void(*GenericSetterFunc)(Handle handle, const void *dataIn);
 
 Type GetPropertyOwner(Property property);
 Type GetPropertyType(Property property);
 void* GetPropertyGetter(Property property);
 void* GetPropertySetter(Property property);
+GenericGetterFunc GetPropertyGenericGetter(Property property);
+GenericSetterFunc GetPropertyGenericSetter(Property property);
 const char * GetPropertyName(Property property);
 PropertyTransferFunc GetPropertyTransferFunc(Property property);
 Enum GetPropertyEnum(Property property);
@@ -30,6 +34,8 @@ void SetPropertyOwner(Property property, Type type);
 void SetPropertyType(Property property, Type type);
 void SetPropertyGetter(Property property, void* getter);
 void SetPropertySetter(Property property, void *setter);
+void SetPropertyGenericGetter(Property property, GenericGetterFunc func);
+void SetPropertyGenericSetter(Property property, GenericSetterFunc func);
 void SetPropertyName(Property property, const char * name);
 void SetPropertyTransferFunc(Property property, PropertyTransferFunc func);
 void SetPropertyChangedSubscribeFunc(Property property, void* func);
@@ -43,6 +49,8 @@ void SetPropertyEnum(Property property, Enum e);
         SetPropertyName(prop_ ## PROPERTYNAME, #PROPERTYNAME ); \
         SetPropertyGetter(prop_ ## PROPERTYNAME, (void*)& Get ## PROPERTYNAME); \
         SetPropertySetter(prop_ ## PROPERTYNAME, (void*)& Set ## PROPERTYNAME); \
+        SetPropertyGenericGetter(prop_ ## PROPERTYNAME, Read ## PROPERTYNAME); \
+        SetPropertyGenericSetter(prop_ ## PROPERTYNAME, Write ## PROPERTYNAME); \
         SetPropertyTransferFunc(prop_ ## PROPERTYNAME, Copy ## PROPERTYNAME); \
 
 #define DefinePropertyReactive(PROPERTYTYPE, PROPERTYNAME) \

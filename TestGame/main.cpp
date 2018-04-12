@@ -15,6 +15,8 @@
 #include <Rendering/RenderingModule.h>
 #include <ImGui/ImGuiModule.h>
 #include <Scene/SceneModule.h>
+#include <Foundation/Stream.h>
+#include <UI/UIModule.h>
 
 int main(int argc, char** argv) {
     Module modules[] = {
@@ -33,6 +35,7 @@ int main(int argc, char** argv) {
         ModuleOf_ImGui(),
         ModuleOf_Scene2D(),
         ModuleOf_Scene3D(),
+        ModuleOf_UI(),
 
         0
     };

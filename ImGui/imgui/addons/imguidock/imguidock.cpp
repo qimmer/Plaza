@@ -26,7 +26,7 @@ SOFTWARE.
 // modified from https://bitbucket.org/duangle/liminal/src/tip/src/liminal/imgui_dock.h
 
 //- Common Code For All Addons needed just to ease inclusion as separate files in user code ----------------------
-#include <imgui.h>
+#include <ImGui/imgui/imgui.h>
 #undef IMGUI_DEFINE_PLACEMENT_NEW
 #define IMGUI_DEFINE_PLACEMENT_NEW
 #undef IMGUI_DEFINE_MATH_OPERATORS

@@ -8,3 +8,7 @@ add_library(Foundation AppLoop.cpp AppLoop.h Visibility.cpp Visibility.h Foundat
 target_include_directories(Foundation PUBLIC ".." ".")
 
 target_link_libraries(Foundation Core)
+
+if(WIN32)
+    target_link_libraries(Foundation shlwapi)
+endif()

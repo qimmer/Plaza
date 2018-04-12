@@ -90,7 +90,6 @@
     }
 
 DefineService(PlayerContext)
-    Subscribe(ContextClosing, OnContextClosing)
     Subscribe(PlayerContextStarted, OnServiceStart)
-        Subscribe(PlayerContextStopped, OnServiceStop)
+    Subscribe(PlayerContextStopped, OnServiceStop)
 EndService()

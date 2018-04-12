@@ -6,15 +6,15 @@
 #include "State.h"
 #include "ToggleState.h"
 #include "InvertState.h"
-#include "PropertyState.h"
+#include "PropertyBinding.h"
 
 DefineModule(Logic)
     ModuleType(State)
     ModuleType(ToggleState)
     ModuleType(InvertState)
-    ModuleType(PropertyState)
+    ModuleType(PropertyBinding)
 
     ModuleService(ToggleState)
     ModuleService(InvertState)
-    ModuleService(PropertyState)
+    ModuleService(PropertyBinding)
 EndModule()

@@ -27,35 +27,6 @@ EndComponent()
 
 DefineComponentPropertyReactive(Folder, StringRef, FolderPath)
 
-StringRef GetCurrentWorkingDirectory() {
-    static char path[PATH_MAX];
-    getcwd(path, PATH_MAX);
-    return path;
-}
-
-StringRef GetFileName(StringRef absolutePath) {
-    auto fileName = strrchr(absolutePath, '/');
-    if(!fileName) return absolutePath;
-    return fileName + 1;
-}
-
-StringRef GetFileExtension(StringRef absolutePath) {
-    auto extension = strrchr(absolutePath, '.');
-    if(!extension) return "";
-    return extension;
-}
-
-void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t bufMax) {
-    strncpy(parentFolder, absolutePath, bufMax);
-    auto ptr = strrchr(parentFolder, '/');
-    if(!ptr) {
-        *parentFolder = 0;
-        return;
-    }
-
-    parentFolder[ptr - parentFolder] = '\0';
-}
-
 void ScanFolder(Entity entity) {
     while(IsEntityValid(GetFirstChild(entity))) {
         DestroyEntity(GetFirstChild(entity));
@@ -150,62 +121,6 @@ bool IsFolder(StringRef absolutePath) {
     if(ent_stat.st_mode & S_IFMT) return true;
 
     return false;
-}
-
-void CleanupPath(char* messyPath) {
-    char *dest = messyPath;
-    auto protocolLocation = strstr(messyPath, "://");
-
-    if(protocolLocation) {
-        messyPath = protocolLocation + 3;
-    }
-
-#ifdef WIN32
-    auto isRelative = ::PathIsRelativeA(messyPath) || messyPath[0] == '/';
-#else
-    auto isRelative = messyPath[0] != '/';
-#endif
-
-    String absolutePath = messyPath;
-    if(isRelative) {
-        absolutePath = GetCurrentWorkingDirectory();
-        absolutePath += "/";
-        absolutePath += messyPath;
-    }
-
-    std::replace(absolutePath.begin(), absolutePath.end(), '\\', '/');
-
-    Vector<String> pathElements;
-    pathElements.clear();
-    std::istringstream is(absolutePath);
-    String element;
-    while(std::getline(is, element, '/')) {
-        if(element.length() == 0) {
-            // nothing in this element
-            continue;
-        } else if(element.length() > 1 && element.compare(element.length() - 2, 2, "..") == 0) {
-            // parent directory identifier
-            pathElements.pop_back();
-        } else if(element.compare(element.length() - 1, 1, ".") == 0) {
-            // current directory identifier
-            continue;
-        } else {
-            pathElements.push_back(element);
-        }
-    }
-
-    std::stringstream os;
-    os << "file://";
-
-#ifndef WIN32
-    os << "/";
-#endif
-
-    std::copy(pathElements.begin(), pathElements.end(), std::ostream_iterator<String>(os, "/"));
-    auto asStr = os.str();
-    asStr.pop_back(); // remove overflowing ending slash from ostream_iterator
-
-    strcpy(dest, asStr.c_str());
 }
 
 static void OnFolderPathChanged(Entity entity, StringRef before, StringRef after) {

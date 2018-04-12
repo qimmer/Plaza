@@ -1,0 +1,14 @@
+﻿$input v_texcoord0
+
+#include <common.sh>
+
+SAMPLER2D(s_tex, 0);
+
+uniform vec3 u_tint;
+
+void main()
+{
+	float a = texture2D(s_tex, v_texcoord0).a;
+
+	gl_FragColor = vec4(u_tint.r, u_tint.g, u_tint.b, a);
+}

@@ -180,7 +180,9 @@ bool IsComponentAbstract(Type type);
 
 #define DeclareComponentProperty(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
     PROPERTYTYPE Get ## PROPERTYNAME (Entity entity); \
+    void Read ## PROPERTYNAME (Entity entity, void *data); \
     void Set ##  PROPERTYNAME (Entity entity, PROPERTYTYPE value);\
+    void Write ## PROPERTYNAME(Entity entity, const void *data);\
     void Copy ## PROPERTYNAME(Entity src, Entity dst);
 
 #define DeclareComponentPropertyReactive(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
@@ -198,6 +200,13 @@ bool IsComponentAbstract(Type type);
         auto data = Get ## TYPENAME (entity); \
         data-> PROPERTYNAME = value; \
     }\
+    void Read ## PROPERTYNAME(Entity entity, void *data) {\
+        PROPERTYTYPE value = Get ## PROPERTYNAME(entity);\
+        memcpy(data, &value, sizeof(PROPERTYTYPE));\
+    }\
+    void Write ## PROPERTYNAME(Entity entity, const void *data) {\
+        Set ## PROPERTYNAME (entity, *(const PROPERTYTYPE*)data);\
+    }\
     void Copy ## PROPERTYNAME(Entity src, Entity dst) { Set ## PROPERTYNAME (dst, Get ## PROPERTYNAME (src)); }
 
 #define DefineComponentPropertyReactive(TYPENAME, PROPERTYTYPE, PROPERTYNAME) \
@@ -210,18 +219,23 @@ bool IsComponentAbstract(Type type);
         if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
         SetAndNotify(TYPENAME, PROPERTYTYPE, PROPERTYNAME, PROPERTYNAME ## Changed, value); \
     }\
+    void Read ## PROPERTYNAME(Entity entity, void *data) {\
+        PROPERTYTYPE value = Get ## PROPERTYNAME(entity);\
+        memcpy(data, &value, sizeof(PROPERTYTYPE));\
+    }\
+    void Write ## PROPERTYNAME(Entity entity, const void *data) {\
+        Set ## PROPERTYNAME (entity, *(const PROPERTYTYPE*)data);\
+    }\
     void Copy ## PROPERTYNAME(Entity src, Entity dst) { Set ## PROPERTYNAME (dst, Get ## PROPERTYNAME (src)); }
 
 #define for_entity(VARNAME, COMPONENTTYPE) \
-        auto num ## COMPONENTTYPE ## VARNAME = GetNum ## COMPONENTTYPE();\
         Entity VARNAME = 0;\
-        for(auto COMPONENTTYPE_i = 0; (COMPONENTTYPE_i < num ## COMPONENTTYPE ## VARNAME) && (VARNAME = Get ## COMPONENTTYPE ## Entity(COMPONENTTYPE_i)); ++COMPONENTTYPE_i)
+        for(auto COMPONENTTYPE_i = 0; (COMPONENTTYPE_i < GetNum ## COMPONENTTYPE()) && (VARNAME = Get ## COMPONENTTYPE ## Entity(COMPONENTTYPE_i)); ++COMPONENTTYPE_i)
 
 #define for_entity_data(VARNAME, DATANAME, COMPONENTTYPE) \
-        auto num ## COMPONENTTYPE ## VARNAME = GetNum ## COMPONENTTYPE();\
         Entity VARNAME = 0;\
         COMPONENTTYPE *DATANAME = 0;\
-        for(auto COMPONENTTYPE_i = 0; (COMPONENTTYPE_i < num ## COMPONENTTYPE ## VARNAME) && (VARNAME = COMPONENTTYPE ## _data[COMPONENTTYPE_i].entity) && (DATANAME = & COMPONENTTYPE ## _data [COMPONENTTYPE_i].data); ++COMPONENTTYPE_i)
+        for(auto COMPONENTTYPE_i = 0; (COMPONENTTYPE_i < GetNum ## COMPONENTTYPE()) && (VARNAME = COMPONENTTYPE ## _data[COMPONENTTYPE_i].entity) && (DATANAME = & COMPONENTTYPE ## _data [COMPONENTTYPE_i].data); ++COMPONENTTYPE_i)
 
 
 #include <Core/Hierarchy.h>

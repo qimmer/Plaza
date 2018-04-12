@@ -77,7 +77,7 @@ DefineComponent(PropertyEditor)
     Dependency(EditorView)
 EndComponent()
 
-static Dictionary<Type, bool> SectionOpened;
+static Lookup<Type, bool> SectionOpened;
 
 static bool Visible = true;
 static const char *ComponentContextMenuId = "ComponentContextMenu";

@@ -30,7 +30,7 @@ struct ProgramCombination {
     Entity program;
 };
 
-OrderedDictionary<u32, ProgramCombination> ProgramLookup;
+Lookup<u32, ProgramCombination> ProgramLookup;
 
 Entity ProgramRoot;
 

@@ -7,13 +7,13 @@
 
 #include <Core/Handle.h>
 
-#include <../include/string.h>
-#include <string>
+#include <EASTL/fixed_string.h>
 #include <Core/Type.h>
 #include <Core/Types.h>
 #include <Core/Service.h>
 
-using String = std::string;
+
+using String = eastl::fixed_string<char, 64>;
 
 template<>
 const char * ApiConvert(const String* str);

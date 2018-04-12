@@ -89,7 +89,6 @@ u16 GetBgfxContextHandle(Entity entity) {
 
 static u32 NumContexts = 0;
 static Entity PrimaryContext = 0;
-static double timeSinceLastPoll = FLT_MAX;
 
 static void OnTextureReadbackInitiated(Entity texture, TextureReadbackHandler handler) {
     if(!IsEntityValid(GetTextureReadbackTarget(texture))) return;
@@ -130,8 +129,6 @@ static void OnTextureReadbackInitiated(Entity texture, TextureReadbackHandler ha
 }
 
 static void OnAppUpdate(double deltaTime) {
-    timeSinceLastPoll += deltaTime;
-
     auto numContexts = GetNumBgfxContext();
 
     for(auto i = 0; i < numContexts; ++i) {
@@ -146,12 +143,7 @@ static void OnAppUpdate(double deltaTime) {
         SetKeyState(entity, MOUSE_RIGHT, 0.0f);
     }
 
-    // Cap polls to 60fps to prevent overloading OS
-    if(timeSinceLastPoll > (1.0f / 200.0f)) {
-        timeSinceLastPoll = 0.0f;
-
-        glfwPollEvents();
-    }
+    glfwPollEvents();
 
     // Render all command lists
     Entity viewIdTaken[256];
@@ -185,7 +177,8 @@ static void OnAppUpdate(double deltaTime) {
         }
 
         if(glfwWindowShouldClose(data->window)) {
-            FireEvent(ContextClosing, context);
+            SetKeyState(context, KEY_WINDOW_CLOSE, 1.0f);
+            SetKeyState(context, KEY_WINDOW_CLOSE, 0.0f);
         }
     }
 }
@@ -396,6 +389,11 @@ static void OnContextRemoved(Entity entity) {
     NumContexts--;
 }
 
+static void OnContextGrabMouseChanged(Entity entity, bool oldValue, bool newValue) {
+    auto data = GetBgfxContext(entity);
+    glfwSetInputMode(data->window, GLFW_CURSOR, newValue ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+}
+
 DefineService(BgfxContext)
     Subscribe(ContextAdded, OnContextAdded)
     Subscribe(BgfxContextAdded, OnBgfxContextAdded)
@@ -408,4 +406,5 @@ DefineService(BgfxContext)
     Subscribe(ContextTitleChanged, OnContextTitleChanged)
     Subscribe(ContextVsyncChanged, OnContextFlagChanged)
     Subscribe(ContextFullscreenChanged, OnContextFlagChanged)
+    Subscribe(ContextGrabMouseChanged, OnContextGrabMouseChanged)
 EndService()

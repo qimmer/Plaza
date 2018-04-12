@@ -5,10 +5,11 @@
 #ifndef PLAZA_DICTIONARY_H
 #define PLAZA_DICTIONARY_H
 
-#include <unordered_map>
-#include <map>
+#include <EASTL/fixed_hash_map.h>
+#include <EASTL/fixed_map.h>
+#include <Core/String.h>
 
-template<typename K, typename V> using Dictionary = std::unordered_map<K, V>;
-template<typename K, typename V> using OrderedDictionary = std::map<K, V>;
+template<typename V> using Dictionary = eastl::fixed_hash_map<String, V, 128, 129, true, eastl::string_hash<String>>;
+template<typename K, typename V> using Lookup = eastl::fixed_hash_map<K, V, 128>;
 
 #endif //PLAZA_DICTIONARY_H

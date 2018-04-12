@@ -48,24 +48,26 @@ public:
         memset(&this->default_value, 0, sizeof(T));
         new (&this->default_value) T();
     }
-    T& operator[] (u32 index);
-    const T& operator[] (u32 index) const;
-    bool IsValid(u32 index) const;
-    u32 End() const;
+    inline T& operator[] (u32 index);
+    inline const T& operator[] (u32 index) const;
+    inline bool IsValid(u32 index) const;
+    inline u32 End() const;
 
-    u32 Add();
-    bool Insert(u32 index);
-    bool Remove(u32 index);
+    inline u32 Add();
+    inline bool Insert(u32 index);
+    inline bool Remove(u32 index);
 };
 
 template<typename T>
-T& Pool<T>::operator[](u32 index)
+inline T& Pool<T>::operator[](u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
-    index = index & 0xff;
+    index &= 0xff;
 
     auto& entry = this->entryPages[page][index];
+#ifdef DEBUG
     Assert(entry.is_occupied);
+#endif
 #ifdef POOL_MEM_GUARD
     AssertGuard(entry.preGuard);
     AssertGuard(entry.postGuard);
@@ -74,13 +76,15 @@ T& Pool<T>::operator[](u32 index)
 }
 
 template<typename T>
-const T& Pool<T>::operator[](u32 index) const
+inline const T& Pool<T>::operator[](u32 index) const
 {
     auto page = (index & 0xffffff00) >> 8;
-    index = index & 0xff;
+    index &= 0xff;
 
     const auto& entry = this->entryPages[page][index];
+#ifdef DEBUG
     Assert(entry.is_occupied);
+#endif
 #ifdef POOL_MEM_GUARD
     AssertGuard(entry.preGuard);
     AssertGuard(entry.postGuard);
@@ -89,7 +93,7 @@ const T& Pool<T>::operator[](u32 index) const
 }
 
 template<typename T>
-bool Pool<T>::IsValid(u32 index) const
+inline bool Pool<T>::IsValid(u32 index) const
 {
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
@@ -105,13 +109,13 @@ bool Pool<T>::IsValid(u32 index) const
 }
 
 template<typename T>
-u32 Pool<T>::End() const
+inline u32 Pool<T>::End() const
 {
     return this->entryPages.size() * PoolPageElements;
 }
 
 template<typename T>
-bool Pool<T>::Insert(u32 index)
+inline bool Pool<T>::Insert(u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
@@ -148,7 +152,7 @@ bool Pool<T>::Insert(u32 index)
 }
 
 template<typename T>
-bool Pool<T>::Remove(u32 index)
+inline bool Pool<T>::Remove(u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
@@ -167,7 +171,7 @@ bool Pool<T>::Remove(u32 index)
 }
 
 template<typename T>
-u32 Pool<T>::Add() {
+inline u32 Pool<T>::Add() {
     u32 index = this->End();
     if(this->free_indices.size() > 0) {
         index = this->free_indices[this->free_indices.size() - 1];
