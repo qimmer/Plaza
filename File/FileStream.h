@@ -10,4 +10,6 @@
 DeclareComponent(FileStream)
 DeclareService(FileStream)
 
+StringRef GetNativePath(StringRef resourcePath);
+
 #endif //PLAZA_FILESTREAM_H

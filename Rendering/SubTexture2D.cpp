@@ -32,5 +32,5 @@ static void InitializeUvOffsetScaleUniform(Entity entity) {
 }
 
 DefineService(SubTexture2D)
-    ServiceEntity(UvOffsetScaleUniform, InitializeUvOffsetScaleUniform)
+    ServiceEntity(UvOffsetScaleUniform, "/.SubTexture2D/UvOffsetScaleUniform", InitializeUvOffsetScaleUniform)
 EndService()

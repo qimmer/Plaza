@@ -28,15 +28,11 @@ TestResult TestCube()
     SetRenderTargetSize(context, {800, 600});
     SetContextTitle(context, "Cube Test");
 
-    SubscribeContextClosing(context, DestroyEntity);
-
     while(IsEntityValid(context)) {
         auto size = GetRenderTargetSize(context);
         SetCommandListViewport(commandList, {0, 0, size.x, size.y});
         AppUpdate();
     }
-
-    UnsubscribeContextClosing(context, DestroyEntity);
 
     DestroyEntity(commandList);
 

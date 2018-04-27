@@ -1,0 +1,14 @@
+//
+// Created by Kim on 22-04-2018.
+//
+
+#ifndef PLAZA_SERVICESUBSCRIPTIONDEFINITION_H
+#define PLAZA_SERVICESUBSCRIPTIONDEFINITION_H
+
+
+class ServiceSubscriptionDefinition {
+
+};
+
+
+#endif //PLAZA_SERVICESUBSCRIPTIONDEFINITION_H

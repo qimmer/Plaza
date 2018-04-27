@@ -1,0 +1,8 @@
+//
+// Created by Kim on 22-04-2018.
+//
+
+#ifndef PLAZA_DATAMODELMODULE_H
+#define PLAZA_DATAMODELMODULE_H
+
+#endif //PLAZA_DATAMODELMODULE_H

@@ -8,6 +8,9 @@
 #include <Core/Handle.h>
 #include <Core/Delegate.h>
 
+typedef Handle Entity;
+typedef void(*EntityHandler)(Entity entity);
+
 DeclareHandle(Service)
 
 typedef void(*ServiceHandler)(Service service);
@@ -24,10 +27,11 @@ bool IsServiceRunning(Service service);
 void SetServiceFunctions(Service service, Handler startFunc, Handler shutdownFunc, BoolHandler isRunningFunc);
 void SetServiceName(Service service, const char *name);
 const char * GetServiceName(Service service);
+Entity GetServiceRoot(Service service);
 
 void AddServiceDependency(Service service, Service dependency);
 void AddServiceSubscription(Service service, void *subscribeFunc, void *unsubscribeFunc, void *eventHandler);
-void AddServiceEntity(Service service, u64 *handlePtr, void* initializeFunc, StringRef name);
+void AddServiceEntity(Service service, Entity *handle, StringRef path, EntityHandler createFunc);
 
 #define DeclareService(SERVICE) \
     DeclareEvent(SERVICE ## Started, ServiceHandler)\
@@ -73,7 +77,7 @@ void AddServiceEntity(Service service, u64 *handlePtr, void* initializeFunc, Str
 
 #define Subscribe(EVENT, HANDLER) Unsubscribe ## EVENT (0, HANDLER); AddServiceSubscription(_service, (void*)Subscribe ## EVENT, (void*)Unsubscribe ## EVENT,(void*) HANDLER);
 
-#define ServiceEntity(ENTITY, ENTITYINITIALIZEFUNC) AddServiceEntity(_service, &ENTITY, (void*)ENTITYINITIALIZEFUNC, #ENTITY);
+#define ServiceEntity(HANDLE, PATH, CREATEHANDLER) AddServiceEntity(_service, &HANDLE, PATH, CREATEHANDLER);
 
 #define ServiceDependency(DEPENDENCYSERVICE) \
     AddServiceDependency(_service, ServiceOf_ ## DEPENDENCYSERVICE ());

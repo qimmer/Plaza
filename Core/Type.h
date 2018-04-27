@@ -3,7 +3,6 @@
 
 #include <Core/Handle.h>
 #include <Core/Types.h>
-#include <Core/Delegate.h>
 
 #define DefineType(TYPENAME) \
     void _InitType_ ## TYPENAME(Type *handle);\

@@ -105,5 +105,5 @@ static void InitializeSpriteRoot(Entity entity) {
     CreateSpriteMesh(entity);
 }
 DefineService(Sprite)
-        ServiceEntity(SpriteRoot, InitializeSpriteRoot)
+        ServiceEntity(SpriteRoot, "/.Sprite", InitializeSpriteRoot)
 EndService()

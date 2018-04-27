@@ -7,6 +7,7 @@
 #include "EditorStyle.h"
 #include <imgui/imgui.h>
 #include <Foundation/Stream.h>
+#include <Foundation/VirtualPath.h>
 
 
 ImFont *UIFont, *MonoFont;

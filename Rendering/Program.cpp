@@ -114,5 +114,5 @@ Entity ResolveProgram(Entity vertexShader, Entity pixelShader, u8 profile, Entit
 };
 
 DefineService(Program)
-    ServiceEntity(ProgramRoot, NULL)
+    ServiceEntity(ProgramRoot, "/.Program", NULL)
 EndService()

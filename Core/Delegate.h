@@ -2,11 +2,37 @@
 #define PLAZA_DELEGATE_H
 
 #include <Core/Vector.h>
-#include "Types.h"
-#include "Handle.h"
+#include <Core/Types.h>
 #include <Core/Pool.h>
 
 typedef u64 Entity;
+typedef u64 Handle;
+typedef Handle Type;
+typedef Handle Event;
+typedef u32 Generation;
+typedef u32 Index;
+
+#define GetHandleIndex(handle) (((Index *) &handle)[0])
+#define GetHandleGeneration(handle) (((Generation *) &handle)[1])
+
+extern Vector<Generation> Event_generations;
+extern Vector<Index> Event_freeSlots;
+typedef Handle Event;
+Event GetEventFromIndex (Index index);
+Event GetNextEvent (Event handle);
+Event CreateEvent();
+void DestroyEvent (Event handle);
+typedef void(* EventHandler)(Event handle);
+inline bool IsEventOccupied(Index index) {
+    return Event_generations.size() > index && Event_generations[index] % 2 != 0;
+}
+inline bool IsEventValid(Event handle) {
+    auto index = GetHandleIndex(handle);
+    return handle && Event_generations.size() > index && Event_generations[index] == GetHandleGeneration(handle);
+}
+
+Type TypeOf_Event ();
+StringRef GetEventName(Event event);
 
 #define FireEvent(EVENTNAME, ENTITY, ...) \
     if(std::is_same<decltype(ENTITY), Entity>::value) {\
@@ -48,5 +74,8 @@ typedef u64 Entity;
 
 typedef void(*Handler)();
 typedef bool(*BoolHandler)();
+
+DeclareEvent(EventCreated, EventHandler)
+DeclareEvent(EventDestroyed, EventHandler)
 
 #endif

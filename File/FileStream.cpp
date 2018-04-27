@@ -191,3 +191,13 @@ DefineService(FileStream)
     Subscribe(FileStreamStarted, OnServiceStart)
     Subscribe(FileStreamStopped, OnServiceStop)
 EndService()
+
+StringRef GetNativePath(StringRef resourcePath) {
+    auto fileIdentifier = strstr(resourcePath, "file://");
+    if(fileIdentifier) {
+        return fileIdentifier + 7;
+    }
+
+    Log(LogChannel_Core, LogSeverity_Error, "Resource path is not a file path: %s", resourcePath);
+    return 0;
+}
