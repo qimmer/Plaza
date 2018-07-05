@@ -12,7 +12,7 @@ DefineComponent(VertexDeclaration)
     Dependency(Hierarchy)
 EndComponent()
 
-u32 GetVertexStride(Entity vertexDeclaration) {
+API_EXPORT u32 GetVertexStride(Entity vertexDeclaration) {
     u32 stride = 0;
     for(auto attribute = GetFirstChild(vertexDeclaration); IsEntityValid(attribute); attribute = GetSibling(attribute)) {
         if(HasVertexAttribute(attribute)) {
@@ -26,7 +26,7 @@ static void OnChanged(Entity entity) {
     if(HasVertexAttribute(entity)) {
         auto vertexDeclaration = GetParent(entity);
         if(IsEntityValid(vertexDeclaration) && HasVertexDeclaration(vertexDeclaration)) {
-            FireEvent(VertexDeclarationChanged, vertexDeclaration);
+            FireNativeEvent(VertexDeclarationChanged, vertexDeclaration);
         }
     }
 }

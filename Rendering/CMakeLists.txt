@@ -8,3 +8,4 @@ add_library(Rendering RenderingModule.cpp RenderingModule.h Shader.cpp Shader.h 
 target_include_directories(Rendering PUBLIC "..")
 
 target_link_libraries(Rendering Core Foundation Input)
+install (TARGETS Rendering RUNTIME DESTINATION bin)

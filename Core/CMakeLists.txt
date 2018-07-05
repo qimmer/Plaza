@@ -32,10 +32,12 @@ SET(ex_eastl_inc_dir "${SOURCE_DIR}/include")
 ADD_LIBRARY(eastl STATIC IMPORTED)
 SET_PROPERTY(TARGET eastl PROPERTY IMPORTED_LOCATION "${ex_eastl_lib_dir}/libEASTL.a")
 
-add_library(Core Entity.cpp Entity.h Types.h Type.h Pool.h Handle.h Function.h Delegate.h Debug.cpp Debug.h Handle.cpp Property.h Property.cpp Type.cpp Vector.cpp Vector.h StackContainer.h Dictionary.cpp Dictionary.h String.cpp String.h Variant.h Module.cpp Module.h Service.cpp Service.h CoreModule.cpp CoreModule.h Hierarchy.cpp Hierarchy.h Function.cpp Base64.cpp Base64.h Enum.cpp Enum.h AlignedAllocator.h ShortAlloc.h Hashing.h Hashing.cpp)
+add_library(Core Entity.cpp Entity.h Types.h Pool.h Function.h Event.h Debug.cpp Debug.h Property.h Property.cpp Vector.cpp Vector.h StackContainer.h Variant.h Module.cpp Module.h CoreModule.cpp CoreModule.h Hierarchy.cpp Hierarchy.h Function.cpp Base64.cpp Base64.h Enum.cpp Enum.h AlignedAllocator.h ShortAlloc.h Hashing.h Hashing.cpp Event.cpp Variant.cpp Component.cpp Component.h NativeUtils.h NativeUtils.cpp Types.cpp)
 
 add_dependencies(Core ex_dyncall ex_eastl)
 
-target_link_libraries(Core PRIVATE dyncall eastl)
+target_link_libraries(Core PUBLIC dyncall eastl)
 target_include_directories(Core PUBLIC ".." "cglm/include" ${ex_dyncall_inc_dir} ${ex_eastl_inc_dir} "${ex_eastl_inc_dir}/../test/packages/EABase/include/Common")
 target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions" "-std=c++14")
+
+install (TARGETS Core RUNTIME DESTINATION bin)

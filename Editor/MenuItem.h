@@ -11,7 +11,7 @@
 DeclareComponent(MenuItem)
 DeclareComponentPropertyReactive(MenuItem, StringRef, MenuItemTitle)
 DeclareComponentPropertyReactive(MenuItem, u16, MenuItemIcon)
-DeclareComponentPropertyReactive(MenuItem, Entity, MenuItemSelectedState)
-DeclareComponentPropertyReactive(MenuItem, Entity, MenuItemEnabledState)
+DeclareComponentPropertyReactive(MenuItem, bool, MenuItemSelected)
+DeclareComponentPropertyReactive(MenuItem, bool, MenuItemEnabled)
 
 #endif //PLAZA_MENUITEM_H

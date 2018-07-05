@@ -453,7 +453,7 @@ sched_atomic_add(volatile sched_int *dst, sched_int value)
 /* ---------------------------------------------------------------
  *                          THREAD
  * ---------------------------------------------------------------*/
-#if defined(_WIN32) && !(defined(__MINGW32__) || defined(__MINGW64__))
+#if defined(_WIN32)
 #define SCHED_THREAD_FUNC_DECL DWORD WINAPI
 #define SCHED_THREAD_LOCAL __declspec(thread)
 

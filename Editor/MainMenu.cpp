@@ -7,26 +7,23 @@
 #include <ImGuiRenderer.h>
 #include <Core/Entity.h>
 #include <imgui/imgui.h>
-#include <Logic/State.h>
+#include <Input/InputState.h>
 
 struct MainMenu {
-    Entity MainMenuVisibilityState;
+    bool MainMenuVisible;
 };
 
 DefineComponent(MainMenu)
 EndComponent()
 
-DefineComponentPropertyReactive(MainMenu, Entity, MainMenuVisibilityState)
+DefineComponentPropertyReactive(MainMenu, bool, MainMenuVisible)
 
 static void DrawMenu(Entity menu) {
     char title[256];
     snprintf(title, 256, "%s", GetMenuItemTitle(menu));
 
-    auto enabledState = GetMenuItemEnabledState(menu);
-    auto selectedState = GetMenuItemSelectedState(menu);
-
-    auto enabled = IsEntityValid(enabledState) ? (GetStateValue(enabledState) > 0.5f) : true;
-    auto selected = IsEntityValid(selectedState) ? (GetStateValue(selectedState) > 0.5f) : false;
+    auto enabled = GetMenuItemEnabled(menu);
+    auto selected = GetMenuItemSelected(menu);
 
     if(GetFirstChild(menu)) {
         if(ImGui::BeginMenu(title, enabled)) {
@@ -40,16 +37,16 @@ static void DrawMenu(Entity menu) {
         }
     } else {
         if(ImGui::MenuItem(title, NULL, selected, enabled)) {
-            SetStateValue(menu, 1.0f);
-            SetStateValue(menu, 0.0f);
+            SetInputStateValue(menu, 1.0f);
+            SetInputStateValue(menu, 0.0f);
         }
     }
 }
 static void OnImGuiDraw(Entity context) {
     for(auto mainMenu = GetFirstChild(context); mainMenu; mainMenu = GetSibling(mainMenu)) {
         if(HasMainMenu(mainMenu)) {
-            auto visibilityState = GetMainMenuVisibilityState(mainMenu);
-            if(IsEntityValid(visibilityState) && GetStateValue(visibilityState) < 0.5f) continue;
+            auto visible = GetMainMenuVisible(mainMenu);
+            if(!visible) continue;
 
             if(ImGui::BeginMainMenuBar()) {
                 for(auto menu = GetFirstChild(mainMenu); menu; menu = GetSibling(menu)) {

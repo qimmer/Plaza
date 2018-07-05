@@ -46,6 +46,7 @@ u16 GetBgfxBinaryShaderHandle(Entity entity) {
         if(size == 0) {
             Log(LogChannel_Core, LogSeverity_Error, "Binary shader data empty. Trying to compile ...");
             CompileShader(entity);
+
             return bgfx::kInvalidHandle;
         } else {
             auto buffer = malloc(size);

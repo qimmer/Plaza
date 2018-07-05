@@ -8,8 +8,7 @@
 #include <Core/Entity.h>
 
 DeclareComponent(EditorContext)
-DeclareComponentPropertyReactive(EditorContext, Entity, EditorContextVisibilityState)
-DeclareComponentPropertyReactive(EditorContext, Entity, EditorContextVisibilityCommand)
+DeclareComponentPropertyReactive(EditorContext, bool, EditorContextVisible)
 
 DeclareService(EditorContext)
 

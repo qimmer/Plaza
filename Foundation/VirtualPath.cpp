@@ -18,7 +18,7 @@ EndComponent()
 DefineComponentPropertyReactive(VirtualPath, StringRef, VirtualPathTrigger)
 DefineComponentPropertyReactive(VirtualPath, StringRef, VirtualPathDestination)
 
-void ResolveVirtualPath(StringRef virtualPath, char *resolvedPath) {
+API_EXPORT void ResolveVirtualPath(StringRef virtualPath, char *resolvedPath) {
     auto len = strlen(virtualPath);
     for_entity(entity, VirtualPath) {
         auto data = GetVirtualPath(entity);

@@ -87,7 +87,7 @@ static void Draw(Entity context) {
 static void OnStreamChanged(Entity stream) {
     for_entity(codeEditor, CodeEditor) {
         if(GetCodeEditorStream(codeEditor) == stream) {
-            FireEvent(CodeEditorChanged, codeEditor);
+            FireNativeEvent(CodeEditorChanged, codeEditor);
         }
     }
 }

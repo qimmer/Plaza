@@ -181,7 +181,7 @@ static bool SerializeJson(Entity persistancePoint) {
         writer.StartObject();
 
         for(auto property = GetNextProperty(0); IsPropertyValid(property); property = GetNextProperty(property)) {
-            auto componentType = GetPropertyOwner(property);
+            auto componentType = GetPropertyComponent(property);
             if(!HasComponent(persistentEntity, componentType)) {
                 continue;
             }

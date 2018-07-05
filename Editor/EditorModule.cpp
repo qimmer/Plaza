@@ -19,7 +19,6 @@
 #include "EditorContext.h"
 #include "EditorView.h"
 
-
 DefineModule(Editor)
         ModuleDependency(Foundation)
         ModuleDependency(Rendering)
@@ -33,7 +32,6 @@ DefineModule(Editor)
         ModuleType(EditorContext)
         ModuleType(EditorView)
 
-        ModuleService(EditorView)
         ModuleService(EditorStandardCommands)
         ModuleService(EditorStyle)
         ModuleService(MainMenu)
@@ -45,4 +43,4 @@ DefineModule(Editor)
         ModuleService(EditorContext)
 
         ModuleService(FirstPersonCameraTool)
-    EndModule()
+EndModule()

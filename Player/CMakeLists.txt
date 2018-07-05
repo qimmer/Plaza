@@ -8,3 +8,4 @@ add_library(Player PlayerModule.cpp PlayerModule.h PlayerContext.cpp PlayerConte
 target_include_directories(Player PUBLIC "..")
 
 target_link_libraries(Player Core Foundation Rendering File)
+install (TARGETS Player RUNTIME DESTINATION bin)

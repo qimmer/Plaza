@@ -22,7 +22,7 @@ DefineComponentPropertyReactive(SubTexture2D, v2i, SubTexture2DOffset)
 DefineComponentPropertyReactive(SubTexture2D, v2i, SubTexture2DSize)
 DefineComponentPropertyReactive(SubTexture2D, Entity, SubTexture2DTexture)
 
-Entity GetSubTexture2DUvOffsetScaleUniform() {
+API_EXPORT Entity GetSubTexture2DUvOffsetScaleUniform() {
     return UvOffsetScaleUniform;
 }
 
@@ -32,5 +32,5 @@ static void InitializeUvOffsetScaleUniform(Entity entity) {
 }
 
 DefineService(SubTexture2D)
-    ServiceEntity(UvOffsetScaleUniform, "/.SubTexture2D/UvOffsetScaleUniform", InitializeUvOffsetScaleUniform)
+    ServiceEntity(UvOffsetScaleUniform, InitializeUvOffsetScaleUniform)
 EndService()

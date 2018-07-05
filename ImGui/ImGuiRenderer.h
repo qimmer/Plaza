@@ -11,7 +11,7 @@
 DeclareService(ImGuiRenderer)
 DeclareComponent(ImGuiRenderer)
 
-DeclareEvent(ImGuiDraw, EntityHandler);
+DeclareEvent(ImGuiDraw, Entity entity);
 
 void* GetDefaultImGuiContext();
 void RebuildImGuiFonts();

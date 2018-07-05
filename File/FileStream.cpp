@@ -39,7 +39,7 @@ public:
             for_entity(fileStream, FileStream) {
                 auto data = GetFileStream(fileStream);
                 if(data->watchID == watchid) {
-                    FireEvent(StreamContentChanged, fileStream);
+                    FireNativeEvent(StreamContentChanged, fileStream);
                     break;
                 }
             }

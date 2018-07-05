@@ -15,9 +15,10 @@ DeclareService(InputState)
 DeclareComponentPropertyReactive(InputState, u16, InputStateKey)
 DeclareComponentPropertyReactive(InputState, u16, InputStatePrimaryModifierKey)
 DeclareComponentPropertyReactive(InputState, u16, InputStateSecondaryModifierKey)
-DeclareComponentPropertyReactive(InputState, float, InputStateStateScale)
+DeclareComponentPropertyReactive(InputState, float, InputStateScale)
+DeclareComponentPropertyReactive(InputState, float, InputStateValue)
 
-DeclareEvent(CommandPressed, EntityHandler)
-DeclareEvent(CommandReleased, EntityHandler)
+DeclareEvent(CommandPressed, Entity entity)
+DeclareEvent(CommandReleased, Entity entity)
 
 #endif //PLAZA_INPUTSTATE_H

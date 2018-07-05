@@ -10,6 +10,7 @@
 DeclareComponent(Label)
 DeclareComponentPropertyReactive(Label, Entity, LabelFont)
 DeclareComponentPropertyReactive(Label, StringRef, LabelText)
+DeclareComponentPropertyReactive(Label, v2f, LabelAlignment)
 
 DeclareService(Label)
 

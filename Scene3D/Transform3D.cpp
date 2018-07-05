@@ -44,13 +44,16 @@ static void UpdateLocalTransform(Entity entity) {
     glm_scale_make(scaleMat, &scale.x);
     glm_quat_mat4(&rotationQuat.x, rotationMat);
     glm_mul(scaleMat, rotationMat, srMat);
+
     glm_vec4_add(srMat[3], pos4, srMat[3]);
 
     SetLocalTransform(entity, *(m4x4f *) srMat);
 }
 
 static void OnPosition3DChanged(Entity entity, v3f before, v3f after) {
-    UpdateLocalTransform(entity);
+    if(memcmp(&before, &after, sizeof(v3f)) != 0) {
+        UpdateLocalTransform(entity);
+    }
 }
 
 static void OnRotationEuler3DChanged(Entity entity, v3f before, v3f after) {

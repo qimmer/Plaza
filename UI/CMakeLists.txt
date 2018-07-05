@@ -3,10 +3,11 @@ project(UI)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(UI Widget.cpp Widget.h Font.cpp Font.h Label.cpp Label.h UIModule.cpp UIModule.h)
+add_library(UI Widget.cpp Widget.h Font.cpp Font.h Label.cpp Label.h UIModule.cpp UIModule.h UICamera.cpp UICamera.h Style.cpp Style.h ../SVG/Path.cpp ../SVG/Path.h ../SVG/PathSegment.cpp ../SVG/PathSegment.h ../SVG/RectSegment.cpp ../SVG/RectSegment.h ../SVG/TextSegment.cpp ../SVG/TextSegment.h)
 
 target_include_directories(UI PUBLIC "..")
 
-target_link_libraries(UI Core Foundation Rendering Scene)
+target_link_libraries(UI Core Foundation Rendering Scene Scene2D)
 
-INSTALL(FILES Shaders/font.vs Shaders/font.ps Shaders/font.var DESTINATION bin/Shaders)
+INSTALL(DIRECTORY Assets DESTINATION bin)
+install (TARGETS UI RUNTIME DESTINATION bin)

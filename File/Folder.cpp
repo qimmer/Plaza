@@ -74,9 +74,10 @@ void ScanFolder(Entity entity) {
 #include <windows.h>
 #include <shlwapi.h>
 #undef CreateService
+#undef CreateEvent
 #endif
 
-bool CreateDirectories(StringRef fullPath) {
+API_EXPORT bool CreateDirectories(StringRef fullPath) {
     auto isVirtualPath = strstr(fullPath, "://") != NULL;
 
     if(isVirtualPath && memcmp(fullPath, "file://", 7) != 0) {
@@ -101,7 +102,7 @@ bool CreateDirectories(StringRef fullPath) {
     return true;
 }
 
-bool IsFolder(StringRef absolutePath) {
+API_EXPORT bool IsFolder(StringRef absolutePath) {
     char resolvedPath[PATH_MAX];
     ResolveVirtualPath(absolutePath, resolvedPath);
 

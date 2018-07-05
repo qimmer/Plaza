@@ -16,7 +16,7 @@ EndComponent()
 DefineComponentPropertyReactive(Texture2D, v2i, TextureSize2D)
 
 static void OnTexture2DChanged(Entity texture) {
-    FireEvent(TextureChanged, texture);
+    FireNativeEvent(TextureChanged, texture);
 }
 
 DefineService(Texture2D)

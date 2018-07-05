@@ -87,7 +87,7 @@ u16 GetBgfxTexture2DHandle(Entity entity) {
                         GetRenderTargetTexture5(renderTarget) == entity ||
                         GetRenderTargetTexture6(renderTarget) == entity ||
                         GetRenderTargetTexture7(renderTarget) == entity) {
-                    FireEvent(OffscreenRenderTargetChanged, renderTarget);
+                    FireNativeEvent(OffscreenRenderTargetChanged, renderTarget);
                     break;
                 }
             }

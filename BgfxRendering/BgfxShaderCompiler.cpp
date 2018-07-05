@@ -55,7 +55,7 @@ private:
     std::stringstream stream;
 };
 
-int Compile(StringRef sourceFilePath,
+API_EXPORT int Compile(StringRef sourceFilePath,
              StringRef varyingDefFilePath,
              StringRef outputFilePath,
              u8 shaderProfile,
@@ -221,6 +221,17 @@ void OnCompile(Entity binaryShader) {
         shaderVariationDefines = GetShaderVariationDefines(shaderVariation);
     }
 
+
+    if(GetShaderType(shader) == ShaderType_Unknown) {
+        Log(LogChannel_Core, LogSeverity_Error, "Shader type of '%s' is unset", GetEntityPath(shader));
+        return;
+    }
+    if(!IsEntityValid(GetShaderDeclaration(shader))) {
+        Log(LogChannel_Core, LogSeverity_Error, "Shader declaration of '%s' is unset", GetEntityPath(shader));
+        return;
+    }
+
+
     bool hasErrors = 0 != Compile(
             GetStreamResolvedPath(shader),
             GetStreamResolvedPath(GetShaderDeclaration(shader)),
@@ -229,8 +240,8 @@ void OnCompile(Entity binaryShader) {
             GetShaderType(shader),
             shaderVariationDefines);
 
-    FireEvent(ShaderCompilerFinished, hasErrors, "");
-    FireEvent(StreamContentChanged, binaryShader);
+    FireNativeEvent(ShaderCompilerFinished, binaryShader, hasErrors, "");
+    FireNativeEvent(StreamContentChanged, binaryShader);
 }
 
 DefineService(BgfxShaderCompiler)

@@ -19,12 +19,12 @@ void Load(Entity persistancePoint);
 void Save(Entity persistancePoint);
 void Unload(Entity persistancePoint);
 
-DeclareEvent(LoadStarted, EntityHandler)
-DeclareEvent(SaveStarted, EntityHandler)
+DeclareEvent(LoadStarted, Entity entity)
+DeclareEvent(SaveStarted, Entity entity)
 
-DeclareEvent(UnloadFinished, EntityHandler)
-DeclareEvent(LoadFinished, EntityHandler)
-DeclareEvent(SaveFinished, EntityHandler)
+DeclareEvent(UnloadFinished, Entity entity)
+DeclareEvent(LoadFinished, Entity entity)
+DeclareEvent(SaveFinished, Entity entity)
 
 void AddSerializer(StringRef mimeType, struct Serializer* serializer);
 void RemoveSerializer(StringRef mimeType);

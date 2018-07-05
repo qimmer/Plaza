@@ -7,7 +7,6 @@
 
 #include <Core/Entity.h>
 
-typedef void(*TaskHandler)(Entity entity, u32 result);
 typedef u32(*TaskFunction)(Entity task);
 
 DeclareComponent(Task)
@@ -15,7 +14,7 @@ DeclareComponentProperty(Task, TaskFunction, TaskFunction)
 DeclareComponentProperty(Task, bool, TaskFinished)
 DeclareComponentProperty(Task, u32, TaskResult)
 
-DeclareEvent(TaskFinished, TaskHandler)
+DeclareEvent(TaskFinished, Entity entity, u32 result)
 
 DeclareService(TaskScheduler)
 

@@ -12,9 +12,8 @@ DeclareEnum(TextureFlag)
 DeclareComponent(Texture)
 
 typedef void(*TextureReadbackHandler)(Entity sourceTexture, Entity blitTexture, const u8* readBackData);
-typedef void(*TextureReadbackInitiatedHandler)(Entity texture, TextureReadbackHandler handler);
 
-DeclareEvent(TextureReadbackInitiated, TextureReadbackInitiatedHandler)
+DeclareEvent(TextureReadbackInitiated, Entity texture, TextureReadbackHandler handler)
 
 DeclareComponentPropertyReactive(Texture, u16, TextureFormat)
 DeclareComponentPropertyReactive(Texture, u32, TextureFlag)

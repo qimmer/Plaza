@@ -3,8 +3,6 @@
 //
 
 #include <Rendering/Context.h>
-#include <Logic/ToggleState.h>
-#include <Logic/State.h>
 #include <Input/InputState.h>
 #include <ImGui/imgui/imgui.h>
 #include <ImGui/ImGuiRenderer.h>
@@ -13,24 +11,22 @@
 #include "EditorView.h"
 #include "MainMenu.h"
 
+Entity EditorMainContext;
+
 struct EditorContext {
-    Entity EditorContextVisibilityState, EditorContextVisibilityCommand;
+    EditorContext() : EditorContextVisible(true) {
+
+    }
+    bool EditorContextVisible;
 };
 
 DefineComponent(EditorContext)
 EndComponent()
 
-DefineComponentPropertyReactive(EditorContext, Entity, EditorContextVisibilityState)
-DefineComponentPropertyReactive(EditorContext, Entity, EditorContextVisibilityCommand)
+DefineComponentPropertyReactive(EditorContext, bool, EditorContextVisible)
 
 static void OnEditorContextAdded(Entity editor) {
     auto data = GetEditorContext(editor);
-
-    data->EditorContextVisibilityState = CreateToggleState(editor, "VisibilityState");
-    data->EditorContextVisibilityCommand = CreateInputState(editor, "VisibilityCommand");
-    SetToggleStateSourceState(data->EditorContextVisibilityState, data->EditorContextVisibilityCommand);
-    SetStateValue(data->EditorContextVisibilityState, 0.0f);
-    SetInputStateKey(data->EditorContextVisibilityCommand, KEY_F8);
 
     for(auto type = GetNextType(0); type; type = GetNextType(type)) {
         if(IsComponent(type)) {
@@ -45,40 +41,37 @@ static void OnEditorContextAdded(Entity editor) {
     }
 
     auto mainMenu = CreateMainMenu(editor, "MainMenu");
-    SetMainMenuVisibilityState(mainMenu, data->EditorContextVisibilityState);
-
 }
 
 static void OnImGuiDraw(Entity editor) {
-    if(GetStateValue(GetEditorContextVisibilityState(editor)) > 0.5f) {
-        for_children(view, editor) {
-            if(HasEditorView(view)
-               && GetStateValue(GetEditorViewVisibilityState(view)) > 0.5f
-               && GetEditorViewDrawFunction(view)) {
-                auto open = true;
-                if(ImGui::Begin(GetName(view), &open)) {
-                    GetEditorViewDrawFunction(view)(view);
+    if(HasEditorContext(editor)) {
+        if(GetEditorContextVisible(editor)) {
+            for_children(view, editor) {
+                if(HasEditorView(view)
+                   && GetEditorViewVisible(view)
+                   && GetEditorViewDrawFunction(view)) {
+                    auto open = true;
+                    if(ImGui::Begin(GetName(view), &open)) {
+                        GetEditorViewDrawFunction(view)(view);
+                    }
+                    if(!open) {
+                        SetEditorViewVisible(view, false);
+                    }
+                    ImGui::End();
                 }
-                if(!open) {
-                    SetStateValue(GetEditorViewVisibilityState(view), 0.0f);
-                }
-                ImGui::End();
             }
         }
     }
 }
 
-static void OnStarted(Service service) {
-    AddExtension(TypeOf_Context(), TypeOf_EditorContext());
-}
-
-static void OnStopped(Service service) {
-    RemoveExtension(TypeOf_Context(), TypeOf_EditorContext());
+static void CreateEditorMainContext(Entity context) {
+    SetContextTitle(context, "Editor");
+    AddEditorContext(context);
 }
 
 DefineService(EditorContext)
     Subscribe(EditorContextAdded, OnEditorContextAdded)
-    Subscribe(EditorContextStarted, OnStarted)
-    Subscribe(EditorContextStopped, OnStopped)
     Subscribe(ImGuiDraw, OnImGuiDraw)
+
+    ServiceEntity(EditorMainContext, CreateEditorMainContext)
 EndService()

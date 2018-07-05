@@ -73,7 +73,7 @@ void* GetBgfxVertexDeclarationHandle(Entity entity) {
 
         for_entity(vertexBuffer, VertexBuffer) {
             if(GetVertexBufferDeclaration(vertexBuffer) == entity) {
-                FireEvent(VertexBufferChanged, vertexBuffer);
+                FireNativeEvent(VertexBufferChanged, vertexBuffer);
             }
         }
     }

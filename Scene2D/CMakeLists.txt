@@ -9,4 +9,5 @@ target_include_directories(Scene2D PUBLIC ".." ".")
 
 target_link_libraries(Scene2D Core Rendering Scene File)
 
-INSTALL(FILES Shaders/sprite.vs Shaders/sprite.ps Shaders/sprite.var DESTINATION bin/Shaders)
+INSTALL(DIRECTORY Assets DESTINATION bin)
+install (TARGETS Scene2D RUNTIME DESTINATION bin)

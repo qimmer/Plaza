@@ -7,6 +7,7 @@
 #include <shlwapi.h>
 #undef GetHandle
 #undef CreateService
+#undef CreateEvent
 #endif
 
 #include <Core/String.h>
@@ -38,9 +39,9 @@ EndComponent()
 
 DefineComponentPropertyReactive(Stream, StringRef, StreamPath)
 
-DefineEvent(StreamContentChanged, EntityHandler)
+DefineEvent(StreamContentChanged)
 
-bool StreamSeek(Entity entity, s32 offset){
+API_EXPORT bool StreamSeek(Entity entity, s32 offset){
     if(!GetStream(entity)->Protocol.StreamSeekHandler) {
         return false;
     }
@@ -48,7 +49,7 @@ bool StreamSeek(Entity entity, s32 offset){
     return GetStream(entity)->Protocol.StreamSeekHandler(entity, offset);
 }
 
-s32 StreamTell(Entity entity){
+API_EXPORT s32 StreamTell(Entity entity){
     if(!GetStream(entity)->Protocol.StreamTellHandler) {
         return 0;
     }
@@ -56,7 +57,7 @@ s32 StreamTell(Entity entity){
     return GetStream(entity)->Protocol.StreamTellHandler(entity);
 }
 
-u64 StreamRead(Entity entity, u64 size, void *data){
+API_EXPORT u64 StreamRead(Entity entity, u64 size, void *data){
     if(!GetStream(entity)->Protocol.StreamReadHandler || !(GetStream(entity)->Mode & StreamMode_Read)) {
         return 0;
     }
@@ -64,7 +65,7 @@ u64 StreamRead(Entity entity, u64 size, void *data){
     return GetStream(entity)->Protocol.StreamReadHandler(entity, size, data);
 }
 
-u64 StreamWrite(Entity entity, u64 size, const void *data){
+API_EXPORT u64 StreamWrite(Entity entity, u64 size, const void *data){
     if(!GetStream(entity)->Protocol.StreamWriteHandler || !(GetStream(entity)->Mode & StreamMode_Write)) {
         return 0;
     }
@@ -74,7 +75,7 @@ u64 StreamWrite(Entity entity, u64 size, const void *data){
     return GetStream(entity)->Protocol.StreamWriteHandler(entity, size, data);
 }
 
-bool IsStreamOpen(Entity entity) {
+API_EXPORT bool IsStreamOpen(Entity entity) {
     if(!GetStream(entity)->Protocol.StreamIsOpenHandler) {
         return false;
     }
@@ -82,11 +83,12 @@ bool IsStreamOpen(Entity entity) {
     return GetStream(entity)->Protocol.StreamIsOpenHandler(entity);
 }
 
-bool StreamOpen(Entity entity, int mode) {
+API_EXPORT bool StreamOpen(Entity entity, int mode) {
     Assert(IsEntityValid(entity));
 
     auto data = GetStream(entity);
     if(!data->Protocol.StreamOpenHandler) {
+        Log(LogChannel_Core, LogSeverity_Error, "Steam '%s' has no open handler.", GetEntityPath(entity));
         return false;
     }
 
@@ -97,12 +99,13 @@ bool StreamOpen(Entity entity, int mode) {
         return true;
     } else {
         data->Mode = 0;
+        Log(LogChannel_Core, LogSeverity_Error, "Steam '%s' could not be opened.", GetEntityPath(entity));
     }
 
     return false;
 }
 
-void StreamClose(Entity entity) {
+API_EXPORT void StreamClose(Entity entity) {
     auto data = GetStream(entity);
     if(data->Protocol.StreamCloseHandler) {
         data->Protocol.StreamCloseHandler(entity);
@@ -110,19 +113,19 @@ void StreamClose(Entity entity) {
         if(data->InvalidationPending) {
             data->InvalidationPending = false;
             data->Mode = 0;
-            FireEvent(StreamContentChanged, entity);
+            FireNativeEvent(StreamContentChanged, entity);
         }
     }
 }
 
-void StreamReadAsync(Entity entity, u64 size, StreamReadAsyncHandler readFinishedHandler){
+API_EXPORT void StreamReadAsync(Entity entity, u64 size, StreamReadAsyncHandler readFinishedHandler){
     char *buffer = (char*)malloc(size);
     StreamRead(entity, size, buffer);
     readFinishedHandler(entity, size, buffer);
     free(buffer);
 }
 
-void StreamWriteAsync(Entity entity, u64 size, const void *data, StreamWriteAsyncHandler writeFinishedHandler){
+API_EXPORT void StreamWriteAsync(Entity entity, u64 size, const void *data, StreamWriteAsyncHandler writeFinishedHandler){
     char *buffer = (char*)malloc(size);
 	Assert(buffer);
     memcpy(buffer, data, size);
@@ -131,38 +134,38 @@ void StreamWriteAsync(Entity entity, u64 size, const void *data, StreamWriteAsyn
     free(buffer);
 }
 
-void AddStreamProtocol(StringRef protocolIdentifier, struct StreamProtocol *protocol) {
+API_EXPORT void AddStreamProtocol(StringRef protocolIdentifier, struct StreamProtocol *protocol) {
     Protocols[protocolIdentifier] = *protocol;
 }
 
-void RemoveStreamProtocol(StringRef protocolIdentifier) {
+API_EXPORT void RemoveStreamProtocol(StringRef protocolIdentifier) {
     auto it = Protocols.find(protocolIdentifier);
     if(it != Protocols.end()) {
         Protocols.erase(it);
     }
 }
 
-void AddStreamCompressor(StringRef mimeType, struct StreamCompressor *compressor) {
+API_EXPORT void AddStreamCompressor(StringRef mimeType, struct StreamCompressor *compressor) {
     Compressors[mimeType] = *compressor;
 }
 
-void RemoveStreamCompressor(StringRef mimeType) {
+API_EXPORT void RemoveStreamCompressor(StringRef mimeType) {
     auto it = Compressors.find(mimeType);
     if(it != Compressors.end()) {
         Compressors.erase(it);
     }
 }
 
-StringRef GetStreamResolvedPath(Entity entity) {
+API_EXPORT StringRef GetStreamResolvedPath(Entity entity) {
     Assert(IsEntityValid(entity));
     return GetStream(entity)->ResolvedPath.c_str();
 }
 
-int GetStreamMode(Entity entity) {
+API_EXPORT int GetStreamMode(Entity entity) {
     return GetStream(entity)->Mode;
 }
 
-StringRef GetStreamMimeType(Entity entity) {
+API_EXPORT StringRef GetStreamMimeType(Entity entity) {
     auto mimeIt = FileExtensionMimeTypes.find(GetFileExtension(GetStreamResolvedPath(entity)));
     if(mimeIt != FileExtensionMimeTypes.end()) {
         return mimeIt->second.c_str();
@@ -171,15 +174,15 @@ StringRef GetStreamMimeType(Entity entity) {
     }
 }
 
-void AddFileType(StringRef fileExtension, StringRef mimeType) {
+API_EXPORT void AddFileType(StringRef fileExtension, StringRef mimeType) {
     FileExtensionMimeTypes[fileExtension] = mimeType;
 }
 
-void RemoveFileType(StringRef fileExtension) {
+API_EXPORT void RemoveFileType(StringRef fileExtension) {
     FileExtensionMimeTypes.erase(fileExtension);
 }
 
-u64 StreamDecompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, void *uncompressedData) {
+API_EXPORT u64 StreamDecompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, void *uncompressedData) {
     auto data = GetStream(entity);
     if(data->Compressor.DecompressHandler) {
         if(!data->Compressor.DecompressHandler(entity, uncompressedOffset, uncompressedSize, uncompressedData)) {
@@ -194,7 +197,7 @@ u64 StreamDecompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize
     return StreamRead(entity, uncompressedSize, uncompressedData);
 }
 
-u64 StreamCompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, const void *uncompressedData) {
+API_EXPORT u64 StreamCompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, const void *uncompressedData) {
     auto data = GetStream(entity);
     if(data->Compressor.CompressHandler) {
         if(!data->Compressor.CompressHandler(entity, uncompressedOffset, uncompressedSize, uncompressedData)) {
@@ -210,19 +213,19 @@ u64 StreamCompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, 
 }
 
 
-StringRef GetFileName(StringRef absolutePath) {
+API_EXPORT StringRef GetFileName(StringRef absolutePath) {
     auto fileName = strrchr(absolutePath, '/');
     if(!fileName) return absolutePath;
     return fileName + 1;
 }
 
-StringRef GetFileExtension(StringRef absolutePath) {
+API_EXPORT StringRef GetFileExtension(StringRef absolutePath) {
     auto extension = strrchr(absolutePath, '.');
     if(!extension) return "";
     return extension;
 }
 
-void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t bufMax) {
+API_EXPORT void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t bufMax) {
     strncpy(parentFolder, absolutePath, bufMax);
     auto ptr = strrchr(parentFolder, '/');
     if(!ptr) {
@@ -233,13 +236,13 @@ void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t bufMax) 
     parentFolder[ptr - parentFolder] = '\0';
 }
 
-StringRef GetCurrentWorkingDirectory() {
+API_EXPORT StringRef GetCurrentWorkingDirectory() {
     static char path[PATH_MAX];
     getcwd(path, PATH_MAX);
     return path;
 }
 
-void CleanupPath(char* messyPath) {
+API_EXPORT void CleanupPath(char* messyPath) {
     char *dest = messyPath;
     auto protocolLocation = strstr(messyPath, "://");
 
@@ -351,7 +354,7 @@ static void OnStreamPathChanged(Entity entity, StringRef oldValue, StringRef new
     if(data->Protocol.StreamProtocolSet) {
         data->Protocol.StreamProtocolSet(entity);
     }
-    FireEvent(StreamContentChanged, entity);
+    FireNativeEvent(StreamContentChanged, entity);
 }
 
 static void OnStreamAdded(Entity entity) {

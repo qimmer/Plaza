@@ -38,19 +38,23 @@ static void UpdateLocalTransform(Entity entity) {
     float trans3D[] = {t.x, t.y, d};
 
     m4x4f m = m4x4f_Identity;
+    glm_translate((vec4*)&m.x.x, trans3D);
     glm_scale((vec4*)&m.x.x, scale3D);
     glm_rotate((vec4*)&m.x.x, glm_rad(r), rotAxis);
-    glm_translate((vec4*)&m.x.x, trans3D);
 
     SetLocalTransform(entity, m);
 }
 
 static void Onv2fChanged(Entity entity, v2f oldValue, v2f newValue) {
-    UpdateLocalTransform(entity);
+    if(memcmp(&oldValue, &newValue, sizeof(v2f)) != 0) {
+        UpdateLocalTransform(entity);
+    }
 }
 
 static void OnFloatChanged(Entity entity, float oldValue, float newValue) {
-    UpdateLocalTransform(entity);
+    if(oldValue != newValue) {
+        UpdateLocalTransform(entity);
+    }
 }
 
 DefineService(Transform2D)

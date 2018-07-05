@@ -11,3 +11,5 @@ endif()
 target_include_directories(File PUBLIC ".." ".")
 
 target_link_libraries(File Foundation Core)
+
+install (TARGETS File RUNTIME DESTINATION bin)

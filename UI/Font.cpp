@@ -159,36 +159,35 @@ u32 GetFontGlyphData(Entity font,
 
         FontVertex vt[2];
         stbtt_GetBakedQuad(data->Characters.data(), FONT_TEXTURE_DIM,FONT_TEXTURE_DIM, ch-data->FontFirstChar, &origin.x,&origin.y,(stbtt_aligned_quad*)vt,1);//1=opengl & d3d10+,0=d3d9
-
         vertices[0] = {
-            { vt[0].Position.x, -vt[0].Position.y },
+            { vt[0].Position.x, vt[0].Position.y },
             { vt[0].Uv.x,       vt[0].Uv.y },
         };
 
         vertices[1] = {
-            { vt[1].Position.x, -vt[0].Position.y },
+            { vt[1].Position.x, vt[0].Position.y },
             { vt[1].Uv.x,       vt[0].Uv.y },
         };
 
         vertices[2] = {
-            { vt[1].Position.x, -vt[1].Position.y },
+            { vt[1].Position.x, vt[1].Position.y },
             { vt[1].Uv.x,       vt[1].Uv.y },
         };
 
 
 
         vertices[3] = {
-            { vt[1].Position.x, -vt[1].Position.y },
+            { vt[1].Position.x, vt[1].Position.y },
             { vt[1].Uv.x,       vt[1].Uv.y },
         };
 
         vertices[4] = {
-            { vt[0].Position.x, -vt[1].Position.y },
+            { vt[0].Position.x, vt[1].Position.y },
             { vt[0].Uv.x,       vt[1].Uv.y },
         };
 
         vertices[5] = {
-            { vt[0].Position.x, -vt[0].Position.y },
+            { vt[0].Position.x, vt[0].Position.y },
             { vt[0].Uv.x,       vt[0].Uv.y },
         };
 
@@ -210,7 +209,7 @@ static void InvalidateFont(Entity entity) {
 
 static void ChangeFont(Entity entity) {
     if(HasFont(entity)) {
-        FireEvent(FontChanged, entity);
+        FireNativeEvent(FontChanged, entity);
     }
 }
 
@@ -234,16 +233,16 @@ static void OnFontStarted(Service service) {
     SetUniformType(FontTextureUniform, TypeOf_Entity());
 
     auto shaderDeclaration = CreateStream(FontRoot, "ShaderDeclaration");
-    SetStreamPath(shaderDeclaration, "res://assets/Shaders/font.var");
+    SetStreamPath(shaderDeclaration, "res://Assets/Shaders/font.var");
 
     FontVertexShader = CreateShader(FontRoot, "VertexShader");
     SetShaderType(FontVertexShader, ShaderType_Vertex);
-    SetStreamPath(FontVertexShader, "res://assets/Shaders/font.vs");
+    SetStreamPath(FontVertexShader, "res://Assets/Shaders/font.vs");
     SetShaderDeclaration(FontVertexShader, shaderDeclaration);
 
     FontPixelShader = CreateShader(FontRoot, "PixelShader");
     SetShaderType(FontPixelShader, ShaderType_Pixel);
-    SetStreamPath(FontPixelShader, "res://assets/Shaders/font.ps");
+    SetStreamPath(FontPixelShader, "res://Assets/Shaders/font.ps");
     SetShaderDeclaration(FontPixelShader, shaderDeclaration);
 
     FontVertexDeclaration = CreateVertexDeclaration(FontRoot, "VertexDeclaration");

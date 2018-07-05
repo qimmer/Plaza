@@ -7,6 +7,6 @@
 
 #include <Core/Module.h>
 
-DeclareModule(Core)
+Module(Core)
 
 #endif //PLAZA_COREMODULE_H

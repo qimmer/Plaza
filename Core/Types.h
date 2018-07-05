@@ -1,16 +1,20 @@
 #ifndef PLAZA_TYPES_H
 #define PLAZA_TYPES_H
 
+#if defined(_WIN32) || defined(_WIN64)
+#       define API_EXPORT __declspec(dllexport)
+#       define API_IMPORT __declspec(dllimport)
+#else
+#   define API_EXPORT __attribute__((visibility("default")))
+#   define API_IMPORT
+#endif
+
+
 #if defined(_MSC_VER)
 #  define ALIGN(X) __declspec(align(X))
 #else
 #  define ALIGN(X) __attribute((aligned(X)))
 #endif
-
-template<typename T1, typename T2>
-T1 ApiConvert(const T2* value) {
-    return (T1)(*value);
-};
 
 typedef const char* StringRef;
 
@@ -23,6 +27,9 @@ typedef signed char s8;
 typedef signed short s16;
 typedef signed int s32;
 typedef signed long long s64;
+
+typedef u64 Entity;
+typedef u8 Type;
 
 typedef struct {
     float x, y;
@@ -102,5 +109,45 @@ static const v3f v3f_Zero = {0, 0, 0};
 static const v3f v3f_One = {1, 1, 1};
 static const v3f v2f_Zero = {0, 0};
 static const v3f v2f_One = {1, 1};
+
+enum {
+    TypeOf_unknown,
+
+    TypeOf_void,
+    TypeOf_u8,
+    TypeOf_u16,
+    TypeOf_u32,
+    TypeOf_u64,
+    TypeOf_s8,
+    TypeOf_s16,
+    TypeOf_s32,
+    TypeOf_s64,
+    TypeOf_float,
+    TypeOf_double,
+    TypeOf_bool,
+    TypeOf_StringRef,
+
+    TypeOf_v2i,
+    TypeOf_v3i,
+    TypeOf_v4i,
+
+    TypeOf_v2f,
+    TypeOf_v3f,
+    TypeOf_v4f,
+
+    TypeOf_Entity,
+    TypeOf_Type,
+
+    TypeOf_rgba8,
+    TypeOf_rgb8,
+
+    TypeOf_rgba32,
+    TypeOf_rgb32,
+
+    TypeOf_MAX,
+};
+
+u8 GetTypeSize(Type type);
+StringRef GetTypeName(Type type);
 
 #endif

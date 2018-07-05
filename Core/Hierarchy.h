@@ -1,52 +1,53 @@
 #ifndef HIERARCHY_H
 #define HIERARCHY_H
 
-#include <Core/Entity.h>
-#include <Core/Service.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Hierarchy)
-DeclareService(Hierarchy)
+Unit(Hierarchy)
 
-typedef void(*ParentChangedHandler)(Entity entity, Entity oldParent, Entity newParent);
-typedef void(*NameChangedHandler)(Entity entity, StringRef oldName, StringRef newName);
-
-DeclareEvent(ParentChanged, ParentChangedHandler)
-DeclareEvent(NameChanged, NameChangedHandler)
-
-DeclareComponentPropertyReactive(Hierarchy, StringRef, Name)
-DeclareComponentPropertyReactive(Hierarchy, Entity, Parent)
-
-Entity GetFirstChild(Entity parent);
-Entity GetNextChild(Entity parent, Entity currentChild);
-Entity GetNextChildThat(Entity parent, Entity currentChild, EntityBoolHandler handler);
-Entity GetSibling(Entity child);
-
-bool IsEntityDecendant(Entity entity, Entity parent);
-
-StringRef GetEntityPath(Entity entity);
-Entity CreateEntityFromPath(StringRef path);
-Entity CreateEntityFromName(Entity parent, StringRef name);
-
-Entity FindChild(Entity parent, StringRef childName);
-Entity FindEntity(StringRef path);
-
-Entity CopyEntity(Entity templateEntity, StringRef copyPath);
-
-#define DeclareComponentChild(TYPENAME, PROPERTYNAME) \
-    Entity Get ## PROPERTYNAME (Entity entity);
-
-#define DefineComponentChild(TYPENAME, CHILDCOMPONENTTYPE, PROPERTYNAME) \
-    Entity Get ## PROPERTYNAME (Entity entity) { \
-        Assert(IsEntityValid(entity));\
-        if(!Has ## TYPENAME (entity)) Add ## TYPENAME (entity); \
-        if(!IsEntityValid(Get ## TYPENAME (entity)->PROPERTYNAME)) { \
-            Get ## TYPENAME (entity)->PROPERTYNAME = Create ## CHILDCOMPONENTTYPE (entity, #PROPERTYNAME); \
-        }\
-        return Get ## TYPENAME (entity)->PROPERTYNAME; \
+Component(Hierarchy)
+    Property(bool, IsLocked)
+    Declare(Property, Parent, 0)
+    struct ParentChangedArgs { Entity ChangedEntity; Entity OldValue; Entity NewValue; };
+    Event(ParentChanged)
+    inline Entity GetParent(Entity entity) {
+        static Entity prop = PropertyOf_Parent();
+        Entity value;
+        memset(&value, 0, sizeof(Entity));
+        GetPropertyValue(prop, entity, &value);
+        return value;
     }
+    void SetParent(Entity entity, Entity value);
+    Declare(Property, Name, 0)
+    struct NameChangedArgs { Entity ChangedEntity; StringRef OldValue; StringRef NewValue; };
+    Event(NameChanged)
+    inline StringRef GetName(Entity entity) {
+        static Entity prop = PropertyOf_Name();
+        StringRef value;
+        memset(&value, 0, sizeof(StringRef));
+        GetPropertyValue(prop, entity, &value);
+        return value;
+    }
+    void SetName(Entity entity, StringRef value);
+
+Function(GetFirstChild, Entity, Entity parent)
+Function(GetSibling, Entity, Entity child)
+
+Function(IsEntityDecendant, bool, Entity child, Entity parent)
+
+Function(GetEntityPath, StringRef, Entity entity)
+
+Function(CreateEntityFromPath, Entity, StringRef path)
+Function(CreateEntityFromName, Entity, Entity parent, StringRef name)
+
+Function(FindEntityByName, Entity, Entity component, StringRef name)
+Function(FindEntityByPath, Entity, StringRef path)
 
 #define for_children(VARNAME, PARENT) \
     for(auto VARNAME = GetFirstChild(PARENT); VARNAME; VARNAME = GetSibling(VARNAME))
 
+void __InitializeHierarchy();
+
+void DumpHierarchy();
 
 #endif //HIERARCHY_H

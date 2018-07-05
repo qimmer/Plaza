@@ -20,9 +20,18 @@ DeclareComponentPropertyReactive(Material, u64, MaterialMultisampleMode)
 DeclareComponentPropertyReactive(Material, u64, MaterialBlendMode)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
-#define RenderState_STATE_RGB_WRITE               UINT64_C(0x0000000000000001) //!< Enable RGB write.
-#define RenderState_STATE_ALPHA_WRITE             UINT64_C(0x0000000000000002) //!< Enable alpha write.
-#define RenderState_STATE_DEPTH_WRITE             UINT64_C(0x0000000000000004) //!< Enable depth write.
+#define RenderState_STATE_R_WRITE                 UINT64_C(0x0000000000000001) //!< Enable R write.
+#define RenderState_STATE_G_WRITE                 UINT64_C(0x0000000000000002) //!< Enable G write.
+#define RenderState_STATE_B_WRITE                 UINT64_C(0x0000000000000004) //!< Enable B write.
+#define RenderState_STATE_ALPHA_WRITE                 UINT64_C(0x0000000000000008) //!< Enable alpha write.
+#define RenderState_STATE_DEPTH_WRITE                 UINT64_C(0x0000004000000000) //!< Enable depth write.
+
+/// Enable RGB write.
+#define RenderState_STATE_RGB_WRITE (0  \
+			| RenderState_STATE_R_WRITE \
+			| RenderState_STATE_G_WRITE \
+			| RenderState_STATE_B_WRITE \
+			)
 
 /// Depth test state. When `RenderState_STATE_DEPTH_` is not specified depth test will be disabled.
 #define RenderState_STATE_DEPTH_TEST_NONE         UINT64_C(0x0000000000000000)

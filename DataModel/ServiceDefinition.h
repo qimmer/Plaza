@@ -5,10 +5,17 @@
 #ifndef PLAZA_SERVICEDEFINITION_H
 #define PLAZA_SERVICEDEFINITION_H
 
+#include <Core/Entity.h>
 
-class ServiceDefinition {
+DeclareComponent(ServiceDefinition)
+    DeclareComponentChild(ServiceDefinition, ServiceDefinitionSubscriptions)
+    DeclareComponentChild(ServiceDefinition, ServiceDefinitionDependencies)
 
-};
+DeclareComponent(ServiceDefinitionDependency)
+    DeclareComponentPropertyReactive(ServiceDefinitionDependency, Service, ServiceDefinitionDependencyService)
 
+DeclareComponent(ServiceSubscriptionDefinition)
+    DeclareComponentPropertyReactive(ServiceSubscriptionDefinition, Event, ServiceSubscriptionEvent)
+    DeclareComponentPropertyReactive(ServiceSubscriptionDefinition, StringRef, ServiceSubscriptionHandlerName)
 
 #endif //PLAZA_SERVICEDEFINITION_H

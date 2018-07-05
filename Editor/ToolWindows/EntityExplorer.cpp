@@ -103,8 +103,8 @@ static void Draw(Entity view) {
 static Type SelectComponentMenu() {
     for(auto module = GetNextModule(0); IsModuleValid(module); module = GetNextModule(module)) {
         if(ImGui::BeginMenu(GetModuleName(module))) {
-            for(auto i = 0; i < GetModuleTypes(module); ++i) {
-                auto type = GetModuleType(module, i);
+            for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
+                if(GetTypeModule(type) != module) continue;
 
                 if(!IsComponentAbstract(type) && ImGui::MenuItem(GetTypeName(type))) {
                     ImGui::EndMenu();

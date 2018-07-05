@@ -8,3 +8,4 @@ add_library(Procedural ProceduralSpawner.cpp ProceduralSpawner.h ProceduralSpawn
 target_include_directories(Procedural PUBLIC "..")
 
 target_link_libraries(Procedural Core Foundation Scene Scene2D Scene3D )
+install (TARGETS Procedural RUNTIME DESTINATION bin)

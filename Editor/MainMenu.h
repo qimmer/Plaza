@@ -11,6 +11,6 @@
 DeclareService(MainMenu)
 
 DeclareComponent(MainMenu)
-DeclareComponentPropertyReactive(MainMenu, Entity, MainMenuVisibilityState)
+DeclareComponentPropertyReactive(MainMenu, bool, MainMenuVisible)
 
 #endif //PLAZA_MAINMENU_H

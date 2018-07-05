@@ -3,3 +3,12 @@
 //
 
 #include "LuaModule.h"
+#include "LuaScript.h"
+#include "LuaBinding.h"
+
+DefineModule(Lua)
+    ModuleType(LuaScript)
+
+    ModuleService(LuaScript)
+    ModuleService(LuaBinding)
+EndModule()

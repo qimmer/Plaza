@@ -90,7 +90,7 @@ static Entity CreateCompositionProgram(Entity vertexShader, Entity pixelShader, 
     return program;
 }
 
-Entity ResolveProgram(Entity vertexShader, Entity pixelShader, u8 profile, Entity shaderVariation) {
+API_EXPORT Entity ResolveProgram(Entity vertexShader, Entity pixelShader, u8 profile, Entity shaderVariation) {
     auto hash = HashCombination(vertexShader, pixelShader, profile, shaderVariation);
 
     auto it = ProgramLookup.find(hash);
@@ -114,5 +114,5 @@ Entity ResolveProgram(Entity vertexShader, Entity pixelShader, u8 profile, Entit
 };
 
 DefineService(Program)
-    ServiceEntity(ProgramRoot, "/.Program", NULL)
+    ServiceEntity(ProgramRoot, NULL)
 EndService()

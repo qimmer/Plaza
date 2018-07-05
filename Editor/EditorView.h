@@ -8,10 +8,7 @@
 #include <Core/Entity.h>
 
 DeclareComponent(EditorView)
-DeclareComponentPropertyReactive(EditorView, Entity, EditorViewVisibilityState)
-DeclareComponentPropertyReactive(EditorView, Entity, EditorViewVisibilityCommand)
+DeclareComponentPropertyReactive(EditorView, bool, EditorViewVisible)
 DeclareComponentPropertyReactive(EditorView, EntityHandler, EditorViewDrawFunction)
-
-DeclareService(EditorView)
 
 #endif //PLAZA_EDITORVIEW_H

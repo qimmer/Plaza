@@ -8,6 +8,12 @@
 #include <Core/Entity.h>
 
 DeclareComponent(ModuleDefinition)
-DeclareService(ModuleDefinition)
+    DeclareComponentChild(ModuleDefinition, ModuleDefinitionDependencies)
+    DeclareComponentChild(ModuleDefinition, ModuleDefinitionComponents)
+    DeclareComponentChild(ModuleDefinition, ModuleDefinitionServices)
+    DeclareComponentChild(ModuleDefinition, ModuleDefinitionEnums)
+
+DeclareComponent(ModuleDependencyDefinition)
+    DeclareComponentPropertyReactive(ModuleDependencyDefinition, Entity, ModuleDependencyModuleDefinition)
 
 #endif //PLAZA_MODULEDEFINITION_H

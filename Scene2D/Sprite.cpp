@@ -85,15 +85,15 @@ static void InitializeSpriteRoot(Entity entity) {
     SetVertexAttributeType(uvAttribute, TypeOf_v2f());
 
     auto shaderDeclaration = CreateStream(entity, "ShaderDeclaration");
-    SetStreamPath(shaderDeclaration, "res://scene2d/shaders/sprite.var");
+    SetStreamPath(shaderDeclaration, "res://Assets/Shaders/sprite.var");
 
     SpriteVertexShader = CreateShader(entity, "VertexShader");
-    SetStreamPath(SpriteVertexShader, "res://scene2d/shaders/sprite.vs");
+    SetStreamPath(SpriteVertexShader, "res://Assets/Shaders/sprite.vs");
     SetShaderType(SpriteVertexShader, ShaderType_Vertex);
     SetShaderDeclaration(SpriteVertexShader, shaderDeclaration);
 
     SpritePixelShader = CreateShader(entity, "PixelShader");
-    SetStreamPath(SpritePixelShader, "res://scene2d/shaders/sprite.ps");
+    SetStreamPath(SpritePixelShader, "res://Assets/Shaders/sprite.ps");
     SetShaderType(SpritePixelShader, ShaderType_Pixel);
     SetShaderDeclaration(SpritePixelShader, shaderDeclaration);
 
@@ -105,5 +105,5 @@ static void InitializeSpriteRoot(Entity entity) {
     CreateSpriteMesh(entity);
 }
 DefineService(Sprite)
-        ServiceEntity(SpriteRoot, "/.Sprite", InitializeSpriteRoot)
+        ServiceEntity(SpriteRoot, InitializeSpriteRoot)
 EndService()

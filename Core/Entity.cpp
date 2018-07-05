@@ -1,207 +1,102 @@
 #include <Core/Entity.h>
 #include <Core/Pool.h>
 #include <Core/Debug.h>
-#include <Core/Dictionary.h>
 #include <Core/Function.h>
-#include "Delegate.h"
-#include "Service.h"
-#include "String.h"
+#include "Event.h"
 
-struct EntityData
-{
-};
+BeginUnit(Entity)
+    RegisterFunction(CreateEntity)
+    RegisterFunction(DestroyEntity)
+    RegisterFunction(GetNextEntity)
+    RegisterFunction(IsEntityOccupied)
+    RegisterFunction(IsEntityValid)
 
-struct ComponentTypeData
-{
-    EntityBoolHandler addFunc, removeFunc, hasFunc;
-    Vector<Type> dependencies, extensions;
-    bool isAbstract;
-};
+    BeginEvent(EntityCreated)
+        EventArgument(Entity, entity)
+    EndEvent()
 
-static Pool<ComponentTypeData> componentTypes;
+    BeginEvent(EntityDestroyed)
+        EventArgument(Entity, entity)
+    EndEvent()
+EndUnit()
 
-DefineHandle(Entity, EntityData)
+Vector<u32> Generations;
+Vector<u32> FreeSlots;
 
-DefineType(Entity)
-    DefineMethod(Entity, CreateEntity)
-    DefineMethod(void, DestroyEntity, Entity entity)
-    DefineMethod(bool, AddComponent, Entity entity, Type componentType)
-    DefineMethod(bool, RemoveComponent, Entity entity, Type componentType)
-    DefineMethod(bool, HasComponent, Entity entity, Type componentType)
-    DefineMethod(bool, IsComponent, Type componentType)
-EndType()
-
-DefineEvent(ComponentAdded, ComponentHandler)
-DefineEvent(ComponentRemoved, ComponentHandler)
-DefineEvent(ComponentChanged, ComponentHandler)
-DefineEvent(PropertyChanged, PropertyChangedHandler)
-
-void SetComponentAbstract(Type componentType, bool value) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return;
-    componentTypes[index].isAbstract = value;
+API_EXPORT bool IsEntityOccupied(u32 index) {
+    return Generations.size() > index && Generations[index] % 2 != 0;
 }
 
-bool IsComponentAbstract(Type componentType) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return false;
-    return componentTypes[index].isAbstract;
+API_EXPORT bool IsEntityValid(Entity entity) {
+    auto index = GetEntityIndex(entity);
+    return entity && Generations.size() > index && Generations[index] == GetEntityGeneration(entity);
 }
 
-bool RegisterComponent(Type componentType, EntityBoolHandler addFunc, EntityBoolHandler removeFunc, EntityBoolHandler hasFunc) {
-    auto index = GetHandleIndex(componentType);
-    if(componentTypes.IsValid(index)) return false;
-    componentTypes.Insert(index);
-
-    componentTypes[index].addFunc = addFunc;
-    componentTypes[index].removeFunc = removeFunc;
-    componentTypes[index].hasFunc = hasFunc;
-
-    return true;
+API_EXPORT Entity GetEntityByIndex (u32 index) {
+    if(index >= Generations.size()) return 0;
+    if(Generations[index] % 2 == 0) return 0;
+    return GetEntity(index, Generations[index]);
 }
 
-bool UnregisterComponent(Type componentType) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return false;
-    componentTypes.Remove(index);
-    return true;
-}
-
-bool AddComponent(Entity entity, Type componentType) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return false;
-
-    return componentTypes[index].addFunc(entity);
-}
-
-bool RemoveComponent(Entity entity, Type componentType) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return false;
-
-    return componentTypes[index].removeFunc(entity);
-}
-
-bool HasComponent(Entity entity, Type componentType) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return false;
-
-    return componentTypes[index].hasFunc(entity);
-}
-
-bool IsComponent(Type componentType) {
-    auto index = GetHandleIndex(componentType);
-    return componentTypes.IsValid(index);
-}
-
-Index GetExtensions(Type componentType) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return 0;
-
-    return componentTypes[index].extensions.size();
-}
-
-Type GetExtension(Type componentType, Index extensionIndex) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index) || extensionIndex >= componentTypes[index].extensions.size()) return 0;
-
-    return componentTypes[index].extensions[extensionIndex];
-}
-
-Index AddExtension(Type componentType, Type extensionType) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return InvalidIndex;
-    componentTypes[index].extensions.push_back(extensionType);
-
-    for(auto entity = GetNextEntity(0); entity; entity = GetNextEntity(entity)) {
-        Assert(IsEntityValid(entity));
-        if(!componentTypes[index].hasFunc(entity)) continue;
-
-        componentTypes[GetHandleIndex(extensionType)].addFunc(entity);
-    }
-
-    return componentTypes[index].extensions.size() - 1;
-}
-
-bool RemoveExtension(Type componentType, Type extensionType) {
-    for(auto i = 0; i < GetExtensions(componentType); ++i) {
-        if(GetExtension(componentType, i) == extensionType) {
-            return RemoveExtensionByIndex(componentType, i);
+API_EXPORT Entity GetNextEntity (Entity entity) {
+    auto index = GetEntityIndex(entity); 
+    if(index >= Generations.size()) return 0; 
+    if(!entity) {
+        while(!IsEntityOccupied(index)) {
+            index++;
+            if(index >= Generations.size()) return 0; 
         }
+        return GetEntity(index, Generations[index]); 
     }
-    return false;
-}
+    index++;
+    if(index >= Generations.size()) return 0; 
+    while(!IsEntityOccupied (index)) { 
+        if(index >= Generations.size()) return 0; 
+        index++; 
+    } 
+    auto gen = Generations[index]; 
+    return GetEntity(index, gen); 
+} 
 
-bool RemoveExtensionByIndex(Type componentType, Index extensionIndex) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index) || extensionIndex >= componentTypes[index].extensions.size()) return false;
+API_EXPORT Entity CreateEntity () {
+    u32 index;
+    if (FreeSlots.size()) {
+        index = FreeSlots[FreeSlots.size() - 1];
+        FreeSlots.pop_back();
+    } else {
+        Generations.push_back(0);
+        index = Generations.size() - 1;
+    }
+    
+    Generations[index]++;
+    
+    Assert(0, Generations[index] % 2 != 0);
+    
+    auto entity = GetEntity(index, Generations[index]);
 
-    for(auto entity = GetNextEntity(0); entity; entity = GetNextEntity(entity)) {
-        if(!componentTypes[index].hasFunc(entity)) continue;
+    Verbose("Entity Created: { index: %i, gen: %u }", index, Generations[index]);
 
-        componentTypes[GetHandleIndex(componentTypes[index].extensions[extensionIndex])].removeFunc(entity);
+    static bool isInCreateEntity = false;
+    if(!isInCreateEntity) {
+        isInCreateEntity = true;
+        FireEntityCreated({entity});
+        isInCreateEntity = false;
     }
 
-    componentTypes[index].extensions.erase(componentTypes[index].extensions.begin() + extensionIndex);
-    return true;
+    return entity;
 }
 
-Index GetDependencies(Type componentType) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return 0;
-
-    return componentTypes[index].dependencies.size();
-}
-
-Type GetDependency(Type componentType, Index dependencyIndex) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index) || dependencyIndex >= componentTypes[index].dependencies.size()) return 0;
-
-    return componentTypes[index].dependencies[dependencyIndex];
-}
-
-Index AddDependency(Type componentType, Type dependency) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index)) return InvalidIndex;
-    componentTypes[index].dependencies.push_back(dependency);
-    return componentTypes[index].dependencies.size() - 1;
-}
-
-bool RemoveDependencyByIndex(Type componentType, Index dependencyIndex) {
-    auto index = GetHandleIndex(componentType);
-    if(!componentTypes.IsValid(index) || dependencyIndex >= componentTypes[index].dependencies.size()) return false;
-    componentTypes[index].dependencies.erase(componentTypes[index].dependencies.begin() + dependencyIndex);
-    return true;
-}
-
-bool RemoveDependency(Type componentType, Type dependencyType) {
-    for(auto i = 0; i < GetDependencies(componentType); ++i) {
-        if(GetDependency(componentType, i) == dependencyType) {
-            return RemoveDependencyByIndex(componentType, i);
-        }
+API_EXPORT void DestroyEntity(Entity entity) {
+    if (!IsEntityValid(entity)) {
+        return;
     }
-    return false;
+
+    FireEntityDestroyed({entity});
+    
+    auto index = GetEntityIndex(entity);
+    FreeSlots.push_back(index);
+    ++ Generations[index];
+    
+    Assert(0, Generations[index] % 2 == 0);
+    Verbose("Entity Destroyed: { index: %d, gen: %d }", index, GetEntityGeneration(entity));
 }
-
-Entity GetNextEntityThat(Entity currentInList, EntityBoolHandler conditionFunc) {
-    currentInList = GetNextEntity(currentInList);
-    while(IsEntityValid(currentInList) && !conditionFunc(currentInList)) {
-        currentInList = GetNextEntity(currentInList);
-    }
-    return currentInList;
-}
-
-static void OnEntityDestroy(Entity entity) {
-    for(auto i = 0; i < componentTypes.End(); ++i ) {
-        if(componentTypes.IsValid(i)) {
-            componentTypes[i].removeFunc(entity);
-        }
-    }
-}
-
-Lookup<Type, Vector<ComponentHandler>> OnComponentAdded;
-Lookup<Type, Vector<ComponentHandler>> OnComponentRemoved;
-Lookup<Property, Vector<PropertyChangedHandler>> OnPropertyChanged;
-
-DefineService(Entity)
-        Subscribe(EntityDestroyed, OnEntityDestroy)
-EndService()

@@ -144,11 +144,11 @@ class Deserializer {
     bool loadFromFile(const char* filename);
     bool allocate(size_t sizeToAllocate,const char* optionalTextToCopy=NULL,size_t optionalTextToCopySize=0);
     public:
-    IMGUI_API Deserializer() : f_data(NULL),f_size(0) {}
+    Deserializer() : f_data(NULL),f_size(0) {}
     IMGUI_API Deserializer(const char* filename);                     // From file
     IMGUI_API Deserializer(const char* text,size_t textSizeInBytes);  // From memory (and optionally from file through GetFileContent(...))
-    IMGUI_API ~Deserializer() {clear();}
-    IMGUI_API bool isValid() const {return (f_data && f_size>0);}
+    ~Deserializer() {clear();}
+    bool isValid() const {return (f_data && f_size>0);}
 
     // returns whether to stop parsing or not
     typedef bool (*ParseCallback)(FieldType ft,int numArrayElements,void* pValue,const char* name,void* userPtr);   // (*)

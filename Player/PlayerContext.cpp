@@ -17,13 +17,9 @@
 #include <Rendering/RenderTarget.h>
 #include "PlayerContext.h"
 
-    Entity PlayerContext = 0, RuntimeFolder = 0;
+    Entity RuntimeFolder = 0;
 
-    Entity GetPlayerContext() {
-        return PlayerContext;
-    }
-
-    int PlayerMain(int argc, char** argv, Module *modules, const StringRef* virtualPathMappings, const StringRef* assets, StringRef title) {
+API_EXPORT int PlayerMain(int argc, char** argv, Module *modules, const StringRef* virtualPathMappings, const StringRef* assets) {
         InitializeModule(ModuleOf_Foundation());
 
         while(virtualPathMappings && *virtualPathMappings) {
@@ -47,8 +43,6 @@
             InitializeModule(modules[i]);
         }
 
-        SetContextTitle(PlayerContext, title);
-
         while(assets && *assets) {
             char path[PATH_MAX];
 			auto protocolOffset = strstr(*assets, "://");
@@ -60,7 +54,7 @@
             assets++;
         }
 
-        while(IsEntityValid(PlayerContext) && IsPlayerContextRunning()) {
+        while(IsPlayerContextRunning()) {
             AppUpdate();
         }
 
@@ -71,25 +65,9 @@
         return 0;
     }
 
-    Entity GetRuntimeFolder() {
+API_EXPORT Entity GetRuntimeFolder() {
         return RuntimeFolder;
     }
 
-    static void OnContextClosing(Entity entity) {
-        if(entity == PlayerContext) {
-            DestroyEntity(PlayerContext);
-        }
-    }
-    static void OnServiceStart(Service service) {
-        PlayerContext = CreateContext(0, "PlayerContext");
-        SetRenderTargetSize(PlayerContext, {800, 600});
-    }
-
-    static void OnServiceStop(Service service){
-        DestroyEntity(PlayerContext);
-    }
-
 DefineService(PlayerContext)
-    Subscribe(PlayerContextStarted, OnServiceStart)
-    Subscribe(PlayerContextStopped, OnServiceStop)
 EndService()

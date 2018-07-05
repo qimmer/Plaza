@@ -3,21 +3,27 @@
 //
 
 #include <Core/Debug.h>
-#include <Core/Delegate.h>
+#include <Core/NativeUtils.h>
+#include <Core/Event.h>
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <cstring>
+#include <process.h>
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <unistd.h>
 #include <signal.h>
 #endif
 
-DeclareEvent(LogMessageReceived, LogHandler)
+BeginUnit(Debug)
+    BeginEvent(LogMessageReceived)
+        EventArgument(u8, LogMessageSeverity)
+        EventArgument(StringRef, LogMessageText)
+    EndEvent()
+EndUnit()
 
-DefineEvent(LogMessageReceived, LogHandler)
-
-void Log(int channel, int severity, StringRef format, ...) {
+API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
     char buffer[4096];
     va_list arg;
 
@@ -43,19 +49,29 @@ void Log(int channel, int severity, StringRef format, ...) {
     buffer[numWritten + 9] = '\n';
     buffer[numWritten + 10] = '\0';
 
+    setbuf(stdout, 0);
     printf("%s", buffer);
 
-    FireEvent(LogMessageReceived, channel, severity, buffer);
+    LogMessageReceivedArgs args;
+    args.Entity = context;
+    args.LogMessageSeverity = severity;
+    strncpy(args.LogMessageText, buffer, sizeof(args.LogMessageText));
+
+    FireLogMessageReceived(args);
 
     if(severity > LogSeverity_Error) {
         DebuggerBreak();
     }
 }
 
-void DebuggerBreak() {
+API_EXPORT void DebuggerBreak() {
 #ifdef WIN32
     __debugbreak();
 #else
     raise(SIGTRAP);
 #endif
+}
+
+API_EXPORT void Exit(s32 returnCode) {
+    ::exit(returnCode);
 }

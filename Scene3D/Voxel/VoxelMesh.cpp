@@ -173,17 +173,17 @@ void InitializeVoxelRoot(Entity entity) {
     //SetVertexAttributeAsInt(texCoord, true);
 
     auto shaderDeclaration = CreateStream(entity, "ShaderDeclaration");
-    SetStreamPath(shaderDeclaration, "res://voxel/shaders/voxel.var");
+    SetStreamPath(shaderDeclaration, "res://Assets/Shaders/voxel.var");
 
     VoxelVertexShader = CreateShader(entity, "VertexShader");
     SetShaderType(VoxelVertexShader, ShaderType_Vertex);
     SetShaderDeclaration(VoxelVertexShader, shaderDeclaration);
-    SetStreamPath(VoxelVertexShader, "res://voxel/shaders/voxel.vs");
+    SetStreamPath(VoxelVertexShader, "res://Assets/Shaders/voxel.vs");
 
     VoxelPixelShader = CreateShader(entity, "PixelShader");
     SetShaderType(VoxelPixelShader, ShaderType_Pixel);
     SetShaderDeclaration(VoxelPixelShader, shaderDeclaration);
-    SetStreamPath(VoxelPixelShader, "res://voxel/shaders/voxel.ps");
+    SetStreamPath(VoxelPixelShader, "res://Assets/Shaders/voxel.ps");
 
     FaceVertexPositionsUsUniform = CreateUniform(entity, "VertexPositionsUsUniform");
     SetUniformName(FaceVertexPositionsUsUniform, "voxel_face_vertex_positions_us");

@@ -81,7 +81,7 @@ StringRef GetFileExtension(StringRef absolutePath);
 void CleanupPath(char* messyPath);
 StringRef GetCurrentWorkingDirectory();
 
-DeclareEvent(StreamContentChanged, EntityHandler)
+DeclareEvent(StreamContentChanged, Entity entity)
 
 #define StreamSeek_End UINT32_MAX
 

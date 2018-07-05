@@ -2,28 +2,25 @@
 // Created by Kim Johannsen on 18-03-2018.
 //
 
-#include <Logic/State.h>
 #include <Rendering/Context.h>
 #include "InputState.h"
 #include "Key.h"
 
 struct InputState {
-    InputState() : InputStateStateScale(1.0f), InputStateKey(0), InputStatePrimaryModifierKey(0), InputStateSecondaryModifierKey(0) {
+    InputState() : InputStateValue(0.0f), InputStateKey(0), InputStatePrimaryModifierKey(0), InputStateSecondaryModifierKey(0) {
     }
 
     u16 InputStateKey, InputStatePrimaryModifierKey, InputStateSecondaryModifierKey;
-    float InputStateStateScale;
+    float InputStateValue;
 };
 
 static void OnStateValueChanged(Entity state, float oldState, float newState) {
-    if(HasInputState(state)) {
-        if(oldState < 0.5f && newState > 0.5f) {
-            FireEvent(CommandPressed, state);
-        }
+    if(oldState < 0.5f && newState > 0.5f) {
+        FireNativeEvent(CommandPressed, state);
+    }
 
-        if(oldState > 0.5f && newState < 0.5f) {
-            FireEvent(CommandReleased, state);
-        }
+    if(oldState > 0.5f && newState < 0.5f) {
+        FireNativeEvent(CommandReleased, state);
     }
 }
 
@@ -34,23 +31,22 @@ static void OnChanged(Entity entity) {
     Assert(data->InputStateSecondaryModifierKey < KEY_MAX);
 }
 
-DefineEvent(CommandPressed, EntityHandler)
-DefineEvent(CommandReleased, EntityHandler)
+DefineEvent(CommandPressed)
+DefineEvent(CommandReleased)
 
 DefineComponent(InputState)
-    Dependency(State)
     DefinePropertyReactiveEnum(u16, InputStateKey, Key)
     DefinePropertyReactiveEnum(u16, InputStatePrimaryModifierKey, Key)
     DefinePropertyReactiveEnum(u16, InputStateSecondaryModifierKey, Key)
-    DefinePropertyReactive(float, InputStateStateScale)
+    DefinePropertyReactive(float, InputStateValue)
 EndComponent()
 
 DefineComponentPropertyReactive(InputState, u16, InputStateKey)
-DefineComponentPropertyReactive(InputState, float, InputStateStateScale)
+DefineComponentPropertyReactive(InputState, float, InputStateValue)
 DefineComponentPropertyReactive(InputState, u16, InputStatePrimaryModifierKey)
 DefineComponentPropertyReactive(InputState, u16, InputStateSecondaryModifierKey)
 
 DefineService(InputState)
-    Subscribe(StateValueChanged, OnStateValueChanged)
+    Subscribe(InputStateValueChanged, OnStateValueChanged)
     Subscribe(InputStateChanged, OnChanged)
 EndService()

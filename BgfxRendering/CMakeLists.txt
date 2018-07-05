@@ -45,7 +45,7 @@ add_dependencies(BgfxRendering ex_bgfx ex_glfw)
 
 target_include_directories(BgfxRendering PUBLIC ".." ${ex_bgfx_inc_dir} ${ex_glfw_inc_dir})
 
-SET(libs Core Foundation Rendering glfw)
+SET(libs Core Foundation Rendering UI glfw)
 
 SET(libs ${libs} bgfx bimg bx)
 
@@ -75,4 +75,5 @@ IF(WITH_SHADER_COMPILER)
     target_link_libraries(BgfxRendering File)
 ENDIF(WITH_SHADER_COMPILER)
 
-INSTALL(FILES ${ex_bgfx_shader_dir}/shaderlib.sh ${ex_bgfx_shader_dir}/common.sh ${ex_bgfx_src_dir}/bgfx_shader.sh ${ex_bgfx_src_dir}/bgfx_compute.sh DESTINATION bin/Shaders)
+INSTALL(FILES ${ex_bgfx_shader_dir}/shaderlib.sh ${ex_bgfx_shader_dir}/common.sh ${ex_bgfx_src_dir}/bgfx_shader.sh ${ex_bgfx_src_dir}/bgfx_compute.sh DESTINATION bin/Assets/Shaders)
+install (TARGETS BgfxRendering RUNTIME DESTINATION bin)

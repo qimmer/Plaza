@@ -17,6 +17,8 @@
 #include <Scene/SceneModule.h>
 #include <Foundation/Stream.h>
 #include <UI/UIModule.h>
+#include <DataModel/DataModelModule.h>
+#include <Lua/LuaModule.h>
 
 int main(int argc, char** argv) {
     Module modules[] = {
@@ -25,6 +27,7 @@ int main(int argc, char** argv) {
         ModuleOf_BgfxRendering(),
         ModuleOf_Json(),
         ModuleOf_StbDecoders(),
+        ModuleOf_Lua(),
 
         // App Modules
         ModuleOf_Player(),
@@ -36,6 +39,7 @@ int main(int argc, char** argv) {
         ModuleOf_Scene2D(),
         ModuleOf_Scene3D(),
         ModuleOf_UI(),
+        ModuleOf_DataModel(),
 
         0
     };
@@ -43,17 +47,14 @@ int main(int argc, char** argv) {
     // Map virtual resource paths used by different libraries,
     // to all find their resources in the current working directory
     StringRef virtualPaths[] = {
-        "res://imgui", "file://.",
-        "res://scene2d", "file://.",
-        "res://voxel", "file://.",
-        "res://assets", "file://.",
+        "res://Assets", "file://Assets",
         "res://shadercache", "file://./shadercache",
         0, 0,
         0
     };
 
     StringRef scenes[] = {
-        "res://assets/game.json",
+        "res://Assets/testlua.json",
         0
     };
 
@@ -64,10 +65,10 @@ int main(int argc, char** argv) {
     char sourceDirectory[PATH_MAX];
     GetParentFolder(sourceFilePath, sourceDirectory, PATH_MAX);
     if(IsFolder(sourceDirectory)) {
-        virtualPaths[10] = "res://source";
-        virtualPaths[11] = sourceDirectory;
-        scenes[0] = "res://source/game.json";
+        virtualPaths[4] = "res://Source";
+        virtualPaths[5] = sourceDirectory;
+        scenes[0] = "res://Source/Assets/testlua.json";
     }
 
-    return PlayerMain(argc, argv, modules, virtualPaths, scenes, "Test Game - Built " __DATE__ " " __TIME__);
+    return PlayerMain(argc, argv, modules, virtualPaths, scenes);
 }

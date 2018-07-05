@@ -331,7 +331,7 @@ static void Draw(Entity view) {
             ImGui::Columns(2, GetTypeName(type));
 
             for(auto property = GetNextProperty(0); IsPropertyValid(property); property = GetNextProperty(property)) {
-                if(GetPropertyOwner(property) != type) {
+                if(GetPropertyComponent(property) != type) {
                     continue;
                 }
 
@@ -395,8 +395,9 @@ void ImGui::ComponentContextMenu(Type componentType) {
         if(ImGui::BeginMenu("Add")) {
             for(auto module = GetNextModule(0); IsModuleValid(module); module = GetNextModule(module)) {
                 if(ImGui::BeginMenu(GetModuleName(module))) {
-                    for(auto i = 0; i < GetModuleTypes(module); ++i) {
-                        auto type = GetModuleType(module, i);
+                    for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
+                        if(GetTypeModule(type) != module) continue;
+
                         if(IsComponent(type)) {
                             if(ImGui::MenuItem(GetTypeName(type))) {
                                 for(auto i = 0; i < GetNumSelection(); ++i) {

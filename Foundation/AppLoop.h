@@ -5,9 +5,7 @@
 #ifndef PLAZA_APPLOOP_H
 #define PLAZA_APPLOOP_H
 
-#include <Core/Delegate.h>
-
-typedef void(*AppUpdateHandler)(double deltaTime);
+#include <Core/Event.h>
 
 void AppUpdate();
 double GetTimeSinceStart();
@@ -15,8 +13,8 @@ double GetTimeSinceStart();
 void SetScreenScanInterval(double interval);
 double GetScreenScanInterval();
 
-DeclareEvent(AppUpdate, AppUpdateHandler)
-DeclareEvent(AppFixedUpdate, AppUpdateHandler)
-DeclareEvent(AppScreenScanUpdate, AppUpdateHandler)
+DeclareEvent(AppUpdate, Entity context, double deltaTime)
+DeclareEvent(AppFixedUpdate, Entity context, double deltaTime)
+DeclareEvent(AppScreenScanUpdate, Entity context, double deltaTime)
 
 #endif //PLAZA_APPLOOP_H

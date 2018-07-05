@@ -13,7 +13,6 @@ add_subdirectory(Core)
 add_subdirectory(Foundation)
 add_subdirectory(File)
 add_subdirectory(Test)
-add_subdirectory(Logic)
 add_subdirectory(Input)
 add_subdirectory(Rendering)
 add_subdirectory(Scene)
@@ -32,15 +31,11 @@ add_subdirectory(Lua)
 add_subdirectory(Json)
 add_subdirectory(StbDecoders)
 #add_subdirectory(Excel)
+add_subdirectory(Tests)
 
 
 # Plaza Plugins
 add_subdirectory(BgfxRendering)
-
-# Tests
-add_subdirectory(CoreTest)
-add_subdirectory(FoundationTest)
-add_subdirectory(RenderingTest)
 
 # Projects
 add_subdirectory(TestGame)

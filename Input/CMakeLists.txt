@@ -7,4 +7,5 @@ add_library(Input InputState.cpp InputState.h InputModule.cpp InputModule.h Key.
 
 target_include_directories(Input PUBLIC "..")
 
-target_link_libraries(Input PUBLIC Foundation Core Logic)
+target_link_libraries(Input PUBLIC Foundation Core)
+install (TARGETS Input RUNTIME DESTINATION bin)

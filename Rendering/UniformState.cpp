@@ -30,16 +30,16 @@ DefineComponentProperty(UniformState, v4f, UniformStateVec4);
 DefineComponentProperty(UniformState, Entity, UniformStateTexture);
 DefineComponentProperty(UniformState, u8, UniformStateStage)
 
-void SetUniformStateState(Entity entity, u64 size, const void *data) {
+API_EXPORT void SetUniformStateState(Entity entity, u64 size, const void *data) {
     Assert(size <= (sizeof(m4x4f)*16));
     memcpy(GetUniformState(entity)->LargeArray, data, size);
 }
 
-void GetUniformStateState(Entity entity, u64 size, void *data) {
+API_EXPORT void GetUniformStateState(Entity entity, u64 size, void *data) {
     Assert(size <= (sizeof(m4x4f)*16));
     memcpy(data, GetUniformState(entity)->LargeArray, size);
 }
 
-void *GetUniformStateStateRaw(Entity entity) {
+API_EXPORT void *GetUniformStateStateRaw(Entity entity) {
     return GetUniformState(entity)->LargeArray;
 };

@@ -56,13 +56,13 @@ Entity FontTexture = 0,
 DefineComponent(ImGuiRenderer)
 EndComponent()
 
-DefineEvent(ImGuiDraw, EntityHandler)
+DefineEvent(ImGuiDraw)
 
-void *GetDefaultImGuiContext() {
+API_EXPORT void *GetDefaultImGuiContext() {
     return PrimaryImGuiContext;
 }
 
-void RebuildImGuiFonts() {
+API_EXPORT void RebuildImGuiFonts() {
     ImGuiIO &io = GetIO();
 
     // Build atlas
@@ -97,16 +97,16 @@ void RebuildImGuiFonts() {
 
 }
 
-Entity GetImGuiTextureUniform() {
+API_EXPORT Entity GetImGuiTextureUniform() {
     return ImGuiTextureUniform;
 }
 
 
-Entity GetImGuiVertexShader() {
+API_EXPORT Entity GetImGuiVertexShader() {
     return ImGuiVertexShader;
 }
 
-Entity GetImGuiPixelShader() {
+API_EXPORT Entity GetImGuiPixelShader() {
     return ImGuiPixelShader;
 }
 
@@ -262,7 +262,7 @@ static void RenderImGui(Entity context, double deltaTime) {
 
     NewFrame();
 
-    FireEvent(ImGuiDraw, context);
+    FireNativeEvent(ImGuiDraw, context);
 
     Render();
 
@@ -302,9 +302,9 @@ static void InitializeProgram() {
     ImGuiPixelShader = CreateShader(ImGuiDataRoot, "PixelShader");
     ImGuiTextureUniform = CreateUniform(ImGuiDataRoot, "TextureUniform");
 
-    SetStreamPath(ImGuiVertexShader, "res://imgui/shaders/imgui.vs");
-    SetStreamPath(ImGuiPixelShader, "res://imgui/shaders/imgui.ps");
-    SetStreamPath(ImGuiShaderDeclaration, "res://imgui/shaders/imgui.var");
+    SetStreamPath(ImGuiVertexShader, "res://Assets/Shaders/imgui.vs");
+    SetStreamPath(ImGuiPixelShader, "res://Assets/Shaders/imgui.ps");
+    SetStreamPath(ImGuiShaderDeclaration, "res://Assets/Shaders/imgui.var");
 
     SetShaderType(ImGuiVertexShader, ShaderType_Vertex);
     SetShaderDeclaration(ImGuiVertexShader, ImGuiShaderDeclaration);

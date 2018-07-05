@@ -321,8 +321,8 @@ private:
 
     IMGUI_API static void StaticInit();
     friend bool BadCodeEditor(const char* label, char* buf, size_t buf_size,ImGuiCe::Language lang,const ImVec2& size_arg, ImGuiInputTextFlags flags, ImGuiTextEditCallback callback, void* user_data, ImGuiID* pOptionalItemIDOut);
-    friend const char* GetSupportedExtensions();
-    friend Language GetLanguageFromExtension(const char* ext);
+    IMGUI_API friend const char* GetSupportedExtensions();
+        IMGUI_API friend Language GetLanguageFromExtension(const char* ext);
 };
 
 

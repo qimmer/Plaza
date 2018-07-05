@@ -9,4 +9,5 @@ target_include_directories(Editor PUBLIC "..")
 
 target_link_libraries(Editor Core Foundation Rendering ImGui Scene Scene3D)
 
-INSTALL(FILES Fonts/fontawesome-webfont.ttf Fonts/MaterialIcons-Regular.ttf Fonts/segoeui.ttf Fonts/DroidSans.ttf Fonts/DroidSans-Bold.ttf DESTINATION bin/Fonts)
+INSTALL(DIRECTORY Assets DESTINATION bin)
+install (TARGETS Editor RUNTIME DESTINATION bin)

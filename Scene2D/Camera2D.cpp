@@ -9,6 +9,8 @@
 #include <Rendering/Context.h>
 
 struct Camera2D {
+    Camera2D() : Camera2DPixelsPerUnit(32.0f) {}
+
     float Camera2DPixelsPerUnit;
 };
 

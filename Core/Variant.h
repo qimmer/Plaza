@@ -5,37 +5,16 @@
 #ifndef PLAZA_VARIANT_H
 #define PLAZA_VARIANT_H
 
-#include <Core/String.h>
-#include <Core/Types.h>
+#include <Core/NativeUtils.h>
 
+struct ALIGN(16) Variant {
+    Entity type;
+    char buffer[1024 - sizeof(Entity)];
+};
 
+bool GetVariant(Variant v, u32 bufferSize, void *buffer, u32 *writtenBytes);
 
-    enum VariantType {
-        VariantType_I1,
-        VariantType_D1,
-        VariantType_I2,
-        VariantType_D2,
-        VariantType_I3,
-        VariantType_D3,
-        VariantType_I4,
-        VariantType_D4,
-        VariantType_STRING,
-        VariantType_BOOL
-    };
-    typedef struct {
-        VariantType type;
-        String string;
-        union {
-            s64 v1i;
-            double v1d;
-            v2i v2i;
-            v3i v3i;
-            v4i v4i;
-            v2d v2d;
-            v3d v3d;
-            v4d v4d;
-            bool boolean;
-        };
-    } Variant;
-}
+#define SetVariant(V, TYPE, VALUE) if(TypeOf_ ## TYPE == TypeOf_String) { V.string = VALUE; } else { auto val = VALUE; memcpy(&v.buffer, &val, sizeof(val)); }
+Variant CreateVariant(Entity type, u32 bufferSize, const void *buffer);
+
 #endif //PLAZA_VARIANT_H

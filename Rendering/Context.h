@@ -9,11 +9,6 @@
 #include <Core/Entity.h>
 
 DeclareComponent(Context)
-
-typedef void(*KeyHandler)(Entity context, u16 key, float oldState, float newState);
-typedef void(*CharHandler)(Entity context, char c);
-typedef void(*CursorHandler)(Entity context, u8 index, v2i oldState, v2i newState);
-
 DeclareComponentPropertyReactive(Context, StringRef, ContextTitle)
 DeclareComponentPropertyReactive(Context, bool, ContextFullscreen)
 DeclareComponentPropertyReactive(Context, bool, ContextVsync)
@@ -26,8 +21,8 @@ void SetKeyState(Entity context, u16 key, float state);
 v2i GetCursorPosition(Entity context, u8 index);
 void SetCursorPosition(Entity context, u8 index, v2i value);
 
-DeclareEvent(KeyStateChanged, KeyHandler)
-DeclareEvent(CharacterPressed, CharHandler)
-DeclareEvent(CursorPositionChanged, CursorHandler)
+DeclareEvent(KeyStateChanged, Entity context, u16 key, float oldState, float newState)
+DeclareEvent(CharacterPressed, Entity context, char c)
+DeclareEvent(CursorPositionChanged, Entity context, u8 index, v2i oldState, v2i newState)
 
 #endif //PLAZA_CONTEXT_H

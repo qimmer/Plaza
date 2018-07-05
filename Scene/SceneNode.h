@@ -11,12 +11,10 @@
     DeclareComponent(SceneNode)
     DeclareService(SceneNode)
 
-    typedef void(*SceneNodeSceneChangedHandler)(Entity sceneNode, Entity oldScene, Entity newScene);
-
     Entity GetSceneNodeScene(Entity sceneNode);
     Entity FindScene(Entity entity);
 void SetScene(Entity entity, Entity scene);
 
-    DeclareEvent(SceneNodeSceneChanged, SceneNodeSceneChangedHandler)
+    DeclareEvent(SceneNodeSceneChanged, Entity sceneNode, Entity oldScene, Entity newScene)
 
 #endif //PLAZA_SCENENODE_H

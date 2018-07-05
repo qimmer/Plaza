@@ -10,112 +10,83 @@
 #define MaxPages 4096
 #define PoolPageElements 256
 
-#ifdef POOL_MEM_GUARD
-#define MemoryGuard(G) char G [16]
-#define AssertGuard(G) Assert(memcmp(G, MemoryGuardData, 16) == 0)
-#define InitGuard(G) memcpy(G, MemoryGuardData, 16)
-static const char *MemoryGuardData = "DeadBeefDeadBif";
-#endif
+inline unsigned long upper_power_of_two(unsigned long v)
+{
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
 
-template<typename T>
-class ALIGN(alignof(T)) Pool
+class Pool
 {
 private:
-    T default_value;
-
-    struct ALIGN(alignof(T)) Entry {
-        Entry() : is_occupied(0) {
-#ifdef POOL_MEM_GUARD
-            InitGuard(preGuard);
-            InitGuard(postGuard);
-#endif
-        }
-#ifdef POOL_MEM_GUARD
-        MemoryGuard(preGuard);
-#endif
-        T data;
-#ifdef POOL_MEM_GUARD
-        MemoryGuard(postGuard);
-#endif
-        u32 is_occupied;
-    };
-
-    Vector<Vector<Entry, PoolPageElements>, 1> entryPages;
-    Vector<u32> free_indices;
+    u32 elementSize, blockSize;
+    Vector<char*> entryPages;
+    Vector<u32> freeIndices;
 public:
     Pool() {
-        this->default_value.~T();
-        memset(&this->default_value, 0, sizeof(T));
-        new (&this->default_value) T();
+        SetElementSize(1);
     }
-    inline T& operator[] (u32 index);
-    inline const T& operator[] (u32 index) const;
+
+    inline char* operator[] (u32 index);
+    inline const char* operator[] (u32 index) const;
     inline bool IsValid(u32 index) const;
     inline u32 End() const;
 
     inline u32 Add();
     inline bool Insert(u32 index);
     inline bool Remove(u32 index);
+
+    inline void SetElementSize(u32 size);
+    inline u32 GetElementSize();
 };
 
-template<typename T>
-inline T& Pool<T>::operator[](u32 index)
+inline char* Pool::operator[](u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
-
-    auto& entry = this->entryPages[page][index];
-#ifdef DEBUG
-    Assert(entry.is_occupied);
-#endif
-#ifdef POOL_MEM_GUARD
-    AssertGuard(entry.preGuard);
-    AssertGuard(entry.postGuard);
-#endif
-    return entry.data;
+    return &this->entryPages[page][index * elementSize];
 }
 
-template<typename T>
-inline const T& Pool<T>::operator[](u32 index) const
-{
-    auto page = (index & 0xffffff00) >> 8;
-    index &= 0xff;
+inline void Pool::SetElementSize(u32 size) {
+    auto oldBlockSize = blockSize;
+    elementSize = size;
+    blockSize = upper_power_of_two(std::max(size + 1, (u32)16));
 
-    const auto& entry = this->entryPages[page][index];
-#ifdef DEBUG
-    Assert(entry.is_occupied);
-#endif
-#ifdef POOL_MEM_GUARD
-    AssertGuard(entry.preGuard);
-    AssertGuard(entry.postGuard);
-#endif
-    return entry.data;
+    // Make sure to expand every single existing element with the new size by allocating new pages
+    for(auto i = 0; i < entryPages.size(); ++i) {
+        auto newPage = (char*)malloc(blockSize * PoolPageElements);
+        auto oldPage = entryPages[i];
+        for(auto j = 0; j < PoolPageElements; ++j) {
+            memcpy(newPage + (j * blockSize), oldPage + (j * oldBlockSize), std::min(elementSize, oldBlockSize));
+            newPage[j * blockSize + blockSize - 1] = oldPage[j * oldBlockSize + oldBlockSize - 1]; // Make sure to copy occupied flag
+        }
+        free(oldPage);
+        entryPages[i] = newPage;
+    }
 }
 
-template<typename T>
-inline bool Pool<T>::IsValid(u32 index) const
+inline bool Pool::IsValid(u32 index) const
 {
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
 
     if(this->entryPages.size() <= page) return false;
 
-    const auto& data = this->entryPages[page][index];
-#ifdef POOL_MEM_GUARD
-    AssertGuard(data.preGuard);
-    AssertGuard(data.postGuard);
-#endif
-    return data.is_occupied;
+    return this->entryPages[page][index * blockSize + blockSize - 1];
 }
 
-template<typename T>
-inline u32 Pool<T>::End() const
+inline u32 Pool::End() const
 {
     return this->entryPages.size() * PoolPageElements;
 }
 
-template<typename T>
-inline bool Pool<T>::Insert(u32 index)
+inline bool Pool::Insert(u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
@@ -123,36 +94,29 @@ inline bool Pool<T>::Insert(u32 index)
     if(page >= this->entryPages.size())
     {
         for(auto i = this->entryPages.size(); i <= page; ++i) {
-            this->entryPages.emplace_back(Vector<Entry, PoolPageElements>(PoolPageElements));
+            this->entryPages.emplace_back((char*)calloc(PoolPageElements, blockSize));
         }
     }
 
-    auto& entry = this->entryPages[page][index];
-    if(entry.is_occupied)
+    if(this->entryPages[page][index * blockSize + blockSize - 1])
     {
         return false;
     }
 
-    entry.is_occupied = true;
-    entry.data = this->default_value;
+    memset(&this->entryPages[page][index * blockSize], 0, blockSize);
+    this->entryPages[page][index * blockSize + blockSize - 1] = true;
 
-    for(u32 i = 0; i < this->free_indices.size(); ++i) {
-        if(this->free_indices[i] == index) {
-            this->free_indices.erase(this->free_indices.begin() + i);
+    for(u32 i = 0; i < this->freeIndices.size(); ++i) {
+        if(this->freeIndices[i] == index) {
+            this->freeIndices.erase(this->freeIndices.begin() + i);
             break;
         }
     }
 
-#ifdef POOL_MEM_GUARD
-    AssertGuard(entry.preGuard);
-    AssertGuard(entry.postGuard);
-#endif
-
     return true;
 }
 
-template<typename T>
-inline bool Pool<T>::Remove(u32 index)
+inline bool Pool::Remove(u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
@@ -161,26 +125,28 @@ inline bool Pool<T>::Remove(u32 index)
 
     auto& data = this->entryPages[page][index];
 
-    if(!data.is_occupied) return false;
+    if(!this->entryPages[page][index * blockSize + blockSize - 1]) return false;
 
-    data.is_occupied = false;
-    data.data = this->default_value;
+    this->entryPages[page][index * blockSize + blockSize - 1] = false;
 
-    this->free_indices.push_back(index);
+    this->freeIndices.push_back(index);
     return true;
 }
 
-template<typename T>
-inline u32 Pool<T>::Add() {
+inline u32 Pool::Add() {
     u32 index = this->End();
-    if(this->free_indices.size() > 0) {
-        index = this->free_indices[this->free_indices.size() - 1];
-        this->free_indices.pop_back();
+    if(this->freeIndices.size() > 0) {
+        index = this->freeIndices[this->freeIndices.size() - 1];
+        this->freeIndices.pop_back();
     }
 
     this->Insert(index);
 
     return index;
+}
+
+inline u32 Pool::GetElementSize() {
+    return elementSize;
 }
 
 #endif

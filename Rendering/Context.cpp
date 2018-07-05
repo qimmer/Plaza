@@ -5,7 +5,6 @@
 #include <Core/String.h>
 #include "Context.h"
 #include "RenderTarget.h"
-#include <Logic/State.h>
 #include <Input/InputState.h>
 #include <cfloat>
 #include <math.h>
@@ -32,16 +31,16 @@ struct Context {
     DefineComponentPropertyReactive(Context, bool, ContextVsync)
     DefineComponentPropertyReactive(Context, bool, ContextGrabMouse)
 
-    DefineEvent(KeyStateChanged, KeyHandler)
-    DefineEvent(CursorPositionChanged, CursorHandler)
-    DefineEvent(CharacterPressed, CharHandler)
+    DefineEvent(KeyStateChanged)
+    DefineEvent(CursorPositionChanged)
+    DefineEvent(CharacterPressed)
 
-    float GetKeyState(Entity context, u16 key) {
+API_EXPORT float GetKeyState(Entity context, u16 key) {
         Assert(key < KEY_MAX);
         return GetContext(context)->KeyStates[(int)key];
     }
 
-    void SetKeyState(Entity context, u16 key, float state) {
+API_EXPORT void SetKeyState(Entity context, u16 key, float state) {
         Assert(key < KEY_MAX);
 
         auto old = GetContext(context)->KeyStates[(int)key];
@@ -52,7 +51,7 @@ struct Context {
 
         GetContext(context)->KeyStates[(int)key] = state;
 
-        FireEvent(KeyStateChanged, context, key, old, state);
+        FireNativeEvent(KeyStateChanged, context, key, old, state);
 
         for_entity(entity, InputState) {
             auto stateKey = GetInputStateKey(entity);
@@ -66,26 +65,25 @@ struct Context {
                 auto value = GetKeyState(context, stateKey);
                 if(pmKey) value *= GetKeyState(context, pmKey);
                 if(smKey) value *= GetKeyState(context, smKey);
-                value *= GetInputStateStateScale(entity);
-                SetStateValue(entity, value);
+                SetInputStateValue(entity, value);
             }
         }
     }
 
-    v2i GetCursorPosition(Entity context, u8 index) {
+API_EXPORT v2i GetCursorPosition(Entity context, u8 index) {
         Assert(index < CURSOR_MAX);
         return GetContext(context)->CursorPositions[index];
     }
 
-    void SetCursorPosition(Entity context, u8 index, v2i value) {
+API_EXPORT void SetCursorPosition(Entity context, u8 index, v2i value) {
         Assert(index < CURSOR_MAX);
 
         auto old = GetContext(context)->CursorPositions[index];
         GetContext(context)->CursorPositions[index] = value;
 
-        FireEvent(CursorPositionChanged, context, index, old, value);
+        FireNativeEvent(CursorPositionChanged, context, index, old, value);
     }
 
-float *GetKeyStates(Entity context) {
+API_EXPORT float *GetKeyStates(Entity context) {
     return GetContext(context)->KeyStates;
 }

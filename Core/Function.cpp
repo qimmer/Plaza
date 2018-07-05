@@ -5,89 +5,53 @@
 #include <dyncall/dyncall.h>
 #include <dyncall/dyncall_signature.h>
 #include <dyncall/dyncall_struct.h>
+#include <string.h>
 
 #include <Core/Function.h>
-#include <Core/String.h>
 #include <Core/Vector.h>
 #include <Core/Pool.h>
-#include <Core/Type.h>
+#include <Core/Types.h>
+#include <cstdarg>
+#include "Entity.h"
+#include "Hierarchy.h"
+#include "Component.h"
+#include "Property.h"
 
 static DCCallVM *CallVM = 0;
 static DCstruct *Struct_v2i, *Struct_v3i, *Struct_v4i, *Struct_v2f, *Struct_v3f, *Struct_v4f, *Struct_m3x3f, *Struct_m4x4f;
 
 #define ALIGNMENT_SSE 16
 
-struct Argument {
-    String Name;
-    Type ArgumentType;
+struct Function {
+    u64 FunctionImplementation;
+    Type FunctionReturnType;
+    FunctionCaller FunctionCaller;
 };
 
-struct FunctionData {
-    String Name;
-    Type ReturnType, ContextType;
-    void *Ptr;
-    Vector<Argument> Arguments;
+struct FunctionArgument {
+    Type FunctionArgumentType;
 };
 
-DefineHandle(Function, FunctionData)
+BeginUnit(Function)
+    BeginComponent(Function)
+        RegisterProperty(u64, FunctionImplementation)
+        RegisterProperty(Type, FunctionReturnType)
+    EndComponent()
 
-Type GetFunctionContextType(Function f) {
-    return FunctionAt(f)->ContextType;
-}
+    BeginComponent(FunctionArgument)
+        RegisterProperty(Type, FunctionArgumentType)
+    EndComponent()
+EndUnit()
 
-Type GetFunctionReturnType(Function f) {
-    return FunctionAt(f)->ReturnType;
-}
 
-const char *GetFunctionName(Function f) {
-    return FunctionAt(f)->Name.c_str();
-}
-
-void *GetFunctionPtr(Function f) {
-    return FunctionAt(f)->Ptr;
-}
-
-u32 GetFunctionArguments(Function f) {
-    return FunctionAt(f)->Arguments.size();
-}
-
-StringRef GetFunctionArgumentName(Function f, u32 index) {
-    return FunctionAt(f)->Arguments[index].Name.c_str();
-}
-
-Type GetFunctionArgumentType(Function f, u32 index) {
-    return FunctionAt(f)->Arguments[index].ArgumentType;
-}
-
-Function FindFunctionByName(StringRef name) {
-    return 0;
-}
-
-void SetFunctionContextType(Function f, Type type) {
-    FunctionAt(f)->ContextType = type;
-}
-
-void SetFunctionReturnType(Function f, Type type) {
-    FunctionAt(f)->ReturnType = type;
-}
-
-void SetFunctionName(Function f, const char *name) {
-    FunctionAt(f)->Name = name;
-}
-
-void SetFunctionPtr(Function f, void *ptr) {
-    FunctionAt(f)->Ptr = ptr;
-}
-
-void SetFunctionArguments(Function f, StringRef arguments) {
-    auto data = FunctionAt(f);
+API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
     auto len = strlen(arguments);
     auto offset = 0;
+    auto byteOffset = 0;
 
     char argumentSplits[PATH_MAX];
     strcpy(argumentSplits, arguments);
 
-    data->Arguments.clear();
     while(offset < len) {
         auto argument = &argumentSplits[0] + offset;
         auto nextComma = strchr(&argumentSplits[0] + offset, ',');
@@ -97,7 +61,7 @@ void SetFunctionArguments(Function f, StringRef arguments) {
         *nextComma = '\0';
 
         auto name = strrchr(argument, ' ');
-		Assert(name);
+        Assert(f, name);
         *name = '\0';
         name++;
 
@@ -110,114 +74,71 @@ void SetFunctionArguments(Function f, StringRef arguments) {
             typeSignatureEnd--;
         }
 
-        data->Arguments.push_back({name, FindTypeByName(typeSignature)});
+        auto argumentEntity = CreateEntityFromName(f, name);
+
+        auto type = 0;
+        for(auto i = 0; i < TypeOf_MAX; ++i) {
+            if(strcmp(typeSignature, GetTypeName(i)) == 0) {
+                type = i;
+                break;
+            }
+        }
+
+        if(!type) {
+            Log(f, LogSeverity_Error, "Unsupported function argument type: %s", typeSignature);
+            return;
+        }
+
+        SetFunctionArgumentType(argumentEntity, type);
+        byteOffset += GetTypeSize(type);
     }
 }
 
 #define _CallFunction_HandleType(TYPE, DCTYPE) \
-    if(arg.ArgumentType == TypeOf_ ## TYPE()) {\
-        dcArg ## DCTYPE(CallVM, *((TYPE*)argumentData));\
-    } else
+    case TypeOf_ ## TYPE :\
+        dcArg ## DCTYPE(CallVM, *((TYPE*)argumentDataPtrs[i]));\
+        break;
 
 #define _CallFunction_HandlePointerType(TYPE) \
-    if(arg.ArgumentType == TypeOf_ ## TYPE()) {\
-        auto dta = (void**)argumentData;\
-        dcArgPointer(CallVM, *dta);\
-    } else
+    case TypeOf_ ## TYPE :\
+        dcArgPointer(CallVM, const_cast<char*>(*((TYPE*)argumentDataPtrs[i])));\
+        break;
 
 #define _CallFunction_HandleVecType(TYPE) \
-    if(arg.ArgumentType == TypeOf_ ## TYPE()) {\
-        dcArgStruct(CallVM, Struct_ ## TYPE, const_cast<void*>(argumentData));\
-    } else
+    case TypeOf_ ## TYPE :\
+        dcArgStruct(CallVM, Struct_ ## TYPE, const_cast<void*>((const void*)argumentDataPtrs[i]));\
+        break;
 
 
 #define _CallFunction_HandleCall(TYPE, DCTYPE) \
-    if(GetFunctionReturnType(f) == TypeOf_ ## TYPE()) {\
-        *((TYPE*)returnData) = dcCall ## DCTYPE(CallVM, GetFunctionPtr(f));\
-    } else
+    case TypeOf_ ## TYPE :\
+        *((TYPE*)returnData) = dcCall ## DCTYPE(CallVM, funcPtr);\
+        break;
 
 #define _CallFunction_HandlePointerCall(TYPE) \
-    if(GetFunctionReturnType(f) == TypeOf_ ## TYPE()) {\
-        *((TYPE*)returnData) = (TYPE)dcCallPointer(CallVM, GetFunctionPtr(f));\
-    } else
+    case TypeOf_ ## TYPE :\
+        *((TYPE*)returnData) = (TYPE)dcCallPointer(CallVM, funcPtr);\
+        break;
 
 #define _CallFunction_HandleVecCall(TYPE) \
-    if(GetFunctionReturnType(f) == TypeOf_ ## TYPE()) {\
-        dcCallStruct(CallVM, GetFunctionPtr(f), Struct_ ## TYPE, returnData);\
-    } else
+    case TypeOf_ ## TYPE :\
+        dcCallStruct(CallVM, funcPtr, Struct_ ## TYPE, returnData);\
+        break;
 
-bool CallFunction(Function f, const void *argumentData, void *returnData) {
-    dcReset(CallVM);
-
-    auto data = FunctionAt(f);
-
-    for(auto& arg : data->Arguments) {
-        _CallFunction_HandleType(bool, Bool)
-        _CallFunction_HandleType(u8, Char)
-        _CallFunction_HandleType(u16, Short)
-        _CallFunction_HandleType(u32, Int)
-        _CallFunction_HandleType(u64, LongLong)
-        _CallFunction_HandleType(s8, Char)
-        _CallFunction_HandleType(s16, Short)
-        _CallFunction_HandleType(s32, Int)
-        _CallFunction_HandleType(s64, LongLong)
-        _CallFunction_HandleType(float, Float)
-        _CallFunction_HandleType(double, Double)
-        _CallFunction_HandlePointerType(StringRef)
-
-        _CallFunction_HandleVecType(v2i)
-        _CallFunction_HandleVecType(v3i)
-        _CallFunction_HandleVecType(v4i)
-        _CallFunction_HandleVecType(v2f)
-        _CallFunction_HandleVecType(v3f)
-        _CallFunction_HandleVecType(v4f)
-        _CallFunction_HandleVecType(m3x3f)
-        _CallFunction_HandleVecType(m4x4f)
-
-        if(GetTypeSize(arg.ArgumentType) == sizeof(Handle)) {
-            dcArgLongLong(CallVM, *((Handle *) argumentData));
-        } else {
-            Log(LogChannel_Core, LogSeverity_Error, "Error calling function '%s'. Argument type '%s' is unsupported.", GetFunctionName(f), GetTypeName(arg.ArgumentType));
-            return false;
-        }
-    }
-
-    _CallFunction_HandleCall(bool, Bool)
-    _CallFunction_HandleCall(u8, Char)
-    _CallFunction_HandleCall(u16, Short)
-    _CallFunction_HandleCall(u32, Int)
-    _CallFunction_HandleCall(u64, LongLong)
-    _CallFunction_HandleCall(s8, Char)
-    _CallFunction_HandleCall(s16, Short)
-    _CallFunction_HandleCall(s32, Int)
-    _CallFunction_HandleCall(s64, LongLong)
-    _CallFunction_HandleCall(float, Float)
-    _CallFunction_HandleCall(double, Double)
-    _CallFunction_HandlePointerCall(StringRef)
-
-    _CallFunction_HandleVecCall(v2i)
-    _CallFunction_HandleVecCall(v3i)
-    _CallFunction_HandleVecCall(v4i)
-    _CallFunction_HandleVecCall(v2f)
-    _CallFunction_HandleVecCall(v3f)
-    _CallFunction_HandleVecCall(v4f)
-    _CallFunction_HandleVecCall(m3x3f)
-    _CallFunction_HandleVecCall(m4x4f)
-
-    if(GetTypeSize(GetFunctionReturnType(f)) == sizeof(Handle)) {
-        *((Handle*)returnData) = dcCallLongLong(CallVM, GetFunctionPtr(f));
-    }
-    else if(GetFunctionReturnType(f) ==TypeOf_void()) {
-        dcCallVoid(CallVM, GetFunctionPtr(f));
-    } else {
-        Log(LogChannel_Core, LogSeverity_Error, "Error calling function '%s'. Return type '%s' is unsupported.", GetFunctionName(f), GetTypeName(GetFunctionReturnType(f)));
-        return false;
-    }
-
-    return true;
+static void Cleanup() {
+    dcFreeStruct(Struct_v2i);
+    dcFreeStruct(Struct_v3i);
+    dcFreeStruct(Struct_v4i);
+    dcFreeStruct(Struct_v2f);
+    dcFreeStruct(Struct_v3f);
+    dcFreeStruct(Struct_v4f);
+    dcFreeStruct(Struct_m3x3f);
+    dcFreeStruct(Struct_m4x4f);
+    dcFree(CallVM);
+    CallVM = 0;
 }
 
-static void OnServiceStart(Service service) {
+static void Initialize() {
     CallVM = dcNewCallVM(4096);
     dcMode(CallVM, DC_CALL_C_DEFAULT);
     dcReset(CallVM);
@@ -255,20 +176,114 @@ static void OnServiceStart(Service service) {
     dcCloseStruct(Struct_m4x4f);
 }
 
-static void OnServiceStop(Service service){
-    dcFreeStruct(Struct_v2i);
-    dcFreeStruct(Struct_v3i);
-    dcFreeStruct(Struct_v4i);
-    dcFreeStruct(Struct_v2f);
-    dcFreeStruct(Struct_v3f);
-    dcFreeStruct(Struct_v4f);
-    dcFreeStruct(Struct_m3x3f);
-    dcFreeStruct(Struct_m4x4f);
-    dcFree(CallVM);
-    CallVM = 0;
+API_EXPORT bool CallNativeFunction(
+        u64 funcImplementation,
+        u8 returnArgumentTypeIndex,
+        void *returnData,
+        u32 numArguments,
+        const u8 *argumentTypes,
+        const void **argumentDataPtrs
+) {
+    static bool initialized = false;
+
+    if(!initialized) {
+        atexit(Cleanup);
+        Initialize();
+        initialized = true;
+    }
+
+    dcReset(CallVM);
+
+    auto funcPtr = (void*)funcImplementation;
+
+    for(auto i = 0; i < numArguments; ++i) {
+        switch(argumentTypes[i]) {
+            _CallFunction_HandleType(bool, Bool)
+            _CallFunction_HandleType(u8, Char)
+            _CallFunction_HandleType(u16, Short)
+            _CallFunction_HandleType(u32, Int)
+            _CallFunction_HandleType(u64, LongLong)
+            _CallFunction_HandleType(s8, Char)
+            _CallFunction_HandleType(s16, Short)
+            _CallFunction_HandleType(s32, Int)
+            _CallFunction_HandleType(s64, LongLong)
+            _CallFunction_HandleType(float, Float)
+            _CallFunction_HandleType(double, Double)
+            _CallFunction_HandlePointerType(StringRef)
+            _CallFunction_HandleType(Entity, LongLong)
+
+            _CallFunction_HandleVecType(v2i)
+            _CallFunction_HandleVecType(v3i)
+            _CallFunction_HandleVecType(v4i)
+            _CallFunction_HandleVecType(v2f)
+            _CallFunction_HandleVecType(v3f)
+            _CallFunction_HandleVecType(v4f)
+
+            default:
+                Log(0, LogSeverity_Error, "Error calling native function. Argument type '%s' is unsupported.", GetName(argumentTypes[i]));
+                return false;
+        }
+    }
+
+    switch(returnArgumentTypeIndex) {
+        _CallFunction_HandleCall(bool, Bool)
+        _CallFunction_HandleCall(u8, Char)
+        _CallFunction_HandleCall(u16, Short)
+        _CallFunction_HandleCall(u32, Int)
+        _CallFunction_HandleCall(u64, LongLong)
+        _CallFunction_HandleCall(s8, Char)
+        _CallFunction_HandleCall(s16, Short)
+        _CallFunction_HandleCall(s32, Int)
+        _CallFunction_HandleCall(s64, LongLong)
+        _CallFunction_HandleCall(float, Float)
+        _CallFunction_HandleCall(double, Double)
+        _CallFunction_HandlePointerCall(StringRef)
+        _CallFunction_HandleCall(Entity, LongLong)
+
+        _CallFunction_HandleVecCall(v2i)
+        _CallFunction_HandleVecCall(v3i)
+        _CallFunction_HandleVecCall(v4i)
+        _CallFunction_HandleVecCall(v2f)
+        _CallFunction_HandleVecCall(v3f)
+        _CallFunction_HandleVecCall(v4f)
+
+        case TypeOf_void:
+            dcCallVoid(CallVM, funcPtr);
+            break;
+
+        default:
+            Log(0, LogSeverity_Error, "Error calling native function. Return type '%s' is unsupported.", GetTypeName(returnArgumentTypeIndex));
+            return false;
+    }
+
+    return true;
 }
 
-DefineService(FunctionCallService)
-        Subscribe(FunctionCallServiceStarted, OnServiceStart)
-        Subscribe(FunctionCallServiceStopped, OnServiceStop)
-EndService()
+API_EXPORT bool CallFunction(
+        Entity f,
+        void *returnData,
+        u32 numArguments,
+        const u8 *argumentTypes,
+        const void **argumentDataPtrs
+) {
+    auto data = GetFunction(f);
+
+    return data->FunctionCaller(
+            data->FunctionImplementation,
+            data->FunctionReturnType,
+            returnData,
+            numArguments,
+            argumentTypes,
+            argumentDataPtrs
+    );
+}
+
+void __InitializeFunction() {
+    auto component = ComponentOf_Function();
+    __Property(PropertyOf_FunctionImplementation(), offsetof(Function, FunctionImplementation), sizeof(Function::FunctionImplementation), TypeOf_u64,  component);
+    __Property(PropertyOf_FunctionReturnType(), offsetof(Function, FunctionReturnType), sizeof(Function::FunctionReturnType), TypeOf_Type,  component);
+    __Property(PropertyOf_FunctionCaller(), offsetof(Function, FunctionCaller), sizeof(Function::FunctionCaller), TypeOf_unknown,  component);
+
+    component = ComponentOf_FunctionArgument();
+    __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component);
+}

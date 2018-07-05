@@ -12,9 +12,8 @@
 
     DeclareService(PlayerContext)
 
-    Entity GetPlayerContext();
     Entity GetRuntimeFolder();
-    int PlayerMain(int argc, char** argv, Module *modules, const StringRef* virtualPathMappings, const StringRef* assets, StringRef title);
+    int PlayerMain(int argc, char** argv, Module *modules, const StringRef* virtualPathMappings, const StringRef* assets);
 
 
 #endif //PLAZA_PLAYERCONTEXT_H

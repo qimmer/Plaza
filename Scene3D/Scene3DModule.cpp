@@ -12,7 +12,6 @@
 #include "Scene3D/Voxel/VoxelPalette.h"
 #include "Scene3D/Voxel/VoxelColor.h"
 #include "Scene3D/Voxel/VoxPersistance.h"
-#include "FirstPersonController.h"
 
 DefineModule(Scene3D)
     ModuleDependency(Scene)
@@ -22,9 +21,7 @@ DefineModule(Scene3D)
     ModuleService(VoxelPalette)
     ModuleService(VoxelMesh)
     ModuleService(VoxPersistance)
-    ModuleService(FirstPersonController)
 
-    ModuleType(FirstPersonController)
     ModuleType(Camera3D)
     ModuleType(Transform3D)
     ModuleType(VoxelChunk)

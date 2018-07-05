@@ -13,6 +13,7 @@
 #include <mmx/sched.h>
 
 #undef CreateService
+#undef CreateEvent
 
 static void *SchedulerMemory;
 static sched_size NeededSchedulerMemory;
@@ -30,7 +31,7 @@ struct Task {
     u32 TaskResult;
 };
 
-DefineEvent(TaskFinished, TaskHandler)
+DefineEvent(TaskFinished)
 
 DefineComponent(Task)
 EndComponent()
@@ -45,12 +46,12 @@ static void TaskFunc(void* taskIndexPtr, struct scheduler*, struct sched_task_pa
     GetTaskFunction(task)(task);
 }
 
-void TaskWait(Entity task) {
+API_EXPORT void TaskWait(Entity task) {
     auto data = GetTask(task);
     scheduler_join(&Scheduler, &data->TaskData);
 }
 
-void TaskSchedule(Entity task) {
+API_EXPORT void TaskSchedule(Entity task) {
     auto data = GetTask(task);
     if(!data->TaskFinished) return;
 
@@ -60,11 +61,11 @@ void TaskSchedule(Entity task) {
     data->TaskFinished = false;
 }
 
-bool GetTaskRunning(Entity task) {
+API_EXPORT bool GetTaskRunning(Entity task) {
     return !sched_task_done(&GetTask(task)->TaskData);
 }
 
-int GetCurrentThreadIndex() {
+API_EXPORT int GetCurrentThreadIndex() {
     u64 threadId;
 #if defined(WIN32) && !defined(_POSIX_THREADS)
     threadId = GetCurrentThreadId();
@@ -83,11 +84,11 @@ int GetCurrentThreadIndex() {
     return threadIds.size() - 1;
 }
 
-int GetMainThreadIndex() {
+API_EXPORT int GetMainThreadIndex() {
     return mainThread;
 }
 
-int GetNumThreads() {
+API_EXPORT int GetNumThreads() {
     return MAX_THREADS;
 }
 
@@ -95,7 +96,7 @@ static void OnUpdate(double deltaTime) {
     for_entity(task, Task) {
         if(GetTaskRunning(task) || GetTaskFinished(task)) continue;
 
-        FireEvent(TaskFinished, task, GetTaskResult(task));
+        FireNativeEvent(TaskFinished, task, GetTaskResult(task));
 
         SetTaskFinished(task, true);
     }

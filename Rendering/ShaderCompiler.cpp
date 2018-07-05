@@ -8,21 +8,21 @@
 #include <unistd.h>
 #include <Foundation/AppLoop.h>
 
-DefineEvent(ShaderCompilerFinished, ShaderCompilerFinishHandler)
-DefineEvent(ShaderCompile, ShaderCompileHandler)
+DefineEvent(ShaderCompilerFinished)
+DefineEvent(ShaderCompile)
 
 String ShaderIncludeDirectory;
 
-void SetShaderIncludeDirectory(StringRef value) {
+API_EXPORT void SetShaderIncludeDirectory(StringRef value) {
     ShaderIncludeDirectory = value;
 }
 
-StringRef GetShaderIncludeDirectory() {
+API_EXPORT StringRef GetShaderIncludeDirectory() {
     return ShaderIncludeDirectory.c_str();
 }
 
-void CompileShader(Entity binaryShader) {
-    FireEvent(ShaderCompile, binaryShader);
+API_EXPORT void CompileShader(Entity binaryShader) {
+    FireNativeEvent(ShaderCompile, binaryShader);
 }
 
 static void OnServiceStart(Service service) {

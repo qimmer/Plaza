@@ -13,7 +13,7 @@
 static const unsigned char base64_table[65] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-void Base64Encode(u8* src, u64 len, s8 *out)
+API_EXPORT void Base64Encode(u8* src, u64 len, s8 *out)
 {
     s8 *pos;
     u8 *end, *in;
@@ -62,7 +62,7 @@ void Base64Encode(u8* src, u64 len, s8 *out)
     *pos = '\0';
 }
 
-void Base64Decode(StringRef src, u8 *out, u64 *out_len)
+API_EXPORT void Base64Decode(StringRef src, u8 *out, u64 *out_len)
 {
     u8 dtable[256], *pos, block[4], tmp;
     u64 i, count, olen;

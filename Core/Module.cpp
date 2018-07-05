@@ -3,120 +3,104 @@
 //
 
 #include <Core/Module.h>
-#include <Core/Pool.h>
-#include <Core/String.h>
-#include <algorithm>
-#include "Service.h"
+#include <cstring>
+#include "Entity.h"
+#include "Debug.h"
 
-struct ModuleData {
-    bool initialized;
-    String name, sourceFilePath;
-    Vector<Type> types;
-    Vector<Service> services;
-    Vector<Module> dependencies;
-    Handler initializeFunc, shutdownFunc;
+typedef Entity(*ModuleOfSignature)();
+
+struct Module {
+    char ModuleVersion[128];
+    char ModuleSourcePath[512];
 };
 
-DefineHandle(Module, ModuleData)
+BeginUnit(Module)
+    BeginComponent(Module)
+        RegisterProperty(StringRef, ModuleVersion)
+        RegisterProperty(StringRef, ModuleSourcePath)
+    EndComponent()
 
-DefineEvent(ModuleInitialized, ModuleHandler)
-DefineEvent(ModuleShutdown, ModuleHandler)
+    RegisterFunction(GetModuleRoot)
+    RegisterFunction(LoadModule)
+EndUnit()
 
-void InitializeModule(Module module) {
-    auto data = ModuleAt(module);
+API_EXPORT Entity GetModuleRoot() {
+    static Entity root = CreateEntityFromName(0, "Modules");
+    return root;
+}
 
-    if(!IsModuleInitialized(module)) {
-        for(auto dependency : data->dependencies) {
-            InitializeModule(dependency);
-        }
+#ifdef WIN32
+#include <Windows.h>
+#include <dbghelp.h>
 
-        Log(LogChannel_Core, LogSeverity_Info, "Registering Module '%s' ...", GetModuleName(module));
+static Entity LoadModuleWin32(StringRef dllPath) {
+    PIMAGE_DOS_HEADER pIDH;
+    PIMAGE_NT_HEADERS pINH;
+    PIMAGE_EXPORT_DIRECTORY pIED;
 
-        for(auto service : data->services) {
-            StartService(service);
-        }
-        data->initialized = true;
+    HMODULE hModule;
+    PDWORD Address,Name;
+    PWORD Ordinal;
+
+    DWORD i;
+
+    hModule=LoadLibrary(dllPath);
+
+    if(!hModule)
+    {
+        Log(0, LogSeverity_Error, "DLL Library Not Found: %s", dllPath);
+        return 0;
     }
-}
 
-void ShutdownModule(Module module) {
-    auto data = ModuleAt(module);
+    pIDH=(PIMAGE_DOS_HEADER)hModule;
 
-    if(IsModuleInitialized(module)) {
-        Log(LogChannel_Core, LogSeverity_Info, "Unregistering Module '%s' ...", GetModuleName(module));
-
-        for(auto dependee = GetNextModule(0); IsModuleValid(dependee); dependee = GetNextModule(dependee)) {
-            auto& dependencies = ModuleAt(dependee)->dependencies;
-            if(std::find(dependencies.begin(), dependencies.end(), module) != dependencies.end()) {
-                ShutdownModule(dependee);
-            }
-        }
-
-        for(auto service : data->services) {
-            StopService(service);
-        }
-        ModuleAt(module)->initialized = false;
+    if(pIDH->e_magic!=IMAGE_DOS_SIGNATURE)
+    {
+        Log(0, LogSeverity_Error, "File is not a DLL Library: %s", dllPath);
+        return NULL;
     }
+
+    pINH=(PIMAGE_NT_HEADERS)((LPBYTE)hModule+pIDH->e_lfanew);
+
+    if(pINH->Signature!=IMAGE_NT_SIGNATURE)
+    {
+        Log(0, LogSeverity_Error, "DLL Library has an invalid PE signature: %s", dllPath);
+        return NULL;
+    }
+
+    if(pINH->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress==0)
+    {
+        Log(0, LogSeverity_Error, "DLL Library has no exports: %s", dllPath);
+        return NULL;
+    }
+
+    pIED=(PIMAGE_EXPORT_DIRECTORY)((LPBYTE)hModule+pINH->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+
+    Address=(PDWORD)((LPBYTE)hModule+pIED->AddressOfFunctions);
+    Name=(PDWORD)((LPBYTE)hModule+pIED->AddressOfNames);
+
+    Ordinal=(PWORD)((LPBYTE)hModule+pIED->AddressOfNameOrdinals);
+
+    for(i=0;i<pIED->NumberOfNames;i++)
+    {
+        auto name = (char*)hModule+Name[i];
+        if(memcmp(name + 4, "ModuleOf_", 9) == 0) {
+            auto procAddress = (PVOID)((LPBYTE)hModule+Address[Ordinal[i]]);
+            return ((ModuleOfSignature)procAddress)();
+        }
+    }
+
+    Log(0, LogSeverity_Error, "DLL Library contains no modules: %s", dllPath);
+
+    return 0;
 }
 
-bool IsModuleInitialized(Module module) {
-    return ModuleAt(module)->initialized;
-}
+#endif
 
-void SetModuleFunctions(Module module, Handler initializeFunc, Handler shutdownFunc) {
-    auto data = ModuleAt(module);
-    ModuleAt(module)->initializeFunc = initializeFunc;
-    ModuleAt(module)->shutdownFunc = shutdownFunc;
-}
+API_EXPORT Entity LoadModule(StringRef libraryPath) {
+#ifdef WIN32
+    return LoadModuleWin32(libraryPath);
+#endif
 
-void SetModuleName(Module module, const char *name) {
-    ModuleAt(module)->name = name;
-}
-
-const char *GetModuleName(Module module) {
-    return ModuleAt(module)->name.c_str();
-}
-
-void AddModuleService(Module module, Service service) {
-    ModuleAt(module)->services.push_back(service);
-}
-
-void AddModuleType(Module module, Type type) {
-    ModuleAt(module)->types.push_back(type);
-}
-
-void AddModuleDependency(Module module, Module dependency) {
-    ModuleAt(module)->dependencies.push_back(dependency);
-}
-
-Index GetModuleTypes(Module module) {
-    return ModuleAt(module)->types.size();
-}
-
-Type GetModuleType(Module module, Index index) {
-    return ModuleAt(module)->types[index];
-}
-
-Index GetModuleServices(Module module) {
-    return ModuleAt(module)->services.size();
-}
-
-Service GetModuleService(Module module, Index index) {
-    return ModuleAt(module)->services[index];
-}
-
-Index GetModuleDependencies(Module module) {
-    return ModuleAt(module)->dependencies.size();
-}
-
-Module GetModuleDependency(Module module, Index index) {
-    return ModuleAt(module)->dependencies[index];
-}
-
-void SetModuleSourcePath(Module module, StringRef sourceFilePath) {
-    ModuleAt(module)->sourceFilePath = sourceFilePath;
-}
-
-StringRef GetModuleSourcePath(Module module) {
-    return ModuleAt(module)->sourceFilePath.c_str();
+    return false;
 }

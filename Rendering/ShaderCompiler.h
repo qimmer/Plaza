@@ -5,18 +5,15 @@
 #ifndef PLAZA_SHADERCOMPILER_H
 #define PLAZA_SHADERCOMPILER_H
 
-#include <Core/Delegate.h>
+#include <Core/Event.h>
 #include <Core/Service.h>
 #include <Core/Entity.h>
 
 #define SETTING_SHADER_INCLUDE_DIRECTORY "shader_include_dir"
 #define LogChannel_ShaderCompiler 359
 
-typedef void(*ShaderCompileHandler)(Entity binaryShader);
-typedef void(*ShaderCompilerFinishHandler)(bool hasErrors, StringRef output);
-
-DeclareEvent(ShaderCompile, ShaderCompileHandler)
-DeclareEvent(ShaderCompilerFinished, ShaderCompilerFinishHandler)
+DeclareEvent(ShaderCompile, Entity binaryShader)
+DeclareEvent(ShaderCompilerFinished, Entity context, bool hasErrors, StringRef output)
 
 DeclareService(ShaderCompiler)
 

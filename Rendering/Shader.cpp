@@ -29,6 +29,9 @@ EndEnum()
 DefineComponent(Shader)
     Dependency(Stream)
     Dependency(Hierarchy)
+
+    DefineProperty(Entity, ShaderDeclaration)
+    DefinePropertyEnum(u8, ShaderType, ShaderType)
 EndComponent()
 
 DefineComponentPropertyReactive(Shader, u8, ShaderType)

@@ -60,6 +60,8 @@ extern "C" {
 #include <Input/Key.h>
 
 #undef CreateService
+#undef CreateEvent
+
 extern "C" {
     GLFWAPI HWND glfwGetWin32Window(GLFWwindow *window);
 }
@@ -222,7 +224,7 @@ static void OnGlfwWindowResized(GLFWwindow *window, int w, int h) {
 }
 
 static void OnCharPressed(GLFWwindow *window, unsigned int c) {
-    FireEvent(CharacterPressed, (Entity)glfwGetWindowUserPointer(window), c);
+    FireNativeEvent(CharacterPressed, (Entity)glfwGetWindowUserPointer(window), c);
 }
 
 static void OnKey(GLFWwindow *window, int key, int scanCode, int action, int mods) {
@@ -323,7 +325,7 @@ static void OnBgfxContextAdded(Entity entity) {
 #endif
 
 #ifdef WIN32
-        bgfx::init(bgfx::RendererType::Direct3D11);
+        bgfx::init();
 #endif
         bgfx::reset(size.x, size.y);
 

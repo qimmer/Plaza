@@ -603,7 +603,7 @@ bool CodeEditor::Style::Load(CodeEditor::Style &style, ImGuiHelper::Deserializer
 #endif //NO_IMGUIHELPER_SERIALIZATION
 
 
-const ImFont* CodeEditor::ImFonts[FONT_STYLE_COUNT] = {NULL,NULL,NULL,NULL};
+IMGUI_API const ImFont* CodeEditor::ImFonts[FONT_STYLE_COUNT] = {NULL,NULL,NULL,NULL};
 
 void CodeEditor::TextLineWithSHV(const char* fmt, va_list args) {
     if (ImGui::GetCurrentWindow()->SkipItems)  return;

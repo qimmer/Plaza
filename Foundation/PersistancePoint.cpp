@@ -21,11 +21,11 @@ EndComponent()
 
 DefineComponentPropertyReactive(PersistancePoint, bool, Loaded)
 
-DefineEvent(LoadStarted, EntityHandler)
-DefineEvent(SaveStarted, EntityHandler)
-DefineEvent(UnloadFinished, EntityHandler)
-DefineEvent(LoadFinished, EntityHandler)
-DefineEvent(SaveFinished, EntityHandler)
+DefineEvent(LoadStarted)
+DefineEvent(SaveStarted)
+DefineEvent(UnloadFinished)
+DefineEvent(LoadFinished)
+DefineEvent(SaveFinished)
 
 void Unload(Entity persistancePoint) {
     for_entity(entity, Persistance) {
@@ -67,7 +67,7 @@ static void OnParentChanged(Entity entity, Entity oldParent, Entity newParent) {
     }
 }
 
-void Load(Entity persistancePoint) {
+API_EXPORT void Load(Entity persistancePoint) {
     auto mimeType = GetStreamMimeType(persistancePoint);
     if(strlen(mimeType) == 0) {
         Log(LogChannel_Core, LogSeverity_Error, "Load failed. Unable to determine serializer, as content mime type is not given for '%s'.", GetStreamResolvedPath(persistancePoint));
@@ -91,15 +91,15 @@ void Load(Entity persistancePoint) {
     GetPersistancePoint(persistancePoint)->Loaded = true;
 
     GetPersistancePoint(persistancePoint)->IsLoading = true;
-    FireEvent(LoadStarted, persistancePoint);
+    FireNativeEvent(LoadStarted, persistancePoint);
     if(!serializerIt->second.DeserializeHandler(persistancePoint)) {
         SetLoaded(persistancePoint, false);
     }
     GetPersistancePoint(persistancePoint)->IsLoading = false;
-    FireEvent(LoadFinished, persistancePoint);
+    FireNativeEvent(LoadFinished, persistancePoint);
 }
 
-void Save(Entity persistancePoint) {
+API_EXPORT void Save(Entity persistancePoint) {
     auto mimeType = GetStreamMimeType(persistancePoint);
     if(strlen(mimeType) == 0) {
         Log(LogChannel_Core, LogSeverity_Error, "Save failed. Unable to determine serializer, as content mime type is not given for '%s'.", GetStreamResolvedPath(persistancePoint));
@@ -118,23 +118,23 @@ void Save(Entity persistancePoint) {
     }
 
     GetPersistancePoint(persistancePoint)->IsSaving = true;
-    FireEvent(SaveStarted, persistancePoint);
+    FireNativeEvent(SaveStarted, persistancePoint);
 
     serializerIt->second.SerializeHandler(persistancePoint);
 
     GetPersistancePoint(persistancePoint)->IsSaving = false;
-    FireEvent(SaveFinished, persistancePoint);
+    FireNativeEvent(SaveFinished, persistancePoint);
 }
 
-bool IsLoading(Entity persistancePoint) {
+API_EXPORT bool IsLoading(Entity persistancePoint) {
     return GetPersistancePoint(persistancePoint)->IsLoading;
 }
 
-void AddSerializer(StringRef mimeType, struct Serializer *serializer) {
+API_EXPORT void AddSerializer(StringRef mimeType, struct Serializer *serializer) {
     Serializers[mimeType] = *serializer;
 }
 
-void RemoveSerializer(StringRef mimeType) {
+API_EXPORT void RemoveSerializer(StringRef mimeType) {
     Serializers.erase(mimeType);
 }
 
