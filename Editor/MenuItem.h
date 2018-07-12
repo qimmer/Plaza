@@ -8,10 +8,11 @@
 
 #include <Core/Entity.h>
 
-DeclareComponent(MenuItem)
-DeclareComponentPropertyReactive(MenuItem, StringRef, MenuItemTitle)
-DeclareComponentPropertyReactive(MenuItem, u16, MenuItemIcon)
-DeclareComponentPropertyReactive(MenuItem, bool, MenuItemSelected)
-DeclareComponentPropertyReactive(MenuItem, bool, MenuItemEnabled)
+Unit(MenuItem)
+    Component(MenuItem)
+        Property(StringRef, MenuItemTitle)
+        Property(u16, MenuItemIcon)
+        Property(bool, MenuItemSelected)
+        Property(bool, MenuItemEnabled)
 
 #endif //PLAZA_MENUITEM_H

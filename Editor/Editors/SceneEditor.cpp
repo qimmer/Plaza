@@ -28,12 +28,13 @@ struct SceneEditor {
     Entity SceneEditorScene, Camera, Plane, RenderTarget, ColorTexture, DepthTexture, RenderTargetMaterial;
 };
 
-DefineComponent(SceneEditor)
-    DefinePropertyReactive(Entity, SceneEditorScene)
+BeginUnit(SceneEditor)
+    BeginComponent(SceneEditor)
+    RegisterProperty(Entity, SceneEditorScene)
     DefineExtensionMethod(Scene, void, EditScene, Entity entity)
 EndComponent()
 
-DefineComponentPropertyReactive(SceneEditor, Entity, SceneEditorScene)
+RegisterProperty(Entity, SceneEditorScene)
 
 void EditScene(Entity scene) {
     char editorPath[PATH_MAX];
@@ -51,7 +52,7 @@ Entity GetCurrentSceneEditorCamera() {
 static void Draw(Entity context) {
     CurrentCamera = 0;
 
-    for_entity(sceneEditor, SceneEditor) {
+    for_entity(sceneEditor, data, SceneEditor) {
         auto data = GetSceneEditor(sceneEditor);
         auto scene = GetSceneEditorScene(sceneEditor);
 
@@ -89,7 +90,7 @@ static void Draw(Entity context) {
     }
 }
 
-static void OnAdded(Entity sceneEditor) {
+LocalFunction(OnAdded, void, Entity sceneEditor) {
     auto data = GetSceneEditor(sceneEditor);
 
     data->Plane = CreateMeshInstance(sceneEditor, "Plane");
@@ -130,7 +131,7 @@ static void OnAdded(Entity sceneEditor) {
 
 }
 
-static void OnRemoved(Entity sceneEditor) {
+LocalFunction(OnRemoved, void, Entity sceneEditor) {
     auto data = GetSceneEditor(sceneEditor);
     DestroyEntity(data->Camera);
     DestroyEntity(data->Plane);
@@ -141,7 +142,7 @@ static void OnRemoved(Entity sceneEditor) {
 
 }
 
-static void OnSceneEditorSceneChanged(Entity sceneEditor, Entity oldScene, Entity newScene) {
+LocalFunction(OnSceneEditorSceneChanged, void, Entity sceneEditor, Entity oldScene, Entity newScene) {
     auto data = GetSceneEditor(sceneEditor);
 
     SetScene(data->Camera, newScene);
@@ -149,8 +150,8 @@ static void OnSceneEditorSceneChanged(Entity sceneEditor, Entity oldScene, Entit
 }
 
 DefineService(SceneEditor)
-        Subscribe(ImGuiDraw, Draw)
-        Subscribe(SceneEditorAdded, OnAdded)
-        Subscribe(SceneEditorRemoved, OnRemoved)
-        Subscribe(SceneEditorSceneChanged, OnSceneEditorSceneChanged)
+        RegisterSubscription(ImGuiDraw, Draw, 0)
+        RegisterSubscription(SceneEditorAdded, OnAdded, 0)
+        RegisterSubscription(SceneEditorRemoved, OnRemoved, 0)
+        RegisterSubscription(SceneEditorSceneChanged, OnSceneEditorSceneChanged, 0)
 EndService()

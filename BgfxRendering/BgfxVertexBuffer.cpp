@@ -9,7 +9,7 @@
 #include <Foundation/Stream.h>
 #include <Foundation/AppLoop.h>
 #include <Core/Vector.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Rendering/VertexAttribute.h>
 
 
@@ -24,17 +24,18 @@ struct BgfxVertexBuffer {
     bool invalidated;
 };
 
-DefineComponent(BgfxVertexBuffer)
+BeginUnit(BgfxVertexBuffer)
+    BeginComponent(BgfxVertexBuffer)
 EndComponent()
 
-static void OnChanged(Entity entity) {
-    if(HasBgfxVertexBuffer(entity)) {
-        GetBgfxVertexBuffer(entity)->invalidated = true;
+LocalFunction(OnChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxVertexBuffer())) {
+        GetBgfxVertexBufferData(entity)->invalidated = true;
     }
 }
 
 void OnVertexBufferRemoved(Entity entity) {
-    auto data = GetBgfxVertexBuffer(entity);
+    auto data = GetBgfxVertexBufferData(entity);
 
     if(bgfx::isValid(data->staticHandle)) {
         bgfx::destroy(data->staticHandle);
@@ -43,7 +44,7 @@ void OnVertexBufferRemoved(Entity entity) {
 }
 
 u16 GetBgfxVertexBufferHandle(Entity entity) {
-    auto data = GetBgfxVertexBuffer(entity);
+    auto data = GetBgfxVertexBufferData(entity);
 
     if(data->invalidated) {
         auto declData = (bgfx::VertexDecl*)GetBgfxVertexDeclarationHandle(GetVertexBufferDeclaration(entity));
@@ -102,15 +103,15 @@ u16 GetBgfxVertexBufferHandle(Entity entity) {
     }
 
     if(GetVertexBufferDynamic(entity)) {
-        return GetBgfxVertexBuffer(entity)->dynamicHandle.idx;
+        return GetBgfxVertexBufferData(entity)->dynamicHandle.idx;
     } else {
-        return GetBgfxVertexBuffer(entity)->staticHandle.idx;
+        return GetBgfxVertexBufferData(entity)->staticHandle.idx;
     }
 }
 
 DefineService(BgfxVertexBuffer)
-        Subscribe(BgfxVertexBufferRemoved, OnVertexBufferRemoved)
-        Subscribe(VertexBufferChanged, OnChanged)
-        Subscribe(StreamChanged, OnChanged)
-        Subscribe(StreamContentChanged, OnChanged)
+        RegisterSubscription(BgfxVertexBufferRemoved, OnVertexBufferRemoved, 0)
+        RegisterSubscription(VertexBufferChanged, OnChanged, 0)
+        RegisterSubscription(StreamChanged, OnChanged, 0)
+        RegisterSubscription(StreamContentChanged, OnChanged, 0)
 EndService()

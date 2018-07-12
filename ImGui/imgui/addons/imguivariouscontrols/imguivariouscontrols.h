@@ -584,8 +584,8 @@ public:
     IMGUI_API void addEmptyChildNodeVector();         // Only works if "childNodes==NULL" (and allocates it)
     IMGUI_API void removeEmptyChildNodeVector();      // Only works if (childNodes->size()==0" (and deallocates it)
     IMGUI_API int getNumSiblings(bool includeMe=true) const;
-    IMGUI_API TreeViewNode* getSiblingNode(int nodeIndexInParentHierarchy=-1);
-    IMGUI_API const TreeViewNode* getSiblingNode(int nodeIndexInParentHierarchy=-1) const;
+    IMGUI_API TreeViewNode* getSiblingNode(int nodeIndexInParentNode=-1);
+    IMGUI_API const TreeViewNode* getSiblingNode(int nodeIndexInParentNode=-1) const;
     IMGUI_API int getDepth() const;   // root nodes have depth = 0
 
     IMGUI_API static void Swap(TreeViewNode*& n1,TreeViewNode*& n2); // untested

@@ -6,7 +6,7 @@
 #include "ModuleDefinition.h"
 #include "ServiceDefinition.h"
 
-DefineModule(DataModel)
+BeginModule(DataModel)
         ModuleDependency(Foundation)
 
         ModuleType(ModuleDefinition)

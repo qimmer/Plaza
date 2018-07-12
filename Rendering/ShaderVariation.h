@@ -5,9 +5,10 @@
 #ifndef PLAZA_SHADERVARIATION_H
 #define PLAZA_SHADERVARIATION_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(ShaderVariation)
-DeclareComponentPropertyReactive(ShaderVariation, StringRef, ShaderVariationDefines)
+Unit(ShaderVariation)
+    Component(ShaderVariation)
+        Property(StringRef, ShaderVariationDefines)
 
 #endif //PLAZA_SHADERVARIATION_H

@@ -5,11 +5,12 @@
 #ifndef PLAZA_UNIFORMSTATE_H
 #define PLAZA_UNIFORMSTATE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(UniformState)
+Unit(UniformState)
+    Component(UniformState)
 
-DeclareComponentPropertyReactive(UniformState, Entity, UniformStateUniform);
+        Property(Entity, UniformStateUniform);
 DeclareComponentProperty(UniformState, m4x4f, UniformStateMat4);
 DeclareComponentProperty(UniformState, v4f, UniformStateVec4);
 DeclareComponentProperty(UniformState, Entity, UniformStateTexture);

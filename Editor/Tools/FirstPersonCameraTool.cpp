@@ -13,11 +13,11 @@
 #include <Input/InputState.h>
 #include <Input/Key.h>
 
-static void OnServiceStart(Service service) {
-    auto editorRoot = CreateHierarchy(0, ".editor");
-    auto root = CreateHierarchy(editorRoot, "InputBindings");
+LocalFunction(OnServiceStart, void, Service service) {
+    auto editorRoot = CreateNode(0, ".editor");
+    auto root = CreateNode(editorRoot, "InputBindings");
 }
 
 DefineService(FirstPersonCameraTool)
-        Subscribe(FirstPersonCameraToolStarted, OnServiceStart)
+        RegisterSubscription(FirstPersonCameraToolStarted, OnServiceStart, 0)
 EndService()

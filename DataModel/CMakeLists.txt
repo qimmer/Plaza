@@ -3,7 +3,7 @@ project(DataModel)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(DataModel DataModelModule.cpp DataModelModule.h ModuleDefinition.cpp ModuleDefinition.h ServiceDefinition.cpp ServiceDefinition.h CppPersistance.cpp CppPersistance.h EnumDefinition.cpp EnumDefinition.h)
+add_library(DataModel DataModelModule.cpp DataModelModule.h CppPersistance.cpp CppPersistance.h)
 
 target_include_directories(DataModel PUBLIC "..")
 

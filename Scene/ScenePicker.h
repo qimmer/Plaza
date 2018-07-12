@@ -5,13 +5,13 @@
 #ifndef PLAZA_ScenePicker_H
 #define PLAZA_ScenePicker_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(ScenePicker)
-DeclareService(ScenePicker)
+Unit(ScenePicker)
+    Component(ScenePicker)
 
-DeclareComponentPropertyReactive(ScenePicker, u8, ScenePickerLayers)
-DeclareComponentPropertyReactive(ScenePicker, v2f, ScenePickerViewportLocation)
-DeclareComponentPropertyReactive(ScenePicker, Entity, ScenePickerPickedEntity)
+        Property(u8, ScenePickerLayers)
+        Property(v2f, ScenePickerViewportLocation)
+        Property(Entity, ScenePickerPickedEntity)
 
 #endif //PLAZA_ScenePicker_H

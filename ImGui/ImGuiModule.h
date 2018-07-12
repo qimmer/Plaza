@@ -8,6 +8,6 @@
 #include <Core/Module.h>
 
 
-    DeclareModule(ImGui)
+    Module(ImGui)
 
 #endif //PLAZA_IMGUIMODULE_H

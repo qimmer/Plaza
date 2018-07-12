@@ -19,20 +19,21 @@ struct Transform3D {
     v4f RotationQuat3D;
 };
 
-DefineComponent(Transform3D)
-    Dependency(Transform)
-    DefinePropertyReactive(v3f, Position3D)
-    DefinePropertyReactive(v3f, Scale3D)
-    DefinePropertyReactive(v3f, RotationEuler3D)
+BeginUnit(Transform3D)
+    BeginComponent(Transform3D)
+    RegisterBase(Transform)
+    RegisterProperty(v3f, Position3D)
+    RegisterProperty(v3f, Scale3D)
+    RegisterProperty(v3f, RotationEuler3D)
 EndComponent()
 
-DefineComponentPropertyReactive(Transform3D, v3f, Position3D)
+RegisterProperty(v3f, Position3D)
 
-DefineComponentPropertyReactive(Transform3D, v3f, RotationEuler3D)
+RegisterProperty(v3f, RotationEuler3D)
 
-DefineComponentPropertyReactive(Transform3D, v4f, RotationQuat3D)
+RegisterProperty(v4f, RotationQuat3D)
 
-DefineComponentPropertyReactive(Transform3D, v3f, Scale3D)
+RegisterProperty(v3f, Scale3D)
 
 static void UpdateLocalTransform(Entity entity) {
     auto position = GetPosition3D(entity);
@@ -50,38 +51,38 @@ static void UpdateLocalTransform(Entity entity) {
     SetLocalTransform(entity, *(m4x4f *) srMat);
 }
 
-static void OnPosition3DChanged(Entity entity, v3f before, v3f after) {
+LocalFunction(OnPosition3DChanged, void, Entity entity, v3f before, v3f after) {
     if(memcmp(&before, &after, sizeof(v3f)) != 0) {
         UpdateLocalTransform(entity);
     }
 }
 
-static void OnRotationEuler3DChanged(Entity entity, v3f before, v3f after) {
+LocalFunction(OnRotationEuler3DChanged, void, Entity entity, v3f before, v3f after) {
     v4f qx, qy, qz, t;
     glm_quat(&qx.x, glm_rad(after.x), 1.0f, 0.0f, 0.0f);
     glm_quat(&qy.x, glm_rad(after.y), 0.0f, 1.0f, 0.0f);
     glm_quat(&qz.x, glm_rad(after.z), 0.0f, 0.0f, 1.0f);
     glm_quat_mulv(&qy.x, &qx.x, &t.x);
-    glm_quat_mulv(&t.x, &qz.x, &GetTransform3D(entity)->RotationQuat3D.x);
+    glm_quat_mulv(&t.x, &qz.x, &GetTransform3DData(entity)->RotationQuat3D.x);
 
     UpdateLocalTransform(entity);
 }
 
-static void OnRotationQuat3DChanged(Entity entity, v4f before, v4f q) {
+LocalFunction(OnRotationQuat3DChanged, void, Entity entity, v4f before, v4f q) {
     v3f euler = {glm_deg(atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * q.x * q.x - 2 * q.z * q.z)),
                  glm_deg(atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * q.y * q.y - 2 * q.z * q.z)),
                  glm_deg(asin(2 * q.x * q.y + 2 * q.z * q.w))};
 
-    GetTransform3D(entity)->RotationEuler3D = euler;
+    GetTransform3DData(entity)->RotationEuler3D = euler;
 
     UpdateLocalTransform(entity);
 }
 
 DefineService(Transform3D)
-    Subscribe(Scale3DChanged, OnPosition3DChanged)
-    Subscribe(Position3DChanged, OnPosition3DChanged)
-    Subscribe(RotationQuat3DChanged, OnRotationQuat3DChanged)
-    Subscribe(RotationEuler3DChanged, OnRotationEuler3DChanged)
+    RegisterSubscription(Scale3DChanged, OnPosition3DChanged, 0)
+    RegisterSubscription(Position3DChanged, OnPosition3DChanged, 0)
+    RegisterSubscription(RotationQuat3DChanged, OnRotationQuat3DChanged, 0)
+    RegisterSubscription(RotationEuler3DChanged, OnRotationEuler3DChanged, 0)
 EndService()
 
 void Move3D(Entity transform, v3f direction, bool relativeToRotation) {

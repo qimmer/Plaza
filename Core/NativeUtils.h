@@ -8,6 +8,8 @@
 #include "Types.h"
 #include <stddef.h>
 #include <memory.h>
+#include <string.h>
+#include <stdio.h>
 
 typedef u64 Entity;
 
@@ -28,7 +30,7 @@ u32 GetComponentIndex(Entity entity, Entity component);
 Entity GetComponentAddedEvent(Entity component);
 Entity GetComponentRemovedEvent(Entity component);
 void SetComponentSize(Entity entity, u16 size);
-void SetEventArgumentSize(Entity entity, u32 size);
+void SetEventArgsByDecl(Entity entity, StringRef decl);
 void SetEventArgumentOffset(Entity entity, u32 offset);
 void SetEventArgumentType(Entity entity, Type type);
 void SetPropertyType(Entity entity, Type type);
@@ -40,7 +42,7 @@ void SetPropertyComponent(Entity entity, Entity component);
 bool GetPropertyValue(Entity entity, Entity context, void *dataOut);
 void SetParent(Entity entity, Entity parent);
 Entity GetParent(Entity entity);
-void FireEventNative(Entity event, const void *eventArgsStruct);
+void FireEvent(Entity event, Entity context, ...);
 void FireEventFast(
         Entity event,
         u32 numArguments,
@@ -67,6 +69,11 @@ Entity EventOf_ParentChanged();
 
 Entity GetUniqueEntity(StringRef name);
 
+template <class... T>
+inline void __FireEventVa(Entity event, T... args) {
+    FireEvent(event, args...);
+}
+
 // Declaration Macros
 
 #define Declare(TYPE, NAME, INITIALIZER) \
@@ -81,10 +88,13 @@ Entity GetUniqueEntity(StringRef name);
 #define Unit(NAME) \
     void __InitUnit_ ## NAME (Entity module);
 
+#define Node(NAME) \
+    Declare(Node, NAME, 0)
+
 #define Component(NAME) \
     struct NAME;\
     Declare(Component, NAME, 0)\
-    inline NAME * Get ## NAME (Entity entity) {\
+    inline NAME * Get ## NAME ## Data(Entity entity) {\
         return (NAME*)GetComponentData(ComponentOf_ ## NAME(), GetComponentIndex(ComponentOf_ ## NAME(), entity));\
     }\
     inline Entity EventOf_ ## NAME ## Added () {\
@@ -94,16 +104,14 @@ Entity GetUniqueEntity(StringRef name);
         return GetComponentRemovedEvent(ComponentOf_ ## NAME());\
     }
 
-#define Event(EVENT) \
-    Declare(Event, EVENT, 0)\
-    inline void Fire ## EVENT (EVENT ## Args arguments) { \
-        FireEventNative(EventOf_ ## EVENT (), &arguments);\
-    }
+#define Event(NAME, ...) \
+    static const StringRef __ ## DECL ## NAME = #__VA_ARGS__;\
+    Declare(Event, NAME, 0)
 
-#define __PropertyCore(PROPERTYTYPE, PROPERTYNAME) \
+#define __PropertyCore(PROPERTYTYPE, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME, 0) \
-    struct PROPERTYNAME ## ChangedArgs { Entity ChangedEntity; PROPERTYTYPE OldValue; PROPERTYTYPE NewValue; };\
-    Event(PROPERTYNAME ## Changed)\
+    static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
+    Event(PROPERTYNAME ## Changed, Entity changedEntity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue)\
     inline PROPERTYTYPE Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         PROPERTYTYPE value;\
@@ -113,10 +121,10 @@ Entity GetUniqueEntity(StringRef name);
     }\
     void Set ## PROPERTYNAME(Entity entity, PROPERTYTYPE value);
 
-#define Property(PROPERTYTYPE, PROPERTYNAME) \
+#define Property(PROPERTYTYPE, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME, 0) \
-    struct PROPERTYNAME ## ChangedArgs { Entity ChangedEntity; PROPERTYTYPE OldValue; PROPERTYTYPE NewValue; };\
-    Event(PROPERTYNAME ## Changed)\
+    static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
+    Event(PROPERTYNAME ## Changed, Entity changedEntity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue)\
     inline PROPERTYTYPE Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         PROPERTYTYPE value;\
@@ -129,20 +137,23 @@ Entity GetUniqueEntity(StringRef name);
         SetPropertyValue(prop, entity, &value);\
     }
 
-#define Function(NAME, R, ...) \
-    R NAME(__VA_ARGS__); \
+#define __Function(NAME, R, ...) \
     inline Entity FunctionOf_ ## NAME () {\
         static Entity entity = 0;\
         if(!entity) {\
             entity = GetUniqueEntity("Function " #NAME);\
             SetName(entity, #NAME);\
             SetFunctionCaller(entity, CallNativeFunction);\
-            SetFunctionImplementation(entity, (u64)(void*)NAME);\
+            SetFunctionImplementation(entity, (u64)(void*) (Entity(*)(StringRef)) & NAME );\
             SetFunctionReturnType(entity, TypeOf_ ## R);\
             SetFunctionArgsByDecl(entity, #__VA_ARGS__);\
         }\
         return entity;\
     }
+
+#define Function(NAME, R, ...) \
+    R NAME( __VA_ARGS__ ); \
+    __Function(NAME, R, ##__VA_ARGS__)
 
 #define Test(NAME) \
     TestResult NAME();\
@@ -162,8 +173,9 @@ Entity GetUniqueEntity(StringRef name);
     TestResult NAME()
 
 #define LocalFunction(NAME, R, ...) \
-    Function(NAME, R, __VA_ARGS__) \
-    R NAME(__VA_ARGS__)
+    static R NAME(__VA_ARGS__);\
+    __Function(NAME, R, __VA_ARGS__) \
+    static R NAME(__VA_ARGS__)
 
 
 #define ReferenceTracker(TRACKEDPROPERTY, REFERENCEPROPERTY, REFERENCECOMPONENT, VECTORNAME) \
@@ -213,9 +225,9 @@ Entity GetUniqueEntity(StringRef name);
         static auto parentComponent = ComponentOf_ ## PARENTCOMPONENT ();\
         static auto childComponent = ComponentOf_ ## CHILDCOMPONENT ();\
         if(HasComponent(context, childComponent)) { \
-            auto childData = Get ## CHILDCOMPONENT (context);\
+            auto childData = Get ## CHILDCOMPONENT ## Data(context);\
             if(HasComponent(oldParent, parentComponent)) {\
-                auto data = Get ## PARENTCOMPONENT (oldParent);\
+                auto data = Get ## PARENTCOMPONENT ## Data(oldParent);\
                 for(auto i = 0; i < data->Num ## VECTORNAME; ++i) { \
                     if(data-> VECTORNAME [i] == childData) { \
                         VectorRemove(data, VECTORNAME, i); \
@@ -224,7 +236,7 @@ Entity GetUniqueEntity(StringRef name);
                 } \
             } \
             if(HasComponent(newParent, parentComponent)) {\
-                auto data = Get ## PARENTCOMPONENT (newParent);\
+                auto data = Get ## PARENTCOMPONENT ## Data(newParent);\
                 VectorAdd(data, VECTORNAME, childData); \
             } \
         } \
@@ -275,6 +287,7 @@ Entity GetUniqueEntity(StringRef name);
         ModuleOf_ ## MODULE (); // Reference and call module initializer
 
 #define EndModule() \
+        FireEvent(EventOf_ModuleInitialized(), module);\
     }
 
 #define BeginUnit(NAME) \
@@ -282,7 +295,7 @@ Entity GetUniqueEntity(StringRef name);
         static bool initialized = false;\
         if(initialized) return;\
         initialized = true;\
-        Entity type = 0, component = 0, property = 0, event = 0, argument = 0, argumentParent = 0, base = 0, extension = 0, function = 0, subscription = 0, subscriptionFunction = 0;\
+        Entity node = 0, type = 0, component = 0, property = 0, event = 0, argument = 0, argumentParent = 0, base = 0, extension = 0, function = 0, subscription = 0, subscriptionFunction = 0;\
         auto unitName = #NAME;\
         char buffer[1024];
 
@@ -290,6 +303,7 @@ Entity GetUniqueEntity(StringRef name);
         component = ComponentOf_ ## COMPONENT ();\
         SetParent(component, module);\
         SetName(component, #COMPONENT);\
+        AddComponent(component, ComponentOf_Component());\
         SetComponentSize(component, sizeof(COMPONENT));\
         {\
             typedef COMPONENT ComponentType;
@@ -297,29 +311,20 @@ Entity GetUniqueEntity(StringRef name);
 #define EndComponent() \
         }
 
-#define BeginEvent(NAME) \
+#define RegisterNode(NAME) \
+        node = NodeOf_ ## NAME ();\
+        SetName(node, #NAME);\
+        SetParent(node, module);
+
+#define RegisterEvent(NAME) \
         event = EventOf_ ## NAME ();\
         SetName(event, #NAME);\
         SetParent(event, module);\
         AddComponent(event, ComponentOf_Event());\
-        { \
-            typedef NAME ## Args EventArgs;
-
-#define EndEvent() \
-        }
-
-#define EventArgument(TYPE, NAME) \
-        argument = CreateEntityFromName(event, #NAME);\
-        SetName(argument, #NAME);\
-        SetParent(argument, event);\
-        SetEventArgumentType(argument, TypeOf_ ## TYPE);\
-        SetEventArgumentOffset(argument, offsetof(EventArgs, NAME));
+        SetEventArgsByDecl(event, __ ## DECL ## NAME);
 
 #define RegisterProperty(PROPERTYTYPE, PROPERTYNAME)\
-    BeginEvent(PROPERTYNAME ## Changed)\
-        EventArgument(PROPERTYTYPE, OldValue)\
-        EventArgument(PROPERTYTYPE, NewValue)\
-    EndEvent()\
+    RegisterEvent(PROPERTYNAME ## Changed)\
     property = PropertyOf_ ## PROPERTYNAME ();\
     SetName(property, #PROPERTYNAME);\
     SetPropertyType(property, TypeOf_ ## PROPERTYTYPE);\
@@ -327,6 +332,7 @@ Entity GetUniqueEntity(StringRef name);
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
     SetPropertyChangedEvent(property, EventOf_ ## PROPERTYNAME ## Changed ());\
     SetPropertyComponent(property, component);\
+    SetPropertyMeta(property, __ ## PROPERTYNAME ## __Meta);\
     SetParent(property, component);
 
 #define RegisterBase(BASECOMPONENT) \
@@ -346,12 +352,13 @@ Entity GetUniqueEntity(StringRef name);
 #define RegisterTest(TEST) \
     RegisterFunction(TEST)
 
-#define RegisterSubscription(EVENT, FUNCTION) \
+#define RegisterSubscription(EVENT, FUNCTION, SENDER) \
     snprintf(buffer, 1024, "Subscription_%s_%s", unitName, #EVENT);\
     subscription = CreateEntityFromName(module, buffer);\
     subscriptionFunction = FunctionOf_ ## FUNCTION ();\
     SetSubscriptionEvent(subscription, EventOf_ ## EVENT ());\
     SetSubscriptionHandler(subscription, subscriptionFunction);\
+    SetSubscriptionSender(subscription, SENDER);\
     if(!IsEntityValid(GetParent(subscriptionFunction))) {\
         SetParent(subscriptionFunction, module);\
     }
@@ -364,7 +371,13 @@ Entity GetUniqueEntity(StringRef name);
 
 #define RegisterChildCache(CHILDCOMPONENT) \
     RegisterFunction(On ## CHILDCOMPONENT ## ParentChanged)\
-    RegisterSubscription(ParentChanged, On ## CHILDCOMPONENT ## ParentChanged)
+    RegisterSubscription(ParentChanged, On ## CHILDCOMPONENT ## ParentChanged, 0)
+
+#define RegisterTimer(FUNCTION, INTERVAL) \
+    auto timer_ ## FUNCTION = CreateEntityFromName(module, #FUNCTION "Timer");\
+    SetTimerInterval(timer_ ## FUNCTION, (INTERVAL));\
+    SetTimerRepeat(timer_ ## FUNCTION, true);\
+    RegisterSubscription( TimerTick, FUNCTION, timer_ ## FUNCTION )
 
 #define EndUnit() \
     }
@@ -374,6 +387,6 @@ Entity GetUniqueEntity(StringRef name);
 #include <Core/Entity.h>
 #include <Core/Component.h>
 #include <Core/Event.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 
 #endif //PLAZA_NATIVEUTILS_H

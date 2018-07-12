@@ -17,28 +17,29 @@ struct OffscreenRenderTarget {
             RenderTargetTexture7;
 };
 
-DefineComponent(OffscreenRenderTarget)
-    DefinePropertyReactive(Entity, RenderTargetTexture0)
-    DefinePropertyReactive(Entity, RenderTargetTexture1)
-    DefinePropertyReactive(Entity, RenderTargetTexture2)
-    DefinePropertyReactive(Entity, RenderTargetTexture3)
-    DefinePropertyReactive(Entity, RenderTargetTexture4)
-    DefinePropertyReactive(Entity, RenderTargetTexture5)
-    DefinePropertyReactive(Entity, RenderTargetTexture6)
-    DefinePropertyReactive(Entity, RenderTargetTexture7)
+BeginUnit(OffscreenRenderTarget)
+    BeginComponent(OffscreenRenderTarget)
+    RegisterProperty(Entity, RenderTargetTexture0)
+    RegisterProperty(Entity, RenderTargetTexture1)
+    RegisterProperty(Entity, RenderTargetTexture2)
+    RegisterProperty(Entity, RenderTargetTexture3)
+    RegisterProperty(Entity, RenderTargetTexture4)
+    RegisterProperty(Entity, RenderTargetTexture5)
+    RegisterProperty(Entity, RenderTargetTexture6)
+    RegisterProperty(Entity, RenderTargetTexture7)
 EndComponent()
 
-DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture0)
-DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture1)
-DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture2)
-DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture3)
-DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture4)
-DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture5)
-DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture6)
-DefineComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture7)
+RegisterProperty(Entity, RenderTargetTexture0)
+RegisterProperty(Entity, RenderTargetTexture1)
+RegisterProperty(Entity, RenderTargetTexture2)
+RegisterProperty(Entity, RenderTargetTexture3)
+RegisterProperty(Entity, RenderTargetTexture4)
+RegisterProperty(Entity, RenderTargetTexture5)
+RegisterProperty(Entity, RenderTargetTexture6)
+RegisterProperty(Entity, RenderTargetTexture7)
 
-static void OnChanged(Entity entity) {
-    auto data = GetOffscreenRenderTarget(entity);
+LocalFunction(OnChanged, void, Entity entity) {
+    auto data = GetOffscreenRenderTargetData(entity);
 
     Entity textures[] = {
             data->RenderTargetTexture0,
@@ -62,11 +63,11 @@ static void OnChanged(Entity entity) {
     }
 }
 
-static void OnRenderTargetSizeChanged(Entity entity, v2i oldSize, v2i newSize) {
-    if(HasOffscreenRenderTarget(entity)) OnChanged(entity);
+LocalFunction(OnRenderTargetSizeChanged, void, Entity entity, v2i oldSize, v2i newSize) {
+    if(HasComponent(entity, ComponentOf_OffscreenRenderTarget())) OnChanged(entity);
 }
 
 DefineService(OffscreenRenderTarget)
-        Subscribe(RenderTargetSizeChanged, OnRenderTargetSizeChanged)
-        Subscribe(OffscreenRenderTargetChanged, OnChanged)
+        RegisterSubscription(RenderTargetSizeChanged, OnRenderTargetSizeChanged, 0)
+        RegisterSubscription(OffscreenRenderTargetChanged, OnChanged, 0)
 EndService()

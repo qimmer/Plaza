@@ -5,12 +5,12 @@
 #ifndef PLAZA_TRANSFORM_H
 #define PLAZA_TRANSFORM_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Transform)
-DeclareService(TransformUpdateService)
+Unit(Transform)
+    Component(Transform)
 
-DeclareComponentPropertyReactive(Transform, m4x4f, GlobalTransform)
-DeclareComponentPropertyReactive(Transform, m4x4f, LocalTransform)
+        Property(m4x4f, GlobalTransform)
+        Property(m4x4f, LocalTransform)
 
 #endif //PLAZA_TRANSFORM_H

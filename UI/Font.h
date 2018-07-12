@@ -5,14 +5,14 @@
 #ifndef PLAZA_FONT_H
 #define PLAZA_FONT_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Font)
-DeclareComponentPropertyReactive(Font, float, FontSize)
-DeclareComponentPropertyReactive(Font, u32, FontFirstChar)
-DeclareComponentPropertyReactive(Font, u32, FontLastChar)
+Unit(Font)
+    Component(Font)
+        Property(float, FontSize)
+        Property(u32, FontFirstChar)
+        Property(u32, FontLastChar)
 
-DeclareService(Font)
 
 struct FontVertex {
     v2f Position, Uv;

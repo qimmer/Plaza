@@ -34,21 +34,22 @@ struct Font {
 
 static u8 textureData[FONT_TEXTURE_DIM*FONT_TEXTURE_DIM];
 
-DefineComponent(Font)
-    Dependency(Stream)
-    DefineProperty(float, FontSize)
-    DefineProperty(u32, FontFirstChar)
-    DefineProperty(u32, FontLastChar)
+BeginUnit(Font)
+    BeginComponent(Font)
+    RegisterBase(Stream)
+    RegisterProperty(float, FontSize))
+    RegisterProperty(u32, FontFirstChar))
+    RegisterProperty(u32, FontLastChar))
 EndComponent()
 
-DefineComponentPropertyReactive(Font, float, FontSize)
-DefineComponentPropertyReactive(Font, u32, FontFirstChar)
-DefineComponentPropertyReactive(Font, u32, FontLastChar)
+RegisterProperty(float, FontSize)
+RegisterProperty(u32, FontFirstChar)
+RegisterProperty(u32, FontLastChar)
 
 static void BakeFont(Entity entity) {
-    if(!HasFont(entity)) return;
+    if(!HasComponent(entity, ComponentOf_Font())) return;
 
-    auto data = GetFont(entity);
+    auto data = GetFontData(entity);
     data->Characters.resize(data->FontLastChar - data->FontFirstChar);
 
     // Read and parse TTF font
@@ -203,18 +204,18 @@ Entity GetFontMaterial(Entity font) {
 }
 
 static void InvalidateFont(Entity entity) {
-    GetFont(entity)->Invalidated = true;
+    GetFontData(entity)->Invalidated = true;
 }
 
 
 static void ChangeFont(Entity entity) {
-    if(HasFont(entity)) {
-        FireNativeEvent(FontChanged, entity);
+    if(HasComponent(entity, ComponentOf_Font())) {
+        FireEvent(EventOf_FontChanged(), entity);
     }
 }
 
-static void OnFontAdded(Entity entity) {
-    auto data = GetFont(entity);
+LocalFunction(OnFontAdded, void, Entity entity) {
+    auto data = GetFontData(entity);
     data->Texture = CreateTexture2D(entity, "Texture");
     data->Material = CreateMaterial(entity, "Material");
     SetMaterialVertexShader(data->Material, FontVertexShader);
@@ -226,8 +227,8 @@ static void OnFontAdded(Entity entity) {
     SetUniformStateUniform(textureState, FontTextureUniform);
 }
 
-static void OnFontStarted(Service service) {
-    FontRoot = CreateHierarchy(0, ".font");
+LocalFunction(OnFontStarted, void, Service service) {
+    FontRoot = CreateNode(0, ".font");
     FontTextureUniform = CreateUniform(FontRoot, "TextureUniform");
     SetUniformName(FontTextureUniform, "s_tex");
     SetUniformType(FontTextureUniform, TypeOf_Entity());
@@ -256,17 +257,17 @@ static void OnFontStarted(Service service) {
 
 }
 
-static void OnFontStopped(Service service) {
+LocalFunction(OnFontStopped, void, Service service) {
     DestroyEntity(FontRoot);
 }
 
 DefineService(Font)
-    Subscribe(FontChanged, InvalidateFont)
-    Subscribe(StreamChanged, ChangeFont)
-    Subscribe(StreamContentChanged, ChangeFont)
-    Subscribe(FontAdded, OnFontAdded)
-    Subscribe(FontStarted, OnFontStarted)
-    Subscribe(FontStopped, OnFontStopped)
+    RegisterSubscription(FontChanged, InvalidateFont, 0)
+    RegisterSubscription(StreamChanged, ChangeFont, 0)
+    RegisterSubscription(StreamContentChanged, ChangeFont, 0)
+    RegisterSubscription(FontAdded, OnFontAdded, 0)
+    RegisterSubscription(FontStarted, OnFontStarted, 0)
+    RegisterSubscription(FontStopped, OnFontStopped, 0)
 EndService()
 
 Entity GetFontVertexDeclaration() {

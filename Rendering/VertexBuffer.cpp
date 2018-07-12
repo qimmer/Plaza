@@ -2,7 +2,7 @@
 // Created by Kim Johannsen on 14/01/2018.
 //
 
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Foundation/Stream.h>
 #include "VertexBuffer.h"
 #include "VertexAttribute.h"
@@ -15,14 +15,15 @@ struct VertexBuffer {
     bool VertexBufferDynamic;
 };
 
-DefineComponent(VertexBuffer)
-    Dependency(Stream)
-    DefinePropertyReactive(Entity, VertexBufferDeclaration)
-    DefinePropertyReactive(bool, VertexBufferDynamic)
+BeginUnit(VertexBuffer)
+    BeginComponent(VertexBuffer)
+    RegisterBase(Stream)
+    RegisterProperty(Entity, VertexBufferDeclaration)
+    RegisterProperty(bool, VertexBufferDynamic)
 EndComponent()
 
-DefineComponentPropertyReactive(VertexBuffer, Entity, VertexBufferDeclaration)
-DefineComponentPropertyReactive(VertexBuffer, bool, VertexBufferDynamic)
+RegisterProperty(Entity, VertexBufferDeclaration)
+RegisterProperty(bool, VertexBufferDynamic)
 
 
 

@@ -766,7 +766,7 @@ struct IMGUI_API ImGuiDrawContext
 struct IMGUI_API ImGuiWindow
 {
     char*                   Name;
-    ImGuiID                 ID;                                 // == ImHash(Name)
+    ImGuiID                 ID;                                 // == ImHasComponent(Name, ComponentOf_h())
     ImGuiWindowFlags        Flags;                              // See enum ImGuiWindowFlags_
     ImVec2                  PosFloat;
     ImVec2                  Pos;                                // Position rounded-up to nearest pixel

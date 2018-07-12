@@ -133,7 +133,7 @@ DefineEnum(TextureFlag, true)
     DefineFlag(TextureFlag_READ_BACK) //!< Texture will be used for read back from GPU.
 EndEnum()
 
-DefineEvent(TextureReadbackInitiated)
+RegisterEvent(TextureReadbackInitiated)
 
 struct Texture {
     Texture() : TextureMipLevels(1), TextureFlag(TextureFlag_NONE), TextureFormat(0), TextureDynamic(false) {}
@@ -145,20 +145,21 @@ struct Texture {
     Entity TextureReadbackTarget;
 };
 
-DefineComponent(Texture)
-    Dependency(Stream)
+BeginUnit(Texture)
+    BeginComponent(Texture)
+    RegisterBase(Stream)
     DefinePropertyEnum(u16, TextureFormat, TextureFormat)
     DefinePropertyEnum(u32, TextureFlag, TextureFlag)
-    DefinePropertyReactive(bool, TextureDynamic)
-    DefinePropertyReactive(u8, TextureMipLevels)
+    RegisterProperty(bool, TextureDynamic)
+    RegisterProperty(u8, TextureMipLevels)
 EndComponent()
 
-DefineComponentPropertyReactive(Texture, u32, TextureFlag)
-DefineComponentPropertyReactive(Texture, u16, TextureFormat)
-DefineComponentPropertyReactive(Texture, bool, TextureDynamic)
-DefineComponentPropertyReactive(Texture, u8, TextureMipLevels)
-DefineComponentPropertyReactive(Texture, Entity, TextureReadbackTarget)
+RegisterProperty(u32, TextureFlag)
+RegisterProperty(u16, TextureFormat)
+RegisterProperty(bool, TextureDynamic)
+RegisterProperty(u8, TextureMipLevels)
+RegisterProperty(Entity, TextureReadbackTarget)
 
 API_EXPORT void TextureReadback(Entity texture, TextureReadbackHandler handler) {
-    FireNativeEvent(TextureReadbackInitiated, texture, handler);
+    FireEvent(EventOf_TextureReadbackInitiated(), texture, handler);
 }

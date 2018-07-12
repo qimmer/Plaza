@@ -5,7 +5,7 @@
 #include <Foundation/AppLoop.h>
 #include "Transform.h"
 #include <cglm/cglm.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 
 struct Transform {
     Transform() {
@@ -15,49 +15,50 @@ struct Transform {
     m4x4f GlobalTransform, LocalTransform;
 };
 
-DefineComponent(Transform)
-    Dependency(Hierarchy)
-    DefinePropertyReactive(m4x4f, LocalTransform)
-    DefinePropertyReactive(m4x4f, GlobalTransform)
+BeginUnit(Transform)
+    BeginComponent(Transform)
+    RegisterBase(Node)
+    RegisterProperty(m4x4f, LocalTransform)
+    RegisterProperty(m4x4f, GlobalTransform)
 EndComponent()
 
-DefineComponentPropertyReactive(Transform, m4x4f, GlobalTransform)
-DefineComponentPropertyReactive(Transform, m4x4f, LocalTransform)
+RegisterProperty(m4x4f, GlobalTransform)
+RegisterProperty(m4x4f, LocalTransform)
 
 static void UpdateGlobal(Entity entity) {
-    auto data = GetTransform(entity);
+    auto data = GetTransformData(entity);
     auto oldTransform = data->GlobalTransform;
     auto parent = GetParent(entity);
 
-    if(HasTransform(parent) > 0) {
+    if(HasComponent(parent, ComponentOf_Transform()) > 0) {
         auto parentGlobalMatrix = GetGlobalTransform(parent);
         glm_mat4_mul((vec4*)&parentGlobalMatrix, (vec4*)&data->LocalTransform, (vec4*)&data->GlobalTransform);
     } else {
         data->GlobalTransform = data->LocalTransform;
     }
 
-    FireNativeEvent(GlobalTransformChanged, entity, oldTransform, data->GlobalTransform);
+    FireEvent(EventOf_GlobalTransformChanged(), entity, oldTransform, data->GlobalTransform);
 
     for_children(child, entity) {
-        if(HasTransform(child)) {
+        if(HasComponent(child, ComponentOf_Transform())) {
             UpdateGlobal(child);
         }
     }
 }
 
-static void OnLocalInvalidated(Entity entity, m4x4f oldMatrix, m4x4f newMatrix) {
+LocalFunction(OnLocalInvalidated, void, Entity entity, m4x4f oldMatrix, m4x4f newMatrix) {
     if(memcmp(&oldMatrix, &newMatrix, sizeof(m4x4f)) != 0) {
         UpdateGlobal(entity);
     }
 }
 
-static void OnParentChanged(Entity child, Entity oldParent, Entity newParent) {
-    if(HasTransform(child)) {
+LocalFunction(OnParentChanged, void, Entity child, Entity oldParent, Entity newParent) {
+    if(HasComponent(child, ComponentOf_Transform())) {
         UpdateGlobal(child);
     }
 }
 
 DefineService(TransformUpdateService)
-    Subscribe(LocalTransformChanged, OnLocalInvalidated)
-    Subscribe(ParentChanged, OnParentChanged)
+    RegisterSubscription(LocalTransformChanged, OnLocalInvalidated, 0)
+    RegisterSubscription(ParentChanged, OnParentChanged, 0)
 EndService()

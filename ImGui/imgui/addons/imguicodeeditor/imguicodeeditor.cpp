@@ -1001,7 +1001,7 @@ class FoldingStringVector : public ImVectorEx<FoldingString> {
         punctuationStringsMerged[0] = '\0';
         resetSHvariables();
     }
-    FoldingStringVector(size_t size) : Base(size) {
+    FoldingStringVector(size_t size) : RegisterBase(size) {
         mergeAdditionalTrailingCharIfPossible = false;
         additionalTrailingChar = ';';
         punctuationStringsMerged[0] = '\0';

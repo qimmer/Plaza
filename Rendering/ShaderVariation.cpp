@@ -9,8 +9,9 @@ struct ShaderVariation {
     String ShaderVariationDefines;
 };
 
-DefineComponent(ShaderVariation)
-    DefinePropertyReactive(StringRef, ShaderVariationDefines)
+BeginUnit(ShaderVariation)
+    BeginComponent(ShaderVariation)
+    RegisterProperty(StringRef, ShaderVariationDefines)
 EndComponent()
 
-DefineComponentPropertyReactive(ShaderVariation, StringRef, ShaderVariationDefines)
+RegisterProperty(StringRef, ShaderVariationDefines)

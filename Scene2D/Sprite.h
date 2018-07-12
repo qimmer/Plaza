@@ -5,9 +5,8 @@
 #ifndef PLAZA_SPRITE_H
 #define PLAZA_SPRITE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(Sprite)
 
 Entity GetSpriteTextureUniform();
 Entity GetSpriteMesh();

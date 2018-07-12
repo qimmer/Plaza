@@ -13,10 +13,11 @@ struct MainMenu {
     bool MainMenuVisible;
 };
 
-DefineComponent(MainMenu)
+BeginUnit(MainMenu)
+    BeginComponent(MainMenu)
 EndComponent()
 
-DefineComponentPropertyReactive(MainMenu, bool, MainMenuVisible)
+RegisterProperty(bool, MainMenuVisible)
 
 static void DrawMenu(Entity menu) {
     char title[256];
@@ -28,7 +29,7 @@ static void DrawMenu(Entity menu) {
     if(GetFirstChild(menu)) {
         if(ImGui::BeginMenu(title, enabled)) {
             for(auto subMenu = GetFirstChild(menu); subMenu; subMenu = GetSibling(subMenu)) {
-                if(!HasMenuItem(subMenu)) continue;
+                if(!HasComponent(subMenu, ComponentOf_MenuItem())) continue;
 
                 DrawMenu(subMenu);
             }
@@ -42,15 +43,15 @@ static void DrawMenu(Entity menu) {
         }
     }
 }
-static void OnImGuiDraw(Entity context) {
+LocalFunction(OnImGuiDraw, void, Entity context) {
     for(auto mainMenu = GetFirstChild(context); mainMenu; mainMenu = GetSibling(mainMenu)) {
-        if(HasMainMenu(mainMenu)) {
+        if(HasComponent(mainMenu, ComponentOf_MainMenu())) {
             auto visible = GetMainMenuVisible(mainMenu);
             if(!visible) continue;
 
             if(ImGui::BeginMainMenuBar()) {
                 for(auto menu = GetFirstChild(mainMenu); menu; menu = GetSibling(menu)) {
-                    if(!HasMenuItem(menu)) continue;
+                    if(!HasComponent(menu, ComponentOf_MenuItem())) continue;
 
                     DrawMenu(menu);
                 }
@@ -61,5 +62,5 @@ static void OnImGuiDraw(Entity context) {
 }
 
 DefineService(MainMenu)
-    Subscribe(ImGuiDraw, OnImGuiDraw)
+    RegisterSubscription(ImGuiDraw, OnImGuiDraw, 0)
 EndService()

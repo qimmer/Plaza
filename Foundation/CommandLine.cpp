@@ -3,25 +3,20 @@
 //
 
 #include "CommandLine.h"
+#include <Core/NativeUtils.h>
 
-struct CommandLine {
-    String CommandLineArgumentName, CommandLineArgumentValue;
+struct CommandLineArgument {
+    char CommandLineArgumentName[32];
+    char CommandLineArgumentValue[1024-32];
 };
 
-DefineComponent(CommandLineArgument)
-EndComponent()
-
-DefineComponentProperty(CommandLineArgument, StringRef, CommandLineArgumentName)
-DefineComponentProperty(CommandLineArgument, StringRef, CommandLineArgumentValue)
+BeginUnit(CommandLineArgument)
+    BeginComponent(CommandLineArgument)
+        RegisterProperty(StringRef, CommandLineArgumentName)
+        RegisterProperty(StringRef, CommandLineArgumentValue)
+    EndComponent()
+EndUnit()
 
 void ParseCommandLine(int argc, char** argv) {
-    char commandLine[PATH_MAX];
-    memset(commandLine, 0, PATH_MAX);
-
-    for(auto i = 0; i < argc; ++i) {
-        strcat(commandLine, argv[i]);
-        strcat(commandLine, " ");
-    }
-    strstr(commandLine, )
 
 }

@@ -11,8 +11,9 @@ struct RenderTarget {
     v2i RenderTargetSize;
 };
 
-DefineComponent(RenderTarget)
-    DefinePropertyReactive(v2i, RenderTargetSize)
+BeginUnit(RenderTarget)
+    BeginComponent(RenderTarget)
+    RegisterProperty(v2i, RenderTargetSize)
 EndComponent()
 
-DefineComponentPropertyReactive(RenderTarget, v2i, RenderTargetSize)
+RegisterProperty(v2i, RenderTargetSize)

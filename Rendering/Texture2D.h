@@ -5,12 +5,12 @@
 #ifndef PLAZA_TEXTURE2D_H
 #define PLAZA_TEXTURE2D_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Texture2D)
+Unit(Texture2D)
+    Component(Texture2D)
 
-DeclareComponentPropertyReactive(Texture2D, v2i, TextureSize2D)
+        Property(v2i, TextureSize2D)
 
-DeclareService(Texture2D)
 
 #endif //PLAZA_TEXTURE2D_H

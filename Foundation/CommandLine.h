@@ -5,13 +5,12 @@
 #ifndef PLAZA_COMMANDLINE_H
 #define PLAZA_COMMANDLINE_H
 
-#include <Core/Entity.h>
-#include <Core/Service.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(CommandLineArgument)
-
-DeclareComponentProperty(CommandLineArgument, StringRef, CommandLineArgumentName)
-DeclareComponentProperty(CommandLineArgument, StringRef, CommandLineArgumentValue)
+Unit(CommandLineArgument)
+    Component(CommandLineArgument)
+        Property(StringRef, CommandLineArgumentName)
+        Property(StringRef, CommandLineArgumentValue)
 
 void ParseCommandLine(int argc, char** argv);
 

@@ -6,8 +6,7 @@
 #include "JsonModule.h"
 #include "JsonPersistance.h"
 
-DefineModule(Json)
-        ModuleDependency(Foundation)
-
-        ModuleService(JsonPersistance)
+BeginModule(Json)
+    RegisterDependency(Foundation)
+    RegisterUnit(JsonPersistance)
 EndModule()

@@ -22,7 +22,7 @@ void ViewTexture(Entity texture) {
     SetTexture2DViewerTexture(editor, texture);
 }
 
-static void OnAdded(Entity viewer) {
+LocalFunction(OnAdded, void, Entity viewer) {
     auto data = GetTexture2DViewer(viewer);
 
     data->Texture2DViewerMaterial = CreateMaterial(viewer, "Material");
@@ -35,17 +35,17 @@ static void OnAdded(Entity viewer) {
     SetUniformStateUniform(data->Texture2DViewerTextureUniformState, GetImGuiTextureUniform());
 }
 
-static void OnChanged(Entity viewer) {
+LocalFunction(OnChanged, void, Entity viewer) {
     auto data = GetTexture2DViewer(viewer);
     SetUniformStateTexture(data->Texture2DViewerTextureUniformState, data->Texture2DViewerTexture);
 }
 
 static void Draw(Entity context) {
-    for_entity(viewer, Texture2DViewer) {
+    for_entity(viewer, data, Texture2DViewer) {
         auto data = GetTexture2DViewer(viewer);
         auto texture = GetTexture2DViewerTexture(viewer);
 
-        if(!IsEntityValid(texture) || !HasTexture2D(texture)) {
+        if(!IsEntityValid(texture) || !HasComponent(texture, ComponentOf_Texture2D())) {
             DestroyEntity(viewer);
             continue;
         }
@@ -65,15 +65,16 @@ static void Draw(Entity context) {
     }
 }
 
-DefineComponent(Texture2DViewer)
-        DefinePropertyReactive(Entity, Texture2DViewerTexture)
+BeginUnit(Texture2DViewer)
+    BeginComponent(Texture2DViewer)
+        RegisterProperty(Entity, Texture2DViewerTexture)
         DefineExtensionMethod(Texture2D, void, ViewTexture, Entity entity)
 EndComponent()
 
-DefineComponentPropertyReactive(Texture2DViewer, Entity, Texture2DViewerTexture)
+RegisterProperty(Entity, Texture2DViewerTexture)
 
 DefineService(Texture2DViewer)
-    Subscribe(ImGuiDraw, Draw)
-    Subscribe(Texture2DViewerAdded, OnAdded)
-    Subscribe(Texture2DViewerChanged, OnChanged)
+    RegisterSubscription(ImGuiDraw, Draw, 0)
+    RegisterSubscription(Texture2DViewerAdded, OnAdded, 0)
+    RegisterSubscription(Texture2DViewerChanged, OnChanged, 0)
 EndService()

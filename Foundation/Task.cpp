@@ -4,6 +4,7 @@
 
 #include "Task.h"
 #include "AppLoop.h"
+#include "Invocation.h"
 #include <stdint.h>
 
 #define SCHED_UINT_PTR uintptr_t
@@ -11,6 +12,7 @@
 #define SCHED_STATIC
 #undef SCHED_MIN
 #include <mmx/sched.h>
+#include <Core/Vector.h>
 
 #undef CreateService
 #undef CreateEvent
@@ -26,43 +28,32 @@ static int mainThread = 0;
 
 struct Task {
     struct sched_task TaskData;
-    TaskFunction TaskFunction;
     bool TaskFinished;
-    u32 TaskResult;
+    Entity TaskFunction;
 };
 
-DefineEvent(TaskFinished)
-
-DefineComponent(Task)
-EndComponent()
-
-DefineComponentProperty(Task, TaskFunction, TaskFunction)
-DefineComponentProperty(Task, bool, TaskFinished)
-DefineComponentProperty(Task, u32, TaskResult)
-
 static void TaskFunc(void* taskIndexPtr, struct scheduler*, struct sched_task_partition, sched_uint thread_num) {
-    auto task = GetTaskEntity((size_t)taskIndexPtr);
-
-    GetTaskFunction(task)(task);
+    auto task = GetComponentEntity(ComponentOf_Task(), (size_t)taskIndexPtr);
+    Invoke(task);
 }
 
 API_EXPORT void TaskWait(Entity task) {
-    auto data = GetTask(task);
+    auto data = GetTaskData(task);
     scheduler_join(&Scheduler, &data->TaskData);
 }
 
 API_EXPORT void TaskSchedule(Entity task) {
-    auto data = GetTask(task);
+    auto data = GetTaskData(task);
     if(!data->TaskFinished) return;
 
-    data->TaskResult = 0;
+    SetInvocationResult(task, CreateVariant(TypeOf_unknown, 0, 0));
 
-    scheduler_add(&Scheduler, &data->TaskData, TaskFunc, (void*)GetTaskIndex(task), 1, 1);
+    scheduler_add(&Scheduler, &data->TaskData, TaskFunc, (void*)GetComponentIndex(ComponentOf_Task(), task), 1, 1);
     data->TaskFinished = false;
 }
 
 API_EXPORT bool GetTaskRunning(Entity task) {
-    return !sched_task_done(&GetTask(task)->TaskData);
+    return !sched_task_done(&GetTaskData(task)->TaskData);
 }
 
 API_EXPORT int GetCurrentThreadIndex() {
@@ -92,17 +83,15 @@ API_EXPORT int GetNumThreads() {
     return MAX_THREADS;
 }
 
-static void OnUpdate(double deltaTime) {
-    for_entity(task, Task) {
+LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
+    for_entity(task, data, Task) {
         if(GetTaskRunning(task) || GetTaskFinished(task)) continue;
-
-        FireNativeEvent(TaskFinished, task, GetTaskResult(task));
 
         SetTaskFinished(task, true);
     }
 }
 
-static void OnServiceStart(Service service) {
+LocalFunction(OnCoreModuleInitialized, void, Entity module) {
     memset(threadIds.data(), 0, sizeof(u64) * MAX_THREADS);
 
     mainThread = GetCurrentThreadIndex();
@@ -113,13 +102,17 @@ static void OnServiceStart(Service service) {
 
 }
 
-static void OnServiceStop(Service service){
+LocalFunction(OnCoreModuleDestroyed, void, Entity module){
     scheduler_stop(&Scheduler, 0);
     free(SchedulerMemory);
 }
 
-DefineService(TaskScheduler)
-    Subscribe(TaskSchedulerStarted, OnServiceStart)
-    Subscribe(TaskSchedulerStopped, OnServiceStop)
-    Subscribe(AppUpdate, OnUpdate)
-EndService()
+BeginUnit(Task)
+    BeginComponent(Task)
+        RegisterBase(Invocation)
+        RegisterProperty(bool, TaskFinished)
+    EndComponent()
+
+    RegisterSubscription(AppLoopFrameChanged, OnAppLoopFrameChanged, 0)
+    RegisterNode(TaskQueue)
+EndUnit()

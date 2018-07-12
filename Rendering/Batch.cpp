@@ -14,16 +14,17 @@ struct Batch {
     Entity BatchShaderVariation;
 };
 
-DefineComponent(Batch)
-    DefineProperty(v4i, BatchScissor)
-    DefineProperty(Entity, BatchMaterial)
-    DefineProperty(Entity, BatchMesh)
-    DefineProperty(Entity, BatchShaderVariation)
-    DefineProperty(m4x4f, BatchWorldMatrix)
+BeginUnit(Batch)
+    BeginComponent(Batch)
+    RegisterProperty(v4i, BatchScissor))
+    RegisterProperty(Entity, BatchMaterial))
+    RegisterProperty(Entity, BatchMesh))
+    RegisterProperty(Entity, BatchShaderVariation))
+    RegisterProperty(m4x4f, BatchWorldMatrix))
 EndComponent()
 
-DefineComponentProperty(Batch, v4i, BatchScissor)
-DefineComponentProperty(Batch, Entity, BatchMaterial)
-DefineComponentProperty(Batch, Entity, BatchMesh)
-DefineComponentProperty(Batch, Entity, BatchShaderVariation)
-DefineComponentProperty(Batch, m4x4f, BatchWorldMatrix)
+RegisterProperty(v4i, BatchScissor)
+RegisterProperty(Entity, BatchMaterial)
+RegisterProperty(Entity, BatchMesh)
+RegisterProperty(Entity, BatchShaderVariation)
+RegisterProperty(m4x4f, BatchWorldMatrix)

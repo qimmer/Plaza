@@ -6,7 +6,7 @@
 #include "ImGuiRenderer.h"
 
 
-    DefineModule(ImGui)
+    BeginModule(ImGui)
         ModuleType(ImGuiRenderer)
         ModuleService(ImGuiRenderer)
     EndModule()

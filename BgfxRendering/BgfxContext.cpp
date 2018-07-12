@@ -81,21 +81,22 @@ struct BgfxContext {
     int debugFlags;
 };
 
-DefineComponent(BgfxContext)
+BeginUnit(BgfxContext)
+    BeginComponent(BgfxContext)
     ExtensionOf(Context)
 EndComponent()
 
 u16 GetBgfxContextHandle(Entity entity) {
-    return GetBgfxContext(entity)->fb.idx;
+    return GetBgfxContextData(entity)->fb.idx;
 }
 
 static u32 NumContexts = 0;
 static Entity PrimaryContext = 0;
 
-static void OnTextureReadbackInitiated(Entity texture, TextureReadbackHandler handler) {
+LocalFunction(OnTextureReadbackInitiated, void, Entity texture, TextureReadbackHandler handler) {
     if(!IsEntityValid(GetTextureReadbackTarget(texture))) return;
 
-    for_entity(context, BgfxContext) {
+    for_entity(context, data, BgfxContext) {
         auto data = GetBgfxContext(context);
 
         auto alreadyPending = false;
@@ -130,7 +131,7 @@ static void OnTextureReadbackInitiated(Entity texture, TextureReadbackHandler ha
     }
 }
 
-static void OnAppUpdate(double deltaTime) {
+LocalFunction(OnAppUpdate, void, double deltaTime) {
     auto numContexts = GetNumBgfxContext();
 
     for(auto i = 0; i < numContexts; ++i) {
@@ -165,7 +166,7 @@ static void OnAppUpdate(double deltaTime) {
 
     auto frame = bgfx::frame();
 
-    for_entity(context, BgfxContext) {
+    for_entity(context, data, BgfxContext) {
         auto data = GetBgfxContext(context);
 
         for(auto i = 0; i < data->pendingReadbackRequests.size(); ++i) {
@@ -186,7 +187,7 @@ static void OnAppUpdate(double deltaTime) {
 }
 
 static void ResetContext(Entity entity) {
-    auto data = GetBgfxContext(entity);
+    auto data = GetBgfxContextData(entity);
     auto size = GetRenderTargetSize(entity);
     auto vsync = GetContextVsync(entity);
     auto fullscreen = GetContextFullscreen(entity);
@@ -205,29 +206,29 @@ static void ResetContext(Entity entity) {
     }
 }
 
-static void OnContextResized(Entity entity, v2i oldSize, v2i newSize) {
-    if(HasBgfxContext(entity)) ResetContext(entity);
+LocalFunction(OnContextResized, void, Entity entity, v2i oldSize, v2i newSize) {
+    if(HasComponent(entity, ComponentOf_BgfxContext())) ResetContext(entity);
 }
 
-static void OnContextFlagChanged(Entity entity, bool oldValue, bool newValue) {
+LocalFunction(OnContextFlagChanged, void, Entity entity, bool oldValue, bool newValue) {
     ResetContext(entity);
 }
 
-static void OnContextTitleChanged(Entity entity, StringRef before, StringRef after) {
-    auto data = GetBgfxContext(entity);
+LocalFunction(OnContextTitleChanged, void, Entity entity, StringRef before, StringRef after) {
+    auto data = GetBgfxContextData(entity);
 
     glfwSetWindowTitle(data->window, after);
 }
 
-static void OnGlfwWindowResized(GLFWwindow *window, int w, int h) {
+LocalFunction(OnGlfwWindowResized, void, GLFWwindow *window, int w, int h) {
     SetRenderTargetSize((Entity)glfwGetWindowUserPointer(window), {w, h});
 }
 
-static void OnCharPressed(GLFWwindow *window, unsigned int c) {
-    FireNativeEvent(CharacterPressed, (Entity)glfwGetWindowUserPointer(window), c);
+LocalFunction(OnCharPressed, void, GLFWwindow *window, unsigned int c) {
+    FireEvent(EventOf_CharacterPressed(), (Entity)glfwGetWindowUserPointer(window), c);
 }
 
-static void OnKey(GLFWwindow *window, int key, int scanCode, int action, int mods) {
+LocalFunction(OnKey, void, GLFWwindow *window, int key, int scanCode, int action, int mods) {
     auto context = (Entity)glfwGetWindowUserPointer(window);
 
     if(action == GLFW_PRESS) {
@@ -253,14 +254,14 @@ static void OnKey(GLFWwindow *window, int key, int scanCode, int action, int mod
     }
 }
 
-static void OnMouseScroll(GLFWwindow *window, double x, double y) {
+LocalFunction(OnMouseScroll, void, GLFWwindow *window, double x, double y) {
     SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_SCROLL_DOWN, fmaxf(-y, 0.0f));
     SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_SCROLL_UP, fmaxf(y, 0.0f));
     SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_SCROLL_LEFT, fmaxf(-x, 0.0f));
     SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSE_SCROLL_RIGHT, fmaxf(x, 0.0f));
 }
 
-static void OnMouseMove(GLFWwindow *window, double x, double y) {
+LocalFunction(OnMouseMove, void, GLFWwindow *window, double x, double y) {
     auto cp = GetCursorPosition((Entity)glfwGetWindowUserPointer(window), 0);
     auto dx = x - cp.x;
     auto dy = y - cp.y;
@@ -273,7 +274,7 @@ static void OnMouseMove(GLFWwindow *window, double x, double y) {
     SetCursorPosition((Entity)glfwGetWindowUserPointer(window), 0, {(int)x, (int)y});
 }
 
-static void OnMouseButton(GLFWwindow *window, int button, int action, int mods) {
+LocalFunction(OnMouseButton, void, GLFWwindow *window, int button, int action, int mods) {
     if(action == GLFW_PRESS) {
         SetKeyState((Entity)glfwGetWindowUserPointer(window), MOUSEBUTTON_0 + button, 1.0f);
     }
@@ -283,8 +284,8 @@ static void OnMouseButton(GLFWwindow *window, int button, int action, int mods) 
     }
 }
 
-static void OnBgfxContextAdded(Entity entity) {
-    auto data = GetBgfxContext(entity);
+LocalFunction(OnBgfxContextAdded, void, Entity entity) {
+    auto data = GetBgfxContextData(entity);
     auto size = GetRenderTargetSize(entity);
 
     if(NumContexts == 1) {
@@ -345,8 +346,8 @@ static void OnBgfxContextAdded(Entity entity) {
     }
 }
 
-static void OnBgfxContextRemoved(Entity entity) {
-    auto data = GetBgfxContext(entity);
+LocalFunction(OnBgfxContextRemoved, void, Entity entity) {
+    auto data = GetBgfxContextData(entity);
 
     if(NumContexts > 1) {
         bgfx::destroy(data->fb);
@@ -375,7 +376,7 @@ static void OnBgfxContextRemoved(Entity entity) {
     }
 }
 
-static void OnContextAdded(Entity entity) {
+LocalFunction(OnContextAdded, void, Entity entity) {
     NumContexts++;
 
     if(NumContexts == 1) {
@@ -383,7 +384,7 @@ static void OnContextAdded(Entity entity) {
     }
 }
 
-static void OnContextRemoved(Entity entity) {
+LocalFunction(OnContextRemoved, void, Entity entity) {
     if(NumContexts == 1) {
         RemoveExtension(TypeOf_Context(), TypeOf_BgfxContext());
     }
@@ -391,22 +392,22 @@ static void OnContextRemoved(Entity entity) {
     NumContexts--;
 }
 
-static void OnContextGrabMouseChanged(Entity entity, bool oldValue, bool newValue) {
-    auto data = GetBgfxContext(entity);
+LocalFunction(OnContextGrabMouseChanged, void, Entity entity, bool oldValue, bool newValue) {
+    auto data = GetBgfxContextData(entity);
     glfwSetInputMode(data->window, GLFW_CURSOR, newValue ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 }
 
 DefineService(BgfxContext)
-    Subscribe(ContextAdded, OnContextAdded)
-    Subscribe(BgfxContextAdded, OnBgfxContextAdded)
-    Subscribe(ContextRemoved, OnContextRemoved)
-    Subscribe(BgfxContextRemoved, OnBgfxContextRemoved)
-    Subscribe(TextureReadbackInitiated, OnTextureReadbackInitiated)
+    RegisterSubscription(ContextAdded, OnContextAdded, 0)
+    RegisterSubscription(BgfxContextAdded, OnBgfxContextAdded, 0)
+    RegisterSubscription(ContextRemoved, OnContextRemoved, 0)
+    RegisterSubscription(BgfxContextRemoved, OnBgfxContextRemoved, 0)
+    RegisterSubscription(TextureReadbackInitiated, OnTextureReadbackInitiated, 0)
 
-    Subscribe(AppUpdate, OnAppUpdate)
-    Subscribe(RenderTargetSizeChanged, OnContextResized)
-    Subscribe(ContextTitleChanged, OnContextTitleChanged)
-    Subscribe(ContextVsyncChanged, OnContextFlagChanged)
-    Subscribe(ContextFullscreenChanged, OnContextFlagChanged)
-    Subscribe(ContextGrabMouseChanged, OnContextGrabMouseChanged)
+    RegisterSubscription(AppUpdate, OnAppUpdate, 0)
+    RegisterSubscription(RenderTargetSizeChanged, OnContextResized, 0)
+    RegisterSubscription(ContextTitleChanged, OnContextTitleChanged, 0)
+    RegisterSubscription(ContextVsyncChanged, OnContextFlagChanged, 0)
+    RegisterSubscription(ContextFullscreenChanged, OnContextFlagChanged, 0)
+    RegisterSubscription(ContextGrabMouseChanged, OnContextGrabMouseChanged, 0)
 EndService()

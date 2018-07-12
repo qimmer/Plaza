@@ -21,11 +21,12 @@ struct BgfxIndexBuffer {
     bool invalidated;
 };
 
-DefineComponent(BgfxIndexBuffer)
+BeginUnit(BgfxIndexBuffer)
+    BeginComponent(BgfxIndexBuffer)
 EndComponent()
 
 void OnIndexBufferRemoved(Entity entity) {
-    auto data = GetBgfxIndexBuffer(entity);
+    auto data = GetBgfxIndexBufferData(entity);
 
     if(bgfx::isValid(data->staticHandle)) {
         bgfx::destroy(data->staticHandle);
@@ -33,21 +34,21 @@ void OnIndexBufferRemoved(Entity entity) {
     }
 }
 
-static void OnChanged(Entity entity) {
-    if(HasBgfxIndexBuffer(entity)) {
-        GetBgfxIndexBuffer(entity)->invalidated = true;
+LocalFunction(OnChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxIndexBuffer())) {
+        GetBgfxIndexBufferData(entity)->invalidated = true;
     }
 }
 
 DefineService(BgfxIndexBuffer)
-        Subscribe(BgfxIndexBufferRemoved, OnIndexBufferRemoved)
-        Subscribe(IndexBufferChanged, OnChanged)
-        Subscribe(StreamChanged, OnChanged)
-        Subscribe(StreamContentChanged, OnChanged)
+        RegisterSubscription(BgfxIndexBufferRemoved, OnIndexBufferRemoved, 0)
+        RegisterSubscription(IndexBufferChanged, OnChanged, 0)
+        RegisterSubscription(StreamChanged, OnChanged, 0)
+        RegisterSubscription(StreamContentChanged, OnChanged, 0)
 EndService()
 
 u16 GetBgfxIndexBufferHandle(Entity entity) {
-    auto data = GetBgfxIndexBuffer(entity);
+    auto data = GetBgfxIndexBufferData(entity);
     if(data->invalidated) {
         if(!StreamOpen(entity, StreamMode_Read)) return bgfx::kInvalidHandle;
         StreamSeek(entity, StreamSeek_End);

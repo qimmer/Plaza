@@ -19,31 +19,32 @@ struct Camera {
     u8 CameraLayer;
 };
 
-DefineComponent(Camera)
+BeginUnit(Camera)
+    BeginComponent(Camera)
     Abstract()
-    Dependency(Transform)
-    Dependency(SceneNode)
-    DefinePropertyReactive(rgba8, CameraClearColor)
-    DefinePropertyReactive(bool, CameraClear)
-    DefinePropertyReactive(float, CameraNearClip)
-    DefinePropertyReactive(float, CameraFarClip)
-    DefinePropertyReactive(v4f, CameraViewport)
-    DefinePropertyReactive(Entity, CameraRenderTarget)
-    DefinePropertyReactive(u8, CameraLayer)
-    DefinePropertyReactive(m4x4f, CameraViewMatrix)
-    DefinePropertyReactive(m4x4f, CameraProjectionMatrix)
+    RegisterBase(Transform)
+    RegisterBase(SceneNode)
+    RegisterProperty(rgba8, CameraClearColor)
+    RegisterProperty(bool, CameraClear)
+    RegisterProperty(float, CameraNearClip)
+    RegisterProperty(float, CameraFarClip)
+    RegisterProperty(v4f, CameraViewport)
+    RegisterProperty(Entity, CameraRenderTarget)
+    RegisterProperty(u8, CameraLayer)
+    RegisterProperty(m4x4f, CameraViewMatrix)
+    RegisterProperty(m4x4f, CameraProjectionMatrix)
 EndComponent()
 
-DefineComponentPropertyReactive(Camera, m4x4f, CameraViewMatrix)
-DefineComponentPropertyReactive(Camera, m4x4f, CameraProjectionMatrix)
-DefineComponentPropertyReactive(Camera, m4x4f, CameraInvViewProjectionMatrix)
-DefineComponentPropertyReactive(Camera, rgba8, CameraClearColor)
-DefineComponentPropertyReactive(Camera, v4f, CameraViewport)
-DefineComponentPropertyReactive(Camera, Entity, CameraRenderTarget)
-DefineComponentPropertyReactive(Camera, bool, CameraClear)
-DefineComponentPropertyReactive(Camera, float, CameraNearClip)
-DefineComponentPropertyReactive(Camera, float, CameraFarClip)
-DefineComponentPropertyReactive(Camera, u8, CameraLayer)
+RegisterProperty(m4x4f, CameraViewMatrix)
+RegisterProperty(m4x4f, CameraProjectionMatrix)
+RegisterProperty(m4x4f, CameraInvViewProjectionMatrix)
+RegisterProperty(rgba8, CameraClearColor)
+RegisterProperty(v4f, CameraViewport)
+RegisterProperty(Entity, CameraRenderTarget)
+RegisterProperty(bool, CameraClear)
+RegisterProperty(float, CameraNearClip)
+RegisterProperty(float, CameraFarClip)
+RegisterProperty(u8, CameraLayer)
 
 v3f GetCameraPickRayPoint(Entity camera, v2f viewportOffset, float d) {
     auto data = GetCamera(camera);
@@ -77,18 +78,18 @@ static void UpdateInvProjectionMatrix(Entity camera, m4x4f oldValue, m4x4f newVa
     SetCameraInvViewProjectionMatrix(camera, invViewProjMat);
 }
 
-static void OnGlobalTransformChanged(Entity entity, m4x4f oldValue, m4x4f newValue) {
-    if(HasCamera(entity)) {
+LocalFunction(OnGlobalTransformChanged, void, Entity entity, m4x4f oldValue, m4x4f newValue) {
+    if(HasComponent(entity, ComponentOf_Camera())) {
         UpdateViewMatrix(entity);
     }
 }
-static void OnCameraAdded(Entity entity) {
+LocalFunction(OnCameraAdded, void, Entity entity) {
     UpdateViewMatrix(entity);
 }
 
 DefineService(Camera)
-    Subscribe(GlobalTransformChanged, OnGlobalTransformChanged)
-    Subscribe(CameraAdded, OnCameraAdded)
-    Subscribe(CameraProjectionMatrixChanged, UpdateInvProjectionMatrix)
-    Subscribe(CameraViewMatrixChanged, UpdateInvProjectionMatrix)
+    RegisterSubscription(GlobalTransformChanged, OnGlobalTransformChanged, 0)
+    RegisterSubscription(CameraAdded, OnCameraAdded, 0)
+    RegisterSubscription(CameraProjectionMatrixChanged, UpdateInvProjectionMatrix, 0)
+    RegisterSubscription(CameraViewMatrixChanged, UpdateInvProjectionMatrix, 0)
 EndService()

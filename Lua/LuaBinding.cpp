@@ -423,7 +423,7 @@ API_EXPORT bool CallLuaFunction(void *funcPtr, u8 numArguments, Type *argumentTy
 	return result;
 }
 
-static void OnStarted(Service service) {
+LocalFunction(OnStarted, void, Service service) {
 	Assert(sizeof(lua_Number) >= 8); // Make sure a number is a double or larger to contain 64-bit handles
 	L = luaL_newstate();
     luaL_openlibs(L);
@@ -451,7 +451,7 @@ static void OnStarted(Service service) {
     }
 }
 
-static void OnStopped(Service service) {
+LocalFunction(OnStopped, void, Service service) {
 	lua_close(L);
 }
 
@@ -460,6 +460,6 @@ lua_State* GetLuaState() {
 }
 
 DefineService(LuaBinding)
-	Subscribe(LuaBindingStarted, OnStarted)
-	Subscribe(LuaBindingStopped, OnStopped)
+	RegisterSubscription(LuaBindingStarted, OnStarted, 0)
+	RegisterSubscription(LuaBindingStopped, OnStopped, 0)
 EndService()

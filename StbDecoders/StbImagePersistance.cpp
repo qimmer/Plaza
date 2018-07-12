@@ -79,7 +79,7 @@ static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
     return pixelData != NULL;
 }
 
-static void OnServiceStart(Service service) {
+LocalFunction(OnServiceStart, void, Service service) {
     Serializer s {
         SerializeImage,
         DeserializeImage
@@ -93,13 +93,13 @@ static void OnServiceStart(Service service) {
     AddStreamCompressor("image/png", &c);
 }
 
-static void OnServiceStop(Service service){
+LocalFunction(OnServiceStop, void, Service service){
     RemoveFileType(".png");
     RemoveSerializer("image/png");
     RemoveStreamCompressor("image/png");
 }
 
 DefineService(StbImagePersistance)
-    Subscribe(StbImagePersistanceStarted, OnServiceStart)
-    Subscribe(StbImagePersistanceStopped, OnServiceStop)
+    RegisterSubscription(StbImagePersistanceStarted, OnServiceStart, 0)
+    RegisterSubscription(StbImagePersistanceStopped, OnServiceStop, 0)
 EndService()

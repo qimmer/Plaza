@@ -3,63 +3,53 @@
 //
 
 #include <Foundation/Timer.h>
+#include <Foundation/StopWatch.h>
 #include <Core/Debug.h>
 
 struct Timer {
     double TimerInterval;
-    bool TimerStarted, TimerRepeat;
+    bool TimerRepeat;
+    double LastStopWatchTime;
 };
+
+LocalFunction(OnStopWatchElapsedSecondsChanged, void, Entity stopWatch, double oldTime, u64 newTime) {
+    auto timer = GetTimerData(stopWatch);
+
+    if(timer) {
+        if(newTime >= (timer->LastStopWatchTime + timer->TimerInterval)) {
+            timer->LastStopWatchTime = newTime;
+
+            const u8 typeIndices[] = {TypeOf_Entity};
+            const void *argumentPtrs[] = {&stopWatch};
+
+            FireEventFast(EventOf_TimerTick(), 1, typeIndices, argumentPtrs);
+
+            if(!timer->TimerRepeat) {
+                SetStopWatchRunning(stopWatch, false);
+                SetStopWatchElapsedSeconds(stopWatch, 0.0);
+            }
+
+        }
+    }
+}
+
+LocalFunction(OnStopWatchRunningChanged, void, Entity timer, bool oldValue, bool newValue) {
+    if(newValue) {
+        auto data = GetTimerData(timer);
+        if(data) {
+            data->LastStopWatchTime = GetStopWatchElapsedSeconds(timer);
+        }
+    }
+}
 
 BeginUnit(Timer)
     BeginComponent(Timer)
+        RegisterBase(StopWatch)
         RegisterProperty(double, TimerInterval)
-        RegisterProperty(bool, TimerStarted)
         RegisterProperty(bool, TimerRepeat)
     EndComponent()
+    RegisterEvent(TimerTick)
 
-    RegisterFunction(GetTimeSinceStart)
+    RegisterSubscription(StopWatchElapsedSecondsChanged, OnStopWatchElapsedSecondsChanged, 0)
 EndUnit()
 
-
-#ifdef WIN32
-#undef GetHandle
-#include <windows.h>
-
-#undef CreateEvent
-static double PCFreq = 0.0;
-
-API_EXPORT double GetTimeSinceStart()
-{
-    LARGE_INTEGER li;
-
-    if(PCFreq == 0.0) {
-        if(!QueryPerformanceFrequency(&li)) {
-            Log(0, LogSeverity_Fatal, "QueryPerformanceFrequency failed!");
-            return 0.0;
-        }
-
-        PCFreq = double(li.QuadPart);
-    }
-
-    QueryPerformanceCounter(&li);
-    return double(li.QuadPart)/PCFreq;
-}
-#endif
-
-#ifdef __APPLE__
-#include <mach/mach_time.h>
-
-API_EXPORT double GetTimeSinceStart()
-{
-    const u64 kOneMillion = 1000 * 1000 * 1000;
-    static mach_timebase_info_data_t s_timebase_info {0, 0};
-
-    if(!s_timebase_info.denom) {
-        mach_timebase_info(&s_timebase_info);
-    }
-
-    // mach_absolute_time() returns billionth of seconds,
-    // so divide by one million to get milliseconds
-    return (double)(mach_absolute_time() * s_timebase_info.numer) / (kOneMillion * s_timebase_info.denom);
-}
-#endif

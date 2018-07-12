@@ -5,10 +5,11 @@
 #ifndef PLAZA_COMMANDLIST_H
 #define PLAZA_COMMANDLIST_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(CommandList)
+    Unit(CommandList)
+    Component(CommandList)
 
     DeclareComponentProperty(CommandList, Entity, CommandListRenderTarget)
     DeclareComponentProperty(CommandList, u8, CommandListLayer)

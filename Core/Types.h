@@ -144,10 +144,12 @@ enum {
     TypeOf_rgba32,
     TypeOf_rgb32,
 
+    TypeOf_Variant,
+
     TypeOf_MAX,
 };
 
-u8 GetTypeSize(Type type);
+u32 GetTypeSize(Type type);
 StringRef GetTypeName(Type type);
 
 #endif

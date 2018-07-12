@@ -7,7 +7,7 @@
 #include <Rendering/CommandList.h>
 #include <Scene/MeshInstance.h>
 #include <Rendering/Batch.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Rendering/Mesh.h>
 #include <Scene/SceneNode.h>
 #include <Scene/Transform.h>
@@ -41,23 +41,24 @@ struct ScenePicker {
     Entity ScenePickerPickedEntity;
 };
 
-DefineComponent(ScenePicker)
-    Dependency(Camera)
-    DefinePropertyReactive(v2f, ScenePickerViewportLocation)
+BeginUnit(ScenePicker)
+    BeginComponent(ScenePicker)
+    RegisterBase(Camera)
+    RegisterProperty(v2f, ScenePickerViewportLocation)
     DefinePropertyEnum(u8, ScenePickerLayers, Layer)
-    DefinePropertyReactive(Entity, ScenePickerPickedEntity)
+    RegisterProperty(Entity, ScenePickerPickedEntity)
 EndComponent()
 
-DefineComponentPropertyReactive(ScenePicker, v2f, ScenePickerViewportLocation)
-DefineComponentPropertyReactive(ScenePicker, u8, ScenePickerLayers)
-DefineComponentPropertyReactive(ScenePicker, Entity, ScenePickerPickedEntity)
+RegisterProperty(v2f, ScenePickerViewportLocation)
+RegisterProperty(u8, ScenePickerLayers)
+RegisterProperty(Entity, ScenePickerPickedEntity)
 
 Entity PickingRoot, PickIdUniform, PickShaderVariation;
 
-static void OnReadback(Entity sourceTexture, Entity blitTexture, const u8* data) {
+LocalFunction(OnReadback, void, Entity sourceTexture, Entity blitTexture, const u8* data) {
     Entity pickedEntity = 0;
     auto scenePicker = GetParent(sourceTexture);
-    if(HasScenePicker(scenePicker)) {
+    if(HasComponent(scenePicker, ComponentOf_ScenePicker())) {
         auto entityIndex = *((const u32*)data);
         if(entityIndex > 0) {
             auto entity = GetEntityFromIndex(entityIndex);
@@ -123,7 +124,7 @@ static void UpdateBatches(Entity scenePicker) {
     for(auto i = 0; i < GetNumMeshInstance(); ++i) {
         auto meshInstance = GetMeshInstanceEntity(i);
         auto meshInstanceScene = GetSceneNodeScene(meshInstance);
-        if(!meshInstanceScene || meshInstanceScene != scene || (HasVisibility(meshInstance) && GetHidden(meshInstance))) continue;
+        if(!meshInstanceScene || meshInstanceScene != scene || (HasComponent(meshInstance, ComponentOf_Visibility()) && GetHidden(meshInstance))) continue;
 
         if(!IsEntityValid(batch)) {
             char name[PATH_MAX];
@@ -154,14 +155,14 @@ static void UpdateBatches(Entity scenePicker) {
     }
 }
 
-static void OnAppUpdate(double deltaTime) {
+LocalFunction(OnAppUpdate, void, double deltaTime) {
     for(auto i = 0; i < GetNumScenePicker(); ++i) {
         UpdateBatches(GetScenePickerEntity(i));
     }
 }
 
-static void OnScenePickerAdded(Entity entity) {
-    auto data = GetScenePicker(entity);
+LocalFunction(OnScenePickerAdded, void, Entity entity) {
+    auto data = GetScenePickerData(entity);
 
     data->CommandList = CreateCommandList(entity, "ScenePicker_CommandList");
     data->RenderTarget = CreateOffscreenRenderTarget(entity, "ScenePicker_RenderTarget");
@@ -186,11 +187,11 @@ static void OnScenePickerAdded(Entity entity) {
     SetTextureReadbackTarget(data->RenderTexture, data->BlitTexture);
 }
 
-static void OnScenePickerRemoved(Entity entity) {
-    DestroyEntity(GetScenePicker(entity)->CommandList);
-    DestroyEntity(GetScenePicker(entity)->RenderTarget);
-    DestroyEntity(GetScenePicker(entity)->RenderTexture);
-    DestroyEntity(GetScenePicker(entity)->BlitTexture);
+LocalFunction(OnScenePickerRemoved, void, Entity entity) {
+    DestroyEntity(GetScenePickerData(entity)->CommandList);
+    DestroyEntity(GetScenePickerData(entity)->RenderTarget);
+    DestroyEntity(GetScenePickerData(entity)->RenderTexture);
+    DestroyEntity(GetScenePickerData(entity)->BlitTexture);
 }
 
 static void InitializePickRoot(Entity entity) {
@@ -203,8 +204,8 @@ static void InitializePickRoot(Entity entity) {
 }
 
 DefineService(ScenePicker)
-    Subscribe(ScenePickerAdded, OnScenePickerAdded)
-    Subscribe(ScenePickerRemoved, OnScenePickerRemoved)
-    Subscribe(AppUpdate, OnAppUpdate)
+    RegisterSubscription(ScenePickerAdded, OnScenePickerAdded, 0)
+    RegisterSubscription(ScenePickerRemoved, OnScenePickerRemoved, 0)
+    RegisterSubscription(AppUpdate, OnAppUpdate, 0)
     ServiceEntity(PickingRoot, InitializePickRoot)
 EndService()

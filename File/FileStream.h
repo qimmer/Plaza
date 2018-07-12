@@ -5,11 +5,11 @@
 #ifndef PLAZA_FILESTREAM_H
 #define PLAZA_FILESTREAM_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(FileStream)
-DeclareService(FileStream)
+Unit(FileStream)
+    Component(FileStream)
 
-StringRef GetNativePath(StringRef resourcePath);
+Function(GetNativePath, StringRef, StringRef resourcePath);
 
 #endif //PLAZA_FILESTREAM_H

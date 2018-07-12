@@ -13,7 +13,7 @@
 #include "Scene3D/Voxel/VoxelColor.h"
 #include "Scene3D/Voxel/VoxPersistance.h"
 
-DefineModule(Scene3D)
+BeginModule(Scene3D)
     ModuleDependency(Scene)
 
     ModuleService(Camera3D)

@@ -19,7 +19,7 @@
 #include "EditorContext.h"
 #include "EditorView.h"
 
-DefineModule(Editor)
+BeginModule(Editor)
         ModuleDependency(Foundation)
         ModuleDependency(Rendering)
         ModuleDependency(ImGui)

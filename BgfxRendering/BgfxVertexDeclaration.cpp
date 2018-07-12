@@ -16,25 +16,26 @@ struct BgfxVertexDeclaration {
     bool invalidated;
 };
 
-DefineComponent(BgfxVertexDeclaration)
+BeginUnit(BgfxVertexDeclaration)
+    BeginComponent(BgfxVertexDeclaration)
 EndComponent()
 
-static void OnChanged(Entity entity) {
-    if(HasBgfxVertexDeclaration(entity)) {
-        GetBgfxVertexDeclaration(entity)->invalidated = true;
+LocalFunction(OnChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxVertexDeclaration())) {
+        GetBgfxVertexDeclarationData(entity)->invalidated = true;
     }
 }
 
 DefineService(BgfxVertexDeclaration)
-        Subscribe(VertexDeclarationChanged, OnChanged)
+        RegisterSubscription(VertexDeclarationChanged, OnChanged, 0)
 EndService()
 
 void* GetBgfxVertexDeclarationHandle(Entity entity) {
-    auto data = GetBgfxVertexDeclaration(entity);
+    auto data = GetBgfxVertexDeclarationData(entity);
     if(data->invalidated) {
         data->decl.begin();
         for(auto attribute = GetFirstChild(entity); IsEntityValid(attribute); attribute = GetSibling(attribute)) {
-            if(!HasVertexAttribute(attribute)) continue;
+            if(!HasComponent(attribute, ComponentOf_VertexAttribute())) continue;
 
             bgfx::AttribType::Enum elementType;
             u32 elementCount;
@@ -71,9 +72,9 @@ void* GetBgfxVertexDeclarationHandle(Entity entity) {
         }
         data->decl.end();
 
-        for_entity(vertexBuffer, VertexBuffer) {
+        for_entity(vertexBuffer, data, VertexBuffer) {
             if(GetVertexBufferDeclaration(vertexBuffer) == entity) {
-                FireNativeEvent(VertexBufferChanged, vertexBuffer);
+                FireEvent(EventOf_VertexBufferChanged(), vertexBuffer);
             }
         }
     }

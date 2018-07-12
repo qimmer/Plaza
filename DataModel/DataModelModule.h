@@ -7,6 +7,6 @@
 
 #include <Core/Module.h>
 
-DeclareModule(DataModel)
+Module(DataModel)
 
 #endif //PLAZA_DATAMODELMODULE_H

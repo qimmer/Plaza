@@ -5,10 +5,11 @@
 #ifndef PLAZA_VALUECONVERTER_H
 #define PLAZA_VALUECONVERTER_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(ValueConverter)
-DeclareComponentPropertyReactive(ValueConverter, Function, ValueConverterConvertTo)
-DeclareComponentPropertyReactive(ValueConverter, Function, ValueConverterConvertFrom)
+Unit(ValueConverter)
+    Component(ValueConverter)
+        Property(Entity, ValueConverterConvertTo)
+        Property(Entity, ValueConverterConvertFrom)
 
 #endif //PLAZA_VALUECONVERTER_H

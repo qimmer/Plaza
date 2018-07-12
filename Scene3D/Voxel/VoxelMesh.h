@@ -5,13 +5,13 @@
 #ifndef PLAZA_VOXELMESH_H
 #define PLAZA_VOXELMESH_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(VoxelMesh)
-DeclareService(VoxelMesh)
+Unit(VoxelMesh)
+    Component(VoxelMesh)
 
-DeclareComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshChunk)
-DeclareComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshPalette)
+        Property(Entity, VoxelMeshChunk)
+        Property(Entity, VoxelMeshPalette)
 
 Entity GetVoxelVertexShader();
 Entity GetVoxelPixelShader();

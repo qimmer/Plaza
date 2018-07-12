@@ -5,7 +5,6 @@
 #ifndef PLAZA_PLAYERCONTEXT_H
 #define PLAZA_PLAYERCONTEXT_H
 
-#include <Core/Service.h>
 #include <Core/Module.h>
 #include <Core/Entity.h>
 

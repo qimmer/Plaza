@@ -13,7 +13,7 @@
 #include <Core/Types.h>
 #include <cstdarg>
 #include "Entity.h"
-#include "Hierarchy.h"
+#include "Node.h"
 #include "Component.h"
 #include "Property.h"
 
@@ -22,15 +22,19 @@ static DCstruct *Struct_v2i, *Struct_v3i, *Struct_v4i, *Struct_v2f, *Struct_v3f,
 
 #define ALIGNMENT_SSE 16
 
+struct FunctionArgument {
+    Type FunctionArgumentType;
+};
+
 struct Function {
     u64 FunctionImplementation;
     Type FunctionReturnType;
     FunctionCaller FunctionCaller;
+
+    Vector(FunctionArguments, FunctionArgument*, 32)
 };
 
-struct FunctionArgument {
-    Type FunctionArgumentType;
-};
+ChildCache(Function, FunctionArgument, FunctionArguments)
 
 BeginUnit(Function)
     BeginComponent(Function)
@@ -41,6 +45,8 @@ BeginUnit(Function)
     BeginComponent(FunctionArgument)
         RegisterProperty(Type, FunctionArgumentType)
     EndComponent()
+
+    RegisterChildCache(FunctionArgument)
 EndUnit()
 
 
@@ -266,7 +272,7 @@ API_EXPORT bool CallFunction(
         const u8 *argumentTypes,
         const void **argumentDataPtrs
 ) {
-    auto data = GetFunction(f);
+    auto data = GetFunctionData(f);
 
     return data->FunctionCaller(
             data->FunctionImplementation,
@@ -287,3 +293,25 @@ void __InitializeFunction() {
     component = ComponentOf_FunctionArgument();
     __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component);
 }
+
+int __ArgStackOffset(int value) {
+    int val = 0;
+    auto offset = ((char*)&value - (char*)&val);
+    return offset;
+}
+
+API_EXPORT u32 GetFunctionArguments(u32 functionIndex, u32 maxArguments, Type *argumentTypes) {
+    auto data = (Function*)GetComponentData(ComponentOf_Function(), functionIndex);
+
+    for(auto i = 0; i < data->NumFunctionArguments; ++i) {
+        argumentTypes[i] = data->FunctionArguments[i]->FunctionArgumentType;
+    }
+
+    return data->NumFunctionArguments;
+}
+
+API_EXPORT Type GetFunctionReturnTypeByIndex(u32 functionIndex) {
+    auto data = (Function*)GetComponentData(ComponentOf_Function(), functionIndex);
+    return data->FunctionReturnType;
+}
+

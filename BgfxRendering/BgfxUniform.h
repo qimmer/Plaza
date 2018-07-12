@@ -5,12 +5,11 @@
 #ifndef PLAZA_BGFXUNIFORM_H
 #define PLAZA_BGFXUNIFORM_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-DeclareComponent(BgfxUniform)
-DeclareService(BgfxUniform)
+Unit(BgfxUniform)
+    Component(BgfxUniform)
 
 u16 GetBgfxUniformHandle(Entity entity);
 

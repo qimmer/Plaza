@@ -5,10 +5,11 @@
 #ifndef PLAZA_EDITORVIEW_H
 #define PLAZA_EDITORVIEW_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(EditorView)
-DeclareComponentPropertyReactive(EditorView, bool, EditorViewVisible)
-DeclareComponentPropertyReactive(EditorView, EntityHandler, EditorViewDrawFunction)
+Unit(EditorView)
+    Component(EditorView)
+        Property(bool, EditorViewVisible)
+        Property(EntityHandler, EditorViewDrawFunction)
 
 #endif //PLAZA_EDITORVIEW_H

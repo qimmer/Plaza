@@ -24,7 +24,7 @@
 #include <Foundation/FoundationModule.h>
 #include <Input/InputModule.h>
 
-DefineModule(Rendering)
+BeginModule(Rendering)
     ModuleDependency(Foundation)
     ModuleDependency(Input)
 

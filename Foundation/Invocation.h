@@ -5,17 +5,17 @@
 #ifndef PLAZA_INVOCATION_H
 #define PLAZA_INVOCATION_H
 
-#include <Core/Entity.h>
-#include <Core/Variant.h>
-#include <Core/Function.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Invocation)
-DeclareComponentPropertyReactive(Invocation, Function, InvocationFunction)
-DeclareComponentPropertyReactive(Invocation, Variant, InvocationResult)
+Unit(Invocation)
+    Component(Invocation)
+        Property(Entity, InvocationFunction)
+        Property(Variant, InvocationResult)
 
-DeclareComponent(InvocationArgument)
-DeclareComponentPropertyReactive(InvocationArgument, Variant, InvocationArgumentValue);
+Unit(InvocationArgument)
+    Component(InvocationArgument)
+        Property(Variant, InvocationArgumentValue);
 
-bool Invoke(Entity invocation);
+Function(Invoke, bool, Entity invocation);
 
 #endif //PLAZA_INVOCATION_H

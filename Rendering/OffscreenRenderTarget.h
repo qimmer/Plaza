@@ -5,18 +5,18 @@
 #ifndef PLAZA_OFFSCREENRENDERTARGET_H
 #define PLAZA_OFFSCREENRENDERTARGET_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(OffscreenRenderTarget)
 
-DeclareComponent(OffscreenRenderTarget)
-DeclareComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture0)
-DeclareComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture1)
-DeclareComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture2)
-DeclareComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture3)
-DeclareComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture4)
-DeclareComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture5)
-DeclareComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture6)
-DeclareComponentPropertyReactive(OffscreenRenderTarget, Entity, RenderTargetTexture7)
+Unit(OffscreenRenderTarget)
+    Component(OffscreenRenderTarget)
+        Property(Entity, RenderTargetTexture0)
+        Property(Entity, RenderTargetTexture1)
+        Property(Entity, RenderTargetTexture2)
+        Property(Entity, RenderTargetTexture3)
+        Property(Entity, RenderTargetTexture4)
+        Property(Entity, RenderTargetTexture5)
+        Property(Entity, RenderTargetTexture6)
+        Property(Entity, RenderTargetTexture7)
 
 #endif //PLAZA_OFFSCREENRENDERTARGET_H

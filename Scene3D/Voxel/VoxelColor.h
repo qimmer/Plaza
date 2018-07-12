@@ -5,17 +5,18 @@
 #ifndef PLAZA_VOXELCOLOR_H
 #define PLAZA_VOXELCOLOR_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 #include "VoxelPalette.h"
 
-DeclareComponent(VoxelColor)
-DeclareComponentPropertyReactive(VoxelColor, Voxel, VoxelColorValue)
-DeclareComponentPropertyReactive(VoxelColor, rgba8, VoxelColorColor)
-DeclareComponentPropertyReactive(VoxelColor, Entity, VoxelColorSubTextureNX)
-DeclareComponentPropertyReactive(VoxelColor, Entity, VoxelColorSubTexturePX)
-DeclareComponentPropertyReactive(VoxelColor, Entity, VoxelColorSubTextureNY)
-DeclareComponentPropertyReactive(VoxelColor, Entity, VoxelColorSubTexturePY)
-DeclareComponentPropertyReactive(VoxelColor, Entity, VoxelColorSubTextureNZ)
-DeclareComponentPropertyReactive(VoxelColor, Entity, VoxelColorSubTexturePZ)
+Unit(VoxelColor)
+    Component(VoxelColor)
+        Property(Voxel, VoxelColorValue)
+        Property(rgba8, VoxelColorColor)
+        Property(Entity, VoxelColorSubTextureNX)
+        Property(Entity, VoxelColorSubTexturePX)
+        Property(Entity, VoxelColorSubTextureNY)
+        Property(Entity, VoxelColorSubTexturePY)
+        Property(Entity, VoxelColorSubTextureNZ)
+        Property(Entity, VoxelColorSubTexturePZ)
 
 #endif //PLAZA_VOXELCOLOR_H

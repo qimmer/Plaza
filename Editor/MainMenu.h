@@ -5,12 +5,11 @@
 #ifndef PLAZA_MAINMENU_H
 #define PLAZA_MAINMENU_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(MainMenu)
 
-DeclareComponent(MainMenu)
-DeclareComponentPropertyReactive(MainMenu, bool, MainMenuVisible)
+Unit(MainMenu)
+    Component(MainMenu)
+        Property(bool, MainMenuVisible)
 
 #endif //PLAZA_MAINMENU_H

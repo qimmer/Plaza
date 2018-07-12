@@ -16,7 +16,7 @@
 #include "BgfxOffscreenRenderTarget.h"
 
 
-DefineModule(BgfxRendering)
+BeginModule(BgfxRendering)
         ModuleService(BgfxContext)
         ModuleService(BgfxUniform)
         ModuleService(BgfxTexture2D)

@@ -25,14 +25,7 @@ void Log(Entity context, int severity, StringRef format, ...);
 void DebuggerBreak();
 void Exit(s32 returnCode);
 
-struct LogMessageReceivedArgs
-{
-    Entity Entity;
-    char LogMessageText[1024 - 64 - 1];
-    u8 LogMessageSeverity;
-};
-
 Unit(Debug)
-    Event(LogMessageReceived)
+    Event(LogMessageReceived, StringRef message, u8 severity)
 
 #endif //PLAZA_DEBUG_H

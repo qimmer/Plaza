@@ -2,10 +2,9 @@
 // Created by Kim Johannsen on 23/01/2018.
 //
 
-#include <Core/String.h>
 #include <Foundation/Stream.h>
 #include "Folder.h"
-#include "Core/Hierarchy.h"
+#include "Core/Node.h"
 #include <Foundation/VirtualPath.h>
 
 #include <unistd.h>
@@ -18,16 +17,10 @@
 #include <iterator>
 
 struct Folder {
-    String FolderPath;
+    char FolderPath[512];
 };
 
-DefineComponent(Folder)
-    Dependency(Hierarchy)
-EndComponent()
-
-DefineComponentPropertyReactive(Folder, StringRef, FolderPath)
-
-void ScanFolder(Entity entity) {
+API_EXPORT void ScanFolder(Entity entity) {
     while(IsEntityValid(GetFirstChild(entity))) {
         DestroyEntity(GetFirstChild(entity));
     }
@@ -51,15 +44,11 @@ void ScanFolder(Entity entity) {
 
             switch(ent_stat.st_mode & S_IFMT) {
                 case S_IFDIR:
-                    entryEntity = CreateFolder(entity, ent->d_name);
-                    SetName(entryEntity, ent->d_name);
-                    SetParent(entryEntity, entity);
+                    entryEntity = CreateEntityFromName(entity, ent->d_name);
                     SetFolderPath(entryEntity, entryPath);
                     break;
                 case S_IFREG:
-                    entryEntity = CreateStream(entity, ent->d_name);
-                    SetName(entryEntity, ent->d_name);
-                    SetParent(entryEntity, entity);
+                    entryEntity = CreateEntityFromName(entity, ent->d_name);
                     SetStreamPath(entryEntity, entryPath);
                     break;
             }
@@ -73,6 +62,8 @@ void ScanFolder(Entity entity) {
 #undef GetHandle
 #include <windows.h>
 #include <shlwapi.h>
+#include <Core/Debug.h>
+
 #undef CreateService
 #undef CreateEvent
 #endif
@@ -81,7 +72,7 @@ API_EXPORT bool CreateDirectories(StringRef fullPath) {
     auto isVirtualPath = strstr(fullPath, "://") != NULL;
 
     if(isVirtualPath && memcmp(fullPath, "file://", 7) != 0) {
-        Log(LogChannel_Core, LogSeverity_Error, "CreateDirectory only supports file:// paths.");
+        Log(0, LogSeverity_Error, "CreateDirectory only supports file:// paths.");
         return false;
     }
 
@@ -95,7 +86,7 @@ API_EXPORT bool CreateDirectories(StringRef fullPath) {
     if(mkdir(fullPath, 0700))
 #endif
     {
-        Log(LogChannel_Core, LogSeverity_Error, "Could not create directory '%s'", fullPath);
+        Log(0, LogSeverity_Error, "Could not create directory '%s'", fullPath);
         return false;
     }
 
@@ -104,12 +95,12 @@ API_EXPORT bool CreateDirectories(StringRef fullPath) {
 
 API_EXPORT bool IsFolder(StringRef absolutePath) {
     char resolvedPath[PATH_MAX];
-    ResolveVirtualPath(absolutePath, resolvedPath);
+    ResolveVirtualPath(absolutePath, PATH_MAX, resolvedPath);
 
     auto isVirtualPath = strstr(resolvedPath, "://") != NULL;
 
     if(isVirtualPath && memcmp(resolvedPath, "file://", 7) != 0) {
-        Log(LogChannel_Core, LogSeverity_Error, "IsDirectory only supports file:// paths.");
+        Log(0, LogSeverity_Error, "IsDirectory only supports file:// paths.");
         return false;
     }
 
@@ -124,21 +115,25 @@ API_EXPORT bool IsFolder(StringRef absolutePath) {
     return false;
 }
 
-static void OnFolderPathChanged(Entity entity, StringRef before, StringRef after) {
+LocalFunction(OnFolderPathChanged, void, Entity entity, StringRef before, StringRef after) {
     //SetName(entity, GetFileName(after));
 }
 
-static void OnFolderAdded(Entity entity) {
+LocalFunction(OnFolderAdded, void, Entity entity) {
 
 }
 
-static void OnFolderRemoved(Entity entity) {
+LocalFunction(OnFolderRemoved, void, Entity entity) {
 
 }
 
-DefineService(Folder)
-        ServiceDependency(Stream)
-        Subscribe(FolderAdded, OnFolderAdded)
-        Subscribe(FolderRemoved, OnFolderRemoved)
-        Subscribe(FolderPathChanged, OnFolderPathChanged)
-EndService()
+BeginUnit(Folder)
+    BeginComponent(Folder)
+        RegisterBase(Node)
+        RegisterProperty(StringRef, FolderPath)
+    EndComponent()
+
+    RegisterSubscription(FolderAdded, OnFolderAdded, 0)
+    RegisterSubscription(FolderRemoved, OnFolderRemoved, 0)
+    RegisterSubscription(FolderPathChanged, OnFolderPathChanged, 0)
+EndComponent()

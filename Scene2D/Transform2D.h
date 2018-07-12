@@ -5,14 +5,14 @@
 #ifndef PLAZA_TRANSFORM2D_H
 #define PLAZA_TRANSFORM2D_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Transform2D)
-DeclareService(Transform2D)
+Unit(Transform2D)
+    Component(Transform2D)
 
-DeclareComponentPropertyReactive(Transform2D, v2f, Position2D)
-DeclareComponentPropertyReactive(Transform2D, float, Rotation2D)
-DeclareComponentPropertyReactive(Transform2D, v2f, Scale2D)
-DeclareComponentPropertyReactive(Transform2D, float, Distance2D)
+        Property(v2f, Position2D)
+        Property(float, Rotation2D)
+        Property(v2f, Scale2D)
+        Property(float, Distance2D)
 
 #endif //PLAZA_TRANSFORM2D_H

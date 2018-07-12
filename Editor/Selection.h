@@ -5,10 +5,11 @@
 #ifndef PLAZA_SELECTION_H
 #define PLAZA_SELECTION_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(Selection)
+    Unit(Selection)
+    Component(Selection)
 
     void DeselectAll();
 

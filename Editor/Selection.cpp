@@ -9,7 +9,8 @@
 
     };
 
-    DefineComponent(Selection)
+    BeginUnit(Selection)
+    BeginComponent(Selection)
     EndComponent()
 
     void DeselectAll() {

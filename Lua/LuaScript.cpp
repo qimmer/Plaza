@@ -11,15 +11,16 @@ struct LuaScript {
 	Vector<Type> LuaScriptComponents;
 };
 
-DefineComponent(LuaScript)
-	Dependency(Stream)
-    DefineProperty(StringRef, LuaScriptErrors)
+BeginUnit(LuaScript)
+    BeginComponent(LuaScript)
+	RegisterBase(Stream)
+    RegisterProperty(StringRef, LuaScriptErrors))
 EndComponent()
 
-DefineComponentPropertyReactive(LuaScript, StringRef, LuaScriptErrors)
+RegisterProperty(StringRef, LuaScriptErrors)
 
 static void LoadScript(Entity entity) {
-    if(!HasLuaScript(entity)) return;
+    if(!HasComponent(entity, ComponentOf_LuaScript())) return;
 
     if(!StreamOpen(entity, StreamMode_Read)) {
         Log(LogChannel_Core, LogSeverity_Error, "Could not open Lua Script '%s' for reading.", GetEntityPath(entity));
@@ -61,7 +62,7 @@ static void LoadScript(Entity entity) {
 }
 
 DefineService(LuaScript)
-	Subscribe(StreamChanged, LoadScript)
-    Subscribe(StreamContentChanged, LoadScript)
-    Subscribe(LuaScriptAdded, LoadScript)
+	RegisterSubscription(StreamChanged, LoadScript, 0)
+    RegisterSubscription(StreamContentChanged, LoadScript, 0)
+    RegisterSubscription(LuaScriptAdded, LoadScript, 0)
 EndService()

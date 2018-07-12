@@ -2,10 +2,11 @@
 #ifndef SQLPersistancePoint_H
 #define SQLPersistancePoint_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(SQLPersistancePoint)
+    Unit(SQLPersistancePoint)
+    Component(SQLPersistancePoint)
     DeclareService(SQLPersistancePoint)
 
     DeclareComponentProperty(SQLPersistancePoint, StringRef, SelectCondition)

@@ -10,11 +10,12 @@ struct VoxelChunk {
     v3i VoxelChunkSize;
 };
 
-DefineComponent(VoxelChunk)
-    Dependency(Stream)
+BeginUnit(VoxelChunk)
+    BeginComponent(VoxelChunk)
+    RegisterBase(Stream)
 EndComponent()
 
-DefineComponentPropertyReactive(VoxelChunk, v3i, VoxelChunkSize)
+RegisterProperty(v3i, VoxelChunkSize)
 
 #define GetStrideZ(SIZE, Z) ((SIZE).x * (SIZE).y * (Z))
 #define GetStrideY(SIZE, Y) ((SIZE).x * (Y))

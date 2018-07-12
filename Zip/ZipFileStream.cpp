@@ -6,7 +6,8 @@
     struct ZipFileStream {
     };
 
-    DefineComponent(ZipFileStream)
+    BeginUnit(ZipFileStream)
+    BeginComponent(ZipFileStream)
 
     EndComponent()
 

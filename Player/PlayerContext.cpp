@@ -8,7 +8,7 @@
 #include <Foundation/FoundationModule.h>
 #include <File/Folder.h>
 #include <zconf.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Foundation/PersistancePoint.h>
 #include <File/FileStream.h>
 #include <Core/String.h>

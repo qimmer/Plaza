@@ -5,12 +5,12 @@
 #ifndef PLAZA_CODEEDITOR_H
 #define PLAZA_CODEEDITOR_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(CodeEditor)
 
-DeclareComponent(CodeEditor)
-DeclareComponentPropertyReactive(CodeEditor, Entity, CodeEditorStream)
+Unit(CodeEditor)
+    Component(CodeEditor)
+        Property(Entity, CodeEditorStream)
 
 void EditCode(Entity stream);
 

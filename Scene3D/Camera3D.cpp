@@ -13,18 +13,19 @@
         float Camera3DFov, Camera3DAspectRatio;
     };
 
-    DefineComponent(Camera3D)
-        DefinePropertyReactive(float, Camera3DFov)
-        DefinePropertyReactive(float, Camera3DAspectRatio)
+    BeginUnit(Camera3D)
+    BeginComponent(Camera3D)
+        RegisterProperty(float, Camera3DFov)
+        RegisterProperty(float, Camera3DAspectRatio)
     EndComponent()
 
-    DefineComponentPropertyReactive(Camera3D, float, Camera3DFov)
-DefineComponentPropertyReactive(Camera3D, float, Camera3DAspectRatio)
+    RegisterProperty(float, Camera3DFov)
+RegisterProperty(float, Camera3DAspectRatio)
 
     static void UpdateProjectionMatrix(Entity entity) {
-        if(!HasCamera3D(entity)) return;
+        if(!HasComponent(entity, ComponentOf_Camera3D())) return;
 
-        auto data = GetCamera3D(entity);
+        auto data = GetCamera3DData(entity);
 
         auto viewport = GetCameraViewport(entity);
 
@@ -37,23 +38,23 @@ DefineComponentPropertyReactive(Camera3D, float, Camera3DAspectRatio)
         SetCameraProjectionMatrix(entity, projection);
     }
 
-    static void OnCamera3DFovChanged(Entity entity, float before, float after) {
+    LocalFunction(OnCamera3DFovChanged, void, Entity entity, float before, float after) {
         UpdateProjectionMatrix(entity);
     }
 
-    static void OnCameraViewportChanged(Entity entity, v4f before, v4f after) {
+    LocalFunction(OnCameraViewportChanged, void, Entity entity, v4f before, v4f after) {
         UpdateProjectionMatrix(entity);
     }
 
-    static void OnCamera3DAdded(Entity entity) {
+    LocalFunction(OnCamera3DAdded, void, Entity entity) {
         UpdateProjectionMatrix(entity);
     }
 
 DefineService(Camera3D)
-        Subscribe(Camera3DAdded, OnCamera3DAdded)
-        Subscribe(CameraNearClipChanged, OnCamera3DFovChanged)
-        Subscribe(CameraFarClipChanged, OnCamera3DFovChanged)
-        Subscribe(Camera3DFovChanged, OnCamera3DFovChanged)
-        Subscribe(Camera3DAspectRatioChanged, OnCamera3DFovChanged)
-        Subscribe(CameraViewportChanged, OnCameraViewportChanged)
+        RegisterSubscription(Camera3DAdded, OnCamera3DAdded, 0)
+        RegisterSubscription(CameraNearClipChanged, OnCamera3DFovChanged, 0)
+        RegisterSubscription(CameraFarClipChanged, OnCamera3DFovChanged, 0)
+        RegisterSubscription(Camera3DFovChanged, OnCamera3DFovChanged, 0)
+        RegisterSubscription(Camera3DAspectRatioChanged, OnCamera3DFovChanged, 0)
+        RegisterSubscription(CameraViewportChanged, OnCameraViewportChanged, 0)
 EndService()

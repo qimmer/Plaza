@@ -20,8 +20,9 @@ struct VoxelPalette {
     Entity VoxelPaletteTexture;
 };
 
-DefineComponent(VoxelPalette)
-    Dependency(Material)
+BeginUnit(VoxelPalette)
+    BeginComponent(VoxelPalette)
+    RegisterBase(Material)
 EndComponent()
 
 DefineType(Voxel)
@@ -31,7 +32,7 @@ static void UpdatePalette(Entity palette) {
     auto data = GetVoxelPalette(palette);
     Assert(StreamOpen(data->VoxelPaletteTexture, StreamMode_Write));
     for(auto voxelColor = GetFirstChild(palette); voxelColor; voxelColor = GetSibling(voxelColor)) {
-        if(HasVoxelColor(voxelColor)) {
+        if(HasComponent(voxelColor, ComponentOf_VoxelColor())) {
             auto rgba = GetVoxelColorColor(voxelColor);
             auto offset = (u32)GetVoxelColorValue(voxelColor) * 4;
             StreamSeek(data->VoxelPaletteTexture, offset);
@@ -41,25 +42,25 @@ static void UpdatePalette(Entity palette) {
     StreamClose(data->VoxelPaletteTexture);
 }
 
-static void OnVoxelColorChanged(Entity voxelColor) {
+LocalFunction(OnVoxelColorChanged, void, Entity voxelColor) {
     auto parent = GetParent(voxelColor);
-    if(IsEntityValid(parent) && HasVoxelPalette(parent)) {
+    if(IsEntityValid(parent) && HasComponent(parent, ComponentOf_VoxelPalette())) {
         invalidatedPalettes.insert(parent);
     }
 }
 
-static void OnParentChanged(Entity voxelColor, Entity oldPalette, Entity newPalette) {
-    if(HasVoxelColor(voxelColor)) {
-        if(IsEntityValid(oldPalette) && HasVoxelPalette(oldPalette)) {
+LocalFunction(OnParentChanged, void, Entity voxelColor, Entity oldPalette, Entity newPalette) {
+    if(HasComponent(voxelColor, ComponentOf_VoxelColor())) {
+        if(IsEntityValid(oldPalette) && HasComponent(oldPalette, ComponentOf_VoxelPalette())) {
             invalidatedPalettes.insert(oldPalette);
         }
-        if(IsEntityValid(newPalette) && HasVoxelPalette(newPalette)) {
+        if(IsEntityValid(newPalette) && HasComponent(newPalette, ComponentOf_VoxelPalette())) {
             invalidatedPalettes.insert(newPalette);
         }
     }
 }
 
-static void OnAdded(Entity voxelPalette) {
+LocalFunction(OnAdded, void, Entity voxelPalette) {
     auto data = GetVoxelPalette(voxelPalette);
 
     auto us = CreateUniformState(voxelPalette, "TextureUniformState");
@@ -78,7 +79,7 @@ static void OnAdded(Entity voxelPalette) {
     SetMaterialPixelShader(voxelPalette, GetVoxelPixelShader());
 }
 
-static void OnAppUpdate(double deltaTime) {
+LocalFunction(OnAppUpdate, void, double deltaTime) {
     for(auto palette : invalidatedPalettes) {
         UpdatePalette(palette);
     }
@@ -87,8 +88,8 @@ static void OnAppUpdate(double deltaTime) {
 
 DefineService(VoxelPalette)
     ServiceDependency(VoxelMesh)
-    Subscribe(VoxelColorChanged, OnVoxelColorChanged)
-    Subscribe(ParentChanged, OnParentChanged)
-    Subscribe(VoxelPaletteAdded, OnAdded)
-    Subscribe(AppUpdate, OnAppUpdate)
+    RegisterSubscription(VoxelColorChanged, OnVoxelColorChanged, 0)
+    RegisterSubscription(ParentChanged, OnParentChanged, 0)
+    RegisterSubscription(VoxelPaletteAdded, OnAdded, 0)
+    RegisterSubscription(AppUpdate, OnAppUpdate, 0)
 EndService()

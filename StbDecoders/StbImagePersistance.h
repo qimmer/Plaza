@@ -5,8 +5,7 @@
 #ifndef PLAZA_STBIMAGEDECODER_H
 #define PLAZA_STBIMAGEDECODER_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(StbImagePersistance)
 
 #endif //PLAZA_STBIMAGEDECODER_H

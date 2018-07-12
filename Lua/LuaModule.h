@@ -7,6 +7,6 @@
 
 #include <Core/Module.h>
 
-DeclareModule(Lua)
+Module(Lua)
 
 #endif //PLAZA_LUAMODULE_H

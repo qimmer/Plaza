@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <Foundation/AppLoop.h>
 
-DefineEvent(ShaderCompilerFinished)
-DefineEvent(ShaderCompile)
+RegisterEvent(ShaderCompilerFinished)
+RegisterEvent(ShaderCompile)
 
 String ShaderIncludeDirectory;
 
@@ -22,10 +22,10 @@ API_EXPORT StringRef GetShaderIncludeDirectory() {
 }
 
 API_EXPORT void CompileShader(Entity binaryShader) {
-    FireNativeEvent(ShaderCompile, binaryShader);
+    FireEvent(EventOf_ShaderCompile(), binaryShader);
 }
 
-static void OnServiceStart(Service service) {
+LocalFunction(OnServiceStart, void, Service service) {
     char cwd[PATH_MAX];
     getcwd(cwd, PATH_MAX);
     strcat(cwd, "/Shaders");
@@ -34,5 +34,5 @@ static void OnServiceStart(Service service) {
 }
 
 DefineService(ShaderCompiler)
-        Subscribe(ShaderCompilerStarted, OnServiceStart)
+        RegisterSubscription(ShaderCompilerStarted, OnServiceStart, 0)
 EndService()

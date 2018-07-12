@@ -5,11 +5,11 @@
 #ifndef PLAZA_EDITORCONTEXT_H
 #define PLAZA_EDITORCONTEXT_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(EditorContext)
-DeclareComponentPropertyReactive(EditorContext, bool, EditorContextVisible)
+Unit(EditorContext)
+    Component(EditorContext)
+        Property(bool, EditorContextVisible)
 
-DeclareService(EditorContext)
 
 #endif //PLAZA_EDITORCONTEXT_H

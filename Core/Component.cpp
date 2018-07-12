@@ -7,7 +7,7 @@
 #include <Core/Entity.h>
 #include <Core/Event.h>
 #include <Core/Pool.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 
 struct Component {
     u16 ComponentSize;
@@ -32,7 +32,7 @@ struct ComponentTypeData {
     Vector<u32> EntityComponentIndices;
 };
 
-static Vector<ComponentTypeData> componentTypeList;
+API_EXPORT Vector<ComponentTypeData> componentTypeList;
 
 static inline ComponentTypeData *GetComponentType(Entity component) {
     auto index = GetEntityIndex(component);
@@ -95,21 +95,17 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
         componentData->EntityComponentIndices[entityIndex] = componentIndex;
         *(Entity*)componentData->DataBuffer[componentIndex] = entity;
 
-        auto componentSize = GetComponentSize(component);
-        memset(componentData->DataBuffer[componentIndex] + sizeof(Entity), 0, componentSize);
+        memset(componentData->DataBuffer[componentIndex] + sizeof(Entity), 0, componentData->DataBuffer.GetElementSize() - sizeof(Entity));
 
         for_children(child, component) {
-            if(HasComponent(child, ComponentOf_Dependency())) {
-                auto dependency = GetDependencyComponent(child);
+            if(HasComponent(child, ComponentOf_Base())) {
+                auto dependency = GetBaseComponent(child);
                 AddComponent(entity, dependency);
             }
         }
 
-        FireEntityComponentAdded({entity, component});
-
-        const void *arguments[] = {&entity};
-        const Type argumentTypes[] = {TypeOf_Entity};
-        FireEventFast(GetComponentAddedEvent(component), 1, argumentTypes, arguments);
+        FireEvent(EventOf_EntityComponentAdded(), entity, component);
+        FireEvent(GetComponentAddedEvent(component), entity);
 
         Verbose("Component %s has been added to Entity %s.", GetName(component), GetName(entity));
 
@@ -125,11 +121,8 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     if(HasComponent(entity, component)) {
         Verbose("Removing Component %s from Entity %s ...", GetName(component), GetName(entity));
 
-        const void *arguments[] = {&entity};
-        const Type argumentTypes[] = {TypeOf_Entity};
-        FireEventFast(GetComponentRemovedEvent(component), 1, argumentTypes, arguments);
-
-        FireEntityComponentRemoved({entity, component});
+        FireEvent(GetComponentRemovedEvent(component), entity);
+        FireEvent(EventOf_EntityComponentRemoved(), entity, component);
 
         if(HasComponent(entity, component)) {
             auto componentData = GetComponentType(component);
@@ -137,6 +130,9 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
             auto deletionComponentIndex = componentData->EntityComponentIndices[deletionEntityIndex];
 
             componentData->EntityComponentIndices[deletionEntityIndex] = InvalidIndex;
+
+            memset(componentData->DataBuffer[deletionComponentIndex], 0, componentData->DataBuffer.GetElementSize());
+
             componentData->DataBuffer.Remove(deletionComponentIndex);
         }
 
@@ -147,20 +143,35 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     return false;
 }
 
-LocalFunction(OnEntityDestroyed, void, Entity entity) {
-    auto numComponents = GetNumComponents(ComponentOf_Component());
-    for(auto i = 0; i < numComponents; ++i ) {
-        auto component = GetComponentEntity(ComponentOf_Component(), i);
-        if(!component) continue;
+API_EXPORT u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Entity *entity) {
+    ++index;
 
-        auto name = GetName(component);
+    auto componentData = &componentTypeList[GetEntityIndex(component)];
+    auto amount = componentData->DataBuffer.End();
+    while(!componentData->DataBuffer.IsValid(index)) {
+        ++index;
+
+        if(index >= amount) {
+            *dataPtr = 0;
+            *entity = 0;
+            return InvalidIndex;
+        }
+    }
+
+    auto entryData = componentData->DataBuffer[index];
+    *dataPtr = entryData + sizeof(Entity);
+    *entity = *(Entity*)entryData;
+
+    return index;
+}
+
+LocalFunction(OnEntityDestroyed, void, Entity entity) {
+    for_entity(component, data, Component) {
         RemoveComponent(entity, component);
     }
 }
 
 BeginUnit(Component)
-    RegisterSubscription(EntityDestroyed, OnEntityDestroyed)
-
     BeginComponent(Component)
         RegisterProperty(u16, ComponentSize)
         RegisterProperty(bool, ComponentAbstract)
@@ -172,13 +183,16 @@ BeginUnit(Component)
         RegisterProperty(Entity, ExtensionComponent)
     EndComponent()
 
-    BeginComponent(Dependency)
-        RegisterProperty(Entity, DependencyComponent)
+    BeginComponent(Base)
+        RegisterProperty(Entity, BaseComponent)
     EndComponent()
+
+    RegisterSubscription(EntityDestroyed, OnEntityDestroyed, 0)
 EndUnit()
 
 
 void __InitializeComponent() {
     auto component = ComponentOf_Component();
     __Property(PropertyOf_ComponentSize(), offsetof(Component, ComponentSize), sizeof(Component::ComponentSize), TypeOf_u16,  component);
+    AddComponent(component, ComponentOf_Component());
 }

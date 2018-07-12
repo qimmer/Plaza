@@ -10,7 +10,7 @@
 #include "Transform2D.h"
 #include "Sprite.h"
 
-DefineModule(Scene2D)
+BeginModule(Scene2D)
     ModuleDependency(Scene)
 
     ModuleService(Camera2D)

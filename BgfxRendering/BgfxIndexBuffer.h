@@ -5,11 +5,11 @@
 #ifndef PLAZA_BGFXINDEXBUFFER_H
 #define PLAZA_BGFXINDEXBUFFER_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(BgfxIndexBuffer)
+    Unit(BgfxIndexBuffer)
+    Component(BgfxIndexBuffer)
     DeclareService(BgfxIndexBuffer)
 
     u16 GetBgfxIndexBufferHandle(Entity entity);

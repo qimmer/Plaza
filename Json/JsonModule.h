@@ -7,6 +7,6 @@
 
 #include <Core/Module.h>
 
-DeclareModule(Json)
+Module(Json)
 
 #endif //PLAZA_JSONMODULE_H

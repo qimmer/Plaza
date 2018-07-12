@@ -5,10 +5,10 @@
 #ifndef PLAZA_BGFXOFFSCREENRENDERTARGET_H
 #define PLAZA_BGFXOFFSCREENRENDERTARGET_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(BgfxOffscreenRenderTarget)
-DeclareService(BgfxOffscreenRenderTarget)
+Unit(BgfxOffscreenRenderTarget)
+    Component(BgfxOffscreenRenderTarget)
 
 u16 GetBgfxOffscreenRenderTargetHandle(Entity entity);
 

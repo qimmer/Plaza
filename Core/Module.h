@@ -16,11 +16,7 @@ Component(Module)
     Property(StringRef, ModuleBinaryPath)
     Property(StringRef, ModuleVersion)
 
-struct ModuleInitializedArgs {};
-struct ModuleShutdownArgs {};
-
 Event(ModuleInitialized)
-Event(ModuleShutdown)
 
 Function(GetModuleRoot, Entity)
 Function(LoadModule, Entity, StringRef libraryPath)

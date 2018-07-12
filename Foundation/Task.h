@@ -5,18 +5,12 @@
 #ifndef PLAZA_TASK_H
 #define PLAZA_TASK_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-typedef u32(*TaskFunction)(Entity task);
-
-DeclareComponent(Task)
-DeclareComponentProperty(Task, TaskFunction, TaskFunction)
-DeclareComponentProperty(Task, bool, TaskFinished)
-DeclareComponentProperty(Task, u32, TaskResult)
-
-DeclareEvent(TaskFinished, Entity entity, u32 result)
-
-DeclareService(TaskScheduler)
+Unit(Task)
+    Component(Task)
+        Property(bool, TaskFinished)
+    Node(TaskQueue)
 
 void TaskSchedule(Entity task);
 void TaskWait(Entity task);

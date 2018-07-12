@@ -5,22 +5,22 @@
 #ifndef PLAZA_CAMERA_H
 #define PLAZA_CAMERA_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-DeclareComponent(Camera)
-DeclareService(Camera)
+Unit(Camera)
+    Component(Camera)
 
-    DeclareComponentPropertyReactive(Camera, m4x4f, CameraViewMatrix)
-    DeclareComponentPropertyReactive(Camera, m4x4f, CameraProjectionMatrix)
-    DeclareComponentPropertyReactive(Camera, m4x4f, CameraInvViewProjectionMatrix)
-    DeclareComponentPropertyReactive(Camera, rgba8, CameraClearColor)
-    DeclareComponentPropertyReactive(Camera, v4f, CameraViewport)
-    DeclareComponentPropertyReactive(Camera, bool, CameraClear)
-    DeclareComponentPropertyReactive(Camera, u8, CameraLayer)
-    DeclareComponentPropertyReactive(Camera, Entity, CameraRenderTarget)
-    DeclareComponentPropertyReactive(Camera, float, CameraNearClip)
-    DeclareComponentPropertyReactive(Camera, float, CameraFarClip)
+            Property(m4x4f, CameraViewMatrix)
+            Property(m4x4f, CameraProjectionMatrix)
+            Property(m4x4f, CameraInvViewProjectionMatrix)
+            Property(rgba8, CameraClearColor)
+            Property(v4f, CameraViewport)
+            Property(bool, CameraClear)
+            Property(u8, CameraLayer)
+            Property(Entity, CameraRenderTarget)
+            Property(float, CameraNearClip)
+            Property(float, CameraFarClip)
 
 v3f GetCameraPickRayPoint(Entity camera, v2f viewportOffset, float d);
 

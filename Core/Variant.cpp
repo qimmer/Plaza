@@ -26,7 +26,7 @@ API_EXPORT bool GetVariant(Variant v, u32 bufferSize, void *buffer, u32 *written
     return true;
 }
 
-API_EXPORT Variant CreateVariant(Entity type, u32 bufferSize, const void *buffer) {
+API_EXPORT Variant CreateVariant(Type type, u32 bufferSize, const void *buffer) {
     auto typeSize = GetTypeSize(type);
     Assert(0, bufferSize >= typeSize);
 

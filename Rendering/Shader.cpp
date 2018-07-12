@@ -3,7 +3,7 @@
 //
 
 #include <Core/String.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Foundation/Stream.h>
 #include <Foundation/MemoryStream.h>
 #include "Shader.h"
@@ -26,14 +26,15 @@ DefineEnum(ShaderType, false)
     DefineFlag(ShaderType_Compute)
 EndEnum()
 
-DefineComponent(Shader)
-    Dependency(Stream)
-    Dependency(Hierarchy)
+BeginUnit(Shader)
+    BeginComponent(Shader)
+    RegisterBase(Stream)
+    RegisterBase(Node)
 
-    DefineProperty(Entity, ShaderDeclaration)
+    RegisterProperty(Entity, ShaderDeclaration))
     DefinePropertyEnum(u8, ShaderType, ShaderType)
 EndComponent()
 
-DefineComponentPropertyReactive(Shader, u8, ShaderType)
-DefineComponentPropertyReactive(Shader, Entity, ShaderDeclaration)
+RegisterProperty(u8, ShaderType)
+RegisterProperty(Entity, ShaderDeclaration)
 

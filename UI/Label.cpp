@@ -21,21 +21,22 @@ struct Label {
     Entity Mesh, VertexBuffer;
 };
 
-DefineComponent(Label)
-    Dependency(Widget)
-    DefineProperty(Entity, LabelFont)
-    DefineProperty(StringRef, LabelText)
-    DefineProperty(v2f, LabelAlignment)
+BeginUnit(Label)
+    BeginComponent(Label)
+    RegisterBase(Widget)
+    RegisterProperty(Entity, LabelFont))
+    RegisterProperty(StringRef, LabelText))
+    RegisterProperty(v2f, LabelAlignment))
 EndComponent()
 
-DefineComponentPropertyReactive(Label, Entity, LabelFont)
-DefineComponentPropertyReactive(Label, StringRef, LabelText)
-DefineComponentPropertyReactive(Label, v2f, LabelAlignment)
+RegisterProperty(Entity, LabelFont)
+RegisterProperty(StringRef, LabelText)
+RegisterProperty(v2f, LabelAlignment)
 
 static void RebuildLabel(Entity entity) {
-    if(!HasLabel(entity)) return;
+    if(!HasComponent(entity, ComponentOf_Label())) return;
 
-    auto data = GetLabel(entity);
+    auto data = GetLabelData(entity);
 
     if(IsEntityValid(data->LabelFont)) {
         SetMeshInstanceMaterial(entity, GetFontMaterial(data->LabelFont));
@@ -46,8 +47,8 @@ static void RebuildLabel(Entity entity) {
 
         v2f min = {FLT_MAX, FLT_MAX}, max = {FLT_MIN, FLT_MIN};
         for(auto i = 0; i < numVertices; ++i) {
-            min.x = std::min(min.x, vertices[i].Position.x);
-            min.y = std::min(min.y, vertices[i].Position.y);
+            min.x = Min(min.x, vertices[i].Position.x);
+            min.y = Min(min.y, vertices[i].Position.y);
 
             max.x = std::max(max.x, vertices[i].Position.x);
             max.y = std::max(max.y, vertices[i].Position.y);
@@ -70,8 +71,8 @@ static void RebuildLabelsWithFont(Entity font) {
     }
 }
 
-static void OnLabelAdded(Entity entity) {
-    auto data = GetLabel(entity);
+LocalFunction(OnLabelAdded, void, Entity entity) {
+    auto data = GetLabelData(entity);
     data->Mesh = CreateMesh(entity, "Mesh");
     data->VertexBuffer = CreateVertexBuffer(data->Mesh, "VertexBuffer");
     SetVertexBufferDeclaration(data->VertexBuffer, GetFontVertexDeclaration());
@@ -81,8 +82,8 @@ static void OnLabelAdded(Entity entity) {
 }
 
 DefineService(Label)
-    Subscribe(FontChanged, RebuildLabelsWithFont)
-    Subscribe(WidgetSizeChanged, RebuildLabel)
-    Subscribe(LabelChanged, RebuildLabel)
-    Subscribe(LabelAdded, OnLabelAdded)
+    RegisterSubscription(FontChanged, RebuildLabelsWithFont, 0)
+    RegisterSubscription(WidgetSizeChanged, RebuildLabel, 0)
+    RegisterSubscription(LabelChanged, RebuildLabel, 0)
+    RegisterSubscription(LabelAdded, OnLabelAdded, 0)
 EndService()

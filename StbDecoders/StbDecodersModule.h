@@ -7,6 +7,6 @@
 
 #include <Core/Module.h>
 
-DeclareModule(StbDecoders)
+Module(StbDecoders)
 
 #endif //PLAZA_STBDECODERSMODULE_H

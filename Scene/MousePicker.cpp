@@ -13,17 +13,18 @@ struct MousePicker {
     v4f MousePickerViewport;
 };
 
-DefineComponent(MousePicker)
-    Dependency(ScenePicker)
-    DefinePropertyReactive(Entity, MousePickerContext)
-    DefinePropertyReactive(v4f, MousePickerViewport)
+BeginUnit(MousePicker)
+    BeginComponent(MousePicker)
+    RegisterBase(ScenePicker)
+    RegisterProperty(Entity, MousePickerContext)
+    RegisterProperty(v4f, MousePickerViewport)
 EndComponent()
 
-DefineComponentPropertyReactive(MousePicker, v4f, MousePickerViewport)
-DefineComponentPropertyReactive(MousePicker, Entity, MousePickerContext)
+RegisterProperty(v4f, MousePickerViewport)
+RegisterProperty(Entity, MousePickerContext)
 
-static void OnAppUpdate(double deltaTime) {
-    for_entity(mousePicker, MousePicker) {
+LocalFunction(OnAppUpdate, void, double deltaTime) {
+    for_entity(mousePicker, data, MousePicker) {
         auto context = GetMousePickerContext(mousePicker);
         if(IsEntityValid(context)) {
             auto cursor = GetCursorPosition(context, 0);
@@ -43,5 +44,5 @@ static void OnAppUpdate(double deltaTime) {
 }
 
 DefineService(MousePicker)
-    Subscribe(AppUpdate, OnAppUpdate)
+    RegisterSubscription(AppUpdate, OnAppUpdate, 0)
 EndService()

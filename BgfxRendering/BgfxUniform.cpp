@@ -15,11 +15,12 @@ struct BgfxUniform {
     bool invalidated;
 };
 
-DefineComponent(BgfxUniform)
+BeginUnit(BgfxUniform)
+    BeginComponent(BgfxUniform)
 EndComponent()
 
 void OnUniformRemoved(Entity entity) {
-    auto data = GetBgfxUniform(entity);
+    auto data = GetBgfxUniformData(entity);
 
     if(bgfx::isValid(data->handle)) {
         bgfx::destroy(data->handle);
@@ -27,14 +28,14 @@ void OnUniformRemoved(Entity entity) {
     }
 }
 
-static void OnChanged(Entity entity) {
-    if(HasBgfxUniform(entity)) {
-        GetBgfxUniform(entity)->invalidated = true;
+LocalFunction(OnChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxUniform())) {
+        GetBgfxUniformData(entity)->invalidated = true;
     }
 }
 
 u16 GetBgfxUniformHandle(Entity entity) {
-    auto data = GetBgfxUniform(entity);
+    auto data = GetBgfxUniformData(entity);
 
     if(data->invalidated) {
         // Eventually free old buffers
@@ -69,6 +70,6 @@ u16 GetBgfxUniformHandle(Entity entity) {
 }
 
 DefineService(BgfxUniform)
-        Subscribe(BgfxUniformRemoved, OnUniformRemoved)
-        Subscribe(UniformChanged, OnChanged)
+        RegisterSubscription(BgfxUniformRemoved, OnUniformRemoved, 0)
+        RegisterSubscription(UniformChanged, OnChanged, 0)
 EndService()

@@ -8,6 +8,6 @@
 #include <Core/Module.h>
 
 
-    DeclareModule(SQL)
+    Module(SQL)
 
 #endif //PLAZA_SQLMODULE_H

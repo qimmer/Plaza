@@ -5,12 +5,12 @@
 #ifndef PLAZA_TEXTURE2DVIEWER_H
 #define PLAZA_TEXTURE2DVIEWER_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(Texture2DViewer)
 
-DeclareComponent(Texture2DViewer)
-DeclareComponentPropertyReactive(Texture2DViewer, Entity, Texture2DViewerTexture)
+Unit(Texture2DViewer)
+    Component(Texture2DViewer)
+        Property(Entity, Texture2DViewerTexture)
 
 void ViewTexture(Entity texture);
 

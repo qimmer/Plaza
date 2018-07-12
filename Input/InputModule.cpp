@@ -5,6 +5,6 @@
 #include "InputModule.h"
 #include "InputState.h"
 
-DefineModule(Input)
+BeginModule(Input)
     ModuleType(InputState)
 EndModule()

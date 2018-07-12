@@ -4,7 +4,7 @@
 
 #include <Core/Property.h>
 #include <Core/Component.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <malloc.h>
 #include <memory.h>
 #include <cstring>
@@ -48,11 +48,15 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
     // If property data is a char array, change valueData to point to a char pointer (StringRef) instead of the actual char data.
     if(propertyData->PropertySize != GetTypeSize(propertyData->PropertyType) && propertyData->PropertyType != TypeOf_unknown) {
         argumentData[1] = (char*)&valueData;
-        FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
-        strcpy(valueData, *(const char**)newValueData);
+        if(strcmp(valueData, *(const char**)newValueData) != 0) {
+            FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+            strcpy(valueData, *(const char**)newValueData);
+        }
     } else {
-        FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
-        memcpy(valueData, newValueData, propertyData->PropertySize);
+        if(memcmp(valueData, newValueData, propertyData->PropertySize) != 0) {
+            FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+            memcpy(valueData, newValueData, propertyData->PropertySize);
+        }
     }
 }
 
@@ -108,7 +112,7 @@ EndUnit()
 
 void __Property(Entity property, u32 offset, u32 size, Type type, Entity component) {
     AddComponent(property, ComponentOf_Property());
-    auto data = GetProperty(property);
+    auto data = GetPropertyData(property);
     data->PropertyOffset = offset;
     data->PropertySize = size;
     data->PropertyType = type;
@@ -122,4 +126,8 @@ void __InitializeProperty() {
     __Property(PropertyOf_PropertyType(),   offsetof(Property, PropertyType),   sizeof(Property::PropertyType),   TypeOf_Type, component);
     __Property(PropertyOf_PropertyComponent(), offsetof(Property, PropertyComponent), sizeof(Property::PropertyComponent), TypeOf_Entity,  component);
     __Property(PropertyOf_PropertyChangedEvent(), offsetof(Property, PropertyChangedEvent), sizeof(Property::PropertyChangedEvent), TypeOf_Entity,  component);
+}
+
+API_EXPORT void SetPropertyMeta(Entity property, StringRef metaString) {
+
 }

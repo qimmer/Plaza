@@ -17,17 +17,18 @@ struct BgfxBinaryShader {
     bool invalidated;
 };
 
-DefineComponent(BgfxBinaryShader)
+BeginUnit(BgfxBinaryShader)
+    BeginComponent(BgfxBinaryShader)
 EndComponent()
 
-static void OnChanged(Entity entity) {
-    if(HasBgfxBinaryShader(entity)) {
-        GetBgfxBinaryShader(entity)->invalidated = true;
+LocalFunction(OnChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxBinaryShader())) {
+        GetBgfxBinaryShaderData(entity)->invalidated = true;
     }
 }
 
 u16 GetBgfxBinaryShaderHandle(Entity entity) {
-    auto data = GetBgfxBinaryShader(entity);
+    auto data = GetBgfxBinaryShaderData(entity);
     if(data->invalidated) {
         // Eventually free old buffers
         if(bgfx::isValid(data->handle)) {
@@ -64,7 +65,7 @@ u16 GetBgfxBinaryShaderHandle(Entity entity) {
 }
 
 void OnBinaryShaderRemoved(Entity entity) {
-    auto data = GetBgfxBinaryShader(entity);
+    auto data = GetBgfxBinaryShaderData(entity);
 
     if(bgfx::isValid(data->handle)) {
         bgfx::destroy(data->handle);
@@ -73,9 +74,9 @@ void OnBinaryShaderRemoved(Entity entity) {
 }
 
 DefineService(BgfxBinaryShader)
-        Subscribe(BgfxBinaryShaderRemoved, OnBinaryShaderRemoved)
-        Subscribe(BinaryShaderChanged, OnChanged)
-        Subscribe(BgfxBinaryShaderChanged, OnChanged)
-        Subscribe(StreamChanged, OnChanged)
-        Subscribe(StreamContentChanged, OnChanged)
+        RegisterSubscription(BgfxBinaryShaderRemoved, OnBinaryShaderRemoved, 0)
+        RegisterSubscription(BinaryShaderChanged, OnChanged, 0)
+        RegisterSubscription(BgfxBinaryShaderChanged, OnChanged, 0)
+        RegisterSubscription(StreamChanged, OnChanged, 0)
+        RegisterSubscription(StreamContentChanged, OnChanged, 0)
 EndService()

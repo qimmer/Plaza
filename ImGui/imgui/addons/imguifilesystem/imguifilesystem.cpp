@@ -2599,7 +2599,7 @@ const char* ChooseFileMainMethod(Dialog& ist,const char* directory,const bool _i
                 if (I.filter.PassFilter(fileName)) {
 #                   ifdef IMGUI_USE_MINIZIP
                     if (acceptZipFilesForBrowsing)  {
-                        hasZipExtension = Path::HasZipExtension(fileName);
+                        hasZipExtension = Path::HasComponent(fileName, ComponentOf_ZipExtension());
                         if (hasZipExtension && !isZipFile)  {
                             ImGui::PopStyleColor(4);
                             ImGui::PushStyleColor(ImGuiCol_Text,ColorSet[Internal::ImGuiCol_Dialog_ZipDirectory_Text]);

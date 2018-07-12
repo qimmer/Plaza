@@ -11,13 +11,8 @@ BeginUnit(Entity)
     RegisterFunction(IsEntityOccupied)
     RegisterFunction(IsEntityValid)
 
-    BeginEvent(EntityCreated)
-        EventArgument(Entity, entity)
-    EndEvent()
-
-    BeginEvent(EntityDestroyed)
-        EventArgument(Entity, entity)
-    EndEvent()
+    RegisterEvent(EntityCreated)
+    RegisterEvent(EntityDestroyed)
 EndUnit()
 
 Vector<u32> Generations;
@@ -79,7 +74,7 @@ API_EXPORT Entity CreateEntity () {
     static bool isInCreateEntity = false;
     if(!isInCreateEntity) {
         isInCreateEntity = true;
-        FireEntityCreated({entity});
+        FireEvent(EventOf_EntityCreated(), entity);
         isInCreateEntity = false;
     }
 
@@ -91,7 +86,11 @@ API_EXPORT void DestroyEntity(Entity entity) {
         return;
     }
 
-    FireEntityDestroyed({entity});
+    for_children(child, entity) {
+        DestroyEntity(child);
+    }
+
+    FireEvent(EventOf_EntityDestroyed(), entity);
     
     auto index = GetEntityIndex(entity);
     FreeSlots.push_back(index);

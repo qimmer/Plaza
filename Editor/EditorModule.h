@@ -7,6 +7,6 @@
 
 #include <Core/Module.h>
 
-DeclareModule(Editor)
+Module(Editor)
 
 #endif //PLAZA_EDITORMODULE_H

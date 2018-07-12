@@ -5,12 +5,12 @@
 #ifndef PLAZA_VERTEXBUFFER_H
 #define PLAZA_VERTEXBUFFER_H
 
-#include <Core/Entity.h>
-#include <Core/Service.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(VertexBuffer)
+Unit(VertexBuffer)
+    Component(VertexBuffer)
 
-DeclareComponentPropertyReactive(VertexBuffer, Entity, VertexBufferDeclaration)
-DeclareComponentPropertyReactive(VertexBuffer, bool, VertexBufferDynamic)
+        Property(Entity, VertexBufferDeclaration)
+        Property(bool, VertexBufferDynamic)
 
 #endif //PLAZA_VERTEXBUFFER_H

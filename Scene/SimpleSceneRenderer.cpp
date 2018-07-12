@@ -6,7 +6,7 @@
 #include <Rendering/CommandList.h>
 #include <Scene/MeshInstance.h>
 #include <Rendering/Batch.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Rendering/Mesh.h>
 #include <Scene/SceneNode.h>
 #include <Scene/Transform.h>
@@ -22,8 +22,9 @@ struct SimpleSceneRenderer {
     Entity CommandList;
 };
 
-DefineComponent(SimpleSceneRenderer)
-    Dependency(Camera)
+BeginUnit(SimpleSceneRenderer)
+    BeginComponent(SimpleSceneRenderer)
+    RegisterBase(Camera)
 EndComponent()
 
 static void UpdateBatches(Entity sceneRenderer) {
@@ -34,7 +35,7 @@ static void UpdateBatches(Entity sceneRenderer) {
     auto renderTarget = GetCameraRenderTarget(sceneRenderer);
     auto viewport = GetCameraViewport(sceneRenderer);
 
-    bool shouldRender = IsEntityValid(renderTarget) && HasRenderTarget(renderTarget);
+    bool shouldRender = IsEntityValid(renderTarget) && HasComponent(renderTarget, ComponentOf_RenderTarget());
     SetHidden(commandList, !shouldRender);
     if(!shouldRender) {
         return;
@@ -61,7 +62,7 @@ static void UpdateBatches(Entity sceneRenderer) {
     for(auto i = 0; i < GetNumMeshInstance(); ++i) {
         auto meshInstance = GetMeshInstanceEntity(i);
         auto meshInstanceScene = GetSceneNodeScene(meshInstance);
-        if(!meshInstanceScene || meshInstanceScene != scene || (HasVisibility(meshInstance) && GetHidden(meshInstance))) continue;
+        if(!meshInstanceScene || meshInstanceScene != scene || (HasComponent(meshInstance, ComponentOf_Visibility()) && GetHidden(meshInstance))) continue;
 
         if(!IsEntityValid(batch)) {
             char name[PATH_MAX];
@@ -78,22 +79,22 @@ static void UpdateBatches(Entity sceneRenderer) {
     }
 }
 
-static void OnAppUpdate(double deltaTime) {
+LocalFunction(OnAppUpdate, void, double deltaTime) {
     for(auto i = 0; i < GetNumSimpleSceneRenderer(); ++i) {
         UpdateBatches(GetSimpleSceneRendererEntity(i));
     }
 }
 
-static void OnSimpleRendererAdded(Entity entity) {
-    GetSimpleSceneRenderer(entity)->CommandList = CreateCommandList(entity, "SimpleSceneRenderer_CommandList");
+LocalFunction(OnSimpleRendererAdded, void, Entity entity) {
+    GetSimpleSceneRendererData(entity)->CommandList = CreateCommandList(entity, "SimpleSceneRenderer_CommandList");
 }
 
-static void OnSimpleRendererRemoved(Entity entity) {
-    DestroyEntity(GetSimpleSceneRenderer(entity)->CommandList);
+LocalFunction(OnSimpleRendererRemoved, void, Entity entity) {
+    DestroyEntity(GetSimpleSceneRendererData(entity)->CommandList);
 }
 
 DefineService(SimpleSceneRenderer)
-        Subscribe(SimpleSceneRendererAdded, OnSimpleRendererAdded)
-        Subscribe(SimpleSceneRendererRemoved, OnSimpleRendererRemoved)
-        Subscribe(AppUpdate, OnAppUpdate)
+        RegisterSubscription(SimpleSceneRendererAdded, OnSimpleRendererAdded, 0)
+        RegisterSubscription(SimpleSceneRendererRemoved, OnSimpleRendererRemoved, 0)
+        RegisterSubscription(AppUpdate, OnAppUpdate, 0)
 EndService()

@@ -2916,13 +2916,13 @@ int TreeViewNode::getNumSiblings(bool includeMe) const	{
     return (includeMe ? num : (num-1));
 }
 
-TreeViewNode *TreeViewNode::getSiblingNode(int nodeIndexInParentHierarchy)  {
-    if (!parentNode || !parentNode->childNodes || nodeIndexInParentHierarchy<0 || nodeIndexInParentHierarchy>=parentNode->childNodes->size()) return NULL;
-    return (*parentNode->childNodes)[nodeIndexInParentHierarchy];
+TreeViewNode *TreeViewNode::getSiblingNode(int nodeIndexInParentNode)  {
+    if (!parentNode || !parentNode->childNodes || nodeIndexInParentNode<0 || nodeIndexInParentNode>=parentNode->childNodes->size()) return NULL;
+    return (*parentNode->childNodes)[nodeIndexInParentNode];
 }
-const TreeViewNode *TreeViewNode::getSiblingNode(int nodeIndexInParentHierarchy) const	{
-    if (!parentNode || !parentNode->childNodes || nodeIndexInParentHierarchy<0 || nodeIndexInParentHierarchy>=parentNode->childNodes->size()) return NULL;
-    return (*parentNode->childNodes)[nodeIndexInParentHierarchy];
+const TreeViewNode *TreeViewNode::getSiblingNode(int nodeIndexInParentNode) const	{
+    if (!parentNode || !parentNode->childNodes || nodeIndexInParentNode<0 || nodeIndexInParentNode>=parentNode->childNodes->size()) return NULL;
+    return (*parentNode->childNodes)[nodeIndexInParentNode];
 }
 int TreeViewNode::getDepth() const  {
     const TreeViewNode* n = this;int depth = -1;

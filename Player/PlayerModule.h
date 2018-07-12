@@ -8,6 +8,6 @@
 #include <Core/Module.h>
 
 
-    DeclareModule(Player)
+    Module(Player)
 
 #endif //PLAZA_PLAYERMODULE_H

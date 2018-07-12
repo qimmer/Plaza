@@ -9,9 +9,10 @@ struct IndexBuffer {
     bool IndexBufferLong, IndexBufferDynamic;
 };
 
-DefineComponent(IndexBuffer)
-    Dependency(Stream)
+BeginUnit(IndexBuffer)
+    BeginComponent(IndexBuffer)
+    RegisterBase(Stream)
 EndComponent()
 
-DefineComponentPropertyReactive(IndexBuffer, bool, IndexBufferLong)
-DefineComponentPropertyReactive(IndexBuffer, bool, IndexBufferDynamic)
+RegisterProperty(bool, IndexBufferLong)
+RegisterProperty(bool, IndexBufferDynamic)

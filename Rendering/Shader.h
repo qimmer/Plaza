@@ -5,7 +5,7 @@
 #ifndef PLAZA_SHADER_H
 #define PLAZA_SHADER_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 DeclareEnum(ShaderType)
 
@@ -17,8 +17,9 @@ DeclareEnum(ShaderType)
 #define ShaderType_Domain 5
 #define ShaderType_Compute 6
 
-DeclareComponent(Shader)
-DeclareComponentPropertyReactive(Shader, u8, ShaderType)
-DeclareComponentPropertyReactive(Shader, Entity, ShaderDeclaration)
+Unit(Shader)
+    Component(Shader)
+        Property(u8, ShaderType)
+        Property(Entity, ShaderDeclaration)
 
 #endif //PLAZA_SHADER_H

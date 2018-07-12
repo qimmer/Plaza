@@ -5,10 +5,11 @@
 #ifndef PLAZA_SIMPLESCENERENDERER_H
 #define PLAZA_SIMPLESCENERENDERER_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(SimpleSceneRenderer)
+    Unit(SimpleSceneRenderer)
+    Component(SimpleSceneRenderer)
     DeclareService(SimpleSceneRenderer)
 
 #endif //PLAZA_SIMPLESCENERENDERER_H

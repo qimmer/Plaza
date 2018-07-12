@@ -9,16 +9,17 @@ struct Texture2D {
     v2i TextureSize2D;
 };
 
-DefineComponent(Texture2D)
-    DefinePropertyReactive(v2i, TextureSize2D)
+BeginUnit(Texture2D)
+    BeginComponent(Texture2D)
+    RegisterProperty(v2i, TextureSize2D)
 EndComponent()
 
-DefineComponentPropertyReactive(Texture2D, v2i, TextureSize2D)
+RegisterProperty(v2i, TextureSize2D)
 
-static void OnTexture2DChanged(Entity texture) {
-    FireNativeEvent(TextureChanged, texture);
+LocalFunction(OnTexture2DChanged, void, Entity texture) {
+    FireEvent(EventOf_TextureChanged(), texture);
 }
 
 DefineService(Texture2D)
-    Subscribe(Texture2DChanged, OnTexture2DChanged)
+    RegisterSubscription(Texture2DChanged, OnTexture2DChanged, 0)
 EndService()

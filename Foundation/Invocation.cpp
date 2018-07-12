@@ -5,65 +5,84 @@
 #include "Invocation.h"
 #include <Core/Variant.h>
 #include <Core/Function.h>
+#include <Core/Debug.h>
+#include <Core/Vector.h>
 
 #define ARGUMENT_DATA_MAX 4096
 
 struct Invocation {
-    Function InvocationFunction;
+    Entity InvocationFunction;
     Variant InvocationResult;
+
+    Vector(InvocationArguments, InvocationArgument*, 16)
 };
-
-DefineComponent(Invocation)
-    DefineProperty(Function, InvocationFunction)
-EndComponent()
-
-DefineComponentPropertyReactive(Invocation, Function, InvocationFunction)
-DefineComponentPropertyReactive(Invocation, Variant, InvocationResult)
 
 struct InvocationArgument {
     Variant InvocationArgumentValue;
 };
 
-DefineComponent(InvocationArgument)
-    DefineProperty(Variant, InvocationArgumentValue)
-EndComponent()
-
-DefineComponentPropertyReactive(InvocationArgument, Variant, InvocationArgumentValue);
-
 API_EXPORT bool Invoke(Entity invocationEntity) {
-    char argumentBuffer[ARGUMENT_DATA_MAX];
-    char returnBuffer[ARGUMENT_DATA_MAX];
+    const void *argumentPtrs[16];
+    u8 argumentTypeIndices[16];
+    Variant result;
 
-    char *argumentPtr = argumentBuffer;
-    char *argumentMax = argumentPtr + ARGUMENT_DATA_MAX - sizeof(Variant);
-
-    auto invocation = GetInvocation(invocationEntity);
+    auto invocation = GetInvocationData(invocationEntity);
 
     if(!invocation) return false;
 
-    for_children(argumentEntity, invocationEntity) {
-        auto argument = GetInvocationArgument(argumentEntity);
-
-        if(!argument) continue;
-
-        if(argumentPtr >= argumentMax) {
-            Log(LogChannel_Core, LogSeverity_Error, "Function invocation '%s' failed: Too many arguments.", GetName(invocationEntity));
-            return false;
-        }
-
-        u32 writtenBytes = 0;
-        if(!GetVariant(argument->InvocationArgumentValue, argumentMax - argumentPtr, argumentPtr, &writtenBytes)) {
-            Log(LogChannel_Core, LogSeverity_Error, "Function invocation '%s' failed: Could not extract variant.", GetName(invocationEntity));
-            return false;
-        }
-
-        argumentPtr += writtenBytes;
+    if(invocation->NumInvocationArguments > 32) {
+        Log(invocationEntity, LogSeverity_Error, "Function invocation '%s' failed: Too many arguments.", GetName(invocationEntity));
+        return false;
     }
 
-    CallFunction(invocation->InvocationFunction, argumentBuffer, returnBuffer);
+    for(int i = 0; i < invocation->NumInvocationArguments; ++i) {
+        auto argument = invocation->InvocationArguments[i];
 
-    auto returnType = GetFunctionReturnType(invocation->InvocationFunction);
-    SetInvocationResult(invocationEntity, CreateVariant(returnType, ARGUMENT_DATA_MAX, returnBuffer));
+        argumentPtrs[i] = argument->InvocationArgumentValue.buffer;
+        argumentTypeIndices[i] = argument->InvocationArgumentValue.type;
+    }
 
-    return true;
+    if(HasComponent(invocation->InvocationFunction, ComponentOf_Function())) {
+        CallFunction(
+                invocation->InvocationFunction,
+                result.buffer,
+                invocation->NumInvocationArguments,
+                argumentTypeIndices,
+                argumentPtrs
+        );
+
+        result.type = GetFunctionReturnType(invocation->InvocationFunction);
+        SetInvocationResult(invocationEntity, result);
+
+        return true;
+    } else if (HasComponent(invocation->InvocationFunction, ComponentOf_Event())) {
+        FireEventFast(
+                invocation->InvocationFunction,
+                invocation->NumInvocationArguments,
+                argumentTypeIndices,
+                argumentPtrs
+        );
+
+        result.type = TypeOf_unknown;
+        SetInvocationResult(invocationEntity, result);
+
+        return true;
+    }
+
+    Log(invocationEntity, LogSeverity_Error, "Function invocation '%s' failed: Invocation function is either a function or an event.", GetName(invocationEntity));
+
+    return false;
 }
+
+ChildCache(Invocation, InvocationArgument, InvocationArguments)
+
+BeginUnit(Invocation)
+    BeginComponent(Invocation)
+        RegisterProperty(Entity, InvocationFunction)
+        RegisterProperty(Variant, InvocationResult)
+        RegisterChildCache(InvocationArgument)
+    EndComponent()
+    BeginComponent(InvocationArgument)
+        RegisterProperty(Variant, InvocationArgumentValue)
+    EndComponent()
+EndUnit()

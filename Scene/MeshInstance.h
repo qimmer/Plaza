@@ -5,7 +5,7 @@
 #ifndef PLAZA_MESHINSTANCE_H
 #define PLAZA_MESHINSTANCE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 #define Layer_0 (1 << 0)
 #define Layer_1 (1 << 1)
@@ -18,10 +18,11 @@
 
 DeclareEnum(Layer)
 
-DeclareComponent(MeshInstance)
+Unit(MeshInstance)
+    Component(MeshInstance)
 
-DeclareComponentPropertyReactive(MeshInstance, Entity, MeshInstanceMesh)
-DeclareComponentPropertyReactive(MeshInstance, Entity, MeshInstanceMaterial)
-DeclareComponentPropertyReactive(MeshInstance, u8, MeshInstanceLayer)
+        Property(Entity, MeshInstanceMesh)
+        Property(Entity, MeshInstanceMaterial)
+        Property(u8, MeshInstanceLayer)
 
 #endif //PLAZA_MESHINSTANCE_H

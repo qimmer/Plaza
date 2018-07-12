@@ -14,22 +14,23 @@ struct UICamera {
     float UICameraPixelsPerUnit;
 };
 
-DefineComponent(UICamera)
-    Dependency(Camera)
-    DefinePropertyReactive(float, UICameraPixelsPerUnit)
+BeginUnit(UICamera)
+    BeginComponent(UICamera)
+    RegisterBase(Camera)
+    RegisterProperty(float, UICameraPixelsPerUnit)
 EndComponent()
 
-DefineComponentPropertyReactive(UICamera, float, UICameraPixelsPerUnit)
+RegisterProperty(float, UICameraPixelsPerUnit)
 
 static void UpdateProjectionMatrix(Entity entity) {
-    if(!HasUICamera(entity)) return;
+    if(!HasComponent(entity, ComponentOf_UICamera())) return;
 
     auto renderTarget = GetCameraRenderTarget(entity);
-    if(!IsEntityValid(renderTarget) || !HasRenderTarget(renderTarget)) {
+    if(!IsEntityValid(renderTarget) || !HasComponent(renderTarget, ComponentOf_RenderTarget())) {
         return;
     }
 
-    auto data = GetUICamera(entity);
+    auto data = GetUICameraData(entity);
     if(data->UICameraPixelsPerUnit <= FLT_EPSILON) {
         return;
     }
@@ -48,24 +49,24 @@ static void UpdateProjectionMatrix(Entity entity) {
     SetCameraProjectionMatrix(entity, projection);
 }
 
-static void OnCameraAspectChanged(Entity entity, float oldAspect, float newAspect) {
+LocalFunction(OnCameraAspectChanged, void, Entity entity, float oldAspect, float newAspect) {
     UpdateProjectionMatrix(entity);
 }
 
-static void OnUICameraPixelsPerUnitChanged(Entity entity, float before, float after) {
+LocalFunction(OnUICameraPixelsPerUnitChanged, void, Entity entity, float before, float after) {
     UpdateProjectionMatrix(entity);
 }
 
-static void OnCameraViewportChanged(Entity entity, v4f before, v4f after) {
+LocalFunction(OnCameraViewportChanged, void, Entity entity, v4f before, v4f after) {
     UpdateProjectionMatrix(entity);
 }
 
-static void OnCameraRenderTargetChanged(Entity entity, Entity before, Entity after) {
+LocalFunction(OnCameraRenderTargetChanged, void, Entity entity, Entity before, Entity after) {
     UpdateProjectionMatrix(entity);
 }
 
-static void OnRenderTargetSizeChanged(Entity entity, v2i oldValue, v2i newValue) {
-    for_entity(camera, UICamera) {
+LocalFunction(OnRenderTargetSizeChanged, void, Entity entity, v2i oldValue, v2i newValue) {
+    for_entity(camera, data, UICamera) {
         if(GetCameraRenderTarget(camera) == entity) {
             UpdateProjectionMatrix(camera);
         }
@@ -73,9 +74,9 @@ static void OnRenderTargetSizeChanged(Entity entity, v2i oldValue, v2i newValue)
 }
 
 DefineService(UICamera)
-    Subscribe(UICameraPixelsPerUnitChanged, OnUICameraPixelsPerUnitChanged)
-    Subscribe(CameraViewportChanged, OnCameraViewportChanged)
-    Subscribe(CameraRenderTargetChanged, OnCameraRenderTargetChanged)
-    Subscribe(UICameraAdded, UpdateProjectionMatrix)
-    Subscribe(RenderTargetSizeChanged, OnRenderTargetSizeChanged)
+    RegisterSubscription(UICameraPixelsPerUnitChanged, OnUICameraPixelsPerUnitChanged, 0)
+    RegisterSubscription(CameraViewportChanged, OnCameraViewportChanged, 0)
+    RegisterSubscription(CameraRenderTargetChanged, OnCameraRenderTargetChanged, 0)
+    RegisterSubscription(UICameraAdded, UpdateProjectionMatrix, 0)
+    RegisterSubscription(RenderTargetSizeChanged, OnRenderTargetSizeChanged, 0)
 EndService()

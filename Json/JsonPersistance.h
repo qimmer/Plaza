@@ -5,8 +5,9 @@
 #ifndef PLAZA_JSONPERSISTANCEPOINT_H
 #define PLAZA_JSONPERSISTANCEPOINT_H
 
-#include <Core/Service.h>
+#include <Core/NativeUtils.h>
+#include <Foundation/PersistancePoint.h>
 
-DeclareService(JsonPersistance)
+Unit(JsonPersistance)
 
 #endif //PLAZA_JSONPERSISTANCEPOINT_H

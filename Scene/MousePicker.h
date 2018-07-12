@@ -5,12 +5,12 @@
 #ifndef PLAZA_MOUSEPICKER_H
 #define PLAZA_MOUSEPICKER_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(MousePicker)
-DeclareComponentPropertyReactive(MousePicker, v4f, MousePickerViewport)
-DeclareComponentPropertyReactive(MousePicker, Entity, MousePickerContext)
+Unit(MousePicker)
+    Component(MousePicker)
+        Property(v4f, MousePickerViewport)
+        Property(Entity, MousePickerContext)
 
-DeclareService(MousePicker)
 
 #endif //PLAZA_MOUSEPICKER_H

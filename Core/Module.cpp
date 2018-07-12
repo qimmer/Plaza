@@ -22,6 +22,8 @@ BeginUnit(Module)
 
     RegisterFunction(GetModuleRoot)
     RegisterFunction(LoadModule)
+
+    RegisterEvent(ModuleInitialized)
 EndUnit()
 
 API_EXPORT Entity GetModuleRoot() {
@@ -57,7 +59,7 @@ static Entity LoadModuleWin32(StringRef dllPath) {
     if(pIDH->e_magic!=IMAGE_DOS_SIGNATURE)
     {
         Log(0, LogSeverity_Error, "File is not a DLL Library: %s", dllPath);
-        return NULL;
+        return 0;
     }
 
     pINH=(PIMAGE_NT_HEADERS)((LPBYTE)hModule+pIDH->e_lfanew);
@@ -65,13 +67,13 @@ static Entity LoadModuleWin32(StringRef dllPath) {
     if(pINH->Signature!=IMAGE_NT_SIGNATURE)
     {
         Log(0, LogSeverity_Error, "DLL Library has an invalid PE signature: %s", dllPath);
-        return NULL;
+        return 0;
     }
 
     if(pINH->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress==0)
     {
         Log(0, LogSeverity_Error, "DLL Library has no exports: %s", dllPath);
-        return NULL;
+        return 0;
     }
 
     pIED=(PIMAGE_EXPORT_DIRECTORY)((LPBYTE)hModule+pINH->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);

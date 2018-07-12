@@ -7,6 +7,6 @@
 
 #include <Core/Module.h>
 
-DeclareModule(Input)
+Module(Input)
 
 #endif //PLAZA_INPUTMODULE_H

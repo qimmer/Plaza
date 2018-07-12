@@ -2,31 +2,32 @@
 #ifndef PersistancePoint_H
 #define PersistancePoint_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(PersistancePoint)
-DeclareService(PersistancePoint)
+Unit(PersistancePoint)
+    Component(PersistancePoint)
+        Property(bool, PersistancePointAsync)
+        Property(bool, PersistancePointLoaded)
+        Property(bool, PersistancePointLoading, PropertyFlag_ReadOnly, PropertyFlag_Transient)
+        Property(bool, PersistancePointSaving, PropertyFlag_ReadOnly, PropertyFlag_Transient)
+        Property(Entity, PersistancePointSerializer, PropertyFlag_ReadOnly, PropertyFlag_Transient)
 
-DeclareComponentPropertyReactive(PersistancePoint, bool, Loaded)
+    Component(Serializer)
+        Property(StringRef, SerializerMimeType)
 
-typedef struct Serializer {
-    EntityBoolHandler SerializeHandler;
-    EntityBoolHandler DeserializeHandler;
-} Serializer;
+    Function(Save, bool, Entity persistancePoint)
 
-bool IsLoading(Entity persistancePoint);
-void Load(Entity persistancePoint);
-void Save(Entity persistancePoint);
-void Unload(Entity persistancePoint);
+struct Serializer {
+    char SerializerMimeType[64];
+    bool(*SerializeHandler)(Entity entity);
+    bool(*DeserializeHandler)(Entity entity);
+};
 
-DeclareEvent(LoadStarted, Entity entity)
-DeclareEvent(SaveStarted, Entity entity)
-
-DeclareEvent(UnloadFinished, Entity entity)
-DeclareEvent(LoadFinished, Entity entity)
-DeclareEvent(SaveFinished, Entity entity)
-
-void AddSerializer(StringRef mimeType, struct Serializer* serializer);
-void RemoveSerializer(StringRef mimeType);
+#define RegisterSerializer(NAME, MIMETYPE) \
+    auto NAME ## serializer = CreateEntityFromName(module, #NAME "Serializer"); \
+    SetSerializerMimeType(NAME ## serializer, MIMETYPE); \
+    auto NAME ## serializerData = GetSerializerData(NAME ## serializer); \
+    NAME ## serializerData->SerializeHandler = Serialize; \
+    NAME ## serializerData->DeserializeHandler = Deserialize;
 
 #endif //PersistancePoint_H

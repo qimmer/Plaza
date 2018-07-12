@@ -1,147 +1,159 @@
 
-#include <Core/Dictionary.h>
-#include <Core/String.h>
 #include "PersistancePoint.h"
-#include "Persistance.h"
 #include "Stream.h"
+#include "Task.h"
+#include "Invocation.h"
+
+#include <EASTL/unordered_map.h>
+#include <EASTL/string.h>
+#include <Core/Debug.h>
+
+using namespace eastl;
 
 struct PersistancePoint {
-    bool Loaded, IsLoading, IsSaving;
+    Entity PersistancePointSerializer;
+    bool PersistancePointLoaded, PersistancePointLoading, PersistancePointSaving, PersistancePointAsync;
 };
 
-static Dictionary<Serializer> Serializers;
-
-DefineComponent(PersistancePoint)
-    Dependency(Stream)
-
-    DefineMethod(void, Load, Entity entity)
-    DefineMethod(void, Unload, Entity entity)
-    DefineMethod(void, Save, Entity entity)
-EndComponent()
-
-DefineComponentPropertyReactive(PersistancePoint, bool, Loaded)
-
-DefineEvent(LoadStarted)
-DefineEvent(SaveStarted)
-DefineEvent(UnloadFinished)
-DefineEvent(LoadFinished)
-DefineEvent(SaveFinished)
-
-void Unload(Entity persistancePoint) {
-    for_entity(entity, Persistance) {
-        if(GetEntityPersistancePoint(entity) == persistancePoint) {
-            DestroyEntity(entity);
-        }
-    }
-    GetPersistancePoint(persistancePoint)->Loaded = false;
-}
-
-static void OnPersistancePointAdded(Entity persistancePoint) {
+LocalFunction(OnPersistancePointAdded, void, Entity persistancePoint) {
     // If children exist already, they are referenced to stores entities at this persistance point.
     // Therefore load these to keep them up to date with the ones on disk.
     if(IsEntityValid(GetFirstChild(persistancePoint))) {
-        Load(persistancePoint);
+        SetPersistancePointLoaded(persistancePoint, true);
     }
 }
 
-static void OnStreamChanged(Entity persistancePoint) {
-    if(HasPersistancePoint(persistancePoint) && IsEntityValid(GetFirstChild(persistancePoint)) && GetLoaded(persistancePoint)) {
-        Load(persistancePoint);
+LocalFunction(OnStreamContentChanged, void, Entity persistancePoint) {
+    // If serialized content has changed, re-deserialize (load) it!
+    if(HasComponent(persistancePoint, ComponentOf_PersistancePoint()) && IsEntityValid(GetFirstChild(persistancePoint)) && GetPersistancePointLoaded(persistancePoint)) {
+        SetPersistancePointLoaded(persistancePoint, false);
+        SetPersistancePointLoaded(persistancePoint, true);
     }
 }
 
-static void LoadedChanged(Entity persistancePoint, bool oldValue, bool newValue) {
-    if(oldValue != newValue && newValue) {
-        Load(persistancePoint);
-    }
-
-    if(oldValue != newValue && !newValue) {
-        Unload(persistancePoint);
-    }
+LocalFunction(OnStreamPathChanged, void, Entity persistancePoint, StringRef oldValue, StringRef newValue) {
+    OnStreamContentChanged(persistancePoint);
 }
 
-static void OnParentChanged(Entity entity, Entity oldParent, Entity newParent) {
-    if(IsEntityValid(newParent) && HasPersistancePoint(newParent)) {
-        auto data = GetPersistancePoint(newParent);
-        if(!data->Loaded && !data->IsLoading) Load(newParent);
-    }
-}
-
-API_EXPORT void Load(Entity persistancePoint) {
-    auto mimeType = GetStreamMimeType(persistancePoint);
-    if(strlen(mimeType) == 0) {
-        Log(LogChannel_Core, LogSeverity_Error, "Load failed. Unable to determine serializer, as content mime type is not given for '%s'.", GetStreamResolvedPath(persistancePoint));
-        SetLoaded(persistancePoint, false);
-        return;
-    }
-    auto serializerIt = Serializers.find(mimeType);
-
-    if(serializerIt == Serializers.end()) {
-        Log(LogChannel_Core, LogSeverity_Error, "Load failed. Mime type '%s' is unknown, which is required by '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
-        SetLoaded(persistancePoint, false);
-        return;
-    }
-
+LocalFunction(Load, bool, Entity persistancePoint) {
     if(!StreamOpen(persistancePoint, StreamMode_Read)) {
-        Log(LogChannel_Core, LogSeverity_Error, "Load failed. Could not open '%s' for reading", GetStreamResolvedPath(persistancePoint));
-        SetLoaded(persistancePoint, false);
-        return;
+        Log(persistancePoint, LogSeverity_Error, "Load failed. Could not open '%s' for reading.", GetStreamResolvedPath(persistancePoint));
+        SetPersistancePointLoaded(persistancePoint, false);
+        return false;
     }
 
-    GetPersistancePoint(persistancePoint)->Loaded = true;
+    auto serializer = GetPersistancePointSerializer(persistancePoint);
+    auto result = GetSerializerData(serializer)->DeserializeHandler(persistancePoint);
 
-    GetPersistancePoint(persistancePoint)->IsLoading = true;
-    FireNativeEvent(LoadStarted, persistancePoint);
-    if(!serializerIt->second.DeserializeHandler(persistancePoint)) {
-        SetLoaded(persistancePoint, false);
-    }
-    GetPersistancePoint(persistancePoint)->IsLoading = false;
-    FireNativeEvent(LoadFinished, persistancePoint);
+    SetPersistancePointLoading(persistancePoint, false);
+
+    return result;
 }
 
-API_EXPORT void Save(Entity persistancePoint) {
-    auto mimeType = GetStreamMimeType(persistancePoint);
-    if(strlen(mimeType) == 0) {
-        Log(LogChannel_Core, LogSeverity_Error, "Save failed. Unable to determine serializer, as content mime type is not given for '%s'.", GetStreamResolvedPath(persistancePoint));
-        return;
-    }
-    auto serializerIt = Serializers.find(mimeType);
+LocalFunction(OnPersistancePointLoadedChanged, void, Entity persistancePoint, bool oldValue, bool newValue) {
+    if(newValue) {
+        // Load
+        auto fileType = GetStreamFileType(persistancePoint);
+        if(!IsEntityValid(fileType)) {
+            Log(persistancePoint, LogSeverity_Error, "Load failed. File type is not found for '%s'.", GetStreamResolvedPath(persistancePoint));
+            SetPersistancePointLoaded(persistancePoint, false);
+            return;
+        }
 
-    if(serializerIt == Serializers.end()) {
-        Log(LogChannel_Core, LogSeverity_Error, "Save failed. Mime type '%s' is unknown, which is required by '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
-        return;
+        auto mimeType = GetFileTypeMimeType(fileType);
+        if(strlen(mimeType) == 0) {
+            Log(persistancePoint, LogSeverity_Error, "Load failed. Unable to determine serializer, as content mime type is not given for '%s'.", GetStreamResolvedPath(persistancePoint));
+            SetPersistancePointLoaded(persistancePoint, false);
+            return;
+        }
+
+        auto serializer = GetPersistancePointSerializer(persistancePoint);
+        if(!IsEntityValid(serializer)) {
+            Log(persistancePoint, LogSeverity_Error, "Load failed. No compatible serialiser for mime type '%s' found when deserializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
+            SetPersistancePointLoaded(persistancePoint, false);
+            return;
+        }
+
+        SetPersistancePointLoading(persistancePoint, true);
+
+        if(GetPersistancePointAsync(persistancePoint)) {
+            char taskName[64];
+            snprintf(taskName, 64, "LoadTask_%llu", persistancePoint);
+
+            auto task = CreateEntityFromName(NodeOf_TaskQueue(), taskName);
+            SetInvocationFunction(task, FunctionOf_Load());
+            TaskSchedule(task);
+        } else {
+            Load(persistancePoint);
+        }
+    } else {
+        // Unload
+        for_children(child, persistancePoint) {
+            DestroyEntity(child);
+        }
+    }
+}
+
+LocalFunction(OnParentChanged, void, Entity entity, Entity oldParent, Entity newParent) {
+    if(IsEntityValid(newParent) && HasComponent(newParent, ComponentOf_PersistancePoint())) {
+        auto data = GetPersistancePointData(newParent);
+        if(!data->PersistancePointLoaded && !data->PersistancePointLoading) Load(newParent);
+    }
+}
+
+API_EXPORT bool Save(Entity persistancePoint) {
+    auto fileType = GetStreamFileType(persistancePoint);
+    if(!IsEntityValid(fileType)) {
+        Log(persistancePoint, LogSeverity_Error, "Save failed. File type is not found for '%s'.", GetStreamResolvedPath(persistancePoint));
+        return false;
+    }
+
+    auto mimeType = GetFileTypeMimeType(fileType);
+    if(strlen(mimeType) == 0) {
+        Log(persistancePoint, LogSeverity_Error, "Save failed. Unable to determine serializer, as content mime type is not given for '%s'.", GetStreamResolvedPath(persistancePoint));
+        return false;
+    }
+
+    auto serializer = GetPersistancePointSerializer(persistancePoint);
+    if(!IsEntityValid(serializer)) {
+        Log(persistancePoint, LogSeverity_Error, "Save failed. No compatible serialiser for mime type '%s' found when serializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
+        return false;
     }
 
     if(!StreamOpen(persistancePoint, StreamMode_Write)) {
-        Log(LogChannel_Core, LogSeverity_Error, "Save failed. Could not open '%s' for writing", GetStreamResolvedPath(persistancePoint));
-        return;
+        Log(persistancePoint, LogSeverity_Error, "Save failed. Could not open '%s' for writing", GetStreamResolvedPath(persistancePoint));
+        return false;
     }
 
-    GetPersistancePoint(persistancePoint)->IsSaving = true;
-    FireNativeEvent(SaveStarted, persistancePoint);
+    SetPersistancePointSaving(persistancePoint, true);
 
-    serializerIt->second.SerializeHandler(persistancePoint);
+    auto result = GetSerializerData(serializer)->SerializeHandler(persistancePoint);
 
-    GetPersistancePoint(persistancePoint)->IsSaving = false;
-    FireNativeEvent(SaveFinished, persistancePoint);
+    SetPersistancePointSaving(persistancePoint, false);
+
+    return result;
 }
 
-API_EXPORT bool IsLoading(Entity persistancePoint) {
-    return GetPersistancePoint(persistancePoint)->IsLoading;
-}
+BeginUnit(PersistancePoint)
+    BeginComponent(PersistancePoint)
+        RegisterProperty(bool, PersistancePointAsync)
+        RegisterProperty(bool, PersistancePointLoaded)
+        RegisterProperty(bool, PersistancePointLoading)
+        RegisterProperty(bool, PersistancePointSaving)
+        RegisterProperty(Entity, PersistancePointSerializer)
 
-API_EXPORT void AddSerializer(StringRef mimeType, struct Serializer *serializer) {
-    Serializers[mimeType] = *serializer;
-}
+        RegisterBase(Stream)
+    EndComponent()
 
-API_EXPORT void RemoveSerializer(StringRef mimeType) {
-    Serializers.erase(mimeType);
-}
+    BeginComponent(Serializer)
+        RegisterProperty(StringRef, SerializerMimeType)
+    EndComponent()
 
-DefineService(PersistancePoint)
-        Subscribe(PersistancePointAdded, OnPersistancePointAdded)
-        Subscribe(StreamContentChanged, OnStreamChanged)
-        Subscribe(StreamChanged, OnStreamChanged)
-        Subscribe(LoadedChanged, LoadedChanged)
-        Subscribe(ParentChanged, OnParentChanged)
-EndService()
+    RegisterFunction(Save)
+
+    RegisterSubscription(PersistancePointAdded, OnPersistancePointAdded, 0)
+    RegisterSubscription(StreamContentChanged, OnStreamContentChanged, 0)
+    RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
+    RegisterSubscription(PersistancePointLoadedChanged, OnPersistancePointLoadedChanged, 0)
+    RegisterSubscription(ParentChanged, OnParentChanged, 0)
+EndUnit()

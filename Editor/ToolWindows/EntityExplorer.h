@@ -5,10 +5,9 @@
 #ifndef PLAZA_ENTITYEXPLORER_H
 #define PLAZA_ENTITYEXPLORER_H
 
-#include <Core/Service.h>
 
-DeclareService(EntityExplorer)
-DeclareComponent(EntityExplorer)
+Unit(EntityExplorer)
+    Component(EntityExplorer)
 
 namespace ImGui {
     void EntityContextMenu();

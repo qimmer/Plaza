@@ -8,7 +8,7 @@
 #include "PlayerModule.h"
 #include "PlayerContext.h"
 
-DefineModule(Player)
+BeginModule(Player)
     ModuleDependency(Foundation)
     ModuleDependency(Rendering)
     ModuleService(PlayerContext)

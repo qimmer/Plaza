@@ -34,5 +34,5 @@ int main(int argc, char** argv) { \
 
     }
 
-    printf("\nTest Results:\n=================\n%d Tests Passed\n%d Tests Failed\n=================", numSucceeded, numFailed); \
+    printf("\nTest Results:\n=================\n%d Tests Passed\n%d Tests Failed\n=================", numSucceeded, numFailed);
 }

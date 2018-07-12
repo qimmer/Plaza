@@ -9,7 +9,7 @@
 #include "Widget.h"
 #include "UICamera.h"
 
-DefineModule(UI)
+BeginModule(UI)
     ModuleDependency(Scene)
 
     ModuleService(Label)

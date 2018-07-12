@@ -1,91 +1,72 @@
 #include <Core/Entity.h>
-#include <Core/Service.h>
+#include <Core/Math.h>
+#include <Core/Vector.h>
 #include "MemoryStream.h"
+#include "Stream.h"
 
 struct MemoryStream {
-    std::vector<char> bytes;
-    s32 offset;
-    bool open;
+    Vector(Bytes, char, 256 - 5);
+    s32 Offset;
+    bool Open;
 };
 
-#define ProtocolIdentifier "memory"
-
-DefineComponent(MemoryStream)
-    Dependency(Stream)
-EndComponent()
-
 static u64 Read(Entity entity, u64 size, void *data) {
-    auto streamData = GetMemoryStream(entity);
-    size = std::min((u64)streamData->bytes.size() - streamData->offset, size);
-    memcpy(data, streamData->bytes.data() + streamData->offset, size);
-    streamData->offset += size;
+    auto streamData = GetMemoryStreamData(entity);
+    size = Min((u64)streamData->NumBytes - streamData->Offset, size);
+    memcpy(data, streamData->Bytes + streamData->Offset, size);
+    streamData->Offset += size;
     return size;
 }
 
 static u64 Write(Entity entity, u64 size, const void *data) {
-    auto streamData = GetMemoryStream(entity);
-    if(streamData->bytes.size() < streamData->offset + size) {
-        streamData->bytes.resize(streamData->offset + size);
+    auto streamData = GetMemoryStreamData(entity);
+    if(streamData->NumBytes < streamData->Offset + size) {
+        SetVectorAmount(streamData, Bytes, streamData->Offset + size);
     }
 
-    memcpy(streamData->bytes.data() + streamData->offset, data, size);
+    memcpy(streamData->Bytes + streamData->Offset, data, size);
 
-    streamData->offset += size;
+    streamData->Offset += size;
 
     return size;
 }
 
 static s32 Tell(Entity entity) {
-    return GetMemoryStream(entity)->offset;
+    return GetMemoryStreamData(entity)->Offset;
 }
 
 static bool Seek(Entity entity, s32 offset) {
     if(offset == StreamSeek_End) {
-        offset = GetMemoryStream(entity)->bytes.size();
+        offset = GetMemoryStreamData(entity)->NumBytes;
     }
 
-    GetMemoryStream(entity)->offset = offset;
+    GetMemoryStreamData(entity)->Offset = offset;
     return true;
 }
 
 static bool Open(Entity entity, int mode) {
-    auto data = GetMemoryStream(entity);
-    data->offset = 0;
-    return data->open = true;
+    auto data = GetMemoryStreamData(entity);
+    data->Offset = 0;
+    return data->Open = true;
 }
 
-static void Close(Entity entity) {
-    auto data = GetMemoryStream(entity);
-    data->open = false;
-    data->bytes.resize(std::max(data->offset, 0));
-    data->offset = 0;
+static bool Close(Entity entity) {
+    auto data = GetMemoryStreamData(entity);
+    data->Open = false;
+    SetVectorAmount(data, Bytes, Max(data->Offset, 0));
+    data->Offset = 0;
+    return true;
 }
 
 static bool IsOpen(Entity entity) {
-    return GetMemoryStream(entity)->open;
+    return GetMemoryStreamData(entity)->Open;
 }
 
-static void OnServiceStart(Service service) {
-    StreamProtocol p {
-        AddMemoryStream,
-        RemoveMemoryStream,
-        Seek,
-        Tell,
-        Read,
-        Write,
-        IsOpen,
-        Open,
-        Close
-    };
 
-    AddStreamProtocol(ProtocolIdentifier, &p);
-}
+BeginUnit(MemoryStream)
+    BeginComponent(MemoryStream)
+        RegisterBase(Stream)
+    EndComponent()
 
-static void OnServiceStop(Service service){
-    RemoveStreamProtocol(ProtocolIdentifier);
-}
-
-DefineService(MemoryStream)
-    Subscribe(MemoryStreamStarted, OnServiceStart)
-    Subscribe(MemoryStreamStopped, OnServiceStop)
-EndService()
+    RegisterStreamProtocol(MemoryStream, "memory")
+EndUnit()

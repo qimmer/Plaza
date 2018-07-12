@@ -5,13 +5,13 @@
 #ifndef PLAZA_LABEL_H
 #define PLAZA_LABEL_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Label)
-DeclareComponentPropertyReactive(Label, Entity, LabelFont)
-DeclareComponentPropertyReactive(Label, StringRef, LabelText)
-DeclareComponentPropertyReactive(Label, v2f, LabelAlignment)
+Unit(Label)
+    Component(Label)
+        Property(Entity, LabelFont)
+        Property(StringRef, LabelText)
+        Property(v2f, LabelAlignment)
 
-DeclareService(Label)
 
 #endif //PLAZA_LABEL_H

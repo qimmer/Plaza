@@ -5,11 +5,11 @@
 #ifndef PLAZA_UICAMERA_H
 #define PLAZA_UICAMERA_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(UICamera)
-DeclareService(UICamera)
+Unit(UICamera)
+    Component(UICamera)
 
-DeclareComponentPropertyReactive(UICamera, float, UICameraPixelsPerUnit)
+        Property(float, UICameraPixelsPerUnit)
 
 #endif //PLAZA_UICAMERA_H

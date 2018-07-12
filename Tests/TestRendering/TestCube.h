@@ -30,7 +30,7 @@ TestResult TestCube()
     SetContextSize(context, {800, 600});
     SetContextTitle(context, "Cube Test");
 
-Subscribe(ContextClosing, DestroyEntity)
+RegisterSubscription(ContextClosing, DestroyEntity, 0)
 
     while(IsEntityValid(context)) {
         auto size = GetContextSize(context);

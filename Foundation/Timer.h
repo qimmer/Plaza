@@ -7,15 +7,10 @@
 
 #include <Core/Component.h>
 
-Function(GetTimeSinceStart, double)
-
 Unit(Timer)
-
-Component(Timer)
-    Property(double, TimerInterval)
-    Property(bool, TimerStarted)
-    Property(bool, TimerRepeat)
-
-
+    Component(Timer)
+        Property(double, TimerInterval)
+        Property(bool, TimerRepeat)
+    Event(TimerTick)
 
 #endif //PLAZA_TIMER_H

@@ -2,7 +2,7 @@
 // Created by Kim Johannsen on 28/01/2018.
 //
 
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include "Material.h"
 #include <Core/Enum.h>
 
@@ -53,20 +53,21 @@ DefineEnum(BlendMode, false)
     DefineFlag(RenderState_STATE_BLEND_LINEAR_BURN)
 EndEnum()
 
-DefineComponent(Material)
-    Dependency(Hierarchy)
-    DefinePropertyReactive(Entity, MaterialVertexShader)
-    DefinePropertyReactive(Entity, MaterialPixelShader)
+BeginUnit(Material)
+    BeginComponent(Material)
+    RegisterBase(Node)
+    RegisterProperty(Entity, MaterialVertexShader)
+    RegisterProperty(Entity, MaterialPixelShader)
     DefinePropertyReactiveEnum(u64, MaterialDepthTest, DepthTest)
     DefinePropertyReactiveEnum(u64, MaterialWriteMask, WriteMask)
     DefinePropertyReactiveEnum(u64, MaterialMultisampleMode, MultisampleMode)
     DefinePropertyReactiveEnum(u64, MaterialBlendMode, BlendMode)
 EndComponent()
 
-DefineComponentPropertyReactive(Material, Entity, MaterialVertexShader)
-DefineComponentPropertyReactive(Material, Entity, MaterialPixelShader)
-DefineComponentPropertyReactive(Material, u64, MaterialDepthTest)
-DefineComponentPropertyReactive(Material, u64, MaterialWriteMask)
-DefineComponentPropertyReactive(Material, u64, MaterialMultisampleMode)
-DefineComponentPropertyReactive(Material, u64, MaterialBlendMode)
+RegisterProperty(Entity, MaterialVertexShader)
+RegisterProperty(Entity, MaterialPixelShader)
+RegisterProperty(u64, MaterialDepthTest)
+RegisterProperty(u64, MaterialWriteMask)
+RegisterProperty(u64, MaterialMultisampleMode)
+RegisterProperty(u64, MaterialBlendMode)
 

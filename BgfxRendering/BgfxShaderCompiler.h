@@ -5,8 +5,7 @@
 #ifndef PLAZA_BGFXSHADERCOMPILER_H
 #define PLAZA_BGFXSHADERCOMPILER_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 #ifdef BGFXRENDERING_WITH_SHADER_COMPILER
     DeclareService(BgfxShaderCompiler)

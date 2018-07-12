@@ -4,7 +4,7 @@
 
 #include <Rendering/CommandList.h>
 #include <bgfx/bgfx.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Rendering/Batch.h>
 #include <Rendering/Uniform.h>
 #include <Rendering/VertexBuffer.h>
@@ -32,7 +32,8 @@
 struct BgfxCommandList {
 };
 
-DefineComponent(BgfxCommandList)
+BeginUnit(BgfxCommandList)
+    BeginComponent(BgfxCommandList)
 EndComponent()
 
 unsigned long RGBA2DWORD(int iR, int iG, int iB, int iA)
@@ -45,7 +46,7 @@ static void SetUniformState(Entity uniformState) {
     static m4x4f state[32];
 
     auto uniform = GetUniformStateUniform(uniformState);
-    if(IsEntityValid(uniform) && HasUniform(uniform)) {
+    if(IsEntityValid(uniform) && HasComponent(uniform, ComponentOf_Uniform())) {
         auto uniformType = GetUniformType(uniform);
 
         if(IsTypeValid(uniformType)) {
@@ -64,7 +65,7 @@ static void SetUniformState(Entity uniformState) {
                 if(IsEntityValid(texture)) {
                     auto uvOffsetScaleUniform = GetBgfxUniformHandle(GetSubTexture2DUvOffsetScaleUniform());
                     Entity textureParent = 0;
-                    if(HasSubTexture2D(texture) && (textureParent = GetSubTexture2DTexture(texture)) && IsEntityValid(textureParent)) {
+                    if(HasComponent(texture, ComponentOf_SubTexture2D()) && (textureParent = GetSubTexture2DTexture(texture)) && IsEntityValid(textureParent)) {
                         auto size = GetTextureSize2D(textureParent);
                         auto uvOffset = GetSubTexture2DOffset(texture);
                         auto uvSize = GetSubTexture2DSize(texture);
@@ -87,7 +88,7 @@ static void SetUniformState(Entity uniformState) {
                         bgfx::setUniform(bgfx::UniformHandle{uvOffsetScaleUniform}, &uvOffsetScale.x);
                     }
 
-                    if(HasBgfxTexture2D(texture)) {
+                    if(HasComponent(texture, ComponentOf_BgfxTexture2D())) {
                         bgfx::setTexture(GetUniformStateStage(uniformState), handle, bgfx::TextureHandle{GetBgfxTexture2DHandle(texture)});
                     }
                 }
@@ -150,19 +151,19 @@ void RenderBatch(u32 viewId, Entity entity, u8 shaderProfile) {
     }
 
     for(auto uniformState = GetFirstChild(material); uniformState; uniformState = GetSibling(uniformState)) {
-        if(!HasUniformState(uniformState)) continue;
+        if(!HasComponent(uniformState, ComponentOf_UniformState())) continue;
 
         SetUniformState(uniformState);
     }
 
     for(auto uniformState = GetFirstChild(program); uniformState; uniformState = GetSibling(uniformState)) {
-        if(!HasUniformState(uniformState)) continue;
+        if(!HasComponent(uniformState, ComponentOf_UniformState())) continue;
 
         SetUniformState(uniformState);
     }
 
     for(auto uniformState = GetFirstChild(entity); uniformState; uniformState = GetSibling(uniformState)) {
-        if(!HasUniformState(uniformState)) continue;
+        if(!HasComponent(uniformState, ComponentOf_UniformState())) continue;
 
         SetUniformState(uniformState);
     }
@@ -171,10 +172,10 @@ void RenderBatch(u32 viewId, Entity entity, u8 shaderProfile) {
 }
 
 void RenderCommandList(Entity entity, unsigned char viewId) {
-    if(HasVisibility(entity) && GetHidden(entity)) return;
+    if(HasComponent(entity, ComponentOf_Visibility()) && GetHidden(entity)) return;
 
-    for_entity(uniform, Uniform) {
-        if(!HasUniformState(uniform)) continue;
+    for_entity(uniform, data, Uniform) {
+        if(!HasComponent(uniform, ComponentOf_UniformState())) continue;
 
         SetUniformState(uniform);
     }
@@ -187,7 +188,7 @@ void RenderCommandList(Entity entity, unsigned char viewId) {
 
     auto renderTarget = GetCommandListRenderTarget(entity);
     if(IsEntityValid(renderTarget)) {
-        if(HasBgfxContext(renderTarget)) {
+        if(HasComponent(renderTarget, ComponentOf_BgfxContext())) {
             bgfx::FrameBufferHandle fb = {GetBgfxContextHandle(renderTarget)};
             if(fb.idx != bgfx::kInvalidHandle) {
                 bgfx::setViewFrameBuffer(viewId, fb);
@@ -195,7 +196,7 @@ void RenderCommandList(Entity entity, unsigned char viewId) {
 
         }
 
-        if(HasBgfxOffscreenRenderTarget(renderTarget)) {
+        if(HasComponent(renderTarget, ComponentOf_BgfxOffscreenRenderTarget())) {
             bgfx::FrameBufferHandle fb = {GetBgfxOffscreenRenderTargetHandle(renderTarget)};
             if(fb.idx != bgfx::kInvalidHandle) {
                 bgfx::setViewFrameBuffer(viewId, fb);
@@ -238,13 +239,13 @@ void RenderCommandList(Entity entity, unsigned char viewId) {
     bgfx::touch(viewId);
 
     for(auto uniformState = GetFirstChild(entity); uniformState; uniformState = GetSibling(uniformState)) {
-        if(!HasUniformState(uniformState)) continue;
+        if(!HasComponent(uniformState, ComponentOf_UniformState())) continue;
 
         SetUniformState(uniformState);
     }
 
     for(auto batch = GetFirstChild(entity); IsEntityValid(batch); batch = GetSibling(batch)) {
-        if(!HasBatch(batch)) continue;
+        if(!HasComponent(batch, ComponentOf_Batch())) continue;
 
         RenderBatch(viewId, batch, shaderProfile);
     }

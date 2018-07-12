@@ -17,10 +17,7 @@
 #endif
 
 BeginUnit(Debug)
-    BeginEvent(LogMessageReceived)
-        EventArgument(u8, LogMessageSeverity)
-        EventArgument(StringRef, LogMessageText)
-    EndEvent()
+    RegisterEvent(LogMessageReceived)
 EndUnit()
 
 API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
@@ -52,12 +49,7 @@ API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
     setbuf(stdout, 0);
     printf("%s", buffer);
 
-    LogMessageReceivedArgs args;
-    args.Entity = context;
-    args.LogMessageSeverity = severity;
-    strncpy(args.LogMessageText, buffer, sizeof(args.LogMessageText));
-
-    FireLogMessageReceived(args);
+    //FireEvent(EventOf_LogMessageReceived(), context, buffer, severity);
 
     if(severity > LogSeverity_Error) {
         DebuggerBreak();

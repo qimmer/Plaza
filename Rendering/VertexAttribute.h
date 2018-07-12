@@ -5,14 +5,15 @@
 #ifndef PLAZA_VERTEXATTRIBUTE_H
 #define PLAZA_VERTEXATTRIBUTE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(VertexAttribute)
+Unit(VertexAttribute)
+    Component(VertexAttribute)
 
-DeclareComponentPropertyReactive(VertexAttribute, Type, VertexAttributeType)
-DeclareComponentPropertyReactive(VertexAttribute, u8, VertexAttributeUsage)
-DeclareComponentPropertyReactive(VertexAttribute, bool, VertexAttributeNormalize)
-DeclareComponentPropertyReactive(VertexAttribute, bool, VertexAttributeAsInt)
+        Property(Type, VertexAttributeType)
+        Property(u8, VertexAttributeUsage)
+        Property(bool, VertexAttributeNormalize)
+        Property(bool, VertexAttributeAsInt)
 
 enum
 {

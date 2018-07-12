@@ -143,7 +143,7 @@ static bool DeserializeImage(Entity entity) {
     return result;
 }
 
-static void OnServiceStart(Service service) {
+LocalFunction(OnServiceStart, void, Service service) {
     Serializer s {
             SerializeImage,
             DeserializeImage
@@ -152,12 +152,12 @@ static void OnServiceStart(Service service) {
     AddSerializer("voxel/vox", &s);
 }
 
-static void OnServiceStop(Service service){
+LocalFunction(OnServiceStop, void, Service service){
     RemoveFileType(".vox");
     RemoveSerializer("voxel/vox");
 }
 
 DefineService(VoxPersistance)
-    Subscribe(VoxPersistanceStarted, OnServiceStart)
-    Subscribe(VoxPersistanceStopped, OnServiceStop)
+    RegisterSubscription(VoxPersistanceStarted, OnServiceStart, 0)
+    RegisterSubscription(VoxPersistanceStopped, OnServiceStop, 0)
 EndService()

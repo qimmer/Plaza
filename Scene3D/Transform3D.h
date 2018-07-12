@@ -5,16 +5,17 @@
 #ifndef PLAZA_TRANSFORM3D_H
 #define PLAZA_TRANSFORM3D_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(Transform3D)
+    Unit(Transform3D)
+    Component(Transform3D)
     DeclareService(Transform3D)
 
-    DeclareComponentPropertyReactive(Transform3D, v3f, Position3D)
-    DeclareComponentPropertyReactive(Transform3D, v3f, RotationEuler3D)
-    DeclareComponentPropertyReactive(Transform3D, v4f, RotationQuat3D)
-    DeclareComponentPropertyReactive(Transform3D, v3f, Scale3D)
+            Property(v3f, Position3D)
+            Property(v3f, RotationEuler3D)
+            Property(v4f, RotationQuat3D)
+            Property(v3f, Scale3D)
 
 void Move3D(Entity transform, v3f direction, bool relativeToRotation);
 

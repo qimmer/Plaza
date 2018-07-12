@@ -5,11 +5,10 @@
 #ifndef PLAZA_BGFXPROGRAM_H
 #define PLAZA_BGFXPROGRAM_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(BgfxProgram)
-DeclareService(BgfxProgram)
+Unit(BgfxProgram)
+    Component(BgfxProgram)
 
 u16 GetBgfxProgramHandle(Entity entity);
 

@@ -23,7 +23,7 @@ static void WriteModuleHeader(Entity moduleDefinition, std::ostream& moduleHeade
     moduleHeaderCode << "" << std::endl;
     moduleHeaderCode << "#include <Core/Module.h>" << std::endl;
     moduleHeaderCode << "" << std::endl;
-    moduleHeaderCode << "DeclareModule(" << GetName(moduleDefinition) << ")" << std::endl;
+    moduleHeaderCode << "Module(" << GetName(moduleDefinition) << ")" << std::endl;
     moduleHeaderCode << "" << std::endl;
     moduleHeaderCode << "#endif" << std::endl;
 }
@@ -37,7 +37,7 @@ static void WriteModuleSource(Entity moduleDefinition, std::ostream& moduleSourc
     }
 
     moduleSourceCode << "" << std::endl;
-    moduleSourceCode << "DefineModule(" << GetName(moduleDefinition) << ")" << std::endl;
+    moduleSourceCode << "BeginModule(" << GetName(moduleDefinition) << ")" << std::endl;
 
     for_children(serviceDefinition, GetModuleDefinitionComponents(moduleDefinition)) {
         moduleSourceCode << "    ModuleService(" << GetName(serviceDefinition) << ")" << std::endl;

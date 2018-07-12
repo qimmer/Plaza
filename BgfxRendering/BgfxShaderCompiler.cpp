@@ -14,7 +14,7 @@
 #include <string>
 #include <iterator>
 #include <climits>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Rendering/Program.h>
 #include <Foundation/Stream.h>
 #include <File/Folder.h>
@@ -240,11 +240,11 @@ void OnCompile(Entity binaryShader) {
             GetShaderType(shader),
             shaderVariationDefines);
 
-    FireNativeEvent(ShaderCompilerFinished, binaryShader, hasErrors, "");
-    FireNativeEvent(StreamContentChanged, binaryShader);
+    FireEvent(EventOf_ShaderCompilerFinished(), binaryShader, hasErrors, "");
+    FireEvent(EventOf_StreamContentChanged(), binaryShader);
 }
 
 DefineService(BgfxShaderCompiler)
         ServiceDependency(ShaderCompiler)
-        Subscribe(ShaderCompile, OnCompile)
+        RegisterSubscription(ShaderCompile, OnCompile, 0)
 EndService()

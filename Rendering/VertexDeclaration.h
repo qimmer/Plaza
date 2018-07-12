@@ -5,11 +5,10 @@
 #ifndef PLAZA_VERTEXDECLARATION_H
 #define PLAZA_VERTEXDECLARATION_H
 
-#include <Core/Entity.h>
-#include <Core/Service.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(VertexDeclaration)
-DeclareComponent(VertexDeclaration)
+Unit(VertexDeclaration)
+    Component(VertexDeclaration)
 
 u32 GetVertexStride(Entity vertexDeclaration);
 

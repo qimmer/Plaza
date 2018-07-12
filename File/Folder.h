@@ -5,17 +5,15 @@
 #ifndef PLAZA_FOLDER_H
 #define PLAZA_FOLDER_H
 
-#include <Core/Entity.h>
-#include <Core/Service.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Folder)
+Unit(Folder)
+    Component(Folder)
+        Property(StringRef, FolderPath)
 
-DeclareComponentPropertyReactive(Folder, StringRef, FolderPath)
+Function(IsFolder, bool, StringRef absolutePath)
+Function(CreateDirectories, bool, StringRef fullPath)
+Function(ScanFolder, void, Entity folder)
 
-bool IsFolder(StringRef absolutePath);
-bool CreateDirectories(StringRef fullPath);
-void ScanFolder(Entity folder);
-
-DeclareService(Folder)
 
 #endif //PLAZA_FOLDER_H

@@ -5,16 +5,13 @@
 #include <Core/Entity.h>
 #include <Foundation/Visibility.h>
 
-
 struct Visibility {
-    Visibility() : Hidden(false) {}
-
     bool Hidden;
 };
 
-DefineComponent(Visibility)
-    DefinePropertyReactive(bool, Hidden)
+BeginUnit(Visibility)
+    BeginComponent(Visibility)
+        RegisterProperty(bool, Hidden)
+    EndComponent()
 EndComponent()
-
-DefineComponentPropertyReactive(Visibility, bool, Hidden)
 

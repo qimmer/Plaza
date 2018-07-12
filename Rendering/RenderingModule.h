@@ -7,6 +7,6 @@
 
 #include <Core/Module.h>
 
-DeclareModule(Rendering)
+Module(Rendering)
 
 #endif //PLAZA_RENDERINGMODULE_H

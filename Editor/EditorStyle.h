@@ -5,9 +5,7 @@
 #ifndef PLAZA_EDITORSTYLE_H
 #define PLAZA_EDITORSTYLE_H
 
-#include <Core/Service.h>
 
-DeclareService(EditorStyle)
 
 struct ImFont * GetMonospaceFont();
 struct ImFont * GetUIFont();

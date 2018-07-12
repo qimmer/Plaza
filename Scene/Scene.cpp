@@ -8,5 +8,6 @@
     struct Scene {
     };
 
-    DefineComponent(Scene)
+    BeginUnit(Scene)
+    BeginComponent(Scene)
     EndComponent()

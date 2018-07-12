@@ -14,8 +14,9 @@ struct EditorView {
     EntityHandler EditorViewDrawFunction;
 };
 
-DefineComponent(EditorView)
+BeginUnit(EditorView)
+    BeginComponent(EditorView)
 EndComponent()
 
-DefineComponentPropertyReactive(EditorView, bool, EditorViewVisible)
-DefineComponentProperty(EditorView, EntityHandler, EditorViewDrawFunction)
+RegisterProperty(bool, EditorViewVisible)
+RegisterProperty(EntityHandler, EditorViewDrawFunction)

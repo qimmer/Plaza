@@ -5,8 +5,7 @@
 #ifndef PLAZA_BINARYSHADER_H
 #define PLAZA_BINARYSHADER_H
 
-#include <Core/Entity.h>
-#include <Core/Service.h>
+#include <Core/NativeUtils.h>
 
 #define ShaderProfile_Unknown 0
 #define ShaderProfile_HLSL_3_0 1
@@ -21,10 +20,11 @@
 
 DeclareEnum(ShaderProfile)
 
-DeclareComponent(BinaryShader)
+Unit(BinaryShader)
+    Component(BinaryShader)
 
-DeclareComponentPropertyReactive(BinaryShader, Entity, SourceShader)
-DeclareComponentPropertyReactive(BinaryShader, u8, BinaryShaderProfile)
-DeclareComponentPropertyReactive(BinaryShader, Entity, BinaryShaderVariation)
+        Property(Entity, SourceShader)
+        Property(u8, BinaryShaderProfile)
+        Property(Entity, BinaryShaderVariation)
 
 #endif //PLAZA_BINARYSHADER_H

@@ -6,7 +6,7 @@
 #include "StbDecodersModule.h"
 #include "StbImagePersistance.h"
 
-DefineModule(StbDecoders)
+BeginModule(StbDecoders)
         ModuleDependency(Foundation)
 
         ModuleService(StbImagePersistance)

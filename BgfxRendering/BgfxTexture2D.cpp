@@ -20,17 +20,18 @@ struct BgfxTexture2D {
     bool invalidated;
 };
 
-DefineComponent(BgfxTexture2D)
+BeginUnit(BgfxTexture2D)
+    BeginComponent(BgfxTexture2D)
 EndComponent()
 
-static void OnChanged(Entity entity) {
-    if(HasBgfxTexture2D(entity)) {
-        GetBgfxTexture2D(entity)->invalidated = true;
+LocalFunction(OnChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxTexture2D())) {
+        GetBgfxTexture2DData(entity)->invalidated = true;
     }
 }
 
 void OnTexture2DRemoved(Entity entity) {
-    auto data = GetBgfxTexture2D(entity);
+    auto data = GetBgfxTexture2DData(entity);
 
     if(bgfx::isValid(data->handle)) {
         bgfx::destroy(data->handle);
@@ -39,17 +40,17 @@ void OnTexture2DRemoved(Entity entity) {
 }
 
 DefineService(BgfxTexture2D)
-        Subscribe(BgfxTexture2DRemoved, OnTexture2DRemoved)
-        Subscribe(TextureChanged, OnChanged)
-        Subscribe(Texture2DChanged, OnChanged)
-        Subscribe(StreamChanged, OnChanged)
-        Subscribe(StreamContentChanged, OnChanged)
+        RegisterSubscription(BgfxTexture2DRemoved, OnTexture2DRemoved, 0)
+        RegisterSubscription(TextureChanged, OnChanged, 0)
+        RegisterSubscription(Texture2DChanged, OnChanged, 0)
+        RegisterSubscription(StreamChanged, OnChanged, 0)
+        RegisterSubscription(StreamContentChanged, OnChanged, 0)
 EndService()
 
 u16 GetBgfxTexture2DHandle(Entity entity) {
     if(!IsEntityValid(entity)) return bgfx::kInvalidHandle;
 
-    auto data = GetBgfxTexture2D(entity);
+    auto data = GetBgfxTexture2DData(entity);
 
     if(data->invalidated) {
         if(!StreamOpen(entity, StreamMode_Read)) return bgfx::kInvalidHandle;
@@ -78,7 +79,7 @@ u16 GetBgfxTexture2DHandle(Entity entity) {
                 data->handle = bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag, bgfx::copy(buffer, info.storageSize));
             }
 
-            for_entity(renderTarget, BgfxOffscreenRenderTarget) {
+            for_entity(renderTarget, data, BgfxOffscreenRenderTarget) {
                 if(GetRenderTargetTexture0(renderTarget) == entity ||
                         GetRenderTargetTexture1(renderTarget) == entity ||
                         GetRenderTargetTexture2(renderTarget) == entity ||
@@ -87,7 +88,7 @@ u16 GetBgfxTexture2DHandle(Entity entity) {
                         GetRenderTargetTexture5(renderTarget) == entity ||
                         GetRenderTargetTexture6(renderTarget) == entity ||
                         GetRenderTargetTexture7(renderTarget) == entity) {
-                    FireNativeEvent(OffscreenRenderTargetChanged, renderTarget);
+                    FireEvent(EventOf_OffscreenRenderTargetChanged(), renderTarget);
                     break;
                 }
             }

@@ -7,6 +7,6 @@
 
 #include <Core/Module.h>
 
-DeclareModule(UI)
+Module(UI)
 
 #endif //PLAZA_UIMODULE_H

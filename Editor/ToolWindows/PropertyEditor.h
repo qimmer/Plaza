@@ -5,10 +5,9 @@
 #ifndef PLAZA_PROPERTYEDITOR_H
 #define PLAZA_PROPERTYEDITOR_H
 
-#include <Core/Service.h>
 
-DeclareComponent(PropertyEditor)
-DeclareService(PropertyEditor)
+Unit(PropertyEditor)
+    Component(PropertyEditor)
 
 namespace ImGui {
     void ComponentContextMenu(Type componentType);

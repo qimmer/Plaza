@@ -2,10 +2,11 @@
 #ifndef ZipFileStream_H
 #define ZipFileStream_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(ZipFileStream)
+    Unit(ZipFileStream)
+    Component(ZipFileStream)
     DeclareService(ZipFileStream)
 
 #endif //ZipFileStream_H

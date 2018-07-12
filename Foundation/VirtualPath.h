@@ -8,11 +8,11 @@
 
 #include <Core/Entity.h>
 
-DeclareComponent(VirtualPath)
+Unit(VirtualPath)
+    Component(VirtualPath)
+        Property(StringRef, VirtualPathTrigger)
+        Property(StringRef, VirtualPathDestination)
 
-DeclareComponentPropertyReactive(VirtualPath, StringRef, VirtualPathTrigger)
-DeclareComponentPropertyReactive(VirtualPath, StringRef, VirtualPathDestination)
-
-void ResolveVirtualPath(StringRef virtualPath, char *resolvedPath);
+void ResolveVirtualPath(StringRef virtualPath, u32 bufferLength, char *resolvedPath);
 
 #endif //PLAZA_VIRTUALPATH_H

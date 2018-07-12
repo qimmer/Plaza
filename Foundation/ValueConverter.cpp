@@ -5,11 +5,13 @@
 #include "ValueConverter.h"
 
 struct ValueConverter {
-    Function ValueConverterConvertTo, ValueConverterConvertFrom;
+    Entity ValueConverterConvertTo, ValueConverterConvertFrom;
 };
 
-DefineComponent(ValueConverter)
-EndComponent()
+BeginUnit(ValueConverter)
+    BeginComponent(ValueConverter)
+        RegisterProperty(Entity, ValueConverterConvertTo)
+        RegisterProperty(Entity, ValueConverterConvertFrom)
+    EndComponent()
+EndUnit()
 
-DefineComponentPropertyReactive(ValueConverter, Function, ValueConverterConvertTo)
-DefineComponentPropertyReactive(ValueConverter, Function, ValueConverterConvertFrom)

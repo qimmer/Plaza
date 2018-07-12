@@ -5,9 +5,10 @@
 #ifndef PLAZA_SCENE_H
 #define PLAZA_SCENE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(Scene)
+    Unit(Scene)
+    Component(Scene)
 
 #endif //PLAZA_SCENE_H

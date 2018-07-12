@@ -8,6 +8,6 @@
 #include <Core/Module.h>
 
 
-    DeclareModule(Scene)
+    Module(Scene)
 
 #endif //PLAZA_SCENEMODULE_H

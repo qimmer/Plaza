@@ -1,0 +1,48 @@
+{
+  "$children": [
+    {
+      "Name": "Person",
+      "$components": ["Component"],
+      "$children": [
+
+        {
+          "Name": "NodeBase",
+          "BaseComponent": "/Core/Components/Node"
+        },
+
+        {
+          "Name": "PersonAge",
+          "PropertyType": "u32"
+        }
+      ]
+    },
+
+    {
+      "Name": "NativeMessage",
+      "$components": ["Event"],
+      "$children": [
+        {
+          "Name": "text",
+          "EventArgumentType": "StringRef"
+        }
+      ]
+    },
+
+    {
+      "Name": "ScriptMessage",
+      "$components": ["Event"],
+      "$children": [
+        {
+          "Name": "text",
+          "EventArgumentType": "StringRef"
+        }
+      ]
+    },
+
+    {
+      "Name": "OnNativeMessage",
+      "SubscriptionEvent": "NativeMessage",
+      "SubscriptionHandler": "OnNativeMessage"
+    }
+  ]
+}

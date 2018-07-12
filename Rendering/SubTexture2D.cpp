@@ -12,15 +12,16 @@ struct SubTexture2D {
     Entity SubTexture2DTexture;
 };
 
-DefineComponent(SubTexture2D)
-    DefinePropertyReactive(v2i, SubTexture2DOffset)
-    DefinePropertyReactive(v2i, SubTexture2DSize)
-    DefinePropertyReactive(Entity, SubTexture2DTexture)
+BeginUnit(SubTexture2D)
+    BeginComponent(SubTexture2D)
+    RegisterProperty(v2i, SubTexture2DOffset)
+    RegisterProperty(v2i, SubTexture2DSize)
+    RegisterProperty(Entity, SubTexture2DTexture)
 EndComponent()
 
-DefineComponentPropertyReactive(SubTexture2D, v2i, SubTexture2DOffset)
-DefineComponentPropertyReactive(SubTexture2D, v2i, SubTexture2DSize)
-DefineComponentPropertyReactive(SubTexture2D, Entity, SubTexture2DTexture)
+RegisterProperty(v2i, SubTexture2DOffset)
+RegisterProperty(v2i, SubTexture2DSize)
+RegisterProperty(Entity, SubTexture2DTexture)
 
 API_EXPORT Entity GetSubTexture2DUvOffsetScaleUniform() {
     return UvOffsetScaleUniform;

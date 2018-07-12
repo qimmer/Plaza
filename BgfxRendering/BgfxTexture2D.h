@@ -5,11 +5,11 @@
 #ifndef PLAZA_BGFXTEXTURE2D_H
 #define PLAZA_BGFXTEXTURE2D_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(BgfxTexture2D)
+    Unit(BgfxTexture2D)
+    Component(BgfxTexture2D)
     DeclareService(BgfxTexture2D)
 
     u16 GetBgfxTexture2DHandle(Entity entity);

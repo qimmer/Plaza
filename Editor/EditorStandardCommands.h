@@ -19,6 +19,5 @@ Entity GetDeleteCommand();
 
 Entity GetQuitCommand();
 
-DeclareService(EditorStandardCommands)
 
 #endif //PLAZA_EDITORSTANDARDCOMMANDS_H

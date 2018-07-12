@@ -5,8 +5,9 @@
 #ifndef PLAZA_STYLE_H
 #define PLAZA_STYLE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Style)
+Unit(Style)
+    Component(Style)
 
 #endif //PLAZA_STYLE_H

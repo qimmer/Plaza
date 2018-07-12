@@ -5,8 +5,9 @@
 #ifndef PLAZA_PATH_H
 #define PLAZA_PATH_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Path)
+Unit(Path)
+    Component(Path)
 
 #endif //PLAZA_PATH_H

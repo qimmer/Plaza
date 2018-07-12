@@ -5,12 +5,12 @@
 #ifndef PLAZA_SCENEEDITOR_H
 #define PLAZA_SCENEEDITOR_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(SceneEditor)
 
-DeclareComponent(SceneEditor)
-DeclareComponentPropertyReactive(SceneEditor, Entity, SceneEditorScene)
+Unit(SceneEditor)
+    Component(SceneEditor)
+        Property(Entity, SceneEditorScene)
 
 void EditScene(Entity scene);
 

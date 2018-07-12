@@ -32,14 +32,15 @@ struct VoxelVertex {
     u8 ao, height;
 };
 
-DefineComponent(VoxelMesh)
-    Dependency(Mesh)
-    DefinePropertyReactive(Entity, VoxelMeshChunk)
-    DefinePropertyReactive(Entity, VoxelMeshPalette)
+BeginUnit(VoxelMesh)
+    BeginComponent(VoxelMesh)
+    RegisterBase(Mesh)
+    RegisterProperty(Entity, VoxelMeshChunk)
+    RegisterProperty(Entity, VoxelMeshPalette)
 EndComponent()
 
-DefineComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshChunk)
-DefineComponentPropertyReactive(VoxelMesh, Entity, VoxelMeshPalette)
+RegisterProperty(Entity, VoxelMeshChunk)
+RegisterProperty(Entity, VoxelMeshPalette)
 
 Entity GetVoxelDataRoot() {
     return VoxelDataRoot;
@@ -345,33 +346,33 @@ static void RegenerateVoxelMesh(Entity voxelMesh) {
     free(buffer);
 }
 
-static void OnVoxelChunkChanged(Entity voxelChunk) {
-    if(HasVoxelChunk(voxelChunk)) {
-        for_entity(voxelMesh, VoxelMesh) {
+LocalFunction(OnVoxelChunkChanged, void, Entity voxelChunk) {
+    if(HasComponent(voxelChunk, ComponentOf_VoxelChunk())) {
+        for_entity(voxelMesh, data, VoxelMesh) {
             if(GetVoxelMeshChunk(voxelMesh) == voxelChunk) RegenerateVoxelMesh(voxelMesh);
         }
     }
 }
 
-static void OnVoxelPaletteChanged(Entity voxelPalette) {
-    for_entity(voxelMesh, VoxelMesh) {
+LocalFunction(OnVoxelPaletteChanged, void, Entity voxelPalette) {
+    for_entity(voxelMesh, data, VoxelMesh) {
         if(GetVoxelMeshPalette(voxelMesh) == voxelPalette) RegenerateVoxelMesh(voxelMesh);
     }
 }
 
-static void OnVoxelMeshAdded(Entity voxelMesh) {
+LocalFunction(OnVoxelMeshAdded, void, Entity voxelMesh) {
     auto vb = CreateVertexBuffer(voxelMesh, "VertexBuffer");
     SetMeshVertexBuffer(voxelMesh, vb);
     SetVertexBufferDeclaration(vb, VoxelVertexDeclaration);
 }
 
 DefineService(VoxelMesh)
-    Subscribe(VoxelMeshAdded, OnVoxelMeshAdded)
-    Subscribe(VoxelPaletteChanged, OnVoxelPaletteChanged)
-    Subscribe(VoxelChunkChanged, OnVoxelChunkChanged)
-    Subscribe(VoxelMeshChanged, RegenerateVoxelMesh)
-    Subscribe(StreamContentChanged, OnVoxelChunkChanged)
-    Subscribe(StreamChanged, OnVoxelChunkChanged)
+    RegisterSubscription(VoxelMeshAdded, OnVoxelMeshAdded, 0)
+    RegisterSubscription(VoxelPaletteChanged, OnVoxelPaletteChanged, 0)
+    RegisterSubscription(VoxelChunkChanged, OnVoxelChunkChanged, 0)
+    RegisterSubscription(VoxelMeshChanged, RegenerateVoxelMesh, 0)
+    RegisterSubscription(StreamContentChanged, OnVoxelChunkChanged, 0)
+    RegisterSubscription(StreamChanged, OnVoxelChunkChanged, 0)
     ServiceEntity(VoxelDataRoot, InitializeVoxelRoot)
 EndService()
 

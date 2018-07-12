@@ -5,11 +5,10 @@
 #ifndef PLAZA_BGFXCONTEXT_H
 #define PLAZA_BGFXCONTEXT_H
 
-#include <Core/Entity.h>
-#include <Core/Service.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(BgfxContext)
-DeclareService(BgfxContext)
+Unit(BgfxContext)
+    Component(BgfxContext)
 
 u16 GetBgfxContextHandle(Entity entity);
 

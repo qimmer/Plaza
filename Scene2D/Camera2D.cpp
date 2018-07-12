@@ -14,22 +14,23 @@ struct Camera2D {
     float Camera2DPixelsPerUnit;
 };
 
-DefineComponent(Camera2D)
-    Dependency(Camera)
-    DefinePropertyReactive(float, Camera2DPixelsPerUnit)
+BeginUnit(Camera2D)
+    BeginComponent(Camera2D)
+    RegisterBase(Camera)
+    RegisterProperty(float, Camera2DPixelsPerUnit)
 EndComponent()
 
-DefineComponentPropertyReactive(Camera2D, float, Camera2DPixelsPerUnit)
+RegisterProperty(float, Camera2DPixelsPerUnit)
 
 static void UpdateProjectionMatrix(Entity entity) {
-    if(!HasCamera2D(entity)) return;
+    if(!HasComponent(entity, ComponentOf_Camera2D())) return;
 
     auto renderTarget = GetCameraRenderTarget(entity);
-    if(!IsEntityValid(renderTarget) || !HasRenderTarget(renderTarget)) {
+    if(!IsEntityValid(renderTarget) || !HasComponent(renderTarget, ComponentOf_RenderTarget())) {
         return;
     }
 
-    auto data = GetCamera2D(entity);
+    auto data = GetCamera2DData(entity);
     if(data->Camera2DPixelsPerUnit <= FLT_EPSILON) {
         return;
     }
@@ -48,24 +49,24 @@ static void UpdateProjectionMatrix(Entity entity) {
     SetCameraProjectionMatrix(entity, projection);
 }
 
-static void OnCameraAspectChanged(Entity entity, float oldAspect, float newAspect) {
+LocalFunction(OnCameraAspectChanged, void, Entity entity, float oldAspect, float newAspect) {
     UpdateProjectionMatrix(entity);
 }
 
-static void OnCamera2DPixelsPerUnitChanged(Entity entity, float before, float after) {
+LocalFunction(OnCamera2DPixelsPerUnitChanged, void, Entity entity, float before, float after) {
     UpdateProjectionMatrix(entity);
 }
 
-static void OnCameraViewportChanged(Entity entity, v4f before, v4f after) {
+LocalFunction(OnCameraViewportChanged, void, Entity entity, v4f before, v4f after) {
     UpdateProjectionMatrix(entity);
 }
 
-static void OnCameraRenderTargetChanged(Entity entity, Entity before, Entity after) {
+LocalFunction(OnCameraRenderTargetChanged, void, Entity entity, Entity before, Entity after) {
     UpdateProjectionMatrix(entity);
 }
 
-static void OnRenderTargetSizeChanged(Entity entity, v2i oldValue, v2i newValue) {
-    for_entity(camera, Camera2D) {
+LocalFunction(OnRenderTargetSizeChanged, void, Entity entity, v2i oldValue, v2i newValue) {
+    for_entity(camera, data, Camera2D) {
         if(GetCameraRenderTarget(camera) == entity) {
             UpdateProjectionMatrix(camera);
         }
@@ -73,9 +74,9 @@ static void OnRenderTargetSizeChanged(Entity entity, v2i oldValue, v2i newValue)
 }
 
 DefineService(Camera2D)
-        Subscribe(Camera2DPixelsPerUnitChanged, OnCamera2DPixelsPerUnitChanged)
-        Subscribe(CameraViewportChanged, OnCameraViewportChanged)
-        Subscribe(CameraRenderTargetChanged, OnCameraRenderTargetChanged)
-        Subscribe(Camera2DAdded, UpdateProjectionMatrix)
-        Subscribe(RenderTargetSizeChanged, OnRenderTargetSizeChanged)
+        RegisterSubscription(Camera2DPixelsPerUnitChanged, OnCamera2DPixelsPerUnitChanged, 0)
+        RegisterSubscription(CameraViewportChanged, OnCameraViewportChanged, 0)
+        RegisterSubscription(CameraRenderTargetChanged, OnCameraRenderTargetChanged, 0)
+        RegisterSubscription(Camera2DAdded, UpdateProjectionMatrix, 0)
+        RegisterSubscription(RenderTargetSizeChanged, OnRenderTargetSizeChanged, 0)
 EndService()

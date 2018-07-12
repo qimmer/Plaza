@@ -5,9 +5,10 @@
 #ifndef PLAZA_RENDERTARGET_H
 #define PLAZA_RENDERTARGET_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(RenderTarget)
-DeclareComponentPropertyReactive(RenderTarget, v2i, RenderTargetSize)
+Unit(RenderTarget)
+    Component(RenderTarget)
+        Property(v2i, RenderTargetSize)
 
 #endif //PLAZA_RENDERTARGET_H

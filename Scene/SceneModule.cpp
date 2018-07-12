@@ -14,7 +14,7 @@
 #include "MousePicker.h"
 
 
-DefineModule(Scene)
+BeginModule(Scene)
         ModuleDependency(Rendering)
 
         ModuleService(SceneNode)

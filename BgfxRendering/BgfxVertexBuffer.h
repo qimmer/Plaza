@@ -5,11 +5,10 @@
 #ifndef PLAZA_BGFXVERTEXBUFFER_H
 #define PLAZA_BGFXVERTEXBUFFER_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(BgfxVertexBuffer)
-DeclareService(BgfxVertexBuffer)
+Unit(BgfxVertexBuffer)
+    Component(BgfxVertexBuffer)
 
 u16 GetBgfxVertexBufferHandle(Entity entity);
 

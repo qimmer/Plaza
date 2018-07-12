@@ -2,7 +2,6 @@
 // Created by Kim Johannsen on 04-03-2018.
 //
 
-#include <Core/Service.h>
 #include <ImGui/ImGuiRenderer.h>
 #include "EditorStyle.h"
 #include <imgui/imgui.h>
@@ -20,7 +19,7 @@ struct ImFont *GetUIFont() {
     return UIFont;
 }
 
-static void OnServiceStart(Service service) {
+LocalFunction(OnServiceStart, void, Service service) {
     ImGui::SetCurrentContext((ImGuiContext*)GetDefaultImGuiContext());
 
     ImGuiIO& io = ImGui::GetIO();
@@ -41,5 +40,5 @@ static void OnServiceStart(Service service) {
 
 DefineService(EditorStyle)
         ServiceDependency(ImGuiRenderer)
-        Subscribe(EditorStyleStarted, OnServiceStart)
+        RegisterSubscription(EditorStyleStarted, OnServiceStart, 0)
 EndService()

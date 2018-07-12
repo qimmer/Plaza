@@ -25,13 +25,14 @@ struct BinaryShader {
     Entity BinaryShaderVariation;
 };
 
-DefineComponent(BinaryShader)
-    Dependency(Stream)
+BeginUnit(BinaryShader)
+    BeginComponent(BinaryShader)
+    RegisterBase(Stream)
     DefinePropertyEnum(u8, BinaryShaderProfile, ShaderProfile)
-    DefinePropertyReactive(Entity, BinaryShaderVariation)
-    DefinePropertyReactive(Entity, SourceShader)
+    RegisterProperty(Entity, BinaryShaderVariation)
+    RegisterProperty(Entity, SourceShader)
 EndComponent()
 
-DefineComponentPropertyReactive(BinaryShader, Entity, SourceShader)
-DefineComponentPropertyReactive(BinaryShader, u8, BinaryShaderProfile)
-DefineComponentPropertyReactive(BinaryShader, Entity, BinaryShaderVariation)
+RegisterProperty(Entity, SourceShader)
+RegisterProperty(u8, BinaryShaderProfile)
+RegisterProperty(Entity, BinaryShaderVariation)

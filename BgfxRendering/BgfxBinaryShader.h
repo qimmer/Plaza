@@ -5,11 +5,11 @@
 #ifndef PLAZA_BGFXSHADER_H
 #define PLAZA_BGFXSHADER_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-    DeclareComponent(BgfxBinaryShader)
+    Unit(BgfxBinaryShader)
+    Component(BgfxBinaryShader)
     DeclareService(BgfxBinaryShader)
 
     u16 GetBgfxBinaryShaderHandle(Entity entity);

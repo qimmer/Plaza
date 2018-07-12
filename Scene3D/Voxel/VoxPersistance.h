@@ -5,8 +5,7 @@
 #ifndef PLAZA_VOXPERSISTANCE_H
 #define PLAZA_VOXPERSISTANCE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(VoxPersistance)
 
 #endif //PLAZA_VOXPERSISTANCE_H

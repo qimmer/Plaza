@@ -7,6 +7,9 @@
 
 #include <Core/NativeUtils.h>
 
+#define PropertyFlag_ReadOnly 1
+#define PropertyFlag_Transient 2
+
 Unit(Property)
 
 Component(Property)
@@ -14,6 +17,7 @@ Component(Property)
     Property(u32, PropertySize)
     Property(Type, PropertyType)
     Property(Entity, PropertyEnum)
+    Property(u32, PropertyFlags)
     Property(Entity, PropertyComponent)
     Property(Entity, PropertyChangedEvent)
 
@@ -25,6 +29,8 @@ Component(Binding)
 
 void SetPropertyValue(Entity entity, Entity context, const void *valueData);
 bool GetPropertyValue(Entity entity, Entity context, void *dataOut);
+
+void SetPropertyMeta(Entity property, StringRef metaString);
 
 void __Property(Entity property, u32 offset, u32 size, Type type, Entity component);
 void __InitializeProperty();

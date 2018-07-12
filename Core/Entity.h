@@ -8,17 +8,13 @@
 #define GetEntity(index, generation) ((((Entity)generation) << 32) | (index))
 
 Unit(Entity)
+    Function(CreateEntity, Entity)
+    Function(DestroyEntity, void, Entity entity)
+    Function(GetNextEntity, Entity, Entity previousEntity);
+    Function(IsEntityOccupied, bool, u32 index)
+    Function(IsEntityValid, bool, Entity handle)
 
-Function(CreateEntity, Entity)
-Function(DestroyEntity, void, Entity entity)
-Function(GetNextEntity, Entity, Entity previousEntity);
-Function(IsEntityOccupied, bool, u32 index)
-Function(IsEntityValid, bool, Entity handle)
-
-struct EntityCreatedArgs { Entity entity; };
-struct EntityDestroyedArgs { Entity entity; };
-
-Event(EntityCreated)
-Event(EntityDestroyed)
+    Event(EntityCreated)
+    Event(EntityDestroyed)
 
 #endif

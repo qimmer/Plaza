@@ -8,30 +8,31 @@
 struct VertexDeclaration {
 };
 
-DefineComponent(VertexDeclaration)
-    Dependency(Hierarchy)
+BeginUnit(VertexDeclaration)
+    BeginComponent(VertexDeclaration)
+    RegisterBase(Node)
 EndComponent()
 
 API_EXPORT u32 GetVertexStride(Entity vertexDeclaration) {
     u32 stride = 0;
     for(auto attribute = GetFirstChild(vertexDeclaration); IsEntityValid(attribute); attribute = GetSibling(attribute)) {
-        if(HasVertexAttribute(attribute)) {
+        if(HasComponent(attribute, ComponentOf_VertexAttribute())) {
             stride += GetTypeSize(GetVertexAttributeType(attribute));
         }
     }
     return stride;
 }
 
-static void OnChanged(Entity entity) {
-    if(HasVertexAttribute(entity)) {
+LocalFunction(OnChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_VertexAttribute())) {
         auto vertexDeclaration = GetParent(entity);
-        if(IsEntityValid(vertexDeclaration) && HasVertexDeclaration(vertexDeclaration)) {
-            FireNativeEvent(VertexDeclarationChanged, vertexDeclaration);
+        if(IsEntityValid(vertexDeclaration) && HasComponent(vertexDeclaration, ComponentOf_VertexDeclaration())) {
+            FireEvent(EventOf_VertexDeclarationChanged(), vertexDeclaration);
         }
     }
 }
 
 DefineService(VertexDeclaration)
-        Subscribe(VertexAttributeChanged, OnChanged)
-        Subscribe(VertexAttributeRemoved, OnChanged)
+        RegisterSubscription(VertexAttributeChanged, OnChanged, 0)
+        RegisterSubscription(VertexAttributeRemoved, OnChanged, 0)
 EndService()

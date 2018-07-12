@@ -13,13 +13,14 @@ struct Uniform {
     Type UniformType;
 };
 
-DefineComponent(Uniform)
-    DefinePropertyReactive(StringRef, UniformName)
-    DefinePropertyReactive(u32, UniformArrayCount)
-    DefinePropertyReactive(Type, UniformType)
+BeginUnit(Uniform)
+    BeginComponent(Uniform)
+    RegisterProperty(StringRef, UniformName)
+    RegisterProperty(u32, UniformArrayCount)
+    RegisterProperty(Type, UniformType)
 EndComponent()
 
-DefineComponentPropertyReactive(Uniform, StringRef, UniformName)
-DefineComponentPropertyReactive(Uniform, u32, UniformArrayCount)
-DefineComponentPropertyReactive(Uniform, Type, UniformType)
+RegisterProperty(StringRef, UniformName)
+RegisterProperty(u32, UniformArrayCount)
+RegisterProperty(Type, UniformType)
 

@@ -5,7 +5,7 @@
 #include <Core/Entity.h>
 #include <File/Folder.h>
 #include <ImGui/imgui/imgui.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <ImGui/ImGuiRenderer.h>
 #include <Core/Module.h>
 #include <Core/String.h>
@@ -19,8 +19,9 @@ struct EntityExplorer {
 
 };
 
-DefineComponent(EntityExplorer)
-    Dependency(EditorView)
+BeginUnit(EntityExplorer)
+    BeginComponent(EntityExplorer)
+    RegisterBase(EditorView)
 EndComponent()
 
 static bool DrawHidden = false, DrawFromRoot = false;
@@ -28,14 +29,14 @@ static Entity Root = 0;
 static const char *EntityContextMenuId = "EntityExplorerContextMenu";
 
 static void DrawEntry(Entity entry, int level) {
-    if(HasHierarchy(entry) && (GetName(entry)[0] != '.' || DrawHidden)) {
+    if(HasComponent(entry, ComponentOf_Node()) && (GetName(entry)[0] != '.' || DrawHidden)) {
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
         if(!IsEntityValid(GetFirstChild(entry))) {
             flags |= ImGuiTreeNodeFlags_Leaf;
         }
 
-        if(HasSelection(entry)) {
+        if(HasComponent(entry, ComponentOf_Selection())) {
             flags |= ImGuiTreeNodeFlags_Selected;
         }
 
@@ -124,7 +125,7 @@ void ImGui::EntityContextMenu() {
         auto type = SelectComponentMenu();
         if(IsTypeValid(type)) {
             auto newEntity = CreateEntity();
-            AddHierarchy(newEntity);
+            AddNode(newEntity);
             AddComponent(newEntity, type);
 
             char name[PATH_MAX];
@@ -223,10 +224,10 @@ void ImGui::EntityContextMenu() {
     }
 }
 
-static void OnAdded(Entity entity) {
+LocalFunction(OnAdded, void, Entity entity) {
     SetEditorViewDrawFunction(entity, Draw);
 }
 
 DefineService(EntityExplorer)
-    Subscribe(EntityExplorerAdded, OnAdded)
+    RegisterSubscription(EntityExplorerAdded, OnAdded, 0)
 EndService()

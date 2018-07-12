@@ -7,7 +7,7 @@
 #include <Foundation/AppLoop.h>
 #include <Rendering/VertexBuffer.h>
 #include <Rendering/VertexAttribute.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Rendering/Program.h>
 #include <Rendering/Shader.h>
 #include <File/FileStream.h>

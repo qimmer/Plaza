@@ -6,25 +6,19 @@
 #include "Folder.h"
 #include <Foundation/Stream.h>
 #include <stdio.h>
-#include <Core/String.h>
-#include <Core/Hierarchy.h>
-#include <Core/Dictionary.h>
+#include <Core/Node.h>
 #include <Foundation/MemoryStream.h>
 #include <Foundation/AppLoop.h>
+#include <Core/Debug.h>
+#include <Foundation/Timer.h>
 #include "FileWatcher/FileWatcher.h"
 
 #define ProtocolIdentifier "file"
 
 struct FileStream {
-    FileStream() : fd(NULL) {}
-
     FILE *fd;
     FW::WatchID watchID;
 };
-
-DefineComponent(FileStream)
-    Dependency(Stream)
-EndComponent()
 
 static FW::FileWatcher fileWatcher;
 
@@ -36,10 +30,10 @@ public:
                           FW::Action action)
     {
         if(action == FW::Actions::Modified) {
-            for_entity(fileStream, FileStream) {
-                auto data = GetFileStream(fileStream);
+            for_entity(fileStream, data, FileStream) {
+                auto data = GetFileStreamData(fileStream);
                 if(data->watchID == watchid) {
-                    FireNativeEvent(StreamContentChanged, fileStream);
+                    FireEvent(EventOf_StreamContentChanged(), fileStream);
                     break;
                 }
             }
@@ -50,14 +44,14 @@ public:
 static UpdateListener listener;
 
 static u64 Read(Entity entity, u64 size, void *data) {
-    if(!GetFileStream(entity)->fd) return 0;
+    if(!GetFileStreamData(entity)->fd) return 0;
 
     u8 *bytes = (u8*)data;
     u64 remaining = size;
     while(remaining) {
-        auto numRead = fread(bytes, 1, remaining, GetFileStream(entity)->fd);
+        auto numRead = fread(bytes, 1, remaining, GetFileStreamData(entity)->fd);
         if(!numRead) {
-            Log(LogChannel_Core, LogSeverity_Error, "Error reading at offset '%llu' in file '%s'", ftell(GetFileStream(entity)->fd), GetStreamPath(entity));
+            Log(entity, LogSeverity_Error, "Error reading at offset '%llu' in file '%s'", ftell(GetFileStreamData(entity)->fd), GetStreamPath(entity));
             return 0;
         }
 
@@ -69,23 +63,23 @@ static u64 Read(Entity entity, u64 size, void *data) {
 }
 
 static u64 Write(Entity entity, u64 size, const void *data) {
-    if(!GetFileStream(entity)->fd) return 0;
-    return fwrite(data, 1, size, GetFileStream(entity)->fd);
+    if(!GetFileStreamData(entity)->fd) return 0;
+    return fwrite(data, 1, size, GetFileStreamData(entity)->fd);
 }
 
 static s32 Tell(Entity entity) {
-    if(!GetFileStream(entity)->fd) return 0;
-    return ftell(GetFileStream(entity)->fd);
+    if(!GetFileStreamData(entity)->fd) return 0;
+    return ftell(GetFileStreamData(entity)->fd);
 }
 
 static bool Seek(Entity entity, s32 offset) {
-    if(!GetFileStream(entity)->fd) return false;
+    if(!GetFileStreamData(entity)->fd) return false;
 
-    return fseek(GetFileStream(entity)->fd, offset == StreamSeek_End ? 0 : offset, offset == StreamSeek_End ? SEEK_END : SEEK_SET) == 0;
+    return fseek(GetFileStreamData(entity)->fd, offset == StreamSeek_End ? 0 : offset, offset == StreamSeek_End ? SEEK_END : SEEK_SET) == 0;
 }
 
 static bool Open(Entity entity, int modeFlag) {
-    auto data = GetFileStream(entity);
+    auto data = GetFileStreamData(entity);
     if(data->fd) return true;
 
     const char *mode;
@@ -101,7 +95,7 @@ static bool Open(Entity entity, int modeFlag) {
 
     auto nativePath = GetStreamResolvedPath(entity);
     if(strlen(nativePath) < 7 || memcmp(nativePath, "file://", 7) != 0) {
-        Log(LogChannel_Core, LogSeverity_Error, "%s", "File stream has wrong protocol identifier.");
+        Log(entity, LogSeverity_Error, "%s", "File stream has wrong protocol identifier.");
         return false;
     }
 
@@ -112,42 +106,24 @@ static bool Open(Entity entity, int modeFlag) {
     return data->fd;
 }
 
-static void Close(Entity entity) {
-    auto data = GetFileStream(entity);
-    if(!data->fd) return;
+static bool Close(Entity entity) {
+    auto data = GetFileStreamData(entity);
+    if(!data->fd) return false;
 
     fclose(data->fd);
     data->fd = NULL;
+
+    return true;
 }
 
 static bool IsOpen(Entity entity) {
-    auto data = GetFileStream(entity);
+    auto data = GetFileStreamData(entity);
     return data->fd;
 }
 
-static void OnServiceStart(Service service) {
-    StreamProtocol p {
-            AddFileStream,
-            RemoveFileStream,
-            Seek,
-            Tell,
-            Read,
-            Write,
-            IsOpen,
-            Open,
-            Close
-    };
-
-    AddStreamProtocol(ProtocolIdentifier, &p);
-}
-
-static void OnServiceStop(Service service){
-    RemoveStreamProtocol(ProtocolIdentifier);
-}
-
-static void OnStreamPathChanged(Entity stream, StringRef oldPath, StringRef newPath) {
-    if(HasFileStream(stream)) {
-        auto data = GetFileStream(stream);
+LocalFunction(OnStreamPathChanged, void, Entity stream, StringRef oldPath, StringRef newPath) {
+    if(HasComponent(stream, ComponentOf_FileStream())) {
+        auto data = GetFileStreamData(stream);
         fileWatcher.removeWatch(data->watchID);
 
         auto nativePath = GetStreamResolvedPath(stream);
@@ -163,34 +139,18 @@ static void OnStreamPathChanged(Entity stream, StringRef oldPath, StringRef newP
     }
 }
 
-static void OnFileStreamAdded(Entity stream) {
+LocalFunction(OnFileStreamAdded, void, Entity stream) {
     OnStreamPathChanged(stream, "", GetStreamResolvedPath(stream));
 }
 
-static void OnFileStreamRemoved(Entity stream) {
-    auto data = GetFileStream(stream);
+LocalFunction(OnFileStreamRemoved, void, Entity stream) {
+    auto data = GetFileStreamData(stream);
     fileWatcher.removeWatch(data->watchID);
 }
 
-static void OnAppUpdate(double deltaTime) {
-    static double timeSinceUpdate = 0.0;
-    timeSinceUpdate += deltaTime;
-
-    if(timeSinceUpdate > 1.0) {
-        timeSinceUpdate = 0.0;
-
-        fileWatcher.update();
-    }
+LocalFunction(OnFileWatcherUpdate, void, Entity timer) {
+    fileWatcher.update();
 }
-
-DefineService(FileStream)
-    Subscribe(AppUpdate, OnAppUpdate)
-    Subscribe(StreamPathChanged, OnStreamPathChanged)
-    Subscribe(FileStreamAdded, OnFileStreamAdded)
-    Subscribe(FileStreamRemoved, OnFileStreamRemoved)
-    Subscribe(FileStreamStarted, OnServiceStart)
-    Subscribe(FileStreamStopped, OnServiceStop)
-EndService()
 
 StringRef GetNativePath(StringRef resourcePath) {
     auto fileIdentifier = strstr(resourcePath, "file://");
@@ -198,6 +158,19 @@ StringRef GetNativePath(StringRef resourcePath) {
         return fileIdentifier + 7;
     }
 
-    Log(LogChannel_Core, LogSeverity_Error, "Resource path is not a file path: %s", resourcePath);
+    Log(0, LogSeverity_Error, "Resource path is not a file path: %s", resourcePath);
     return 0;
 }
+
+BeginUnit(FileStream)
+    BeginComponent(FileStream)
+        RegisterBase(Stream)
+    EndComponent()
+
+    RegisterTimer(OnFileWatcherUpdate, 1.0)
+    RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
+    RegisterSubscription(FileStreamAdded, OnFileStreamAdded, 0)
+    RegisterSubscription(FileStreamRemoved, OnFileStreamRemoved, 0)
+
+    RegisterStreamProtocol(FileStream, "file")
+EndComponent()

@@ -5,12 +5,12 @@
 #ifndef PLAZA_CAMERA2D_H
 #define PLAZA_CAMERA2D_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Camera3D)
-DeclareService(Camera3D)
+Unit(Camera3D)
+    Component(Camera3D)
 
-DeclareComponentPropertyReactive(Camera3D, float, Camera3DFov)
-DeclareComponentPropertyReactive(Camera3D, float, Camera3DAspectRatio)
+        Property(float, Camera3DFov)
+        Property(float, Camera3DAspectRatio)
 
 #endif //PLAZA_CAMERA2D_H

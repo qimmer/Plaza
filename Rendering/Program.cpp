@@ -16,13 +16,14 @@ struct Program {
     Entity ProgramBinaryVertexShader, ProgramBinaryPixelShader;
 };
 
-DefineComponent(Program)
-    DefinePropertyReactive(Entity, ProgramBinaryVertexShader)
-    DefinePropertyReactive(Entity, ProgramBinaryPixelShader)
+BeginUnit(Program)
+    BeginComponent(Program)
+    RegisterProperty(Entity, ProgramBinaryVertexShader)
+    RegisterProperty(Entity, ProgramBinaryPixelShader)
 EndComponent()
 
-DefineComponentPropertyReactive(Program, Entity, ProgramBinaryVertexShader);
-DefineComponentPropertyReactive(Program, Entity, ProgramBinaryPixelShader)
+RegisterProperty(Entity, ProgramBinaryVertexShader);
+RegisterProperty(Entity, ProgramBinaryPixelShader)
 
 struct ProgramCombination {
     Entity vertexShader, pixelShader, shaderVariation;

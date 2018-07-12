@@ -11,6 +11,7 @@
 #include "TestCore.h"
 
 #include <cstring>
+#include <Core/Math.h>
 
 struct Person {
     char PersonFirstName[64];
@@ -58,15 +59,18 @@ Test(TestComponent) {
     Verify(GetPersonAge(entity) == 45, "Age should be 45");
     Verify(strcmp(GetPersonFirstName(entity), "John") == 0, "First Name should be John");
 
+    auto personComponent = ComponentOf_Person();
+    auto index = GetComponentIndex(ComponentOf_Component(), personComponent);
+
     DestroyEntity(entity);
 
     return Success;
 }
 
-static bool isEventTriggeredProperly = false;
+static int ageDifference = 0;
 
 LocalFunction(OnAgeChanged, void, Entity person, u8 oldValue, u8 newValue) {
-    isEventTriggeredProperly = oldValue == 0 && newValue == 49;
+    ageDifference = Abs(newValue - oldValue);
 }
 
 Test(TestEvent) {
@@ -75,10 +79,22 @@ Test(TestEvent) {
     auto subscription = CreateEntity();
     SetSubscriptionEvent(subscription, EventOf_PersonAgeChanged());
     SetSubscriptionHandler(subscription, FunctionOf_OnAgeChanged());
+    SetSubscriptionSender(subscription, 0);
 
+    SetPersonAge(entity, 0);
     SetPersonAge(entity, 49);
 
-    Verify(isEventTriggeredProperly, "Event is not triggered");
+    Verify(ageDifference == 49, "Event is not triggered on general subscription");
+
+    SetSubscriptionSender(subscription, entity);
+    SetPersonAge(entity, 50);
+
+    Verify(ageDifference == 1, "Event is not triggered on entity specific subscription");
+
+    SetSubscriptionSender(subscription, entity + 1);
+    SetPersonAge(entity, 51);
+
+    Verify(ageDifference == 1, "Event is triggered on wrong entity");
 
     DestroyEntity(entity);
     DestroyEntity(subscription);

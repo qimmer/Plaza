@@ -5,7 +5,8 @@
 struct SQLPersistancePoint {
 };
 
-DefineComponent(SQLPersistancePoint)
+BeginUnit(SQLPersistancePoint)
+    BeginComponent(SQLPersistancePoint)
 
 EndComponent()
 

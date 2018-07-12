@@ -5,9 +5,10 @@
 #ifndef PLAZA_COMMANDLISTBATCH_H
 #define PLAZA_COMMANDLISTBATCH_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Batch)
+Unit(Batch)
+    Component(Batch)
 
 DeclareComponentProperty(Batch, v4i, BatchScissor)
 DeclareComponentProperty(Batch, Entity, BatchMaterial)

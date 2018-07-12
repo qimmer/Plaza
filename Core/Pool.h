@@ -4,7 +4,7 @@
 #include <Core/Types.h>
 #include <Core/Vector.h>
 #include <Core/Debug.h>
-#include <algorithm>
+#include <Core/Math.h>
 #include <memory>
 
 #define MaxPages 4096
@@ -30,6 +30,8 @@ private:
     Vector<u32> freeIndices;
 public:
     Pool() {
+        blockSize = 0;
+        elementSize = 0;
         SetElementSize(1);
     }
 
@@ -63,7 +65,7 @@ inline void Pool::SetElementSize(u32 size) {
         auto newPage = (char*)malloc(blockSize * PoolPageElements);
         auto oldPage = entryPages[i];
         for(auto j = 0; j < PoolPageElements; ++j) {
-            memcpy(newPage + (j * blockSize), oldPage + (j * oldBlockSize), std::min(elementSize, oldBlockSize));
+            memcpy(newPage + (j * blockSize), oldPage + (j * oldBlockSize), Min(elementSize, oldBlockSize));
             newPage[j * blockSize + blockSize - 1] = oldPage[j * oldBlockSize + oldBlockSize - 1]; // Make sure to copy occupied flag
         }
         free(oldPage);

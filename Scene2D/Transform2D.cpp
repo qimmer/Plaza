@@ -14,18 +14,19 @@ struct Transform2D {
     float Rotation2D, Distance2D;
 };
 
-DefineComponent(Transform2D)
-    Dependency(Transform)
-    DefinePropertyReactive(v2f, Position2D)
-    DefinePropertyReactive(v2f, Scale2D)
-    DefinePropertyReactive(float, Rotation2D)
-    DefinePropertyReactive(float, Distance2D)
+BeginUnit(Transform2D)
+    BeginComponent(Transform2D)
+    RegisterBase(Transform)
+    RegisterProperty(v2f, Position2D)
+    RegisterProperty(v2f, Scale2D)
+    RegisterProperty(float, Rotation2D)
+    RegisterProperty(float, Distance2D)
 EndComponent()
 
-DefineComponentPropertyReactive(Transform2D, v2f, Position2D)
-DefineComponentPropertyReactive(Transform2D, float, Rotation2D)
-DefineComponentPropertyReactive(Transform2D, v2f, Scale2D)
-DefineComponentPropertyReactive(Transform2D, float, Distance2D)
+RegisterProperty(v2f, Position2D)
+RegisterProperty(float, Rotation2D)
+RegisterProperty(v2f, Scale2D)
+RegisterProperty(float, Distance2D)
 
 static void UpdateLocalTransform(Entity entity) {
     auto t = GetPosition2D(entity);
@@ -45,21 +46,21 @@ static void UpdateLocalTransform(Entity entity) {
     SetLocalTransform(entity, m);
 }
 
-static void Onv2fChanged(Entity entity, v2f oldValue, v2f newValue) {
+LocalFunction(Onv2fChanged, void, Entity entity, v2f oldValue, v2f newValue) {
     if(memcmp(&oldValue, &newValue, sizeof(v2f)) != 0) {
         UpdateLocalTransform(entity);
     }
 }
 
-static void OnFloatChanged(Entity entity, float oldValue, float newValue) {
+LocalFunction(OnFloatChanged, void, Entity entity, float oldValue, float newValue) {
     if(oldValue != newValue) {
         UpdateLocalTransform(entity);
     }
 }
 
 DefineService(Transform2D)
-        Subscribe(Position2DChanged, Onv2fChanged)
-        Subscribe(Scale2DChanged, Onv2fChanged)
-        Subscribe(Rotation2DChanged, OnFloatChanged)
-        Subscribe(Distance2DChanged, OnFloatChanged)
+        RegisterSubscription(Position2DChanged, Onv2fChanged, 0)
+        RegisterSubscription(Scale2DChanged, Onv2fChanged, 0)
+        RegisterSubscription(Rotation2DChanged, OnFloatChanged, 0)
+        RegisterSubscription(Distance2DChanged, OnFloatChanged, 0)
 EndService()

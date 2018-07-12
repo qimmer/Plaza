@@ -43,6 +43,10 @@ bool CallNativeFunction(
     const void **argumentDataPtrs
 );
 
+u32 GetFunctionArguments(u32 functionIndex, u32 maxArguments, Type *argumentTypes);
+Type GetFunctionReturnTypeByIndex(u32 functionIndex);
+
 void __InitializeFunction();
+int __ArgStackOffset(int value);
 
 #endif

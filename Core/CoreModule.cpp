@@ -9,7 +9,7 @@
 #include <Core/Property.h>
 #include <Core/Event.h>
 #include <Core/Module.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Core/Debug.h>
 
 #include <malloc.h>
@@ -17,7 +17,7 @@
 void __InitializeBase() {
     __InitializeComponent();
     __InitializeProperty();
-    __InitializeHierarchy();
+    __InitializeNode();
     __InitializeEvent();
     __InitializeFunction();
 }
@@ -27,10 +27,10 @@ BeginModule(Core)
     RegisterUnit(Property)
     RegisterUnit(Function)
     RegisterUnit(Event)
-    RegisterUnit(Component)
     RegisterUnit(Entity)
+    RegisterUnit(Component)
     RegisterUnit(Module)
-    RegisterUnit(Hierarchy)
+    RegisterUnit(Node)
     RegisterUnit(Debug)
 EndModule()
 

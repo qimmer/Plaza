@@ -3,84 +3,64 @@
 //
 
 #include "JsonPersistance.h"
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Core/Types.h>
-#include <Core/Type.h>
-#include <Core/String.h>
-#include <Foundation/Persistance.h>
 #include <Foundation/Stream.h>
 #include <Foundation/PersistancePoint.h>
 #include <File/FileStream.h>
 #include <sstream>
 #include <cmath>
+#include <Core/Debug.h>
 
-#define RAPIDJSON_ASSERT(x) Assert(x)
+#define RAPIDJSON_ASSERT(x) Assert(0, x)
 
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
 
-#define DeclareGetSet(TYPE) typedef TYPE (* TYPE ## Getter)(Entity entity); typedef void(* TYPE ## Setter)(Entity entity, TYPE value);
+#include <EASTL/string.h>
+
+using namespace eastl;
 
 #define WriteIf(TYPE, JSONWRITEFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
-        writer.JSONWRITEFUNC(((TYPE ## Getter)GetPropertyGetter(property))(persistentEntity));\
+    if(type == TypeOf_ ## TYPE) {\
+        writer.JSONWRITEFUNC(*(TYPE*)valueData);\
     } else
 
 #define ReadIf(TYPE, JSONREADFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
-        ((TYPE ## Setter)GetPropertySetter(property))(persistentEntity, reader.Get ## JSONREADFUNC ());\
+    if(type == TypeOf_ ## TYPE) {\
+        *(TYPE*)valueData = reader.Get ## JSONREADFUNC ();\
     }  else
 
-#define WriteReferencedIf(TYPE, JSONWRITEFUNC, CONVERTERFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
-        writer.JSONWRITEFUNC(CONVERTERFUNC(((TYPE ## Getter)GetPropertyGetter(property))(persistentEntity)));\
-    } else
-
-#define ReadReferencedIf(TYPE, JSONREADFUNC, CONVERTERFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
-        ((TYPE ## Setter)GetPropertySetter(property))(persistentEntity, CONVERTERFUNC(reader.Get ## JSONREADFUNC ()));\
-    } else
-
 #define ReadVec2If(TYPE, JSONREADFUNC)\
-    if(type == TypeOf_ ## TYPE () && reader.GetType() == rapidjson::kObjectType) {\
+    if(type == TypeOf_ ## TYPE && reader.GetType() == rapidjson::kObjectType) {\
         TYPE v;\
         v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
         v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
-        ((TYPE ## Setter)GetPropertySetter(property))(persistentEntity, v);\
+        *(TYPE*)valueData = v;\
     } else
 
 #define ReadVec3If(TYPE, JSONREADFUNC)\
-    if(type == TypeOf_ ## TYPE () && reader.GetType() == rapidjson::kObjectType) {\
+    if(type == TypeOf_ ## TYPE && reader.GetType() == rapidjson::kObjectType) {\
         TYPE v;\
         v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
         v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
         v.z = reader.GetObject()["z"].Get ## JSONREADFUNC ();\
-        ((TYPE ## Setter)GetPropertySetter(property))(persistentEntity, v);\
+        *(TYPE*)valueData = v;\
     } else
 
 #define ReadVec4If(TYPE, JSONREADFUNC)\
-    if(type == TypeOf_ ## TYPE () && reader.GetType() == rapidjson::kObjectType) {\
+    if(type == TypeOf_ ## TYPE && reader.GetType() == rapidjson::kObjectType) {\
         TYPE v;\
         v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
         v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
         v.z = reader.GetObject()["z"].Get ## JSONREADFUNC ();\
         v.w = reader.GetObject()["w"].Get ## JSONREADFUNC ();\
-        ((TYPE ## Setter)GetPropertySetter(property))(persistentEntity, v);\
-    } else
-
-#define ReadMat4x4If(TYPE)\
-    if(type == TypeOf_ ## TYPE () && reader.GetType() == rapidjson::kArrayType) {\
-        TYPE v;\
-        auto arr = reader.GetArray();\
-        for(auto i = 0; i < 16; ++i) {\
-            ((float*)&v.x.x)[i] = arr[i].GetDouble();\
-        }\
-        ((TYPE ## Setter)GetPropertySetter(property))(persistentEntity, v);\
+        *(TYPE*)valueData = v;\
     } else
 
 #define WriteVec2If(TYPE, JSONWRITEFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
-        auto v = ((TYPE ## Getter)GetPropertyGetter(property))(persistentEntity);\
+    if(type == TypeOf_ ## TYPE) {\
+        auto v = *(TYPE*)valueData;\
         writer.StartObject();\
         writer.String("x");\
         writer.JSONWRITEFUNC(v.x);\
@@ -90,8 +70,8 @@
     } else
 
 #define WriteVec3If(TYPE, JSONWRITEFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
-        auto v = ((TYPE ## Getter)GetPropertyGetter(property))(persistentEntity);\
+    if(type == TypeOf_ ## TYPE) {\
+        auto v = *(TYPE*)valueData;\
         writer.StartObject();\
         writer.String("x");\
         writer.JSONWRITEFUNC(v.x);\
@@ -103,8 +83,8 @@
     } else
 
 #define WriteVec4If(TYPE, JSONWRITEFUNC)\
-    if(type == TypeOf_ ## TYPE ()) {\
-        auto v = ((TYPE ## Getter)GetPropertyGetter(property))(persistentEntity);\
+    if(type == TypeOf_ ## TYPE) {\
+        auto v = *(TYPE*)valueData;\
         writer.StartObject();\
         writer.String("x");\
         writer.JSONWRITEFUNC(v.x);\
@@ -117,44 +97,8 @@
         writer.EndObject();\
     } else
 
-#define WriteMat4x4If(TYPE)\
-    if(type == TypeOf_ ## TYPE ()) {\
-        auto v = ((TYPE ## Getter)GetPropertyGetter(property))(persistentEntity);\
-        writer.StartArray();\
-        for(auto i = 0; i < 16; ++i) {\
-            auto val = ((float*)&v.x.x)[i];\
-            if(!std::isfinite(val)) val = 0.0f;\
-            writer.Double(val);\
-        }\
-        writer.EndArray();\
-    } else
-
-DeclareGetSet(u8)
-DeclareGetSet(u16)
-DeclareGetSet(u32)
-DeclareGetSet(u64)
-DeclareGetSet(s8)
-DeclareGetSet(s16)
-DeclareGetSet(s32)
-DeclareGetSet(s64)
-DeclareGetSet(float)
-DeclareGetSet(double)
-DeclareGetSet(bool)
-DeclareGetSet(v2f)
-DeclareGetSet(v3f)
-DeclareGetSet(v4f)
-DeclareGetSet(v2i)
-DeclareGetSet(v3i)
-DeclareGetSet(v4i)
-DeclareGetSet(m3x3f)
-DeclareGetSet(m4x4f)
-DeclareGetSet(rgba8)
-DeclareGetSet(Entity)
-DeclareGetSet(Type)
-DeclareGetSet(StringRef)
-
 static StringRef TryGetEntityPath(Entity entity) {
-    if(!IsEntityValid(entity) || !HasHierarchy(entity)) {
+    if(!IsEntityValid(entity) || !HasComponent(entity, ComponentOf_Node())) {
         return "";
     }
 
@@ -169,30 +113,27 @@ static Entity TryCreateEntityFromPath(StringRef path) {
     return CreateEntityFromPath(path);
 }
 
-static bool SerializeJson(Entity persistancePoint) {
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-
+static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer) {
     writer.StartObject();
-    for_entity(persistentEntity, Persistance) {
-        if(GetEntityPersistancePoint(persistentEntity) != persistancePoint) continue;
-
-        writer.String(GetEntityPath(persistentEntity));
+    for_children(child, parent) {
+        writer.String(GetName(child));
         writer.StartObject();
 
-        for(auto property = GetNextProperty(0); IsPropertyValid(property); property = GetNextProperty(property)) {
-            auto componentType = GetPropertyComponent(property);
-            if(!HasComponent(persistentEntity, componentType)) {
+        for_entity(property, propertyData, Property) {
+            auto component = GetPropertyComponent(property);
+
+            if(!HasComponent(child, component)
+               || (parent == root && (component == ComponentOf_PersistancePoint()))) {
                 continue;
             }
 
-            if(strcmp(GetPropertyName(property), "Name") == 0 ||
-                strcmp(GetPropertyName(property), "EntityPersistancePoint") == 0 ||
-                strcmp(GetPropertyName(property), "Parent") == 0) continue;
+            if(property == PropertyOf_Name() || property == PropertyOf_Parent()) continue;
 
+            char valueData[64];
             auto type = GetPropertyType(property);
+            GetPropertyValue(property, parent, valueData);
 
-            writer.String(GetPropertyName(property));
+            writer.String(GetName(property));
 
             WriteIf(u8, Uint)
             WriteIf(u16, Uint)
@@ -206,8 +147,7 @@ static bool SerializeJson(Entity persistancePoint) {
             WriteIf(float, Double)
             WriteIf(double, Double)
             WriteIf(bool, Bool)
-            WriteReferencedIf(Entity, String, TryGetEntityPath)
-            WriteReferencedIf(Type, String, GetTypeName)
+            WriteIf(Type, Uint)
             WriteVec2If(v2f, Double)
             WriteVec3If(v3f, Double)
             WriteVec4If(v4f, Double)
@@ -215,9 +155,19 @@ static bool SerializeJson(Entity persistancePoint) {
             WriteVec3If(v3i, Int)
             WriteVec4If(v4i, Int)
             WriteVec4If(rgba8, Int)
-            WriteMat4x4If(m4x4f)
-            {
-                Log(LogChannel_Core, LogSeverity_Error, "Unsupported type when serializing property '%s': %s", GetPropertyName(property), GetTypeName(type));
+
+            // Special Case, as entity can be an object if part of this tree, or a path string as reference to outside this tree
+            if(type == TypeOf_Entity) {
+                auto entity = *(Entity*)valueData;
+                if(HasComponent(entity, ComponentOf_PersistancePoint())) {
+                    writer.String(GetStreamPath(entity));
+                } else if (!IsEntityDecendant(entity, root)) {
+                    writer.String(GetEntityPath(entity));
+                } else {
+                    SerializeNode(entity, root, writer);
+                }
+            } else {
+                Log(parent, LogSeverity_Error, "Unsupported type when serializing property '%s': %s", GetName(property), GetTypeName(type));
                 writer.Null();
             }
         }
@@ -225,11 +175,9 @@ static bool SerializeJson(Entity persistancePoint) {
         writer.String("$components");
 
         std::stringstream componentsStream;
-        for(auto type = GetNextType(0); IsTypeValid(type); type = GetNextType(type)) {
-            if(!IsComponent(type)) continue;
-
-            if(HasComponent(persistentEntity, type)) {
-                componentsStream << GetTypeName(type) << ";";
+        for_entity(component, componentData, Component) {
+            if(HasComponent(parent, component)) {
+                componentsStream << GetName(component) << ";";
             }
         }
         auto components = componentsStream.str();
@@ -239,122 +187,119 @@ static bool SerializeJson(Entity persistancePoint) {
         writer.EndObject();
     }
     writer.EndObject();
+}
+
+static bool DeserializeNode(Entity parent, Entity root, rapidjson::Value& value) {
+    string componentList;
+
+    for (auto propertyIterator = value.MemberBegin();
+         propertyIterator != value.MemberEnd(); ++propertyIterator)
+    {
+        auto propertyName = propertyIterator->name.GetString();
+
+        if(strcmp(propertyName, "$components") == 0 && propertyIterator->value.IsString()) {
+            componentList = propertyIterator->value.GetString();
+            continue;
+        }
+
+        for_entity(property, propertyData, Property) {
+            if(strcmp(propertyName, GetName(property)) == 0) break;
+        }
+
+        if(!IsEntityValid(property)) {
+            Log(root, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetStreamPath(root), propertyName);
+            continue;
+        }
+
+        auto& reader = propertyIterator->value;
+        auto type = GetPropertyType(property);
+        auto jsonType =propertyIterator->value.GetType();
+        auto typeName = GetTypeName(type);
+        char valueData[64];
+
+        ReadIf(u8, Uint)
+        ReadIf(u16, Uint)
+        ReadIf(u32, Uint)
+        ReadIf(u64, Uint64)
+        ReadIf(s8, Int)
+        ReadIf(s16, Int)
+        ReadIf(s32, Int)
+        ReadIf(s64, Int64)
+        ReadIf(StringRef, String)
+        ReadIf(float, Double)
+        ReadIf(double, Double)
+        ReadIf(bool, Bool)
+        ReadIf(Type, Uint)
+        ReadVec2If(v2f, Double)
+        ReadVec3If(v3f, Double)
+        ReadVec4If(v4f, Double)
+        ReadVec2If(v2i, Int)
+        ReadVec3If(v3i, Int)
+        ReadVec4If(v4i, Int)
+        ReadVec4If(rgba8, Int)
+        {
+            Log(root, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetName(property), typeName);
+        }
+
+        SetPropertyValue(property, parent, valueData);
+    }
+    string element;
+    size_t start = 0;
+    while(start < componentList.length()) {
+        auto nextSep = componentList.find(';', start);
+        if(nextSep == string::npos) nextSep = componentList.length();
+        auto componentName = componentList.substr(start, nextSep - start);
+        start = nextSep + 1;
+
+        for_entity(component, componentData, Component) {
+            if(strcmp(componentName.c_str(), GetName(component)) == 0) break;
+        }
+
+        if(!IsEntityValid(component)) {
+            Log(root, LogSeverity_Warning, "Unknown component in JSON: %s", componentName.c_str());
+        } else {
+            AddComponent(parent, component);
+        }
+    }
+}
+
+static bool Serialize(Entity persistancePoint) {
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+
+    auto result = SerializeNode(persistancePoint, persistancePoint, writer);
 
     writer.Flush();
 
-    Assert(StreamOpen(persistancePoint, StreamMode_Write));
-    Assert(StreamWrite(persistancePoint, buffer.GetLength(), buffer.GetString()));
+    Assert(persistancePoint, StreamOpen(persistancePoint, StreamMode_Write));
+    Assert(persistancePoint, StreamWrite(persistancePoint, buffer.GetLength(), buffer.GetString()));
     StreamClose(persistancePoint);
 
-    return true;
+    return result;
 }
 
-static bool DeserializeJson(Entity persistancePoint) {
-    Assert(StreamOpen(persistancePoint, StreamMode_Read));
-    Assert(StreamSeek(persistancePoint, StreamSeek_End));
+static bool Deserialize(Entity persistancePoint) {
+    Assert(persistancePoint, StreamOpen(persistancePoint, StreamMode_Read));
+    Assert(persistancePoint, StreamSeek(persistancePoint, StreamSeek_End));
     auto size = StreamTell(persistancePoint);
     char *data = (char*)malloc(size + 1);
-	Assert(data);
-    Assert(StreamSeek(persistancePoint, 0));
-    Assert(StreamRead(persistancePoint, size, data));
+	Assert(persistancePoint, data);
+    Assert(persistancePoint, StreamSeek(persistancePoint, 0));
+    Assert(persistancePoint, StreamRead(persistancePoint, size, data));
     StreamClose(persistancePoint);
     data[size] = '\0';
 
     rapidjson::Document document;
     document.Parse(data, size);
 
-    for (auto entityIterator = document.MemberBegin();
-         entityIterator != document.MemberEnd(); ++entityIterator)
-    {
-        auto entityPath = entityIterator->name.GetString();
-        auto persistentEntity = CreateEntityFromPath(entityPath);
-        SetEntityPersistancePoint(persistentEntity, persistancePoint);
-
-        String componentList;
-
-        for (auto propertyIterator = entityIterator->value.MemberBegin();
-             propertyIterator != entityIterator->value.MemberEnd(); ++propertyIterator) {
-            auto propertyName = propertyIterator->name.GetString();
-
-            if(strcmp(propertyName, "$components") == 0 && propertyIterator->value.IsString()) {
-                componentList = propertyIterator->value.GetString();
-                continue;
-            }
-
-            auto property = FindPropertyByName(propertyName);
-            if(!IsPropertyValid(property)) {
-                Log(LogChannel_Core, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetStreamPath(persistentEntity), propertyName);
-                continue;
-            }
-            auto& reader = propertyIterator->value;
-            auto type = GetPropertyType(property);
-            auto jsonType =propertyIterator->value.GetType();
-            auto typeName = GetTypeName(type);
-
-            ReadIf(u8, Uint)
-            ReadIf(u16, Uint)
-            ReadIf(u32, Uint)
-            ReadIf(u64, Uint64)
-            ReadIf(s8, Int)
-            ReadIf(s16, Int)
-            ReadIf(s32, Int)
-            ReadIf(s64, Int64)
-            ReadIf(StringRef, String)
-            ReadIf(float, Double)
-            ReadIf(double, Double)
-            ReadIf(bool, Bool)
-            ReadReferencedIf(Entity, String, TryCreateEntityFromPath)
-            ReadReferencedIf(Type, String, FindTypeByName)
-            ReadVec2If(v2f, Double)
-            ReadVec3If(v3f, Double)
-            ReadVec4If(v4f, Double)
-            ReadVec2If(v2i, Int)
-            ReadVec3If(v3i, Int)
-            ReadVec4If(v4i, Int)
-            ReadVec4If(rgba8, Int)
-            ReadMat4x4If(m4x4f)
-            {
-                Log(LogChannel_Core, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetPropertyName(property), GetTypeName(property));
-            }
-        }
-
-        String element;
-        size_t start = 0;
-        while(start < componentList.length()) {
-            auto nextSep = componentList.find(';', start);
-            if(nextSep == String::npos) nextSep = componentList.length();
-            auto componentName = componentList.substr(start, nextSep - start);
-            start = nextSep + 1;
-
-            auto componentType = FindTypeByName(componentName.c_str());
-            if(!IsTypeValid(componentType)) {
-                Log(LogChannel_Core, LogSeverity_Warning, "Unknown component type in JSON: %s", componentName.c_str());
-            } else {
-                AddComponent(persistentEntity, componentType);
-            }
-        }
-    }
+    auto result = DeserializeNode(persistancePoint, persistancePoint, document);
 
     free(data);
 
-    return true;
+    return result;
 }
 
-static void OnServiceStart(Service service) {
-    Serializer s {
-        SerializeJson,
-        DeserializeJson
-    };
-    AddFileType(".json", "application/json");
-    AddSerializer("application/json", &s);
-}
-
-static void OnServiceStop(Service service){
-    RemoveFileType(".json");
-    RemoveSerializer("application/json");
-}
-
-DefineService(JsonPersistance)
-    Subscribe(JsonPersistanceStarted, OnServiceStart)
-    Subscribe(JsonPersistanceStopped, OnServiceStop)
-EndService()
+BeginUnit(JsonPersistance)
+    RegisterSerializer(JsonSerializer, "application/json")
+    RegisterFileType("json", "application/json")
+EndUnit()

@@ -5,21 +5,22 @@
 #ifndef PLAZA_TEXTURE_H
 #define PLAZA_TEXTURE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 DeclareEnum(TextureFormat)
 DeclareEnum(TextureFlag)
-DeclareComponent(Texture)
+Unit(Texture)
+    Component(Texture)
 
 typedef void(*TextureReadbackHandler)(Entity sourceTexture, Entity blitTexture, const u8* readBackData);
 
-DeclareEvent(TextureReadbackInitiated, Entity texture, TextureReadbackHandler handler)
+Event(TextureReadbackInitiated, TextureReadbackHandler handler)
 
-DeclareComponentPropertyReactive(Texture, u16, TextureFormat)
-DeclareComponentPropertyReactive(Texture, u32, TextureFlag)
-DeclareComponentPropertyReactive(Texture, bool, TextureDynamic)
-DeclareComponentPropertyReactive(Texture, u8, TextureMipLevels)
-DeclareComponentPropertyReactive(Texture, Entity, TextureReadbackTarget)
+        Property(u16, TextureFormat)
+        Property(u32, TextureFlag)
+        Property(bool, TextureDynamic)
+        Property(u8, TextureMipLevels)
+        Property(Entity, TextureReadbackTarget)
 
 void TextureReadback(Entity texture, TextureReadbackHandler handler);
 

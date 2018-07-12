@@ -5,13 +5,13 @@
 #ifndef PLAZA_VOXELCHUNKSPAWNER_H
 #define PLAZA_VOXELCHUNKSPAWNER_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(VoxelChunkSpawner)
-DeclareComponentPropertyReactive(VoxelChunkSpawner, Entity, VoxelChunkSpawnerCenterEntity)
-DeclareComponentPropertyReactive(VoxelChunkSpawner, Entity, VoxelChunkSpawnerTemplateEntity)
-DeclareComponentPropertyReactive(VoxelChunkSpawner, u8, VoxelChunkSpawnerRadius)
+Unit(VoxelChunkSpawner)
+    Component(VoxelChunkSpawner)
+        Property(Entity, VoxelChunkSpawnerCenterEntity)
+        Property(Entity, VoxelChunkSpawnerTemplateEntity)
+        Property(u8, VoxelChunkSpawnerRadius)
 
-DeclareService(VoxelChunkSpawner)
 
 #endif //PLAZA_VOXELCHUNKSPAWNER_H

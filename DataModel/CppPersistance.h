@@ -5,9 +5,8 @@
 #ifndef PLAZA_CPPPERSISTANCE_H
 #define PLAZA_CPPPERSISTANCE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(CppPersistance)
 
 void GenerateModuleSources(Entity moduleDefinition);
 

@@ -2,32 +2,24 @@
 // Created by Kim Johannsen on 28-02-2018.
 //
 
-#include <Core/String.h>
 #include "VirtualPath.h"
+#include <cstring>
+#include <cstdio>
 
 struct VirtualPath {
-    String VirtualPathTrigger, VirtualPathDestination;
+    char VirtualPathTrigger[32];
+    char VirtualPathDestination[512 - 32];
 };
 
-DefineComponent(VirtualPath)
-    DefinePropertyReactive(StringRef, VirtualPathTrigger)
-    DefinePropertyReactive(StringRef, VirtualPathDestination)
-EndComponent()
-
-
-DefineComponentPropertyReactive(VirtualPath, StringRef, VirtualPathTrigger)
-DefineComponentPropertyReactive(VirtualPath, StringRef, VirtualPathDestination)
-
-API_EXPORT void ResolveVirtualPath(StringRef virtualPath, char *resolvedPath) {
+API_EXPORT void ResolveVirtualPath(StringRef virtualPath, u32 bufferLength, char *resolvedPath) {
     auto len = strlen(virtualPath);
-    for_entity(entity, VirtualPath) {
-        auto data = GetVirtualPath(entity);
-        auto triggerLen = data->VirtualPathTrigger.length();
+    for_entity(entity, data, VirtualPath) {
+        auto triggerLen = strlen(data->VirtualPathTrigger);
 
         if(len < triggerLen) continue;
         if(virtualPath[0] == data->VirtualPathTrigger[0] && virtualPath[triggerLen - 1] == data->VirtualPathTrigger[triggerLen - 1]) {
-            if(memcmp(data->VirtualPathTrigger.c_str(), virtualPath, triggerLen) == 0) {
-                snprintf(resolvedPath, PATH_MAX, "%s%s", data->VirtualPathDestination.c_str(), &virtualPath[triggerLen]);
+            if(memcmp(data->VirtualPathTrigger, virtualPath, triggerLen) == 0) {
+                snprintf(resolvedPath, bufferLength, "%s%s", data->VirtualPathDestination, &virtualPath[triggerLen]);
                 return;
             }
         }
@@ -35,3 +27,10 @@ API_EXPORT void ResolveVirtualPath(StringRef virtualPath, char *resolvedPath) {
 
     strcpy(resolvedPath, virtualPath);
 }
+
+BeginUnit(VirtualPath)
+    BeginComponent(VirtualPath)
+        RegisterProperty(StringRef, VirtualPathTrigger)
+        RegisterProperty(StringRef, VirtualPathDestination)
+    EndComponent()
+EndUnit()

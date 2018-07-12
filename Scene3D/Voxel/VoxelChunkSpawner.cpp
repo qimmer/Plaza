@@ -9,15 +9,16 @@ struct VoxelChunkSpawner {
     u8 VoxelChunkSpawnerRadius;
 };
 
-DefineComponent(VoxelChunkSpawner)
-    DefineProperty(Entity, VoxelChunkSpawnerCenterEntity)
-    DefineProperty(Entity, VoxelChunkSpawnerTemplateEntity)
-    DefineProperty(u8, VoxelChunkSpawnerRadius)
+BeginUnit(VoxelChunkSpawner)
+    BeginComponent(VoxelChunkSpawner)
+    RegisterProperty(Entity, VoxelChunkSpawnerCenterEntity))
+    RegisterProperty(Entity, VoxelChunkSpawnerTemplateEntity))
+    RegisterProperty(u8, VoxelChunkSpawnerRadius))
 EndComponent()
 
-DefineComponentPropertyReactive(VoxelChunkSpawner, Entity, VoxelChunkSpawnerCenterEntity)
-DefineComponentPropertyReactive(VoxelChunkSpawner, Entity, VoxelChunkSpawnerTemplateEntity)
-DefineComponentPropertyReactive(VoxelChunkSpawner, u8, VoxelChunkSpawnerRadius)
+RegisterProperty(Entity, VoxelChunkSpawnerCenterEntity)
+RegisterProperty(Entity, VoxelChunkSpawnerTemplateEntity)
+RegisterProperty(u8, VoxelChunkSpawnerRadius)
 
 DefineService(VoxelChunkSpawner)
 

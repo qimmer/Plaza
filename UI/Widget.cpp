@@ -17,8 +17,8 @@
 #include <Rendering/Texture2D.h>
 #include "Widget.h"
 
-DefineEvent(WidgetMouseDown)
-DefineEvent(WidgetMouseUp)
+RegisterEvent(WidgetMouseDown)
+RegisterEvent(WidgetMouseUp)
 
 DefineEnum(WidgetChildLayout, false)
     DefineFlag(WidgetChildLayout_Horizontal)
@@ -50,22 +50,23 @@ struct Widget {
     Entity WidgetTexture, WidgetTextureState, WidgetSizeState, WidgetBorderSizeState;
 };
 
-DefineComponent(Widget)
-    Dependency(MeshInstance)
-    DefineProperty(v2i, WidgetMinimumSize)
-    DefineProperty(v2i, WidgetSize)
-    DefineProperty(v2f, WidgetWeight)
-    DefineProperty(Entity, WidgetTexture)
+BeginUnit(Widget)
+    BeginComponent(Widget)
+    RegisterBase(MeshInstance)
+    RegisterProperty(v2i, WidgetMinimumSize))
+    RegisterProperty(v2i, WidgetSize))
+    RegisterProperty(v2f, WidgetWeight))
+    RegisterProperty(Entity, WidgetTexture))
     DefinePropertyEnum(u8, WidgetChildLayout, WidgetChildLayout)
     DefinePropertyEnum(u8, WidgetSizing, WidgetSizing)
 EndComponent()
 
-DefineComponentPropertyReactive(Widget, v2i, WidgetSize)
-DefineComponentPropertyReactive(Widget, v2i, WidgetMinimumSize)
-DefineComponentPropertyReactive(Widget, v2f, WidgetWeight)
-DefineComponentPropertyReactive(Widget, u8, WidgetChildLayout)
-DefineComponentPropertyReactive(Widget, u8, WidgetSizing)
-DefineComponentPropertyReactive(Widget, Entity, WidgetTexture)
+RegisterProperty(v2i, WidgetSize)
+RegisterProperty(v2i, WidgetMinimumSize)
+RegisterProperty(v2f, WidgetWeight)
+RegisterProperty(u8, WidgetChildLayout)
+RegisterProperty(u8, WidgetSizing)
+RegisterProperty(Entity, WidgetTexture)
 DefineComponentChild(Widget, UniformState, WidgetTextureState)
 DefineComponentChild(Widget, UniformState, WidgetSizeState)
 DefineComponentChild(Widget, UniformState, WidgetBorderSizeState)
@@ -75,7 +76,7 @@ static void UpdateChildrenLayout(Entity parentWidget) {
 
     v2f weightSum = {0.0f, 0.0f};
     for_children(childWidget, parentWidget) {
-        if(!HasWidget(childWidget)) continue;
+        if(!HasComponent(childWidget, ComponentOf_Widget())) continue;
 
         auto childData = GetWidget(childWidget);
         weightSum.x += childData->WidgetWeight.x;
@@ -84,7 +85,7 @@ static void UpdateChildrenLayout(Entity parentWidget) {
 
     v2i position = {0, 0};
     for_children(childWidget, parentWidget) {
-        if(!HasWidget(childWidget)) continue;
+        if(!HasComponent(childWidget, ComponentOf_Widget())) continue;
 
         auto childData = GetWidget(childWidget);
 
@@ -113,11 +114,11 @@ static void UpdateChildrenLayout(Entity parentWidget) {
     }
 }
 
-static void OnWidgetSizeChanged(Entity widget, v2i oldSize, v2i newSize) {
+LocalFunction(OnWidgetSizeChanged, void, Entity widget, v2i oldSize, v2i newSize) {
     UpdateChildrenLayout(widget);
 }
 
-static void OnWidgetAdded(Entity widget) {
+LocalFunction(OnWidgetAdded, void, Entity widget) {
     SetMeshInstanceMaterial(widget, WidgetMaterial);
     SetMeshInstanceMesh(widget, WidgetMesh);
 
@@ -216,8 +217,8 @@ static void CreateWidgetMaterial(Entity material) {
 }
 
 DefineService(Widget)
-    Subscribe(WidgetSizeChanged, OnWidgetSizeChanged)
-    Subscribe(WidgetAdded, OnWidgetAdded)
+    RegisterSubscription(WidgetSizeChanged, OnWidgetSizeChanged, 0)
+    RegisterSubscription(WidgetAdded, OnWidgetAdded, 0)
 
     ServiceEntity(WidgetVertexDeclaration, CreateWidgetVertexDeclaration)
     ServiceEntity(WidgetMesh, CreateWidgetMesh)

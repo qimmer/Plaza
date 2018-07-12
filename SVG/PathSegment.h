@@ -5,11 +5,12 @@
 #ifndef PLAZA_PATHSEGMENT_H
 #define PLAZA_PATHSEGMENT_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(PathSegment)
-DeclareComponentPropertyReactive(PathSegment, Entity, PathSegmentStrokeBrush)
-DeclareComponentPropertyReactive(PathSegment, Entity, PathSegmentFillBrush)
-DeclareComponentPropertyReactive(PathSegment, float, PathSegmentStrokeWidth)
+Unit(PathSegment)
+    Component(PathSegment)
+        Property(Entity, PathSegmentStrokeBrush)
+        Property(Entity, PathSegmentFillBrush)
+        Property(float, PathSegmentStrokeWidth)
 
 #endif //PLAZA_PATHSEGMENT_H

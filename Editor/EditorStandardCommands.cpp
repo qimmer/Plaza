@@ -48,9 +48,9 @@ Entity GetToggleEditorCommand() {
     return ToggleEditor;
 }
 
-static void OnServiceStart(Service service) {
-    Entity editorRoot = CreateHierarchy(0, ".editor");
-    Entity root = CreateHierarchy(editorRoot, "StandardCommands");
+LocalFunction(OnServiceStart, void, Service service) {
+    Entity editorRoot = CreateNode(0, ".editor");
+    Entity root = CreateNode(editorRoot, "StandardCommands");
     
     NewCommand = CreateInputState(root, "New");
     SetInputStateKey(NewCommand, KEY_N);
@@ -85,5 +85,5 @@ static void OnServiceStart(Service service) {
 }
 
 DefineService(EditorStandardCommands)
-        Subscribe(EditorStandardCommandsStarted, OnServiceStart)
+        RegisterSubscription(EditorStandardCommandsStarted, OnServiceStart, 0)
 EndService()

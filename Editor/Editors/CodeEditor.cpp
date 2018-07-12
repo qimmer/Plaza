@@ -32,9 +32,9 @@ static void SaveCode(Entity codeEditor) {
     StreamClose(data->CodeEditorStream);
 }
 
-static void OnCommandReleased(Entity command) {
+LocalFunction(OnCommandReleased, void, Entity command) {
     if(command == GetSaveCommand()) {
-        for_entity(codeEditor, CodeEditor) {
+        for_entity(codeEditor, data, CodeEditor) {
             auto data = GetCodeEditor(codeEditor);
 
             if(!data->Invalidated || !data->Active) continue;
@@ -55,7 +55,7 @@ void EditCode(Entity stream) {
 static void Draw(Entity context) {
     static String buffer;
 
-    for_entity(codeEditor, CodeEditor) {
+    for_entity(codeEditor, data, CodeEditor) {
         auto data = GetCodeEditor(codeEditor);
         auto stream = GetCodeEditorStream(codeEditor);
 
@@ -84,21 +84,21 @@ static void Draw(Entity context) {
     }
 }
 
-static void OnStreamChanged(Entity stream) {
-    for_entity(codeEditor, CodeEditor) {
+LocalFunction(OnStreamChanged, void, Entity stream) {
+    for_entity(codeEditor, data, CodeEditor) {
         if(GetCodeEditorStream(codeEditor) == stream) {
-            FireNativeEvent(CodeEditorChanged, codeEditor);
+            FireEvent(EventOf_CodeEditorChanged(), codeEditor);
         }
     }
 }
 
-static void OnRemoved(Entity codeEditor) {
+LocalFunction(OnRemoved, void, Entity codeEditor) {
     if(GetCodeEditor(codeEditor)->Invalidated) {
 
     }
 }
 
-static void OnCodeEditorChanged(Entity sceneEditor) {
+LocalFunction(OnCodeEditorChanged, void, Entity sceneEditor) {
     auto data = GetCodeEditor(sceneEditor);
 
     if(IsEntityValid(data->CodeEditorStream) && HasStream(data->CodeEditorStream)) {
@@ -135,7 +135,7 @@ static void OnCodeEditorChanged(Entity sceneEditor) {
     }
 }
 
-static void OnServiceStart(Service service) {
+LocalFunction(OnServiceStart, void, Service service) {
     ImGuiCe::CodeEditor::ImFonts[0] =
             ImGuiCe::CodeEditor::ImFonts[1] =
             ImGuiCe::CodeEditor::ImFonts[2] =
@@ -143,20 +143,21 @@ static void OnServiceStart(Service service) {
             GetMonospaceFont();
 }
 
-DefineComponent(CodeEditor)
-        DefinePropertyReactive(Entity, CodeEditorStream)
+BeginUnit(CodeEditor)
+    BeginComponent(CodeEditor)
+        RegisterProperty(Entity, CodeEditorStream)
         DefineExtensionMethod(Stream, void, EditCode, Entity entity)
 EndComponent()
 
-DefineComponentPropertyReactive(CodeEditor, Entity, CodeEditorStream)
+RegisterProperty(Entity, CodeEditorStream)
 
 DefineService(CodeEditor)
     ServiceDependency(EditorStyle)
-    Subscribe(CommandReleased, OnCommandReleased)
-    Subscribe(ImGuiDraw, Draw)
-    Subscribe(CodeEditorRemoved, OnRemoved)
-        Subscribe(CodeEditorChanged, OnCodeEditorChanged)
-        Subscribe(StreamChanged, OnStreamChanged)
-        Subscribe(StreamContentChanged, OnStreamChanged)
-    Subscribe(CodeEditorStarted, OnServiceStart)
+    RegisterSubscription(CommandReleased, OnCommandReleased, 0)
+    RegisterSubscription(ImGuiDraw, Draw, 0)
+    RegisterSubscription(CodeEditorRemoved, OnRemoved, 0)
+        RegisterSubscription(CodeEditorChanged, OnCodeEditorChanged, 0)
+        RegisterSubscription(StreamChanged, OnStreamChanged, 0)
+        RegisterSubscription(StreamContentChanged, OnStreamChanged, 0)
+    RegisterSubscription(CodeEditorStarted, OnServiceStart, 0)
 EndService()

@@ -5,12 +5,13 @@
 #ifndef PLAZA_UNIFORM_H
 #define PLAZA_UNIFORM_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(Uniform)
+Unit(Uniform)
+    Component(Uniform)
 
-DeclareComponentPropertyReactive(Uniform, StringRef, UniformName)
-DeclareComponentPropertyReactive(Uniform, u32, UniformArrayCount)
-DeclareComponentPropertyReactive(Uniform, Type, UniformType)
+        Property(StringRef, UniformName)
+        Property(u32, UniformArrayCount)
+        Property(Type, UniformType)
 
 #endif //PLAZA_UNIFORM_H

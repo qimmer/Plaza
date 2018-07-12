@@ -7,7 +7,7 @@
 #include "SQLPersistancePoint.h"
 
 
-DefineModule(SQL)
+BeginModule(SQL)
     ModuleDependency(Foundation)
 
     ModuleService(SQLPersistancePoint)

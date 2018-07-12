@@ -6,7 +6,7 @@
 #include <Core/Entity.h>
 #include <File/Folder.h>
 #include <ImGui/ImGuiControls.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <ImGui/ImGuiRenderer.h>
 #include <Core/Module.h>
 #include <Core/Types.h>
@@ -73,8 +73,9 @@ struct PropertyEditor {
 };
 
 
-DefineComponent(PropertyEditor)
-    Dependency(EditorView)
+BeginUnit(PropertyEditor)
+    BeginComponent(PropertyEditor)
+    RegisterBase(EditorView)
 EndComponent()
 
 static Lookup<Type, bool> SectionOpened;
@@ -208,7 +209,7 @@ static void DrawEntity(Property property) {
     char id[512];
 
     if(IsEntityValid(value)) {
-        if(HasHierarchy(value)) {
+        if(HasComponent(value, ComponentOf_Node())) {
             snprintf(id, 512, "%s", GetEntityPath(value));
         } else {
             snprintf(id, 512, "Entity_%u", GetHandleIndex(value));
@@ -415,10 +416,10 @@ void ImGui::ComponentContextMenu(Type componentType) {
     }
 }
 
-static void OnPropertyEditorAdded(Entity entity) {
+LocalFunction(OnPropertyEditorAdded, void, Entity entity) {
     SetEditorViewDrawFunction(entity, Draw);
 }
 
 DefineService(PropertyEditor)
-        Subscribe(PropertyEditorAdded, OnPropertyEditorAdded)
+        RegisterSubscription(PropertyEditorAdded, OnPropertyEditorAdded, 0)
 EndService()

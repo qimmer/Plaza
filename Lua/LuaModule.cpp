@@ -6,7 +6,7 @@
 #include "LuaScript.h"
 #include "LuaBinding.h"
 
-DefineModule(Lua)
+BeginModule(Lua)
     ModuleType(LuaScript)
 
     ModuleService(LuaScript)

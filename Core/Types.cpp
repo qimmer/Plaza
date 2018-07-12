@@ -5,8 +5,8 @@
 #include <Core/Types.h>
 #include "Debug.h"
 
-API_EXPORT u8 GetTypeSize(Type type) {
-    static u8 typeSizes[] = {
+API_EXPORT u32 GetTypeSize(Type type) {
+    static u32 typeSizes[] = {
         0,
 
         0,
@@ -38,7 +38,9 @@ API_EXPORT u8 GetTypeSize(Type type) {
         sizeof(rgb8),
 
         sizeof(rgba32),
-        sizeof(rgb32)
+        sizeof(rgb32),
+
+        sizeof(Variant)
     };
 
     Assert(0, type < TypeOf_MAX);
@@ -46,7 +48,7 @@ API_EXPORT u8 GetTypeSize(Type type) {
     return typeSizes[type];
 }
 
-StringRef GetTypeName(Type type) {
+API_EXPORT StringRef GetTypeName(Type type) {
     static StringRef typeNames[] = {
         "",
 
@@ -79,7 +81,9 @@ StringRef GetTypeName(Type type) {
         "rgb8",
 
         "rgba32",
-        "rgb32"
+        "rgb32",
+
+        "Variant"
     };
 
     Assert(0, type < TypeOf_MAX);

@@ -5,14 +5,14 @@
 #ifndef PLAZA_SUBTEXTURE2D_H
 #define PLAZA_SUBTEXTURE2D_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(SubTexture2D)
-DeclareService(SubTexture2D)
+Unit(SubTexture2D)
+    Component(SubTexture2D)
 
-DeclareComponentPropertyReactive(SubTexture2D, v2i, SubTexture2DOffset)
-DeclareComponentPropertyReactive(SubTexture2D, v2i, SubTexture2DSize)
-DeclareComponentPropertyReactive(SubTexture2D, Entity, SubTexture2DTexture)
+        Property(v2i, SubTexture2DOffset)
+        Property(v2i, SubTexture2DSize)
+        Property(Entity, SubTexture2DTexture)
 
 Entity GetSubTexture2DUvOffsetScaleUniform();
 

@@ -18,7 +18,7 @@
 #include <imgui/imgui.h>
 #include <cglm/cglm.h>
 #include <Rendering/VertexAttribute.h>
-#include <Core/Hierarchy.h>
+#include <Core/Node.h>
 #include <Rendering/Uniform.h>
 #include <Rendering/Batch.h>
 #include <File/FileStream.h>
@@ -53,10 +53,11 @@ Entity FontTexture = 0,
     FontMaterial = 0,
     ImGuiDataRoot = 0;
 
-DefineComponent(ImGuiRenderer)
+BeginUnit(ImGuiRenderer)
+    BeginComponent(ImGuiRenderer)
 EndComponent()
 
-DefineEvent(ImGuiDraw)
+RegisterEvent(ImGuiDraw)
 
 API_EXPORT void *GetDefaultImGuiContext() {
     return PrimaryImGuiContext;
@@ -112,7 +113,7 @@ API_EXPORT Entity GetImGuiPixelShader() {
 
 static void InitializeKeyMapping();
 
-static void OnContextAdded(Entity context) {
+LocalFunction(OnContextAdded, void, Entity context) {
     auto data = GetImGuiRenderer(context);
 
     auto oldContext = ImGui::GetCurrentContext();
@@ -136,7 +137,7 @@ static void OnContextAdded(Entity context) {
     ImGui::SetCurrentContext(oldContext);
 }
 
-static void OnContextRemoved(Entity context) {
+LocalFunction(OnContextRemoved, void, Entity context) {
     auto data = GetImGuiRenderer(context);
 
     for (auto batch : data->Batches) {
@@ -210,8 +211,8 @@ static void UpdateBatches(Entity context, Entity commandList) {
             SetBatchScissor(batch, {
                 std::max((int) pcmd.ClipRect.x, 0),
                 std::max((int) pcmd.ClipRect.y, 0),
-                std::min((int) pcmd.ClipRect.z, 65535) - clipX,
-                std::min((int) pcmd.ClipRect.w, 65535) - clipY});
+                Min((int) pcmd.ClipRect.z, 65535) - clipX,
+                Min((int) pcmd.ClipRect.w, 65535) - clipY});
 
             Entity material = GetEntityFromIndex((u32) (u64) pcmd.TextureId);
             SetBatchMaterial(batch, material);
@@ -262,7 +263,7 @@ static void RenderImGui(Entity context, double deltaTime) {
 
     NewFrame();
 
-    FireNativeEvent(ImGuiDraw, context);
+    FireEvent(EventOf_ImGuiDraw(), context);
 
     Render();
 
@@ -281,13 +282,13 @@ static void RenderImGui(Entity context, double deltaTime) {
     UpdateBatches(context, data->CommandList);
 }
 
-static void OnAppUpdate(double deltaTime) {
-    for_entity(context, ImGuiRenderer) {
+LocalFunction(OnAppUpdate, void, double deltaTime) {
+    for_entity(context, data, ImGuiRenderer) {
         RenderImGui(context, deltaTime);
     }
 }
 
-static void OnCharPressed(Entity context, char c) {
+LocalFunction(OnCharPressed, void, Entity context, char c) {
     auto data = GetImGuiRenderer(context);
 
     SetCurrentContext(data->ImGuiContext);
@@ -367,11 +368,11 @@ static void InitializeKeyMapping() {
     io.KeyMap[ImGuiKey_Z] = KEY_Z;
 }
 
-static void OnServiceStart(Service service) {
+LocalFunction(OnServiceStart, void, Service service) {
     ImGui::GetIO();
     PrimaryImGuiContext = ImGui::GetCurrentContext();
 
-    ImGuiDataRoot = CreateHierarchy(0, ".ImGui");
+    ImGuiDataRoot = CreateNode(0, ".ImGui");
 
     InitializeProgram();
     InitializeFontTexture();
@@ -381,7 +382,7 @@ static void OnServiceStart(Service service) {
     AddExtension(TypeOf_Context(), TypeOf_ImGuiRenderer());
 }
 
-static void OnServiceStop(Service service) {
+LocalFunction(OnServiceStop, void, Service service) {
     RemoveExtension(TypeOf_Context(), TypeOf_ImGuiRenderer());
 
     DestroyEntity(ImGuiDataRoot);
@@ -395,10 +396,10 @@ static void OnServiceStop(Service service) {
 }
 
 DefineService(ImGuiRenderer)
-    Subscribe(AppUpdate, OnAppUpdate)
-    Subscribe(ImGuiRendererAdded, OnContextAdded)
-    Subscribe(ImGuiRendererRemoved, OnContextRemoved)
-    Subscribe(CharacterPressed, OnCharPressed)
-    Subscribe(ImGuiRendererStarted, OnServiceStart)
-    Subscribe(ImGuiRendererStopped, OnServiceStop)
+    RegisterSubscription(AppUpdate, OnAppUpdate, 0)
+    RegisterSubscription(ImGuiRendererAdded, OnContextAdded, 0)
+    RegisterSubscription(ImGuiRendererRemoved, OnContextRemoved, 0)
+    RegisterSubscription(CharacterPressed, OnCharPressed, 0)
+    RegisterSubscription(ImGuiRendererStarted, OnServiceStart, 0)
+    RegisterSubscription(ImGuiRendererStopped, OnServiceStop, 0)
 EndService()

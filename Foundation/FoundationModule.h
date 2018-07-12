@@ -7,7 +7,7 @@
 
 #include <Core/Module.h>
 
-DeclareModule(Foundation)
+Module(Foundation)
 
 
 #endif //PLAZA_FOUNDATIONMODULE_H

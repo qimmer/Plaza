@@ -5,12 +5,12 @@
 #ifndef PLAZA_VOXELPALETTE_H
 #define PLAZA_VOXELPALETTE_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 typedef u8 Voxel;
 
-DeclareComponent(VoxelPalette)
-DeclareService(VoxelPalette)
+Unit(VoxelPalette)
+    Component(VoxelPalette)
 DeclareType(Voxel)
 
 #endif //PLAZA_VOXELPALETTE_H

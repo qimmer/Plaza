@@ -5,10 +5,10 @@
 #ifndef PLAZA_BGFXCOMMANDLIST_H
 #define PLAZA_BGFXCOMMANDLIST_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(BgfxCommandList)
+Unit(BgfxCommandList)
+    Component(BgfxCommandList)
 
 void RenderCommandList(Entity commandList, unsigned char viewId);
 

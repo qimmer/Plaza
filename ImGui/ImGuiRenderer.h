@@ -5,13 +5,12 @@
 #ifndef PLAZA_ImGui_H
 #define PLAZA_ImGui_H
 
-#include <Core/Service.h>
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
-DeclareService(ImGuiRenderer)
-DeclareComponent(ImGuiRenderer)
+Unit(ImGuiRenderer)
+    Component(ImGuiRenderer)
 
-DeclareEvent(ImGuiDraw, Entity entity);
+Event(ImGuiDraw);
 
 void* GetDefaultImGuiContext();
 void RebuildImGuiFonts();

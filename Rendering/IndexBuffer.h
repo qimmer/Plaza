@@ -5,12 +5,12 @@
 #ifndef PLAZA_INDEXBUFFER_H
 #define PLAZA_INDEXBUFFER_H
 
-#include <Core/Entity.h>
-#include <Core/Service.h>
+#include <Core/NativeUtils.h>
 
-DeclareComponent(IndexBuffer)
+Unit(IndexBuffer)
+    Component(IndexBuffer)
 
-DeclareComponentPropertyReactive(IndexBuffer, bool, IndexBufferLong)
-DeclareComponentPropertyReactive(IndexBuffer, bool, IndexBufferDynamic)
+        Property(bool, IndexBufferLong)
+        Property(bool, IndexBufferDynamic)
 
 #endif //PLAZA_INDEXBUFFER_H

@@ -9,6 +9,6 @@
 #include <Core/Module.h>
 
 
-    DeclareModule(BgfxRendering)
+    Module(BgfxRendering)
 
 #endif //PLAZA_BGFXMODULE_H

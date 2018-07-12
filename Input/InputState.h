@@ -7,18 +7,17 @@
 
 
 #include <Core/Entity.h>
-#include <Core/Service.h>
 
-DeclareComponent(InputState)
-DeclareService(InputState)
+Unit(InputState)
+    Component(InputState)
 
-DeclareComponentPropertyReactive(InputState, u16, InputStateKey)
-DeclareComponentPropertyReactive(InputState, u16, InputStatePrimaryModifierKey)
-DeclareComponentPropertyReactive(InputState, u16, InputStateSecondaryModifierKey)
-DeclareComponentPropertyReactive(InputState, float, InputStateScale)
-DeclareComponentPropertyReactive(InputState, float, InputStateValue)
+        Property(u16, InputStateKey)
+        Property(u16, InputStatePrimaryModifierKey)
+        Property(u16, InputStateSecondaryModifierKey)
+        Property(float, InputStateScale)
+        Property(float, InputStateValue)
 
-DeclareEvent(CommandPressed, Entity entity)
-DeclareEvent(CommandReleased, Entity entity)
+Event(CommandPressed)
+Event(CommandReleased)
 
 #endif //PLAZA_INPUTSTATE_H

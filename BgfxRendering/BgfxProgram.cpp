@@ -21,19 +21,20 @@ struct BgfxProgram {
     bgfx::ProgramHandle handle;
 };
 
-DefineComponent(BgfxProgram)
+BeginUnit(BgfxProgram)
+    BeginComponent(BgfxProgram)
 EndComponent()
 
 static bool IsVertexShader(Entity entity) {
-    return HasShader(entity) && GetShaderType(entity) == ShaderType_Vertex;
+    return HasComponent(entity, ComponentOf_Shader()) && GetShaderType(entity) == ShaderType_Vertex;
 }
 
 static bool IsPixelShader(Entity entity) {
-    return HasShader(entity) && GetShaderType(entity) == ShaderType_Pixel;
+    return HasComponent(entity, ComponentOf_Shader()) && GetShaderType(entity) == ShaderType_Pixel;
 }
 
 void OnProgramRemoved(Entity entity) {
-    auto data = GetBgfxProgram(entity);
+    auto data = GetBgfxProgramData(entity);
 
     if (bgfx::isValid(data->handle)) {
         bgfx::destroy(data->handle);
@@ -41,9 +42,9 @@ void OnProgramRemoved(Entity entity) {
     }
 }
 
-static void OnChanged(Entity entity) {
-    if(HasBgfxProgram(entity)) {
-        auto data = GetBgfxProgram(entity);
+LocalFunction(OnChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxProgram())) {
+        auto data = GetBgfxProgramData(entity);
 
         if (bgfx::isValid(data->handle)) {
             bgfx::destroy(data->handle);
@@ -51,9 +52,9 @@ static void OnChanged(Entity entity) {
         }
     }
 
-    if(HasBinaryShader(entity)) {
-        for_entity(program, BgfxProgram) {
-            auto data = GetBgfxProgram(entity);
+    if(HasComponent(entity, ComponentOf_BinaryShader())) {
+        for_entity(program, data, BgfxProgram) {
+            auto data = GetBgfxProgramData(entity);
 
             if(GetProgramBinaryVertexShader(program) == entity ||
                 GetProgramBinaryPixelShader(program) == entity) {
@@ -67,12 +68,12 @@ static void OnChanged(Entity entity) {
 }
 
 DefineService(BgfxProgram)
-        Subscribe(BgfxProgramRemoved, OnProgramRemoved)
-        Subscribe(ProgramChanged, OnChanged)
+        RegisterSubscription(BgfxProgramRemoved, OnProgramRemoved, 0)
+        RegisterSubscription(ProgramChanged, OnChanged, 0)
 EndService()
 
 u16 GetBgfxProgramHandle(Entity entity) {
-    auto data = GetBgfxProgram(entity);
+    auto data = GetBgfxProgramData(entity);
 
     if(data->handle.idx == bgfx::kInvalidHandle) {
         auto binaryVertexShader = GetProgramBinaryVertexShader(entity);

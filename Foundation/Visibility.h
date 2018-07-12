@@ -5,11 +5,12 @@
 #ifndef PLAZA_VISIBILITY_H
 #define PLAZA_VISIBILITY_H
 
-#include <Core/Entity.h>
+#include <Core/NativeUtils.h>
 
 
-DeclareComponent(Visibility)
-DeclareComponentPropertyReactive(Visibility, bool, Hidden)
+Unit(Visibility)
+    Component(Visibility)
+        Property(bool, Hidden)
 
 
 #endif //PLAZA_VISIBILITY_H

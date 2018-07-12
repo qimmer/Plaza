@@ -14,39 +14,40 @@ struct InputState {
     float InputStateValue;
 };
 
-static void OnStateValueChanged(Entity state, float oldState, float newState) {
+LocalFunction(OnStateValueChanged, void, Entity state, float oldState, float newState) {
     if(oldState < 0.5f && newState > 0.5f) {
-        FireNativeEvent(CommandPressed, state);
+        FireEvent(EventOf_CommandPressed(), state);
     }
 
     if(oldState > 0.5f && newState < 0.5f) {
-        FireNativeEvent(CommandReleased, state);
+        FireEvent(EventOf_CommandReleased(), state);
     }
 }
 
-static void OnChanged(Entity entity) {
-    auto data = GetInputState(entity);
+LocalFunction(OnChanged, void, Entity entity) {
+    auto data = GetInputStateData(entity);
     Assert(data->InputStateKey < KEY_MAX);
     Assert(data->InputStatePrimaryModifierKey < KEY_MAX);
     Assert(data->InputStateSecondaryModifierKey < KEY_MAX);
 }
 
-DefineEvent(CommandPressed)
-DefineEvent(CommandReleased)
+RegisterEvent(CommandPressed)
+RegisterEvent(CommandReleased)
 
-DefineComponent(InputState)
+BeginUnit(InputState)
+    BeginComponent(InputState)
     DefinePropertyReactiveEnum(u16, InputStateKey, Key)
     DefinePropertyReactiveEnum(u16, InputStatePrimaryModifierKey, Key)
     DefinePropertyReactiveEnum(u16, InputStateSecondaryModifierKey, Key)
-    DefinePropertyReactive(float, InputStateValue)
+    RegisterProperty(float, InputStateValue)
 EndComponent()
 
-DefineComponentPropertyReactive(InputState, u16, InputStateKey)
-DefineComponentPropertyReactive(InputState, float, InputStateValue)
-DefineComponentPropertyReactive(InputState, u16, InputStatePrimaryModifierKey)
-DefineComponentPropertyReactive(InputState, u16, InputStateSecondaryModifierKey)
+RegisterProperty(u16, InputStateKey)
+RegisterProperty(float, InputStateValue)
+RegisterProperty(u16, InputStatePrimaryModifierKey)
+RegisterProperty(u16, InputStateSecondaryModifierKey)
 
 DefineService(InputState)
-    Subscribe(InputStateValueChanged, OnStateValueChanged)
-    Subscribe(InputStateChanged, OnChanged)
+    RegisterSubscription(InputStateValueChanged, OnStateValueChanged, 0)
+    RegisterSubscription(InputStateChanged, OnChanged, 0)
 EndService()

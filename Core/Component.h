@@ -9,42 +9,40 @@
 
 #define InvalidIndex 0xFFFFFFFF
 
-bool AddComponent(Entity entity, Entity componentType);
-bool RemoveComponent(Entity entity, Entity componentType);
-bool HasComponent(Entity entity, Entity componentType);
+Function(AddComponent, bool, Entity entity, Entity componentType)
+Function(RemoveComponent, bool, Entity entity, Entity componentType)
+Function(HasComponent, bool, Entity entity, Entity componentType)
 
-u32 GetNumComponents(Entity component);
-Entity GetComponentEntity(Entity component, u32 index);
-char * GetComponentData(Entity component, u32 index);
-u32 GetComponentIndex(Entity entity, Entity component);
+Function(GetNumComponents, u32, Entity component);
+Function(GetComponentEntity, Entity, Entity component, u32 index);
+Function(GetComponentIndex, u32, Entity entity, Entity component);
 
 Unit(Component)
+    Component(Component)
+        Property(u16, ComponentSize)
+        Property(bool, ComponentAbstract)
+        Property(Entity, ComponentAddedEvent)
+        Property(Entity, ComponentRemovedEvent)
 
-Component(Component)
-    Property(u16, ComponentSize)
-    Property(bool, ComponentAbstract)
-    Property(Entity, ComponentAddedEvent)
-    Property(Entity, ComponentRemovedEvent)
+    Component(Extension)
+        Property(Entity, ExtensionComponent)
 
-Component(Extension)
-    Property(Entity, ExtensionComponent)
+    Component(Base)
+        Property(Entity, BaseComponent)
 
-Component(Dependency)
-    Property(Entity, DependencyComponent)
+    Event(EntityComponentAdded)
+    Event(EntityComponentRemoved)
 
-struct EntityComponentAddedArgs {
-    Entity ComponentEntity;
-    Entity Component;
-};
+char * GetComponentData(Entity component, u32 index);
 
-struct EntityComponentRemovedArgs {
-    Entity ComponentEntity;
-    Entity Component;
-};
-
-Event(EntityComponentAdded)
-Event(EntityComponentRemoved)
+u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Entity *entity);
 
 void __InitializeComponent();
+
+#define for_entity(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
+    auto __component ## DATAVAR = ComponentOf_ ## COMPONENTTYPE ();\
+    Entity ENTITYVAR = 0;\
+    struct COMPONENTTYPE * DATAVAR = 0;\
+    for(u32 __index = GetNextComponent(__component ## DATAVAR, InvalidIndex, (void**)&DATAVAR, &ENTITYVAR); __index != InvalidIndex; __index = GetNextComponent(__component ## DATAVAR, __index, (void**)&DATAVAR, &ENTITYVAR))
 
 #endif //PLAZA_COMPONENT_H

@@ -20,19 +20,20 @@ struct EditorContext {
     bool EditorContextVisible;
 };
 
-DefineComponent(EditorContext)
+BeginUnit(EditorContext)
+    BeginComponent(EditorContext)
 EndComponent()
 
-DefineComponentPropertyReactive(EditorContext, bool, EditorContextVisible)
+RegisterProperty(bool, EditorContextVisible)
 
-static void OnEditorContextAdded(Entity editor) {
+LocalFunction(OnEditorContextAdded, void, Entity editor) {
     auto data = GetEditorContext(editor);
 
     for(auto type = GetNextType(0); type; type = GetNextType(type)) {
         if(IsComponent(type)) {
             for(auto i = 0; i < GetDependencies(type); ++i) {
                 if(GetDependency(type, i) == TypeOf_EditorView()) {
-                    auto view = CreateHierarchy(editor, GetTypeName(type));
+                    auto view = CreateNode(editor, GetTypeName(type));
                     AddComponent(view, type);
                     break;
                 }
@@ -43,11 +44,11 @@ static void OnEditorContextAdded(Entity editor) {
     auto mainMenu = CreateMainMenu(editor, "MainMenu");
 }
 
-static void OnImGuiDraw(Entity editor) {
-    if(HasEditorContext(editor)) {
+LocalFunction(OnImGuiDraw, void, Entity editor) {
+    if(HasComponent(editor, ComponentOf_EditorContext())) {
         if(GetEditorContextVisible(editor)) {
             for_children(view, editor) {
-                if(HasEditorView(view)
+                if(HasComponent(view, ComponentOf_EditorView())
                    && GetEditorViewVisible(view)
                    && GetEditorViewDrawFunction(view)) {
                     auto open = true;
@@ -70,8 +71,8 @@ static void CreateEditorMainContext(Entity context) {
 }
 
 DefineService(EditorContext)
-    Subscribe(EditorContextAdded, OnEditorContextAdded)
-    Subscribe(ImGuiDraw, OnImGuiDraw)
+    RegisterSubscription(EditorContextAdded, OnEditorContextAdded, 0)
+    RegisterSubscription(ImGuiDraw, OnImGuiDraw, 0)
 
     ServiceEntity(EditorMainContext, CreateEditorMainContext)
 EndService()
