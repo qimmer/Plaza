@@ -7,7 +7,7 @@
 
         {
           "Name": "NodeBase",
-          "BaseComponent": "/Core/Components/Node"
+          "BaseComponent": "/Modules/Core/Node"
         },
 
         {
@@ -15,6 +15,12 @@
           "PropertyType": "u32"
         }
       ]
+    },
+
+    {
+      "Name": "TestScript",
+      "StreamPath": "file://test.js",
+      "PersistancePointLoaded": true
     },
 
     {
@@ -41,6 +47,17 @@
 
     {
       "Name": "OnNativeMessage",
+      "$components": ["Function"],
+      "$children": [
+        {
+          "Name": "text",
+          "FunctionArgumentType": "StringRef"
+        }
+      ]
+    },
+
+    {
+      "Name": "OnNativeMessageSubscription",
       "SubscriptionEvent": "NativeMessage",
       "SubscriptionHandler": "OnNativeMessage"
     }

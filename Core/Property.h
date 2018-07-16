@@ -12,14 +12,14 @@
 
 Unit(Property)
 
-Component(Property)
+__Component(Property)
     Property(u32, PropertyOffset)
     Property(u32, PropertySize)
     Property(Type, PropertyType)
     Property(Entity, PropertyEnum)
     Property(u32, PropertyFlags)
     Property(Entity, PropertyComponent)
-    Property(Entity, PropertyChangedEvent)
+__PropertyNoInit(Entity, PropertyChangedEvent)
 
 Component(Binding)
     Property(Entity, BindingSourceEntity)

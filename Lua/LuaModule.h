@@ -5,7 +5,7 @@
 #ifndef PLAZA_LUAMODULE_H
 #define PLAZA_LUAMODULE_H
 
-#include <Core/Module.h>
+#include <Core/NativeUtils.h>
 
 Module(Lua)
 

@@ -11,6 +11,7 @@
 #include <Foundation/AppLoop.h>
 #include <Core/Debug.h>
 #include <Foundation/Timer.h>
+#include <Foundation/NativeUtils.h>
 #include "FileWatcher/FileWatcher.h"
 
 #define ProtocolIdentifier "file"
@@ -75,7 +76,10 @@ static s32 Tell(Entity entity) {
 static bool Seek(Entity entity, s32 offset) {
     if(!GetFileStreamData(entity)->fd) return false;
 
-    return fseek(GetFileStreamData(entity)->fd, offset == StreamSeek_End ? 0 : offset, offset == StreamSeek_End ? SEEK_END : SEEK_SET) == 0;
+    auto origin = offset == StreamSeek_End ? SEEK_END : SEEK_SET;
+    offset = offset == StreamSeek_End ? 0 : offset;
+
+    return fseek(GetFileStreamData(entity)->fd, offset, origin) == 0;
 }
 
 static bool Open(Entity entity, int modeFlag) {
@@ -139,11 +143,11 @@ LocalFunction(OnStreamPathChanged, void, Entity stream, StringRef oldPath, Strin
     }
 }
 
-LocalFunction(OnFileStreamAdded, void, Entity stream) {
+LocalFunction(OnFileStreamAdded, void, Entity component, Entity stream) {
     OnStreamPathChanged(stream, "", GetStreamResolvedPath(stream));
 }
 
-LocalFunction(OnFileStreamRemoved, void, Entity stream) {
+LocalFunction(OnFileStreamRemoved, void, Entity component, Entity stream) {
     auto data = GetFileStreamData(stream);
     fileWatcher.removeWatch(data->watchID);
 }
@@ -169,8 +173,8 @@ BeginUnit(FileStream)
 
     RegisterTimer(OnFileWatcherUpdate, 1.0)
     RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
-    RegisterSubscription(FileStreamAdded, OnFileStreamAdded, 0)
-    RegisterSubscription(FileStreamRemoved, OnFileStreamRemoved, 0)
+    RegisterSubscription(EntityComponentAdded, OnFileStreamAdded, ComponentOf_FileStream())
+    RegisterSubscription(EntityComponentRemoved, OnFileStreamRemoved, ComponentOf_FileStream())
 
     RegisterStreamProtocol(FileStream, "file")
 EndComponent()

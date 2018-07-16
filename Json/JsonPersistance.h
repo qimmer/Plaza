@@ -10,4 +10,7 @@
 
 Unit(JsonPersistance)
 
+bool SerializeJson(Entity stream, Entity entity);
+bool DeserializeJson(Entity stream, Entity entity);
+
 #endif //PLAZA_JSONPERSISTANCEPOINT_H

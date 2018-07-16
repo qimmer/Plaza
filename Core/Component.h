@@ -21,8 +21,6 @@ Unit(Component)
     Component(Component)
         Property(u16, ComponentSize)
         Property(bool, ComponentAbstract)
-        Property(Entity, ComponentAddedEvent)
-        Property(Entity, ComponentRemovedEvent)
 
     Component(Extension)
         Property(Entity, ExtensionComponent)
@@ -30,8 +28,8 @@ Unit(Component)
     Component(Base)
         Property(Entity, BaseComponent)
 
-    Event(EntityComponentAdded)
-    Event(EntityComponentRemoved)
+    Event(EntityComponentAdded, Entity entity)
+    Event(EntityComponentRemoved, Entity entity)
 
 char * GetComponentData(Entity component, u32 index);
 

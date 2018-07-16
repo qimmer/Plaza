@@ -3,6 +3,7 @@
 #include <Core/Vector.h>
 #include "MemoryStream.h"
 #include "Stream.h"
+#include "NativeUtils.h"
 
 struct MemoryStream {
     Vector(Bytes, char, 256 - 5);

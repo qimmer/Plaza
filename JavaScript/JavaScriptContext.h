@@ -11,4 +11,6 @@ Unit(JavaScriptContext)
     Component(JavaScriptContext)
     Node(JavaScriptMainContext)
 
+bool EvaluateJavaScript(Entity context, StringRef name, StringRef code);
+
 #endif //PLAZA_JAVASCRIPTCONTEXT_H

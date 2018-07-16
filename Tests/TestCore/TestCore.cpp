@@ -12,14 +12,42 @@
 
 #include <cstring>
 #include <Core/Math.h>
+#include <Core/Vector.h>
+#include <Test/TestModule.h>
 
 struct Person {
     char PersonFirstName[64];
     u8 PersonAge;
+    Vector(PersonChildren, u64, 128)
 };
 
-Test(TestEntity)
-{
+Test(TestVector) {
+    auto person = CreateEntity();
+    SetPersonAge(person, 20);
+    auto data = GetPersonData(person);
+
+    VectorAdd(data, PersonChildren, 1);
+    VectorAdd(data, PersonChildren, 2);
+    VectorAdd(data, PersonChildren, 3);
+    VectorAdd(data, PersonChildren, 4);
+    VectorAdd(data, PersonChildren, 5);
+    VectorAdd(data, PersonChildren, 6);
+
+    const u64 expectedAddedValues[] = {1, 2, 3, 4, 5, 6};
+
+    Verify(memcmp(data->PersonChildren, expectedAddedValues, sizeof(expectedAddedValues)) == 0, "Vector values are not as expected after add");
+
+    VectorRemove(data, PersonChildren, 1);
+    VectorRemove(data, PersonChildren, 3);
+
+    const u64 expectedRemovedValues[] = {1, 6, 3, 5};
+
+    Verify(memcmp(data->PersonChildren, expectedRemovedValues, sizeof(expectedRemovedValues)) == 0, "Vector values are not as expected after removal");
+
+    return Success;
+}
+
+Test(TestEntity) {
     Entity entities[] = {
         CreateEntity(),
         CreateEntity(),
@@ -45,7 +73,7 @@ Test(TestEntity)
 }
 
 Test(TestComponent) {
-    auto entity = CreateEntity();
+    auto entity = CreateEntityFromName(FunctionOf_TestComponent(), "Person2");
 
     Verify(!HasComponent(ComponentOf_Person(), entity), "Should have no person");
     Verify(AddComponent(ComponentOf_Person(), entity), "Should have added person");
@@ -104,6 +132,7 @@ Test(TestEvent) {
 
 BeginModule(TestCore)
     RegisterDependency(Core)
+    RegisterDependency(Test)
     RegisterUnit(TestCore)
 EndModule()
 
@@ -113,6 +142,7 @@ BeginUnit(TestCore)
         RegisterProperty(StringRef, PersonFirstName)
     EndComponent()
 
+    RegisterTest(TestVector)
     RegisterTest(TestEntity)
     RegisterTest(TestComponent)
     RegisterTest(TestEvent)

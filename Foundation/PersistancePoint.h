@@ -10,7 +10,6 @@ Unit(PersistancePoint)
         Property(bool, PersistancePointLoaded)
         Property(bool, PersistancePointLoading, PropertyFlag_ReadOnly, PropertyFlag_Transient)
         Property(bool, PersistancePointSaving, PropertyFlag_ReadOnly, PropertyFlag_Transient)
-        Property(Entity, PersistancePointSerializer, PropertyFlag_ReadOnly, PropertyFlag_Transient)
 
     Component(Serializer)
         Property(StringRef, SerializerMimeType)
@@ -22,12 +21,5 @@ struct Serializer {
     bool(*SerializeHandler)(Entity entity);
     bool(*DeserializeHandler)(Entity entity);
 };
-
-#define RegisterSerializer(NAME, MIMETYPE) \
-    auto NAME ## serializer = CreateEntityFromName(module, #NAME "Serializer"); \
-    SetSerializerMimeType(NAME ## serializer, MIMETYPE); \
-    auto NAME ## serializerData = GetSerializerData(NAME ## serializer); \
-    NAME ## serializerData->SerializeHandler = Serialize; \
-    NAME ## serializerData->DeserializeHandler = Deserialize;
 
 #endif //PersistancePoint_H

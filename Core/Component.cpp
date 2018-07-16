@@ -9,18 +9,19 @@
 #include <Core/Pool.h>
 #include <Core/Node.h>
 
+static bool __isComponentInitialized = false;
+
 struct Component {
     u16 ComponentSize;
     bool ComponentAbstract;
-    Entity ComponentAddedEvent, ComponentRemovedEvent;
 };
 
 struct Extension {
     Entity ExtensionComponent;
 };
 
-struct Dependency {
-    Entity DependencyComponent;
+struct Base {
+    Entity BaseComponent;
 };
 
 struct ComponentTypeData {
@@ -32,7 +33,7 @@ struct ComponentTypeData {
     Vector<u32> EntityComponentIndices;
 };
 
-API_EXPORT Vector<ComponentTypeData> componentTypeList;
+static Vector<ComponentTypeData> componentTypeList;
 
 static inline ComponentTypeData *GetComponentType(Entity component) {
     auto index = GetEntityIndex(component);
@@ -104,8 +105,9 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
             }
         }
 
-        FireEvent(EventOf_EntityComponentAdded(), entity, component);
-        FireEvent(GetComponentAddedEvent(component), entity);
+        if(__isComponentInitialized) {
+            FireEvent(EventOf_EntityComponentAdded(), component, entity);
+        }
 
         Verbose("Component %s has been added to Entity %s.", GetName(component), GetName(entity));
 
@@ -121,8 +123,7 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     if(HasComponent(entity, component)) {
         Verbose("Removing Component %s from Entity %s ...", GetName(component), GetName(entity));
 
-        FireEvent(GetComponentRemovedEvent(component), entity);
-        FireEvent(EventOf_EntityComponentRemoved(), entity, component);
+        FireEvent(EventOf_EntityComponentRemoved(), component, entity);
 
         if(HasComponent(entity, component)) {
             auto componentData = GetComponentType(component);
@@ -175,8 +176,6 @@ BeginUnit(Component)
     BeginComponent(Component)
         RegisterProperty(u16, ComponentSize)
         RegisterProperty(bool, ComponentAbstract)
-        RegisterProperty(Entity, ComponentAddedEvent)
-        RegisterProperty(Entity, ComponentRemovedEvent)
     EndComponent()
 
     BeginComponent(Extension)
@@ -186,6 +185,11 @@ BeginUnit(Component)
     BeginComponent(Base)
         RegisterProperty(Entity, BaseComponent)
     EndComponent()
+
+    RegisterEvent(EntityComponentAdded)
+    RegisterEvent(EntityComponentRemoved)
+
+    __isComponentInitialized = true;
 
     RegisterSubscription(EntityDestroyed, OnEntityDestroyed, 0)
 EndUnit()

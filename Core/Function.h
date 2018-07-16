@@ -18,12 +18,14 @@ Unit(Function)
 Component(Function)
     Property(u64, FunctionImplementation)
     Property(Entity, FunctionReturnType)
-    Property(FunctionCaller, FunctionCaller)
 
 Component(FunctionArgument)
     Property(Entity, FunctionArgumentType)
 
-Function FindFunctionByName(StringRef name);
+Function(FindFunctionByName, Entity, StringRef name)
+FunctionCaller GetFunctionCaller(Entity function);
+void SetFunctionCaller(Entity function, FunctionCaller caller);
+
 void SetFunctionArgsByDecl(Entity f, StringRef argsDecl);
 
 bool CallFunction(

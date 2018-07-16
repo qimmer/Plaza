@@ -4,9 +4,10 @@
 #include <Core/NativeUtils.h>
 
 Unit(Event)
-    Component(Event)
 
-    Component(EventArgument)
+__Component(Event)
+
+Component(EventArgument)
         Property(Type, EventArgumentType)
         Property(u32, EventArgumentOffset)
 

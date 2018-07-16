@@ -27,7 +27,20 @@ BeginUnit(Module)
 EndUnit()
 
 API_EXPORT Entity GetModuleRoot() {
-    static Entity root = CreateEntityFromName(0, "Modules");
+    static Entity root = 0;
+    if(root == 0) {
+        root = CreateEntity();
+        SetName(root, "Modules");
+    }
+    return root;
+}
+
+API_EXPORT Entity GetUnregisteredEntitiesRoot() {
+    static Entity root = 0;
+    if(root == 0) {
+        root = CreateEntity();
+        SetName(root, "Unregistered");
+    }
     return root;
 }
 

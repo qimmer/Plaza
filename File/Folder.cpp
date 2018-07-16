@@ -119,11 +119,11 @@ LocalFunction(OnFolderPathChanged, void, Entity entity, StringRef before, String
     //SetName(entity, GetFileName(after));
 }
 
-LocalFunction(OnFolderAdded, void, Entity entity) {
+LocalFunction(OnFolderAdded, void, Entity component, Entity entity) {
 
 }
 
-LocalFunction(OnFolderRemoved, void, Entity entity) {
+LocalFunction(OnFolderRemoved, void, Entity component, Entity entity) {
 
 }
 
@@ -133,7 +133,7 @@ BeginUnit(Folder)
         RegisterProperty(StringRef, FolderPath)
     EndComponent()
 
-    RegisterSubscription(FolderAdded, OnFolderAdded, 0)
-    RegisterSubscription(FolderRemoved, OnFolderRemoved, 0)
+    RegisterSubscription(EntityComponentAdded, OnFolderAdded, ComponentOf_Folder())
+    RegisterSubscription(EntityComponentRemoved, OnFolderRemoved, ComponentOf_Folder())
     RegisterSubscription(FolderPathChanged, OnFolderPathChanged, 0)
 EndComponent()

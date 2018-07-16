@@ -79,6 +79,7 @@ LocalFunction(OnSubscriptionHandlerChanged, void, Entity context, Entity oldValu
 
         if(IsEntityValid(newValue)) {
             VectorAdd(event, SubscriptionCache, *subscription);
+            Assert(0, memcmp(&event->SubscriptionCache[event->NumSubscriptionCache-1], subscription, sizeof(Subscription)) == 0);
         }
     }
 }
@@ -104,11 +105,11 @@ LocalFunction(OnSubscriptionEventChanged, void, Entity context, Entity oldValue,
 
     if(IsEntityValid(oldValue)) {
         AddComponent(oldValue, ComponentOf_Event ());
-        auto data = GetEventData (oldValue);
+        auto event = GetEventData (oldValue);
 
-        for(auto i = 0; i < data->NumSubscriptionCache; ++i) {
-            if(data-> SubscriptionCache [i].SubscriptionEvent == subscription->SubscriptionEvent) {
-                VectorRemove(data, SubscriptionCache, i);
+        for(auto i = 0; i < event->NumSubscriptionCache; ++i) {
+            if(event-> SubscriptionCache [i].SubscriptionEvent == subscription->SubscriptionEvent) {
+                VectorRemove(event, SubscriptionCache, i);
                 break;
             }
         }
@@ -116,8 +117,8 @@ LocalFunction(OnSubscriptionEventChanged, void, Entity context, Entity oldValue,
 
     if(IsEntityValid(newValue) && IsEntityValid(subscription->SubscriptionEvent)) {
         AddComponent(newValue, ComponentOf_Event());
-        auto data = GetEventData(newValue);
-        VectorAdd(data, SubscriptionCache, *subscription);
+        auto event = GetEventData(newValue);
+        VectorAdd(event, SubscriptionCache, *subscription);
     }
 }
 
@@ -327,7 +328,7 @@ BeginUnit(Event)
 
     BeginComponent(EventArgument)
         RegisterProperty(u32, EventArgumentOffset)
-        RegisterProperty(u8, EventArgumentType)
+        RegisterProperty(Type, EventArgumentType)
     EndComponent()
 
     BeginComponent(Subscription)
@@ -340,9 +341,9 @@ BeginUnit(Event)
     __ForceArgumentParse(EventOf_SubscriptionHandlerChanged());
     __ForceArgumentParse(EventOf_SubscriptionSenderChanged());
 
-    RegisterFunction(OnSubscriptionHandlerChanged)\
-    RegisterFunction(OnSubscriptionEventChanged)\
-    RegisterFunction(OnSubscriptionSenderChanged)\
+    RegisterFunction(OnSubscriptionHandlerChanged)
+    RegisterFunction(OnSubscriptionEventChanged)
+    RegisterFunction(OnSubscriptionSenderChanged)
 
     RegisterChildCache(EventArgument)
 

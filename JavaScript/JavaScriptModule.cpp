@@ -4,8 +4,9 @@
 
 #include <Core/NativeUtils.h>
 #include "JavaScriptModule.h"
-#include "JavaScript.h"
+#include <JavaScript/JavaScriptPersistance.h>
 
 BeginModule(JavaScript)
-    RegisterUnit(JavaScript)
+    RegisterUnit(JavaScriptContext)
+    RegisterUnit(JavaScriptPersistance)
 EndModule()

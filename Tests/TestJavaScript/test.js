@@ -1,4 +1,4 @@
 
 function OnNativeMessage(text) {
-    Core.FireEvent(JavaScriptTest.ScriptMessage, 0, "Hello from JavaScript!");
+    Core.FireEvent(JavaScriptTest.Events.ScriptMessage, 0, "Hello from JavaScript!");
 }

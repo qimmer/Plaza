@@ -7,7 +7,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <Core/Debug.h>
+#include <Foundation/Stream.h>
+#include <Foundation/PersistancePoint.h>
 
+#include <EASTL/unordered_set.h>
+#include <EASTL/string.h>
 
 #define duk_push_entity(CONTEXT, ENTITY) duk_push_number(CONTEXT, *(double*)&ENTITY)
 
@@ -104,6 +108,17 @@ static duk_ret_t CallFunc(duk_context *ctx) {
     }
 }
 
+static bool CallJavaScriptFunc(
+        u64 functionImplementation,
+        Type returnArgumentTypeIndex,
+        void *returnData,
+        u32 numArguments,
+        const Type *argumentTypes,
+        const void **argumentDataPtrs
+) {
+
+}
+
 static void ToCamelCase(char *line)  {
     bool active = true;
 
@@ -121,77 +136,97 @@ static void ToCamelCase(char *line)  {
     }
 }
 
-static void BindProperty(duk_context *ctx, Entity property) {
-
-}
-
-static void BindComponent(duk_context *ctx, Entity component) {
-    // Make name camel case
-    char nameCamelCase[32];
-    strncpy(nameCamelCase, GetName(component), 32);
-    ToCamelCase(nameCamelCase);
-
-    duk_push_entity(ctx, component);
-    duk_put_prop_string(ctx, 0, nameCamelCase);
-}
-
-static void BindFunction(duk_context *ctx, Entity function) {
-    Assert(function, HasComponent(function, ComponentOf_Function()));
-
-    auto functionIndex = GetComponentIndex(function, ComponentOf_Function());
-    Assert(function, functionIndex < UINT16_MAX);
-
-    // Make name camel case
-    char nameCamelCase[32];
-    strncpy(nameCamelCase, GetName(function), 32);
-    ToCamelCase(nameCamelCase);
-
-    duk_push_c_function(ctx, CallFunc, DUK_VARARGS);
-    duk_set_magic(ctx, 0, *(s16*)&functionIndex);
-    duk_put_prop_string(ctx, 0, nameCamelCase);
-}
-
-static void BindEvent(duk_context *ctx, Entity event) {
-
-}
-
 static void BindModule(duk_context *ctx, Entity module) {
+    // Module object
     duk_push_bare_object(ctx);
 
     for_children(child, module) {
-        if(HasComponent(child, ComponentOf_Component())) {
-            BindComponent(ctx, child);
+        if(HasComponent(child, ComponentOf_Function())) {
+            auto functionIndex = GetComponentIndex(ComponentOf_Function(), child);
+            Assert(child, functionIndex < UINT16_MAX);
+
+            duk_push_c_function(ctx, CallFunc, DUK_VARARGS);
+            duk_set_magic(ctx, -1, *(s16*)&functionIndex);
+        } else {
+            duk_push_entity(ctx, child);
         }
+
+        auto name = GetName(child);
+        duk_put_prop_string(ctx, -2, name);
     }
 
-    // Make name camel case
-    char nameCamelCase[32];
-    strncpy(nameCamelCase, GetName(module), 32);
-    ToCamelCase(nameCamelCase);
-
     // Push module object onto the global table
-    duk_put_global_string(ctx, nameCamelCase);
+    duk_put_global_string(ctx, GetName(module));
 }
 
-LocalFunction(OnJavaScriptContextAdded, void, Entity context) {
+LocalFunction(OnJavaScriptContextAdded, void, Entity component, Entity context) {
     auto data = GetJavaScriptContextData(context);
 
     data->ctx = duk_create_heap_default();
+
+    for_entity(module, moduleData, Module) {
+        BindModule(data->ctx, module);
+    }
 }
 
-LocalFunction(OnJavaScriptContextRemoved, void, Entity context) {
+LocalFunction(OnJavaScriptContextRemoved, void, Entity component, Entity context) {
     auto data = GetJavaScriptContextData(context);
 
     duk_destroy_heap(data->ctx);
 }
 
+static void RebindModuleChild(Entity module, Entity child, StringRef oldName) {
+    for_entity(context, contextData, JavaScriptContext) {
+        BindModule(contextData->ctx, module);
+    }
+}
+
+API_EXPORT bool EvaluateJavaScript(Entity context, StringRef name, StringRef code) {
+    auto data = GetJavaScriptContextData(context);
+
+    if (duk_peval_string(data->ctx, code) != 0) {
+        Log(context, LogSeverity_Error, "Error: %s (%s)\n", duk_safe_to_string(data->ctx, -1), name);
+        duk_pop(data->ctx);  // pop error
+        return false;
+    } else {
+        duk_pop(data->ctx);  // pop result
+
+        duk_push_global_object(data->ctx);
+
+        for_entity(function, functionData, Function) {
+            auto caller = GetFunctionCaller(function);
+
+            // If function has no caller or has a JavaScript caller,
+            // we should check if this function has been implemented/overridden
+            // in the new script we just evaluated.
+
+            if(!caller || caller == CallJavaScriptFunc) {
+                auto functionName = GetName(function);
+                if(duk_get_prop_string(data->ctx, -1, functionName) == 1) {
+                    Verbose("%s implements %s", name, functionName);
+
+                    SetFunctionCaller(function, CallJavaScriptFunc);
+                    SetFunctionImplementation(function, (u64)duk_get_heapptr(data->ctx, -1));
+                }
+                duk_pop(data->ctx);
+            }
+        }
+
+        duk_pop(data->ctx); // pop global object
+
+        return true;
+    }
+}
+
+
 BeginUnit(JavaScriptContext)
     BeginComponent(JavaScriptContext)
     EndComponent()
 
-    RegisterSubscription(JavaScriptContextAdded, OnJavaScriptContextAdded, 0)
-    RegisterSubscription(JavaScriptContextRemoved, OnJavaScriptContextRemoved, 0)
+    RegisterSubscription(EntityComponentAdded, OnJavaScriptContextAdded, ComponentOf_JavaScriptContext())
+    RegisterSubscription(EntityComponentRemoved, OnJavaScriptContextRemoved, ComponentOf_JavaScriptContext())
 
     auto context = NodeOf_JavaScriptMainContext();
+    SetName(context, "MainJavaScriptContext");
     AddComponent(context, ComponentOf_JavaScriptContext());
 EndUnit()

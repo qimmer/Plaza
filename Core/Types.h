@@ -151,5 +151,6 @@ enum {
 
 u32 GetTypeSize(Type type);
 StringRef GetTypeName(Type type);
+Type FindType(StringRef typeName);
 
 #endif

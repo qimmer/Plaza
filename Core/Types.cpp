@@ -5,6 +5,43 @@
 #include <Core/Types.h>
 #include "Debug.h"
 
+static StringRef typeNames[] = {
+        "",
+
+        "void",
+        "u8",
+        "u16",
+        "u32",
+        "u64",
+        "s8",
+        "s16",
+        "s32",
+        "s64",
+        "float",
+        "double",
+        "bool",
+        "StringRef",
+
+        "v2i",
+        "v3i",
+        "v4i",
+
+        "v2f",
+        "v3f",
+        "v4f",
+
+        "Entity",
+        "Type",
+
+        "rgba8",
+        "rgb8",
+
+        "rgba32",
+        "rgb32",
+
+        "Variant"
+};
+
 API_EXPORT u32 GetTypeSize(Type type) {
     static u32 typeSizes[] = {
         0,
@@ -49,44 +86,17 @@ API_EXPORT u32 GetTypeSize(Type type) {
 }
 
 API_EXPORT StringRef GetTypeName(Type type) {
-    static StringRef typeNames[] = {
-        "",
-
-        "void",
-        "u8",
-        "u16",
-        "u32",
-        "u64",
-        "s8",
-        "s16",
-        "s32",
-        "s64",
-        "float",
-        "double",
-        "bool",
-        "StringRef",
-
-        "v2i",
-        "v3i",
-        "v4i",
-
-        "v2f",
-        "v3f",
-        "v4f",
-
-        "Entity",
-        "Type",
-
-        "rgba8",
-        "rgb8",
-
-        "rgba32",
-        "rgb32",
-
-        "Variant"
-    };
-
     Assert(0, type < TypeOf_MAX);
 
     return typeNames[type];
+}
+
+API_EXPORT Type FindType(StringRef typeName) {
+    for(auto i = 0; i < TypeOf_MAX; ++i) {
+        if(strcmp(typeName, typeNames[i]) == 0) {
+            return i;
+        }
+    }
+
+    return TypeOf_unknown;
 }

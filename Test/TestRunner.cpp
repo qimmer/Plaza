@@ -22,7 +22,11 @@ int main(int argc, char** argv) { \
         auto entity = GetComponentEntity(ComponentOf_Test(), i);
         if(IsEntityValid(entity)) {
             u32 result = -1;
-            CallFunction(entity, &result, 0, NULL, NULL);
+
+            const Type argumentTypes[] = {TypeOf_Entity};
+            const void* argumentPtrs[] = {&entity};
+
+            CallFunction(entity, &result, 1, argumentTypes, argumentPtrs);
             printf("%s %s.\n", GetName(entity), (result == 0) ? "Succeeded" : "Failed");
 
             if(result == 0) {

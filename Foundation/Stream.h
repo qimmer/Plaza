@@ -24,6 +24,7 @@ Unit(Stream)
     Component(FileType)
         Property(StringRef, FileTypeExtension)
         Property(StringRef, FileTypeMimeType)
+        Property(Entity, FileTypeComponent)
 
     Event(StreamContentChanged)
 
@@ -90,31 +91,6 @@ StringRef GetCurrentWorkingDirectory();
 
 bool SetStreamData(Entity stream, u32 offset, u32 numBytes, const char *data);
 
-#define StreamSeek_End UINT32_MAX
-
-#define RegisterStreamProtocol(COMPONENT, IDENTIFIER) \
-    auto COMPONENT ## protocol = CreateEntityFromName(module, #COMPONENT "Protocol"); \
-    SetStreamProtocolIdentifier(COMPONENT ## protocol, IDENTIFIER); \
-    SetStreamProtocolComponent(COMPONENT ## protocol, ComponentOf_ ## COMPONENT ()); \
-    auto COMPONENT ## protocolData = GetStreamProtocolData(COMPONENT ## protocol); \
-    COMPONENT ## protocolData->StreamSeekHandler = Seek; \
-    COMPONENT ## protocolData->StreamTellHandler = Tell; \
-    COMPONENT ## protocolData->StreamReadHandler = Read; \
-    COMPONENT ## protocolData->StreamWriteHandler = Write; \
-    COMPONENT ## protocolData->StreamIsOpenHandler = IsOpen; \
-    COMPONENT ## protocolData->StreamOpenHandler = Open; \
-    COMPONENT ## protocolData->StreamCloseHandler = Close;
-
-#define RegisterStreamCompressor(COMPONENT, MIMETYPE) \
-    auto COMPONENT ## compressor = CreateEntityFromName(module, #COMPONENT "Compressor"); \
-    SetStreamCompressor(COMPONENT ## compressor, MIMETYPE); \
-    auto COMPONENT ## compressorData = GetStreamCompressorData(COMPONENT ## compressor); \
-    COMPONENT ## compressorData->CompressHandler = Compress; \
-    COMPONENT ## compressorData->DecompressHandler = Decompress;
-
-#define RegisterFileType(EXTENSION, MIMETYPE) \
-    auto COMPONENT ## filetype = CreateEntityFromName(module, #EXTENSION "_FileType"); \
-    SetFileTypeExtension(COMPONENT ## filetype, EXTENSION); \
-    SetFileTypeMimeType(COMPONENT ## filetype, MIMETYPE);
+#define StreamSeek_End -1
 
 #endif //PLAZA_STREAM_H

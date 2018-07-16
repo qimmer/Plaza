@@ -14,6 +14,7 @@
 #include <Core/Debug.h>
 #include "Stream.h"
 #include "VirtualPath.h"
+#include "NativeUtils.h"
 
 #include <EASTL/unordered_map.h>
 #include <EASTL/vector.h>
@@ -33,8 +34,9 @@ struct Stream {
 };
 
 struct FileType {
+    Entity FileTypeComponent;
     char FileTypeExtension[16];
-    char FileTypeMimeType[128 - 16];
+    char FileTypeMimeType[128 - 16 - sizeof(Entity)];
 };
 
 API_EXPORT bool StreamSeek(Entity entity, s32 offset){
@@ -325,12 +327,34 @@ API_EXPORT bool SetStreamData(Entity stream, u32 offset, u32 numBytes, const cha
     return true;
 }
 
+LocalFunction(OnStreamFileTypeChanged, void, Entity stream, Entity oldFileType, Entity newFileType) {
+    if(IsEntityValid(oldFileType)) {
+        auto fileTypeComponent = GetFileTypeComponent(oldFileType);
+
+        if(IsEntityValid(fileTypeComponent)) {
+            RemoveComponent(stream, fileTypeComponent);
+        }
+    }
+
+    if(IsEntityValid(newFileType)) {
+        auto fileTypeComponent = GetFileTypeComponent(newFileType);
+
+        if(IsEntityValid(fileTypeComponent)) {
+            AddComponent(stream, fileTypeComponent);
+        }
+    }
+}
+
 LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, StringRef newValue) {
     auto data = GetStreamData(entity);
 
     if(IsStreamOpen(entity)) {
         StreamClose(entity);
     }
+
+    SetStreamFileType(entity, 0);
+    SetStreamCompressor(entity, 0);
+    SetStreamProtocol(entity, 0);
 
     // Resolve protocol, compressor and filetype first
     char resolvedPath[PATH_MAX];
@@ -365,6 +389,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
 
     if(!IsEntityValid(data->StreamProtocol)) {
         Log(entity, LogSeverity_Error, "Unknown stream protocol: %s (%s)", protocolIdentifier, resolvedPath);
+        return;
     }
 
     // Find Filetype (optional)
@@ -378,6 +403,10 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
         }
     }
 
+    if(!IsEntityValid(GetStreamFileType(entity))) {
+        Log(entity, LogSeverity_Warning, "Unknown file type: %s", extension);
+    }
+
     // Find compressor (optional)
     for_entity(compressorEntity, compressorData, StreamCompressor) {
         if(strcmp(mimeType, compressorData->StreamCompressorMimeType) == 0) {
@@ -387,11 +416,25 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
 
     // Update stream with new protocol, compressor and filetype
     if(IsEntityValid(oldProtocol)) {
-        RemoveComponent(entity, GetStreamProtocolData(oldProtocol)->StreamProtocolComponent);
+        auto protocolComponent = GetStreamProtocolData(oldProtocol)->StreamProtocolComponent;
+        if(IsEntityValid(protocolComponent)) {
+            RemoveComponent(entity, protocolComponent);
+        }
     }
 
     if(IsEntityValid(data->StreamProtocol)) {
-        AddComponent(entity, GetStreamProtocolData(data->StreamProtocol)->StreamProtocolComponent);
+        auto protocolComponent = GetStreamProtocolData(data->StreamProtocol)->StreamProtocolComponent;
+        if(IsEntityValid(protocolComponent)) {
+            AddComponent(entity, protocolComponent);
+        }
+    }
+
+    // Find serializer (optional)
+    for_entity(serializerEntity, serializerData, Serializer) {
+        if(strcmp(mimeType, serializerData->SerializerMimeType) == 0) {
+            AddComponent(entity, ComponentOf_PersistancePoint());
+            break;
+        }
     }
 
     FireEvent(EventOf_StreamContentChanged(), entity);
@@ -441,6 +484,7 @@ BeginUnit(Stream)
     BeginComponent(FileType)
         RegisterProperty(StringRef, FileTypeExtension)
         RegisterProperty(StringRef, FileTypeMimeType)
+        RegisterProperty(Entity, FileTypeComponent)
     EndComponent()
 
     RegisterEvent(StreamContentChanged)
@@ -451,4 +495,5 @@ BeginUnit(Stream)
     RegisterSubscription(FileTypeExtensionChanged, OnFileTypeChanged, 0)
     RegisterSubscription(FileTypeMimeTypeChanged, OnFileTypeChanged, 0)
     RegisterSubscription(StreamCompressorMimeTypeChanged, OnCompressorChanged, 0)
+    RegisterSubscription(StreamFileTypeChanged, OnStreamFileTypeChanged, 0)
 EndUnit()

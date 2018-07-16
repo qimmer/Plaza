@@ -51,7 +51,7 @@ API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
 
     //FireEvent(EventOf_LogMessageReceived(), context, buffer, severity);
 
-    if(severity > LogSeverity_Error) {
+    if(severity >= LogSeverity_Error) {
         DebuggerBreak();
     }
 }

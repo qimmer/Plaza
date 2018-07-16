@@ -102,8 +102,18 @@ API_EXPORT Entity FindChild(Entity parent, StringRef childName) {
 }
 
 API_EXPORT StringRef GetEntityPath(Entity entity) {
-        return GetNodeData(entity)->Path;
-    }
+    return GetNodeData(entity)->Path;
+}
+
+
+API_EXPORT StringRef GetEntityRelativePath(Entity entity, Entity relativeTo) {
+    if(entity == relativeTo) return "";
+    if(!IsEntityDecendant(entity, relativeTo)) return GetEntityPath(entity);
+
+    StringRef parentPath = GetNodeData(relativeTo)->Path;
+
+    return (StringRef)GetNodeData(entity)->Path + strlen(parentPath) + 1;
+}
 
 API_EXPORT Entity CreateEntityFromPath(StringRef path) {
         Assert(0, path);
@@ -152,8 +162,8 @@ API_EXPORT Entity CreateEntityFromName(Entity parent, StringRef name) {
     }
 
     auto entity = CreateEntity();
-    SetName(entity, name);
     SetParent(entity, parent);
+    SetName(entity, name);
     return entity;
 }
 
@@ -291,50 +301,93 @@ static void Attach(Entity entity, Entity parent) {
     EntityMap[entity] = data->Path;
 }
 
-LocalFunction(OnNameChanged, void, Entity entity, StringRef oldName, StringRef newName) {
-    char newPath[PATH_MAX];
-    CalculateEntityPath(newPath, PATH_MAX, entity);
-    auto existingEntity = FindEntityByPath(newPath);
-
-    Assert(entity, !IsEntityValid(existingEntity) || existingEntity == entity);
-
-    auto data = GetNodeData(entity);
-    EntityPathMap.erase(data->Path);
-    EntityMap.erase(entity);
-    strcpy(data->Path, newPath);
-    EntityPathMap[data->Path] = entity;
-    EntityMap[entity] = data->Path;
-}
-
 API_EXPORT void SetParent(Entity entity, Entity parent) {
-    static Entity prop = PropertyOf_Parent();
-    Entity oldParent = 0;
-    GetPropertyValue(prop, entity, &oldParent);
-
     AddComponent(entity, ComponentOf_Node());
     if(IsEntityValid(parent)) AddComponent(parent, ComponentOf_Node());
 
-    SetPropertyValue(prop, entity, &parent);
+    if(entity == parent) {
+        Log(entity, LogSeverity_Error, "Cannot set parent to itself");
+        return;
+    }
 
-    Detach(entity, oldParent);
-    Attach(entity, parent);
+    if(IsEntityValid(parent) && IsEntityDecendant(parent, entity)) {
+        Log(entity, LogSeverity_Error, "Cannot attach itself to any entity in it's own subtree.");
+        return;
+    }
+
+    auto data = GetNodeData(entity);
+    Entity oldParent = data->Parent;
+
+    if(IsEntityValid(parent) && oldParent != parent) {
+        char newPath[PATH_MAX];
+        snprintf(newPath, PATH_MAX, "%s/%s", GetEntityPath(parent), GetName(entity));
+
+        auto existingChild = FindEntityByPath(newPath);
+        if(IsEntityValid(existingChild)) {
+            Log(entity, LogSeverity_Error, "Cannot attach '%s' to '%s'. An existing child with the same name already exist. Rename the child first to avoid two children with the same name.", GetEntityPath(entity), GetEntityPath(parent));
+            return;
+        }
+    }
+
+    if(oldParent != parent) {
+        Detach(entity, oldParent);
+        Attach(entity, parent);
+
+        data->Parent = parent;
+
+        const Type argumentTypes[] = {TypeOf_Entity, TypeOf_Entity, TypeOf_Entity};
+        const void * argumentData[] = {&entity, &oldParent, &parent};
+
+        auto changedEvent = GetPropertyChangedEvent(PropertyOf_Parent());
+        FireEventFast(changedEvent, 3, argumentTypes, argumentData);
+    }
 }
 
 
 API_EXPORT void SetName(Entity entity, StringRef name) {
-    static Entity prop = PropertyOf_Name();
-    StringRef oldName = 0;
-    GetPropertyValue(prop, entity, &oldName);
-
     AddComponent(entity, ComponentOf_Node());
 
-    SetPropertyValue(prop, entity, &name);
+    auto data = GetNodeData(entity);
+    if(strcmp(data->Name, name) != 0) {
+        char newPath[sizeof(Node::Path)];
+        char oldName[sizeof(Node::Name)];
+        char oldPath[sizeof(Node::Path)];
 
-    OnNameChanged(entity, oldName, name);
+        strncpy(oldName, data->Name, sizeof(data->Name));
+        strncpy(oldPath, data->Path, sizeof(data->Path));
+
+        strncpy(data->Name, name, sizeof(data->Name));
+
+        CalculateEntityPath(newPath, sizeof(Node::Path), entity);
+        auto existingEntity = FindEntityByPath(newPath);
+
+        if(IsEntityValid(existingEntity)) {
+            strncpy(data->Name, oldName, sizeof(data->Name));
+
+            CalculateEntityPath(data->Path, sizeof(data->Path), entity);
+
+            auto parentPath = IsEntityValid(data->Parent) ? GetEntityPath(data->Parent) : "<None>";
+            Log(entity, LogSeverity_Error, "Cannot rename entity from '%s' to '%s' with parent '%s'. Sibling entity with the same entity already exists.", oldName, name, parentPath);
+            return;
+        }
+
+        strncpy(data->Path, newPath, sizeof(data->Path));
+
+        EntityPathMap.erase(oldPath);
+        EntityMap.erase(entity);
+        EntityPathMap[data->Path] = entity;
+        EntityMap[entity] = data->Path;
+
+        const Type argumentTypes[] = {TypeOf_Entity, TypeOf_StringRef, TypeOf_StringRef};
+        const void * argumentData[] = {&entity, &oldName, &name};
+
+        auto changedEvent = GetPropertyChangedEvent(PropertyOf_Name());
+        FireEventFast(changedEvent, 3, argumentTypes, argumentData);
+    }
 }
 
 
-LocalFunction(OnNodeRemoved, void, Entity entity) {
+LocalFunction(OnNodeRemoved, void, Entity component, Entity entity) {
     while(GetFirstChild(entity)) {
         DestroyEntity(GetFirstChild(entity));
     }
@@ -342,7 +395,7 @@ LocalFunction(OnNodeRemoved, void, Entity entity) {
     Detach(entity, GetParent(entity));
 }
 
-LocalFunction(OnNodeAdded, void, Entity entity) {
+LocalFunction(OnNodeAdded, void, Entity component, Entity entity) {
     Attach(entity, 0); // Attach to hierarchy as a root entity
 }
 
@@ -354,8 +407,8 @@ BeginUnit(Node)
         RegisterProperty(bool, IsLocked)
     EndComponent()
 
-    RegisterSubscription(NodeAdded, OnNodeAdded, 0)
-    RegisterSubscription(NodeRemoved, OnNodeRemoved, 0)
+    RegisterSubscription(EntityComponentAdded, OnNodeAdded, ComponentOf_Node())
+    RegisterSubscription(EntityComponentRemoved, OnNodeRemoved, ComponentOf_Node())
 
     __ForceArgumentParse(EventOf_ParentChanged());
 EndUnit()
@@ -369,7 +422,13 @@ void __InitializeNode() {
 static void PrintNode(int level, Entity entity) {
     static const int identation = 4;
 
-    printf("%*s - %s (i: %d)\n", level * identation, " ", GetName(entity), GetEntityIndex(entity));
+    printf("%*s - %s (i: %d) [", level * identation, " ", GetName(entity), GetEntityIndex(entity));
+    for_entity(componentEntity, componentData, Component) {
+        if(HasComponent(entity, componentEntity)) {
+            printf("%s, ", GetName(componentEntity));
+        }
+    }
+    printf("]\n");
 
     for_children(child, entity) {
         PrintNode(level + 1, child);
@@ -382,4 +441,14 @@ API_EXPORT void DumpNode() {
             PrintNode(0, entity);
         }
     }
+}
+
+API_EXPORT StringRef GetName(Entity entity)  {
+    auto data = GetNodeData(entity);
+    return data->Name;
+}
+
+API_EXPORT Entity GetParent(Entity entity)  {
+    auto data = GetNodeData(entity);
+    return data->Parent;
 }

@@ -8,8 +8,8 @@
 #include <File/FileStream.h>
 
 BeginModule(File)
+    RegisterDependency(Foundation)
+
     RegisterUnit(Folder)
     RegisterUnit(FileStream)
-
-    RegisterDependency(Foundation)
 EndModule()

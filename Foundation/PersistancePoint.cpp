@@ -11,17 +11,8 @@
 using namespace eastl;
 
 struct PersistancePoint {
-    Entity PersistancePointSerializer;
     bool PersistancePointLoaded, PersistancePointLoading, PersistancePointSaving, PersistancePointAsync;
 };
-
-LocalFunction(OnPersistancePointAdded, void, Entity persistancePoint) {
-    // If children exist already, they are referenced to stores entities at this persistance point.
-    // Therefore load these to keep them up to date with the ones on disk.
-    if(IsEntityValid(GetFirstChild(persistancePoint))) {
-        SetPersistancePointLoaded(persistancePoint, true);
-    }
-}
 
 LocalFunction(OnStreamContentChanged, void, Entity persistancePoint) {
     // If serialized content has changed, re-deserialize (load) it!
@@ -36,13 +27,40 @@ LocalFunction(OnStreamPathChanged, void, Entity persistancePoint, StringRef oldV
 }
 
 LocalFunction(Load, bool, Entity persistancePoint) {
+    auto fileType = GetStreamFileType(persistancePoint);
+    if(!IsEntityValid(fileType)) {
+        Log(persistancePoint, LogSeverity_Error, "Load failed. File type is not found for '%s'.", GetStreamResolvedPath(persistancePoint));
+        SetPersistancePointLoaded(persistancePoint, false);
+        return false;
+    }
+
+    auto mimeType = GetFileTypeMimeType(fileType);
+    if(strlen(mimeType) == 0) {
+        Log(persistancePoint, LogSeverity_Error, "Load failed. Unable to determine mime type for '%s'.", GetStreamResolvedPath(persistancePoint));
+        SetPersistancePointLoaded(persistancePoint, false);
+        return false;
+    }
+
+    // Find serializer
+    Entity serializer = 0;
+    for_entity(serializerEntity, serializerData, Serializer) {
+        if(strcmp(mimeType, serializerData->SerializerMimeType) == 0) {
+            serializer = serializerEntity;
+            break;
+        }
+    }
+
+    if(!IsEntityValid(serializer)) {
+        Log(persistancePoint, LogSeverity_Error, "Load failed. No compatible serializer for mime type '%s' found when deserializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
+        SetPersistancePointLoaded(persistancePoint, false);
+        return false;
+    }
     if(!StreamOpen(persistancePoint, StreamMode_Read)) {
         Log(persistancePoint, LogSeverity_Error, "Load failed. Could not open '%s' for reading.", GetStreamResolvedPath(persistancePoint));
         SetPersistancePointLoaded(persistancePoint, false);
         return false;
     }
 
-    auto serializer = GetPersistancePointSerializer(persistancePoint);
     auto result = GetSerializerData(serializer)->DeserializeHandler(persistancePoint);
 
     SetPersistancePointLoading(persistancePoint, false);
@@ -52,28 +70,6 @@ LocalFunction(Load, bool, Entity persistancePoint) {
 
 LocalFunction(OnPersistancePointLoadedChanged, void, Entity persistancePoint, bool oldValue, bool newValue) {
     if(newValue) {
-        // Load
-        auto fileType = GetStreamFileType(persistancePoint);
-        if(!IsEntityValid(fileType)) {
-            Log(persistancePoint, LogSeverity_Error, "Load failed. File type is not found for '%s'.", GetStreamResolvedPath(persistancePoint));
-            SetPersistancePointLoaded(persistancePoint, false);
-            return;
-        }
-
-        auto mimeType = GetFileTypeMimeType(fileType);
-        if(strlen(mimeType) == 0) {
-            Log(persistancePoint, LogSeverity_Error, "Load failed. Unable to determine serializer, as content mime type is not given for '%s'.", GetStreamResolvedPath(persistancePoint));
-            SetPersistancePointLoaded(persistancePoint, false);
-            return;
-        }
-
-        auto serializer = GetPersistancePointSerializer(persistancePoint);
-        if(!IsEntityValid(serializer)) {
-            Log(persistancePoint, LogSeverity_Error, "Load failed. No compatible serialiser for mime type '%s' found when deserializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
-            SetPersistancePointLoaded(persistancePoint, false);
-            return;
-        }
-
         SetPersistancePointLoading(persistancePoint, true);
 
         if(GetPersistancePointAsync(persistancePoint)) {
@@ -114,7 +110,14 @@ API_EXPORT bool Save(Entity persistancePoint) {
         return false;
     }
 
-    auto serializer = GetPersistancePointSerializer(persistancePoint);
+    Entity serializer = 0;
+    for_entity(serializerEntity, serializerData, Serializer) {
+        if(strcmp(mimeType, serializerData->SerializerMimeType) == 0) {
+            serializer = serializerEntity;
+            break;
+        }
+    }
+
     if(!IsEntityValid(serializer)) {
         Log(persistancePoint, LogSeverity_Error, "Save failed. No compatible serialiser for mime type '%s' found when serializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
         return false;
@@ -140,7 +143,6 @@ BeginUnit(PersistancePoint)
         RegisterProperty(bool, PersistancePointLoaded)
         RegisterProperty(bool, PersistancePointLoading)
         RegisterProperty(bool, PersistancePointSaving)
-        RegisterProperty(Entity, PersistancePointSerializer)
 
         RegisterBase(Stream)
     EndComponent()
@@ -151,7 +153,6 @@ BeginUnit(PersistancePoint)
 
     RegisterFunction(Save)
 
-    RegisterSubscription(PersistancePointAdded, OnPersistancePointAdded, 0)
     RegisterSubscription(StreamContentChanged, OnStreamContentChanged, 0)
     RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
     RegisterSubscription(PersistancePointLoadedChanged, OnPersistancePointLoadedChanged, 0)

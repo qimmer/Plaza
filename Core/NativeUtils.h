@@ -15,11 +15,14 @@ typedef u64 Entity;
 
 typedef bool(*FunctionCaller)(u64 functionImplementation, Type returnArgumentTypeIndex, void *returnData, u32 numArguments, const Type *argumentTypes, const void **argumentDataPtrs);
 
+Entity ModuleOf_Core();
+
 Entity CreateEntityFromName(Entity parent, StringRef name);
 
 void SetModuleSourcePath(Entity module, StringRef sourcePath);
 void SetModuleVersion(Entity module, StringRef version);
 Entity GetModuleRoot();
+Entity GetUnregisteredEntitiesRoot();
 void SetName(Entity entity, StringRef name);
 bool AddComponent(Entity entity, Entity type);
 bool HasComponent(Entity entity, Entity component);
@@ -67,7 +70,7 @@ bool CallNativeFunction(
 
 Entity EventOf_ParentChanged();
 
-Entity GetUniqueEntity(StringRef name);
+Entity GetUniqueEntity(StringRef name, bool *firstTime);
 
 template <class... T>
 inline void __FireEventVa(Entity event, T... args) {
@@ -78,10 +81,26 @@ inline void __FireEventVa(Entity event, T... args) {
 
 #define Declare(TYPE, NAME, INITIALIZER) \
     inline Entity TYPE ## Of_ ## NAME () {\
-        static Entity entity = GetUniqueEntity(#TYPE " " #NAME);\
+        static Entity entity = 0;\
+        static bool firstTime = false;\
+        if(entity == 0) {\
+            entity = GetUniqueEntity(#TYPE " " #NAME, &firstTime);\
+            if(firstTime) {\
+                SetName(entity, #TYPE " " #NAME);\
+                SetParent(entity, GetUnregisteredEntitiesRoot());\
+            }\
+        }\
         return entity;\
     }
 
+#define __Declare(TYPE, NAME, INITIALIZER) \
+    inline Entity TYPE ## Of_ ## NAME () {\
+        static Entity entity = 0;\
+        if(entity == 0) {\
+            entity = GetUniqueEntity(#TYPE " " #NAME, NULL);\
+        }\
+        return entity;\
+    }
 #define Module(NAME) \
     Entity ModuleOf_ ## NAME ();
 
@@ -96,17 +115,22 @@ inline void __FireEventVa(Entity event, T... args) {
     Declare(Component, NAME, 0)\
     inline NAME * Get ## NAME ## Data(Entity entity) {\
         return (NAME*)GetComponentData(ComponentOf_ ## NAME(), GetComponentIndex(ComponentOf_ ## NAME(), entity));\
-    }\
-    inline Entity EventOf_ ## NAME ## Added () {\
-        return GetComponentAddedEvent(ComponentOf_ ## NAME());\
-    } \
-    inline Entity EventOf_ ## NAME ## Removed () {\
-        return GetComponentRemovedEvent(ComponentOf_ ## NAME());\
+    }
+
+#define __Component(NAME) \
+    struct NAME;\
+    __Declare(Component, NAME, 0)\
+    inline NAME * Get ## NAME ## Data(Entity entity) {\
+        return (NAME*)GetComponentData(ComponentOf_ ## NAME(), GetComponentIndex(ComponentOf_ ## NAME(), entity));\
     }
 
 #define Event(NAME, ...) \
-    static const StringRef __ ## DECL ## NAME = #__VA_ARGS__;\
+    static const StringRef __Event ## NAME = #__VA_ARGS__;\
     Declare(Event, NAME, 0)
+
+#define __Event(NAME, ...) \
+    static const StringRef __Event ## NAME = #__VA_ARGS__;\
+    __Declare(Event, NAME, 0)
 
 #define __PropertyCore(PROPERTYTYPE, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME, 0) \
@@ -137,16 +161,38 @@ inline void __FireEventVa(Entity event, T... args) {
         SetPropertyValue(prop, entity, &value);\
     }
 
+#define __PropertyNoInit(PROPERTYTYPE, PROPERTYNAME, ...) \
+    __Declare(Property, PROPERTYNAME, 0) \
+    static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
+    Event(PROPERTYNAME ## Changed, Entity changedEntity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue)\
+    inline PROPERTYTYPE Get ## PROPERTYNAME(Entity entity) {\
+        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
+        PROPERTYTYPE value;\
+        memset(&value, 0, sizeof(PROPERTYTYPE));\
+        GetPropertyValue(prop, entity, &value);\
+        return value;\
+    }\
+    inline void Set ## PROPERTYNAME(Entity entity, PROPERTYTYPE value) {\
+        static Entity prop = PropertyOf_ ## PROPERTYNAME ();\
+        SetPropertyValue(prop, entity, &value);\
+    }
+
 #define __Function(NAME, R, ...) \
     inline Entity FunctionOf_ ## NAME () {\
         static Entity entity = 0;\
+        static bool firstTime = false;\
         if(!entity) {\
-            entity = GetUniqueEntity("Function " #NAME);\
-            SetName(entity, #NAME);\
-            SetFunctionCaller(entity, CallNativeFunction);\
-            SetFunctionImplementation(entity, (u64)(void*) (Entity(*)(StringRef)) & NAME );\
-            SetFunctionReturnType(entity, TypeOf_ ## R);\
-            SetFunctionArgsByDecl(entity, #__VA_ARGS__);\
+            entity = GetUniqueEntity("Function " #NAME " " __FILE__, &firstTime);\
+            if(firstTime) {\
+                char unregisteredName[64];\
+                snprintf(unregisteredName, 64, "Func_" #NAME "_%llu", entity);\
+                SetParent(entity, GetUnregisteredEntitiesRoot());\
+                SetName(entity, unregisteredName);\
+                SetFunctionReturnType(entity, TypeOf_ ## R);\
+                SetFunctionCaller(entity, CallNativeFunction);\
+                SetFunctionImplementation(entity, (u64)(void*) (Entity(*)(StringRef)) & NAME );\
+                SetFunctionArgsByDecl(entity, #__VA_ARGS__);\
+            }\
         }\
         return entity;\
     }
@@ -156,21 +202,27 @@ inline void __FireEventVa(Entity event, T... args) {
     __Function(NAME, R, ##__VA_ARGS__)
 
 #define Test(NAME) \
-    TestResult NAME();\
+    TestResult NAME(Entity test);\
     inline Entity FunctionOf_ ## NAME () {\
         static Entity entity = 0;\
+        static bool firstTime = false;\
         if(!entity) {\
-            entity = GetUniqueEntity("Function " #NAME);\
-            SetName(entity, #NAME);\
-            SetFunctionCaller(entity, CallNativeFunction);\
-            SetFunctionImplementation(entity, (u64)(void*)NAME);\
-            SetFunctionReturnType(entity, TypeOf_u32);\
-            SetFunctionArgsByDecl(entity, "");\
-            AddComponent(entity, ComponentOf_Test());\
+            entity = GetUniqueEntity("Test " #NAME " " __FILE__, &firstTime);\
+            if(firstTime) {\
+                char unregisteredName[64];\
+                snprintf(unregisteredName, 64, "Test_%llu", entity);\
+                SetParent(entity, GetUnregisteredEntitiesRoot());\
+                SetName(entity, unregisteredName);\
+                SetFunctionReturnType(entity, TypeOf_u32);\
+                SetFunctionImplementation(entity, (u64)(void*)NAME);\
+                SetFunctionCaller(entity, CallNativeFunction);\
+                SetFunctionArgsByDecl(entity, "");\
+                AddComponent(entity, ComponentOf_Test());\
+            }\
         }\
         return entity;\
     }\
-    TestResult NAME()
+    TestResult NAME(Entity test)
 
 #define LocalFunction(NAME, R, ...) \
     static R NAME(__VA_ARGS__);\
@@ -267,13 +319,17 @@ inline void __FireEventVa(Entity event, T... args) {
     void __InitModule_ ## NAME(Entity module);\
     API_EXPORT Entity ModuleOf_ ## NAME () {\
         static Entity module = 0;\
+        static bool firstTime = false;\
         if(!module) {\
-            module = GetUniqueEntity("Module " #NAME);\
-            __InitModule_ ## NAME(module);\
-            SetModuleSourcePath(module, __FILE__);\
-            SetModuleVersion(module, __DATE__ " " __TIME__);\
-            SetName(module, #NAME);\
-            SetParent(module, GetModuleRoot());\
+            ModuleOf_Core();\
+            module = GetUniqueEntity("Module " #NAME, &firstTime);\
+            if(firstTime) {\
+                SetName(module, #NAME);\
+                SetParent(module, GetModuleRoot());\
+                SetModuleSourcePath(module, __FILE__);\
+                SetModuleVersion(module, __DATE__ " " __TIME__);\
+                __InitModule_ ## NAME(module);\
+            }\
         }\
         return module;\
     }\
@@ -321,24 +377,24 @@ inline void __FireEventVa(Entity event, T... args) {
         SetName(event, #NAME);\
         SetParent(event, module);\
         AddComponent(event, ComponentOf_Event());\
-        SetEventArgsByDecl(event, __ ## DECL ## NAME);
+        SetEventArgsByDecl(event, __Event ## NAME);
 
 #define RegisterProperty(PROPERTYTYPE, PROPERTYNAME)\
     RegisterEvent(PROPERTYNAME ## Changed)\
     property = PropertyOf_ ## PROPERTYNAME ();\
+    SetParent(property, component);\
     SetName(property, #PROPERTYNAME);\
     SetPropertyType(property, TypeOf_ ## PROPERTYTYPE);\
     SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
     SetPropertyChangedEvent(property, EventOf_ ## PROPERTYNAME ## Changed ());\
     SetPropertyComponent(property, component);\
-    SetPropertyMeta(property, __ ## PROPERTYNAME ## __Meta);\
-    SetParent(property, component);
+    SetPropertyMeta(property, __ ## PROPERTYNAME ## __Meta);
 
 #define RegisterBase(BASECOMPONENT) \
     base = CreateEntityFromName(component, #BASECOMPONENT);\
     SetName(base, #BASECOMPONENT);\
-    SetDependencyComponent(base, component);
+    SetBaseComponent(base, component);
 
 #define RegisterExtension(EXTENSIONCOMPONENT) \
     extension = CreateEntityFromName(component, #EXTENSIONCOMPONENT);\
@@ -347,10 +403,12 @@ inline void __FireEventVa(Entity event, T... args) {
 
 #define RegisterFunction(FUNCTION) \
     function = FunctionOf_ ## FUNCTION ();\
-    SetParent(function, module);
+    SetParent(function, module);\
+    SetName(function, #FUNCTION);
 
 #define RegisterTest(TEST) \
-    RegisterFunction(TEST)
+    RegisterFunction(TEST)\
+    AddComponent(function, ComponentOf_Test());
 
 #define RegisterSubscription(EVENT, FUNCTION, SENDER) \
     snprintf(buffer, 1024, "Subscription_%s_%s", unitName, #EVENT);\

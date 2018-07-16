@@ -25,7 +25,7 @@ template<typename T, typename Comparator = std::less<T>> using OrderedSet = east
     TYPE * NAME; \
     TYPE Buf ## NAME [SMALLCAP];
 
-#define SetVectorAmount(DATA, NAME, NEWCOUNT) __SetVectorAmount(& DATA -> Num ## NAME, (NEWCOUNT), & DATA -> Cap ## NAME, DATA -> StaticCap ## NAME, (void**)& DATA -> NAME, &DATA -> Buf ## NAME[0], sizeof(DATA->NAME) )
+#define SetVectorAmount(DATA, NAME, NEWCOUNT) __SetVectorAmount(& DATA -> Num ## NAME, (NEWCOUNT), & DATA -> Cap ## NAME, DATA -> StaticCap ## NAME, (void**)& DATA -> NAME, &DATA -> Buf ## NAME[0], DATA->ElementSize_ ## NAME )
 #define VectorRemove(DATA, NAME, INDEX) DATA -> NAME [INDEX] = DATA -> NAME [DATA -> Num ## NAME - 1]; SetVectorAmount(DATA, NAME, DATA -> Num ## NAME - 1)
 #define VectorAdd(DATA, NAME, VALUE) SetVectorAmount(DATA, NAME, DATA -> Num ## NAME + 1); DATA -> NAME [DATA -> Num ## NAME - 1] = VALUE
 #define VectorClear(DATA, NAME) SetVectorAmount(DATA, NAME, 0)

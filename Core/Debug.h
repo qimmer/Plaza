@@ -5,8 +5,8 @@
 #ifndef PLAZA_DEBUG_H
 #define PLAZA_DEBUG_H
 
-#include <Core/NativeUtils.h>
 #include <stdio.h>
+#include <Core/Types.h>
 
 #define Assert(CONTEXT, x) if(!(x)) { Log( CONTEXT, LogSeverity_Fatal, "Assertion failed at line %d in %s: %s", __LINE__, __FILE__, #x ); Exit(-1); } do{} while(false)
 
@@ -24,6 +24,8 @@
 void Log(Entity context, int severity, StringRef format, ...);
 void DebuggerBreak();
 void Exit(s32 returnCode);
+
+#include <Core/NativeUtils.h>
 
 Unit(Debug)
     Event(LogMessageReceived, StringRef message, u8 severity)

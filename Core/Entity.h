@@ -14,7 +14,15 @@ Unit(Entity)
     Function(IsEntityOccupied, bool, u32 index)
     Function(IsEntityValid, bool, Entity handle)
 
-    Event(EntityCreated)
+    static const StringRef __EventEntityCreated = "";
+    inline Entity EventOf_EntityCreated() {\
+        static Entity entity = 0;
+        if(entity == 0) {
+            entity = GetUniqueEntity("Event EntityCreated", NULL);
+        }
+        return entity;
+    }
+
     Event(EntityDestroyed)
 
 #endif

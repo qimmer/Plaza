@@ -204,6 +204,7 @@ API_EXPORT bool CallNativeFunction(
 
     for(auto i = 0; i < numArguments; ++i) {
         switch(argumentTypes[i]) {
+            _CallFunction_HandleType(Type, Char)
             _CallFunction_HandleType(bool, Bool)
             _CallFunction_HandleType(u8, Char)
             _CallFunction_HandleType(u16, Short)
@@ -232,6 +233,7 @@ API_EXPORT bool CallNativeFunction(
     }
 
     switch(returnArgumentTypeIndex) {
+        _CallFunction_HandleCall(Type, Char)
         _CallFunction_HandleCall(bool, Bool)
         _CallFunction_HandleCall(u8, Char)
         _CallFunction_HandleCall(u16, Short)
@@ -288,7 +290,6 @@ void __InitializeFunction() {
     auto component = ComponentOf_Function();
     __Property(PropertyOf_FunctionImplementation(), offsetof(Function, FunctionImplementation), sizeof(Function::FunctionImplementation), TypeOf_u64,  component);
     __Property(PropertyOf_FunctionReturnType(), offsetof(Function, FunctionReturnType), sizeof(Function::FunctionReturnType), TypeOf_Type,  component);
-    __Property(PropertyOf_FunctionCaller(), offsetof(Function, FunctionCaller), sizeof(Function::FunctionCaller), TypeOf_unknown,  component);
 
     component = ComponentOf_FunctionArgument();
     __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component);
@@ -313,5 +314,15 @@ API_EXPORT u32 GetFunctionArguments(u32 functionIndex, u32 maxArguments, Type *a
 API_EXPORT Type GetFunctionReturnTypeByIndex(u32 functionIndex) {
     auto data = (Function*)GetComponentData(ComponentOf_Function(), functionIndex);
     return data->FunctionReturnType;
+}
+
+API_EXPORT FunctionCaller GetFunctionCaller(Entity function) {
+    auto data = GetFunctionData(function);
+    return data->FunctionCaller;
+}
+
+API_EXPORT void SetFunctionCaller(Entity function, FunctionCaller caller) {
+    auto data = GetFunctionData(function);
+    data->FunctionCaller = caller;
 }
 
