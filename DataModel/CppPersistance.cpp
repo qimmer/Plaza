@@ -57,30 +57,30 @@ static void WriteComponentHeader(Entity componentDefinition, std::ostream& code)
 }
 
 API_EXPORT void GenerateModuleSources(Entity moduleDefinition) {
-    char moduleVirtualPath[PATH_MAX];
-    char moduleResolvedPath[PATH_MAX];
+    char moduleVirtualPath[PathMax];
+    char moduleResolvedPath[PathMax];
 
-    snprintf(moduleVirtualPath, PATH_MAX, "file://%s/../../%s", __FILE__, GetName(moduleDefinition));
+    snprintf(moduleVirtualPath, PathMax, "file://%s/../../%s", __FILE__, GetName(moduleDefinition));
     ResolveVirtualPath(moduleVirtualPath, moduleResolvedPath);
 
-    char moduleSourceFilePath[PATH_MAX];
-    char moduleHeaderFilePath[PATH_MAX];
+    char moduleSourceFilePath[PathMax];
+    char moduleHeaderFilePath[PathMax];
 
-    snprintf(moduleHeaderFilePath, PATH_MAX, "%s/%sModule.h", moduleResolvedPath, GetName(moduleDefinition));
-    snprintf(moduleSourceFilePath, PATH_MAX, "%s/%sModule.cpp", moduleResolvedPath, GetName(moduleDefinition));
+    snprintf(moduleHeaderFilePath, PathMax, "%s/%sModule.h", moduleResolvedPath, GetName(moduleDefinition));
+    snprintf(moduleSourceFilePath, PathMax, "%s/%sModule.cpp", moduleResolvedPath, GetName(moduleDefinition));
 
     std::stringstream moduleHeaderCode, moduleSourceCode;
     WriteModuleHeader(moduleDefinition, moduleHeaderCode);
     WriteModuleSource(moduleDefinition, moduleSourceCode);
 
     for_children(componentDefinition, GetModuleDefinitionComponents(moduleDefinition)) {
-        char componentSourceFilePath[PATH_MAX];
-        char componentHeaderFilePath[PATH_MAX];
+        char componentSourceFilePath[PathMax];
+        char componentHeaderFilePath[PathMax];
 
         std::stringstream headerCode, sourceCode;
 
-        snprintf(moduleHeaderFilePath, PATH_MAX, "%s/%sModule.h", moduleResolvedPath, GetName(moduleDefinition));
-        snprintf(moduleSourceFilePath, PATH_MAX, "%s/%sModule.cpp", moduleResolvedPath, GetName(moduleDefinition));
+        snprintf(moduleHeaderFilePath, PathMax, "%s/%sModule.h", moduleResolvedPath, GetName(moduleDefinition));
+        snprintf(moduleSourceFilePath, PathMax, "%s/%sModule.cpp", moduleResolvedPath, GetName(moduleDefinition));
 
         auto headerStream = CreateStream(componentDefinition, "HeaderStream");
         SetStreamPath(headerStream, componentHeaderFilePath);

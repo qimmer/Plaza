@@ -196,8 +196,8 @@ static void BindModule(lua_State *L, Module module) {
 }
 
 static int l_module(lua_State *L) {
-	char currentSrc[PATH_MAX];
-	GetCurrentSource(L, currentSrc, PATH_MAX);
+	char currentSrc[PathMax];
+	GetCurrentSource(L, currentSrc, PathMax);
 
 	auto moduleName = lua_tostring(L, -1);
 

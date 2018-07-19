@@ -58,12 +58,12 @@ int main(int argc, char** argv) {
         0
     };
 
-    char sourceFilePath[PATH_MAX];
-    snprintf(sourceFilePath, PATH_MAX, "file://%s", __FILE__);
+    char sourceFilePath[PathMax];
+    snprintf(sourceFilePath, PathMax, "file://%s", __FILE__);
     CleanupPath(sourceFilePath);
 
-    char sourceDirectory[PATH_MAX];
-    GetParentFolder(sourceFilePath, sourceDirectory, PATH_MAX);
+    char sourceDirectory[PathMax];
+    GetParentFolder(sourceFilePath, sourceDirectory, PathMax);
     if(IsFolder(sourceDirectory)) {
         virtualPaths[4] = "res://Source";
         virtualPaths[5] = sourceDirectory;

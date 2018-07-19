@@ -13,20 +13,22 @@ Function(AddComponent, bool, Entity entity, Entity componentType)
 Function(RemoveComponent, bool, Entity entity, Entity componentType)
 Function(HasComponent, bool, Entity entity, Entity componentType)
 
-Function(GetNumComponents, u32, Entity component);
+Function(GetComponentMax, u32, Entity component);
 Function(GetComponentEntity, Entity, Entity component, u32 index);
 Function(GetComponentIndex, u32, Entity entity, Entity component);
 
 Unit(Component)
-    Component(Component)
-        Property(u16, ComponentSize)
-        Property(bool, ComponentAbstract)
-
     Component(Extension)
         Property(Entity, ExtensionComponent)
+        Property(Entity, ExtensionExtenderComponent)
 
     Component(Base)
         Property(Entity, BaseComponent)
+
+    Component(Component)
+        __PropertyCore(Component, u16, ComponentSize)
+        __ArrayPropertyCore(Base, Bases)
+        __ArrayPropertyCore(Property, Properties)
 
     Event(EntityComponentAdded, Entity entity)
     Event(EntityComponentRemoved, Entity entity)

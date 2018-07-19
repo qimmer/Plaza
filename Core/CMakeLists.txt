@@ -33,7 +33,7 @@ SET(ex_eastl_inc_dir "${SOURCE_DIR}/include")
 ADD_LIBRARY(eastl STATIC IMPORTED)
 SET_PROPERTY(TARGET eastl PROPERTY IMPORTED_LOCATION "${ex_eastl_lib_dir}/libEASTL.a")
 
-add_library(Core Entity.cpp Entity.h Types.h Pool.h Function.h Event.h Debug.cpp Debug.h Property.h Property.cpp Vector.cpp Vector.h StackContainer.h Variant.h Module.cpp Module.h CoreModule.cpp CoreModule.h Node.cpp Node.h Function.cpp Base64.cpp Base64.h Enum.cpp Enum.h AlignedAllocator.h ShortAlloc.h Hashing.h Hashing.cpp Event.cpp Variant.cpp Component.cpp Component.h NativeUtils.h NativeUtils.cpp Types.cpp Math.h)
+add_library(Core Entity.cpp Entity.h Types.h Pool.h Function.h Event.h Debug.cpp Debug.h Property.h Property.cpp Vector.cpp Vector.h StackContainer.h Variant.h Module.cpp Module.h CoreModule.cpp CoreModule.h Function.cpp Base64.cpp Base64.h Enum.cpp Enum.h AlignedAllocator.h ShortAlloc.h Hashing.h Hashing.cpp Event.cpp Variant.cpp Component.cpp Component.h NativeUtils.h NativeUtils.cpp Types.cpp Math.h Identification.cpp Identification.h)
 
 add_dependencies(Core ex_dyncall ex_eastl)
 

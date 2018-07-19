@@ -255,12 +255,12 @@ static void Drawm4x4f(Property property) {
 }
 static void DrawStringRef(Property property) {
     char id[128];
-    char buf[PATH_MAX];
+    char buf[PathMax];
     sprintf(id, "##%llu", property);
     typedef StringRef(*Getter)(Entity entity);
     typedef void(*Setter)(Entity entity, StringRef value);
     strcpy(buf, ((Getter)GetPropertyGetter(property))(GetSelectionEntity(0)));
-    if(ImGui::InputText(id, buf, PATH_MAX, ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if(ImGui::InputText(id, buf, PathMax, ImGuiInputTextFlags_EnterReturnsTrue)) {
         for(auto i = 0; i < GetNumSelection(); ++i) {
             ((Setter)GetPropertySetter(property))(GetSelectionEntity(i), buf);
         }

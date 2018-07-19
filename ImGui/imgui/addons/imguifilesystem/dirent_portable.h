@@ -154,7 +154,7 @@
 /* Maximum length of file name */
 #ifndef DIRENT_MAX_PATH
 #   ifndef MAX_PATH
-#       define MAX_PATH PATH_MAX    // it should be in <limits.h> AFAIK
+#       define MAX_PATH PathMax    // it should be in <limits.h> AFAIK
 #   endif //MAX_PATH
 #   ifndef DIRENT_USE_ASCII_SHORT_PATHS_ON_WINDOWS    // utf8 strings can have up to 4 bytes per char
 #       define DIRENT_MAX_PATH (MAX_PATH*4)

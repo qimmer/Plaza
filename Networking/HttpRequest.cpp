@@ -26,7 +26,7 @@ BeginUnit(HttpRequest)
 
     BeginComponent(HttpRequest)
         RegisterProperty(StringRef, HttpRequestMethod)
-        RegisterProperty(Entity, HttpRequestResponse)
+        RegisterChildProperty(HttpResponse, HttpRequestResponse)
         RegisterProperty(StringRef, HttpRequestUrl)
         RegisterProperty(StringRef, HttpRequestVersion)
     EndComponent()

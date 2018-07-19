@@ -32,6 +32,10 @@ struct Task {
     Entity TaskFunction;
 };
 
+struct TaskQueue {
+    Vector(QueuedTasks, Entity, 32)
+};
+
 static void TaskFunc(void* taskIndexPtr, struct scheduler*, struct sched_task_partition, sched_uint thread_num) {
     auto task = GetComponentEntity(ComponentOf_Task(), (size_t)taskIndexPtr);
     Invoke(task);
@@ -113,6 +117,9 @@ BeginUnit(Task)
         RegisterProperty(bool, TaskFinished)
     EndComponent()
 
+    BeginComponent(TaskQueue)
+        RegisterArrayProperty(Task, QueuedTasks)
+    EndComponent()
+
     RegisterSubscription(AppLoopFrameChanged, OnAppLoopFrameChanged, 0)
-    RegisterNode(TaskQueue)
 EndUnit()

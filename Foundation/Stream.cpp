@@ -20,14 +20,22 @@
 #include <EASTL/vector.h>
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
+#include <Core/Identification.h>
 
 using namespace eastl;
+
+struct StreamExtensionModule {
+    Vector(ModuleStreamProtocols, Entity, 8)
+    Vector(ModuleStreamCompressors, Entity, 8)
+    Vector(ModuleFileTypes, Entity, 8)
+    Vector(ModuleSerializers, Entity, 8)
+};
 
 struct Stream {
     Entity StreamProtocol, StreamCompressor, StreamFileType;
 
-    char StreamPath[512];
-    char StreamResolvedPath[512];
+    char StreamPath[PathMax];
+    char StreamResolvedPath[PathMax];
     int StreamMode;
 
     bool InvalidationPending;
@@ -131,7 +139,7 @@ API_EXPORT bool StreamOpen(Entity entity, int mode) {
         return true;
     } else {
         data->StreamMode = 0;
-        Log(entity, LogSeverity_Error, "Steam could not be opened.");
+        Log(entity, LogSeverity_Error, "Stream '%s' could not be opened.", data->StreamPath);
     }
 
     return false;
@@ -246,8 +254,8 @@ API_EXPORT void GetParentFolder(StringRef absolutePath, char *parentFolder, size
 }
 
 API_EXPORT StringRef GetCurrentWorkingDirectory() {
-    static char path[PATH_MAX];
-    getcwd(path, PATH_MAX);
+    static char path[PathMax];
+    getcwd(path, PathMax);
     return path;
 }
 
@@ -357,8 +365,8 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     SetStreamProtocol(entity, 0);
 
     // Resolve protocol, compressor and filetype first
-    char resolvedPath[PATH_MAX];
-    ResolveVirtualPath(newValue, PATH_MAX, resolvedPath);
+    char resolvedPath[PathMax];
+    ResolveVirtualPath(newValue, PathMax, resolvedPath);
 
     strncpy(data->StreamResolvedPath, resolvedPath, sizeof(data->StreamResolvedPath));
 
@@ -485,6 +493,18 @@ BeginUnit(Stream)
         RegisterProperty(StringRef, FileTypeExtension)
         RegisterProperty(StringRef, FileTypeMimeType)
         RegisterProperty(Entity, FileTypeComponent)
+    EndComponent()
+
+    BeginComponent(Serializer)
+        RegisterProperty(StringRef, SerializerMimeType)
+    EndComponent()
+
+    BeginComponent(StreamExtensionModule)
+        RegisterBase(Module)
+        RegisterArrayProperty(StreamProtocol, ModuleStreamProtocols)
+        RegisterArrayProperty(StreamCompressor, ModuleStreamCompressors)
+        RegisterArrayProperty(FileType, ModuleFileTypes)
+        RegisterArrayProperty(Serializer, ModuleSerializers)
     EndComponent()
 
     RegisterEvent(StreamContentChanged)

@@ -1,0 +1,33 @@
+{
+  "$children": [
+    {
+      "Name": "WebServer",
+      "ServerPort": 8080,
+      "$components": ["HttpServer"],
+      "$children": [
+        {
+          "Name": "Route",
+          "RestResourceRoutingRoot": "file://wwwroot",
+          "RestRoutingRoute": "/"
+        }
+      ]
+    },
+    {
+      "Name": "ApiServer",
+      "ServerPort": 8000,
+      "$components": ["HttpServer"],
+      "$children": [
+        {
+          "Name": "Route",
+          "RestEntityRoutingRoot": "/Modules",
+          "RestRoutingRoute": "/"
+        }
+      ]
+    },
+    {
+      "Name": "Html",
+      "FileTypeExtension": ".html",
+      "FileTypeMimeType": "text/html"
+    }
+  ]
+}

@@ -16,6 +16,10 @@
 #include <signal.h>
 #endif
 
+#ifdef WIN32
+#include <Windows.h>
+#endif
+
 BeginUnit(Debug)
     RegisterEvent(LogMessageReceived)
 EndUnit()
@@ -58,7 +62,9 @@ API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
 
 API_EXPORT void DebuggerBreak() {
 #ifdef WIN32
-    __debugbreak();
+    if(IsDebuggerPresent()) {
+        __debugbreak();
+    }
 #else
     raise(SIGTRAP);
 #endif

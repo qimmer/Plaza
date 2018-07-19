@@ -16,8 +16,21 @@
 #include <Foundation/ValueConverter.h>
 #include <Foundation/VirtualPath.h>
 #include <Foundation/Visibility.h>
+#include "FoundationModule.h"
 
-BeginModule(Foundation)
+struct FoundationData {
+    Entity TaskQueue, FilesystemUpdateTimer;
+};
+
+BeginUnit(Foundation)
+    BeginComponent(FoundationData)
+        RegisterChildProperty(TaskQueue, TaskQueue)
+        RegisterChildProperty(Timer, FilesystemUpdateTimer)
+    EndComponent()
+EndUnit()
+
+BeginModule(Foundation, ComponentOf_FoundationData())
+    RegisterUnit(Foundation)
     RegisterUnit(AppLoop)
     RegisterUnit(CommandLineArgument)
     RegisterUnit(Invocation)

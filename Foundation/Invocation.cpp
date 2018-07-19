@@ -7,6 +7,7 @@
 #include <Core/Function.h>
 #include <Core/Debug.h>
 #include <Core/Vector.h>
+#include <Core/Identification.h>
 
 #define ARGUMENT_DATA_MAX 4096
 
@@ -14,7 +15,7 @@ struct Invocation {
     Entity InvocationFunction;
     Variant InvocationResult;
 
-    Vector(InvocationArguments, InvocationArgument*, 16)
+    Vector(InvocationArguments, Entity, 16)
 };
 
 struct InvocationArgument {
@@ -30,13 +31,13 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
 
     if(!invocation) return false;
 
-    if(invocation->NumInvocationArguments > 32) {
+    if(invocation->InvocationArguments.Count > 16) {
         Log(invocationEntity, LogSeverity_Error, "Function invocation '%s' failed: Too many arguments.", GetName(invocationEntity));
         return false;
     }
 
-    for(int i = 0; i < invocation->NumInvocationArguments; ++i) {
-        auto argument = invocation->InvocationArguments[i];
+    for(int i = 0; i < invocation->InvocationArguments.Count; ++i) {
+        auto argument = GetInvocationArgumentData(GetVector(invocation->InvocationArguments)[i]);
 
         argumentPtrs[i] = argument->InvocationArgumentValue.buffer;
         argumentTypeIndices[i] = argument->InvocationArgumentValue.type;
@@ -46,7 +47,7 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
         CallFunction(
                 invocation->InvocationFunction,
                 result.buffer,
-                invocation->NumInvocationArguments,
+                invocation->InvocationArguments.Count,
                 argumentTypeIndices,
                 argumentPtrs
         );
@@ -58,7 +59,7 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
     } else if (HasComponent(invocation->InvocationFunction, ComponentOf_Event())) {
         FireEventFast(
                 invocation->InvocationFunction,
-                invocation->NumInvocationArguments,
+                invocation->InvocationArguments.Count,
                 argumentTypeIndices,
                 argumentPtrs
         );
@@ -74,13 +75,11 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
     return false;
 }
 
-ChildCache(Invocation, InvocationArgument, InvocationArguments)
-
 BeginUnit(Invocation)
     BeginComponent(Invocation)
         RegisterProperty(Entity, InvocationFunction)
         RegisterProperty(Variant, InvocationResult)
-        RegisterChildCache(InvocationArgument)
+        RegisterArrayProperty(InvocationArgument, InvocationArguments)
     EndComponent()
     BeginComponent(InvocationArgument)
         RegisterProperty(Variant, InvocationArgumentValue)

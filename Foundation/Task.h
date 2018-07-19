@@ -10,7 +10,9 @@
 Unit(Task)
     Component(Task)
         Property(bool, TaskFinished)
-    Node(TaskQueue)
+
+    Component(TaskQueue)
+        ArrayProperty(Task, QueuedTasks)
 
 void TaskSchedule(Entity task);
 void TaskWait(Entity task);

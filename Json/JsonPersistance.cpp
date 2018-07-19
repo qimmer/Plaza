@@ -3,7 +3,6 @@
 //
 
 #include "JsonPersistance.h"
-#include <Core/Node.h>
 #include <Core/Types.h>
 #include <Foundation/Stream.h>
 #include <Foundation/PersistancePoint.h>
@@ -20,6 +19,7 @@
 #include <EASTL/string.h>
 #include <EASTL/fixed_vector.h>
 #include <Foundation/NativeUtils.h>
+#include <Core/Identification.h>
 
 using namespace eastl;
 
@@ -111,27 +111,65 @@ using namespace eastl;
         }\
         break;
 
-static StringRef TryGetEntityPath(Entity entity) {
-    if(!IsEntityValid(entity) || !HasComponent(entity, ComponentOf_Node())) {
-        return "";
+static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer);
+
+static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer) {
+    char valueData[64];
+    auto type = GetPropertyType(property);
+    GetPropertyValue(property, entity, valueData);
+
+    switch(type) {
+        WriteIf(u8, Uint)
+        WriteIf(u16, Uint)
+        WriteIf(u32, Uint)
+        WriteIf(u64, Uint64)
+        WriteIf(s8, Int)
+        WriteIf(s16, Int)
+        WriteIf(s32, Int)
+        WriteIf(s64, Int64)
+        WriteIf(StringRef, String)
+        WriteIf(float, Double)
+        WriteIf(double, Double)
+        WriteIf(bool, Bool)
+        WriteVec2If(v2f, Double)
+        WriteVec3If(v3f, Double)
+        WriteVec4If(v4f, Double)
+        WriteVec2If(v2i, Int)
+        WriteVec3If(v3i, Int)
+        WriteVec4If(v4i, Int)
+        WriteVec4If(rgba8, Int)
+        case TypeOf_Type:
+            writer.String(GetTypeName(*(Type*)valueData));
+            break;
+        case TypeOf_Entity:
+        {
+            auto entity = *(Entity*)valueData;
+            if(IsEntityValid(entity)) {
+                char entityPath[2048];
+                CalculateEntityPath(entityPath, 2048, entity);
+                writer.String(GetEntityRelativePath(entityPath, root));
+            } else {
+                writer.Null();
+            }
+        }
+
+            break;
+        default:
+            Log(entity, LogSeverity_Error, "Unsupported type when serializing property '%s': %s", GetName(property), GetTypeName(type));
+            writer.Null();
+            return false;
     }
 
-    return GetEntityPath(entity);
-}
-
-static Entity TryCreateEntityFromPath(StringRef path) {
-    if(strlen(path) == 0) {
-        return 0;
-    }
-
-    return CreateEntityFromPath(path);
+    return true;
 }
 
 static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer) {
+    bool result = true;
+
     writer.StartObject();
 
     for_entity(property, propertyData, Property) {
-        auto component = GetPropertyComponent(property);
+        auto component = GetOwner(property);
 
         if(!HasComponent(parent, component)
            || (parent == root && (component == ComponentOf_PersistancePoint()))
@@ -140,164 +178,195 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
             continue;
         }
 
-        if(property == PropertyOf_Parent()) continue;
-
-        char valueData[64];
-        auto type = GetPropertyType(property);
-        GetPropertyValue(property, parent, valueData);
+        if(property == PropertyOf_Owner()) continue;
 
         writer.String(GetName(property));
 
-        switch(type) {
-            WriteIf(u8, Uint)
-            WriteIf(u16, Uint)
-            WriteIf(u32, Uint)
-            WriteIf(u64, Uint64)
-            WriteIf(s8, Int)
-            WriteIf(s16, Int)
-            WriteIf(s32, Int)
-            WriteIf(s64, Int64)
-            WriteIf(StringRef, String)
-            WriteIf(float, Double)
-            WriteIf(double, Double)
-            WriteIf(bool, Bool)
-            WriteVec2If(v2f, Double)
-            WriteVec3If(v3f, Double)
-            WriteVec4If(v4f, Double)
-            WriteVec2If(v2i, Int)
-            WriteVec3If(v3i, Int)
-            WriteVec4If(v4i, Int)
-            WriteVec4If(rgba8, Int)
-            case TypeOf_Type:
-                writer.String(GetTypeName(*(Type*)valueData));
+        switch(GetPropertyKind(property)) {
+            case PropertyKind_String:
+            case PropertyKind_Value:
+                result &= SerializeValue(parent, property, root, writer);
                 break;
-            case TypeOf_Entity:
+            case PropertyKind_Child:
             {
-                auto entity = *(Entity*)valueData;
-                if(IsEntityValid(entity)) {
-                    writer.String(GetEntityRelativePath(entity, root));
-                } else {
-                    writer.Null();
+                Entity child = 0;
+                GetPropertyValue(property, parent, &child);
+                result &= SerializeNode(child, root, writer);
+            }
+            break;
+            case PropertyKind_Array:
+            {
+                auto count = GetArrayPropertyCount(property, parent);
+                writer.StartArray();
+                for(auto i = 0; i < count; ++i) {
+                    auto child = GetArrayPropertyElement(property, parent, i);
+                    result &= SerializeNode(child, root, writer);
                 }
             }
-
                 break;
             default:
-                Log(parent, LogSeverity_Error, "Unsupported type when serializing property '%s': %s", GetName(property), GetTypeName(type));
-                writer.Null();
+                Log(property, LogSeverity_Warning, "Unknown property kind: %d", GetPropertyKind(property));
                 break;
         }
     }
 
-    writer.String("$components");
-    writer.StartArray();
-    for_entity(component, componentData, Component) {
-        if(HasComponent(parent, component)) {
-            writer.String(GetName(component));
-        }
-    }
-    writer.EndArray();
-
-    if(root == parent || !HasComponent(parent, ComponentOf_PersistancePoint())) {
-        writer.String("$children");
+    {
+        writer.String("$components");
         writer.StartArray();
-        for_children(child, parent) {
-            SerializeNode(child, root, writer);
+        for_entity(component, componentData, Component) {
+            if(HasComponent(parent, component)) {
+                writer.String(GetName(component));
+            }
         }
         writer.EndArray();
     }
 
     writer.EndObject();
 
+    return result;
+}
+
+static bool DeserializeValue(Entity parent, Entity property, Entity root, const rapidjson::Value& reader) {
+    auto type = GetPropertyType(property);
+    auto jsonType = reader.GetType();
+    auto typeName = GetTypeName(type);
+    char valueData[64];
+
+    switch(type) {
+        ReadIf(u8, Uint)
+        ReadIf(u16, Uint)
+        ReadIf(u32, Uint)
+        ReadIf(u64, Uint64)
+        ReadIf(s8, Int)
+        ReadIf(s16, Int)
+        ReadIf(s32, Int)
+        ReadIf(s64, Int64)
+        ReadIf(StringRef, String)
+        ReadIf(float, Double)
+        ReadIf(double, Double)
+        ReadIf(bool, Bool)
+        ReadVec2If(v2f, Double)
+        ReadVec3If(v3f, Double)
+        ReadVec4If(v4f, Double)
+        ReadVec2If(v2i, Int)
+        ReadVec3If(v3i, Int)
+        ReadVec4If(v4i, Int)
+        ReadVec4If(rgba8, Int)
+        case TypeOf_Type:
+            if(!reader.IsString()) {
+                Log(root, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's name.", GetName(property));
+                break;
+            }
+            *(Type*)valueData = FindType(reader.GetString());
+            break;
+        case TypeOf_Entity:
+        {
+            if(reader.IsNull()) {
+                *(Entity*)valueData = 0;
+                break;
+            } else if(!reader.IsString()) {
+                Log(root, LogSeverity_Error, "Error parsing property '%s': Entity references should be noted by a path string in JSON. Use $children to note entity hierarchy data.", GetName(property));
+                break;
+            }
+
+            char absolutePath[PathMax];
+            auto path = reader.GetString();
+
+            if(path[0] == '/') {
+                snprintf(absolutePath, PathMax, "%s", path);
+            } else {
+                char rootPath[PathMax];
+                CalculateEntityPath(rootPath, PathMax, root);
+
+                snprintf(absolutePath, PathMax, "%s/%s", rootPath, path);
+            }
+
+            LoadEntityPath(path); // Ensure referred entities are loaded, if they persist in any unloaded persistance points
+            auto entity = FindEntityByPath(path);
+            *(Entity*)valueData = entity;
+            if(!IsEntityValid(entity)) {
+                Log(root, LogSeverity_Error, "Could not find entity by path: %s", path);
+            }
+        }
+            break;
+        default:
+            Log(root, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetName(property), typeName);
+            return false;
+            break;
+    }
+
+    SetPropertyValue(property, parent, valueData);
+
     return true;
 }
 
 static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& value, bool onlyHierarchy) {
+    bool result = true;
+
     auto components = value.FindMember("$components");
     auto children = value.FindMember("$children");
 
-    if(!onlyHierarchy) {
-        for (auto propertyIterator = value.MemberBegin();
-             propertyIterator != value.MemberEnd(); ++propertyIterator)
-        {
-            auto propertyName = propertyIterator->name.GetString();
+    for (auto propertyIterator = value.MemberBegin();
+         propertyIterator != value.MemberEnd(); ++propertyIterator)
+    {
+        auto propertyName = propertyIterator->name.GetString();
 
-            if(propertyName[0] == '$' || strcmp(propertyName, "Parent") == 0 || strcmp(propertyName, "Name") == 0) {
-                continue;
-            }
-
-            for_entity(property, propertyData, Property) {
-                if(strcmp(propertyName, GetName(property)) == 0) break;
-            }
-
-            if(!IsEntityValid(property)) {
-                Log(root, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetStreamPath(root), propertyName);
-                continue;
-            }
-
-            if(property == PropertyOf_Parent()) continue;
-
-            auto& reader = propertyIterator->value;
-            auto type = GetPropertyType(property);
-            auto jsonType =propertyIterator->value.GetType();
-            auto typeName = GetTypeName(type);
-            char valueData[64];
-
-            switch(type) {
-                ReadIf(u8, Uint)
-                ReadIf(u16, Uint)
-                ReadIf(u32, Uint)
-                ReadIf(u64, Uint64)
-                ReadIf(s8, Int)
-                ReadIf(s16, Int)
-                ReadIf(s32, Int)
-                ReadIf(s64, Int64)
-                ReadIf(StringRef, String)
-                ReadIf(float, Double)
-                ReadIf(double, Double)
-                ReadIf(bool, Bool)
-                ReadVec2If(v2f, Double)
-                ReadVec3If(v3f, Double)
-                ReadVec4If(v4f, Double)
-                ReadVec2If(v2i, Int)
-                ReadVec3If(v3i, Int)
-                ReadVec4If(v4i, Int)
-                ReadVec4If(rgba8, Int)
-                case TypeOf_Type:
-                    if(!propertyIterator->value.IsString()) {
-                        Log(root, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's name.", propertyName);
-                        break;
-                    }
-                    *(Type*)valueData = FindType(reader.GetString());
-                    break;
-                case TypeOf_Entity:
-                {
-                    if(propertyIterator->value.IsNull()) {
-                        *(Entity*)valueData = 0;
-                        break;
-                    } else if(!propertyIterator->value.IsString()) {
-                        Log(root, LogSeverity_Error, "Error parsing property '%s': Entity references should be noted by a path string in JSON. Use $children to note entity hierarchy data.", propertyName);
-                        break;
-                    }
-
-                    char absolutePath[PATH_MAX];
-                    auto path = propertyIterator->value.GetString();
-
-                    if(path[0] == '/') {
-                        snprintf(absolutePath, PATH_MAX, "%s", path);
-                    } else {
-                        snprintf(absolutePath, PATH_MAX, "%s/%s", GetEntityPath(root), path);
-                    }
-
-                    *(Entity*)valueData = CreateEntityFromPath(absolutePath);
-                }
-                    break;
-                default:
-                    Log(root, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetName(property), typeName);
-            }
-
-            SetPropertyValue(property, parent, valueData);
+        if(propertyName[0] == '$') {
+            continue;
         }
+
+        for_entity(property, propertyData, Property) {
+            if(strcmp(propertyName, GetName(property)) == 0) break;
+        }
+
+        if(!IsEntityValid(property)) {
+            Log(root, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetStreamPath(root), propertyName);
+            continue;
+        }
+
+        if(property == PropertyOf_Owner() || property == PropertyOf_Name()) continue;
+
+        auto propertyKind = GetPropertyKind(property);
+        auto& reader = propertyIterator->value;
+        switch(propertyKind) {
+            case PropertyKind_String:
+            case PropertyKind_Value:
+                if(!onlyHierarchy) {
+                    result &= DeserializeValue(parent, property, root, reader);
+                }
+                break;
+            case PropertyKind_Child:
+            {
+                Entity child = 0;
+                GetPropertyValue(property, parent, &child);
+                result &= DeserializeNode(child, root, value, onlyHierarchy);
+            }
+            break;
+            case PropertyKind_Array:
+            {
+                auto count = value.MemberCount();
+                auto existingCount = GetArrayPropertyCount(property, parent);
+                for(auto i = 0; i < count; ++i) {
+                    auto& element = value[i];
+
+                    if(i >= existingCount) {
+                        AddArrayPropertyElement(property, parent); // Add missing element
+                    }
+
+                    auto child = GetArrayPropertyElement(property, parent, i);
+                    DeserializeNode(child, root, element, onlyHierarchy);
+                }
+
+                for(auto i = count; count <= existingCount; ++i) { // Remove excess elements
+                    RemoveArrayPropertyElement(property, parent, count);
+                }
+            }
+            break;
+            default:
+                Log(root, LogSeverity_Warning, "Unknown property kind: %d", propertyKind);
+                break;
+        }
+
     }
 
     if(components != value.MemberEnd() && components->value.IsArray()) {
@@ -317,25 +386,7 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
         }
     }
 
-    if(children != value.MemberEnd() && children->value.IsArray()) {
-        for(auto arrayIt = children->value.Begin(); arrayIt != children->value.End(); ++arrayIt) {
-
-            auto name = arrayIt->FindMember("Name");
-
-            if(name == value.MemberEnd() || !name->value.IsString()) {
-                Log(root, LogSeverity_Error, "JSON child to '%s' needs a Name property (string).", GetEntityPath(parent));
-                continue;
-            }
-
-            auto child = CreateEntityFromName(parent, name->value.GetString());
-
-            if(!DeserializeNode(child, root, *arrayIt, onlyHierarchy)) {
-                return false;
-            }
-        }
-    }
-
-    return true;
+    return result;
 }
 
 API_EXPORT bool SerializeJson(Entity stream, Entity entity) {

@@ -7,6 +7,12 @@
 
 #include <Core/NativeUtils.h>
 
+struct Serializer {
+    char SerializerMimeType[64];
+    bool(*SerializeHandler)(Entity entity);
+    bool(*DeserializeHandler)(Entity entity);
+};
+
 Unit(Stream)
     Component(Stream)
         Property(StringRef, StreamPath)
@@ -26,7 +32,17 @@ Unit(Stream)
         Property(StringRef, FileTypeMimeType)
         Property(Entity, FileTypeComponent)
 
-    Event(StreamContentChanged)
+    Component(Serializer)
+        Property(StringRef, SerializerMimeType)
+
+    Component(StreamExtensionModule)
+        ArrayProperty(StreamProtocol, ModuleStreamProtocols)
+        ArrayProperty(StreamCompressor, ModuleStreamCompressors)
+        ArrayProperty(FileType, ModuleFileTypes)
+        ArrayProperty(Serializer, ModuleSerializers)
+
+
+Event(StreamContentChanged)
 
 typedef bool(*StreamSeekHandler)(Entity entity, s32 offset);
 typedef s32(*StreamTellHandler)(Entity entity);

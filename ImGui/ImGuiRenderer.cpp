@@ -166,8 +166,8 @@ static void UpdateBatches(Entity context, Entity commandList) {
     data->Batches.resize(numBatches);
 
     for (int i = oldSize; i < numBatches; ++i) {
-        char name[PATH_MAX];
-        snprintf(name, PATH_MAX, "Batch_%i", i);
+        char name[PathMax];
+        snprintf(name, PathMax, "Batch_%i", i);
         data->Batches[i] = CreateBatch(commandList, name);
         auto mesh = CreateMesh(data->Batches[i], "Mesh");
         SetMeshVertexBuffer(mesh, data->VertexBuffer);

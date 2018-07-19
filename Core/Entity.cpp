@@ -5,9 +5,6 @@
 #include "Event.h"
 
 BeginUnit(Entity)
-    RegisterFunction(CreateEntity)
-    RegisterFunction(DestroyEntity)
-    RegisterFunction(GetNextEntity)
     RegisterFunction(IsEntityOccupied)
     RegisterFunction(IsEntityValid)
 
@@ -17,6 +14,8 @@ EndUnit()
 
 Vector<u32> Generations;
 Vector<u32> FreeSlots;
+
+extern bool __IsCoreInitialized;
 
 API_EXPORT bool IsEntityOccupied(u32 index) {
     return Generations.size() > index && Generations[index] % 2 != 0;
@@ -71,23 +70,36 @@ API_EXPORT Entity CreateEntity () {
 
     Verbose("Entity Created: { index: %i, gen: %u }", index, Generations[index]);
 
-    static bool isInCreateEntity = false;
-    if(!isInCreateEntity) {
-        isInCreateEntity = true;
+    if(__IsCoreInitialized) {
         FireEvent(EventOf_EntityCreated(), entity);
-        isInCreateEntity = false;
     }
 
     return entity;
 }
 
-API_EXPORT void DestroyEntity(Entity entity) {
+API_EXPORT void __DestroyEntity(Entity entity) {
     if (!IsEntityValid(entity)) {
         return;
     }
 
-    for_children(child, entity) {
-        DestroyEntity(child);
+    for_entity(component, componentData, Component) {
+        if(HasComponent(entity, component)) {
+            auto properties = GetProperties(component);
+            for(auto i = 0; i < GetNumProperties(component); ++i) {
+                auto property = properties[i];
+                auto kind = GetPropertyKind(property);
+
+                if(kind == PropertyKind_Child) {
+                    Entity childEntity = 0;
+                    GetPropertyValue(property, entity, &childEntity);
+                    __DestroyEntity(childEntity);
+                } else if(kind == PropertyKind_Array) {
+                    while(GetArrayPropertyCount(property, entity)) {
+                        RemoveArrayPropertyElement(property, entity, 0);
+                    }
+                }
+            }
+        }
     }
 
     FireEvent(EventOf_EntityDestroyed(), entity);

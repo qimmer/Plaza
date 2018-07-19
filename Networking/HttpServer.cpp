@@ -10,8 +10,10 @@
 
 #include <asio.hpp>
 #include <unordered_map>
+#include <chrono>
 #include <Foundation/Stream.h>
 #include <Foundation/AppLoop.h>
+#include <Core/Debug.h>
 
 #include "HttpServer.h"
 #include "HttpRequest.h"
@@ -80,7 +82,7 @@ public:
 
 
 static void HandleResponse(Entity server, RequestSession *data, std::stringstream& ssOut) {
-    auto request = CreateEntityFromName(server, "CurrentRequest");
+    auto request = AddHttpServerRequests(server);
     SetHttpRequestMethod(request, data->headers.method.c_str());
     SetHttpRequestUrl(request, data->headers.url.c_str());
     SetHttpRequestVersion(request, data->headers.version.c_str());
@@ -88,8 +90,8 @@ static void HandleResponse(Entity server, RequestSession *data, std::stringstrea
     FireEvent(EventOf_HttpServerRequest(), server, request);
 
     auto response = GetHttpRequestResponse(request);
-    Entity streamFileType = 0;
-    if(IsEntityValid(response) && HasComponent(response, ComponentOf_Stream()) && StreamOpen(response, StreamMode_Read) && (streamFileType = GetStreamFileType(response))) {
+    Entity streamFileType = GetStreamFileType(response);
+    if(HasComponent(response, ComponentOf_Stream()) && StreamOpen(response, StreamMode_Read)) {
         StreamSeek(response, StreamSeek_End);
         auto size = StreamTell(response);
         StreamSeek(response, 0);
@@ -101,22 +103,31 @@ static void HandleResponse(Entity server, RequestSession *data, std::stringstrea
         streamData[size] = '\0';
 
         ssOut << "HTTP/1.1 " << GetHttpResponseCode(response) << " OK" << std::endl;
-        ssOut << "content-type: " << GetFileTypeMimeType(streamFileType) << std::endl;
+
+        ssOut << "Access-Control-Allow-Origin: *" << std::endl;
+        ssOut << "Access-Control-Allow-Credentials: true" << std::endl;
+        ssOut << "Access-Control-Allow-Headers: Content-Type, Accept, X-Requested-With, remember-me" << std::endl;
+
+        ssOut << "content-type: " << (IsEntityValid(streamFileType) ? GetFileTypeMimeType(streamFileType) : "application/octet-stream") << std::endl;
         ssOut << "content-length: " << size << std::endl;
         ssOut << std::endl;
 
         ssOut.write(streamData, size);
 
         free(streamData);
-
-        DestroyEntity(response);
     } else {
         ssOut << "HTTP/1.1 404 Not Found" << std::endl;
         ssOut << "content-length: 0" << std::endl;
         ssOut << std::endl;
     }
 
-    DestroyEntity(request);
+    auto requests = GetHttpServerRequests(server);
+    for(auto i = 0; i < GetNumHttpServerRequests(server); ++i) {
+        if(requests[i] == request) {
+            RemoveHttpServerRequests(server, i);
+            break;
+        }
+    }
 }
 
 
@@ -213,6 +224,7 @@ struct HttpServerImpl {
 };
 
 struct HttpServer {
+    Vector(HttpServerRequests, Entity, 128)
     HttpServerImpl *impl;
 };
 
@@ -239,13 +251,14 @@ LocalFunction(OnAppLoopChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame
     for_entity(httpServer, httpServerData, HttpServer) {
         if(!httpServerData->impl) continue;
 
-        httpServerData->impl->io_service.poll();
+        httpServerData->impl->io_service.run_for(chrono::milliseconds(10));
     }
 }
 
 BeginUnit(HttpServer)
     BeginComponent(HttpServer)
         RegisterBase(Server)
+        RegisterArrayProperty(HttpRequest, HttpServerRequests)
     EndComponent()
 
     RegisterEvent(HttpServerRequest)

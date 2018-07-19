@@ -6,3 +6,5 @@ set(CMAKE_CXX_STANDARD 14)
 add_library(TestCore SHARED TestCore.cpp TestCore.h)
 
 target_link_libraries(TestCore Core Test)
+
+add_dependencies(TestCore Core Test)

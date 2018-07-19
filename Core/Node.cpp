@@ -32,15 +32,15 @@ std::map<Entity, eastl::string> EntityMap;
 static Entity FirstRoot = 0;
 
 static void CalculateEntityPath(char *dest, size_t bufMax, Entity entity) {
-    char path[PATH_MAX];
-    char path2[PATH_MAX];
-    snprintf(path, PATH_MAX, "");
-    snprintf(path2, PATH_MAX, "");
+    char path[PathMax];
+    char path2[PathMax];
+    snprintf(path, PathMax, "");
+    snprintf(path2, PathMax, "");
 
     while(IsEntityValid(entity)) {
-        snprintf(path2, PATH_MAX, "/%s%s", GetName(entity), path);
+        snprintf(path2, PathMax, "/%s%s", GetName(entity), path);
         entity = GetParent(entity);
-        strncpy(path, path2, PATH_MAX);
+        strncpy(path, path2, PathMax);
     }
 
     strncpy(dest, path2, bufMax);
@@ -57,7 +57,7 @@ static void GetParentPath(char *dest, u32 maxSize, StringRef path) {
 
 
 API_EXPORT Entity FindEntityByName(Entity component, StringRef typeName) {
-    for(auto i = 0; i < GetNumComponents(component); ++i) {
+    for(auto i = 0; i < GetComponentMax(component); ++i) {
         auto entity = GetComponentEntity(component, i);
         if(strcmp(GetName(entity), typeName) == 0) {
             return entity;
@@ -95,8 +95,8 @@ API_EXPORT Entity GetSibling(Entity child) {
 }
 
 API_EXPORT Entity FindChild(Entity parent, StringRef childName) {
-    char path[PATH_MAX];
-    snprintf(path, PATH_MAX, "%s/%s", GetEntityPath(parent), childName);
+    char path[PathMax];
+    snprintf(path, PathMax, "%s/%s", GetEntityPath(parent), childName);
 
     return FindEntityByPath(path);
 }
@@ -131,8 +131,8 @@ API_EXPORT Entity CreateEntityFromPath(StringRef path) {
         Assert(0, name);
 		name++;
 
-        char parentPath[PATH_MAX];
-        GetParentPath(parentPath, PATH_MAX, path);
+        char parentPath[PathMax];
+        GetParentPath(parentPath, PathMax, path);
 
         auto parent = parentPath[0] ? CreateEntityFromPath(parentPath) : 0;
 
@@ -195,11 +195,11 @@ API_EXPORT Entity CopyEntity(Entity templateEntity, StringRef copyPath) {
 
     auto copy = CreateEntityFromPath(copyPath);
 
-    for(auto i = 0; i < GetNumComponents(ComponentOf_Component()); ++i) {
+    for(auto i = 0; i < GetComponentMax(ComponentOf_Component()); ++i) {
         auto component = GetComponentEntity(ComponentOf_Component(), i);
 
         if(HasComponent(templateEntity, component)) {
-            for(auto j = 0; j < GetNumComponents(ComponentOf_Property()); ++j) {
+            for(auto j = 0; j < GetComponentMax(ComponentOf_Property()); ++j) {
                 auto property = GetComponentEntity(ComponentOf_Property(), j);
 
                 if(GetPropertyComponent(property) != component) continue;
@@ -319,8 +319,8 @@ API_EXPORT void SetParent(Entity entity, Entity parent) {
     Entity oldParent = data->Parent;
 
     if(IsEntityValid(parent) && oldParent != parent) {
-        char newPath[PATH_MAX];
-        snprintf(newPath, PATH_MAX, "%s/%s", GetEntityPath(parent), GetName(entity));
+        char newPath[PathMax];
+        snprintf(newPath, PathMax, "%s/%s", GetEntityPath(parent), GetName(entity));
 
         auto existingChild = FindEntityByPath(newPath);
         if(IsEntityValid(existingChild)) {

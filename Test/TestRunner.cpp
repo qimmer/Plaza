@@ -4,10 +4,23 @@
 
 #include <Core/Module.h>
 #include <cstdio>
+#include <cstdlib>
+#include <Core/Debug.h>
+#include <Core/Identification.h>
 #include "TestRunner.h"
 #include "Test.h"
 
+static bool hasRunAsExpected = false;
+
+void OnExit() {
+    if(!hasRunAsExpected) {
+        DebuggerBreak();
+    }
+}
+
 int main(int argc, char** argv) { \
+    atexit(OnExit);
+
     for(auto i = 1; i < argc; ++i) {
         auto module = LoadModule(argv[i]);
         if(IsEntityValid(module)) {
@@ -18,7 +31,7 @@ int main(int argc, char** argv) { \
     printf("%s", "\n");
 
     s32 numFailed = 0, numSucceeded = 0;
-    for(auto i = 0; i < GetNumComponents(ComponentOf_Test()); ++i) {
+    for(auto i = 0; i < GetComponentMax(ComponentOf_Test()); ++i) {
         auto entity = GetComponentEntity(ComponentOf_Test(), i);
         if(IsEntityValid(entity)) {
             u32 result = -1;
@@ -39,4 +52,6 @@ int main(int argc, char** argv) { \
     }
 
     printf("\nTest Results:\n=================\n%d Tests Passed\n%d Tests Failed\n=================", numSucceeded, numFailed);
+
+    hasRunAsExpected = true;
 }

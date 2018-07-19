@@ -3,10 +3,12 @@
 #include "Stream.h"
 #include "Task.h"
 #include "Invocation.h"
+#include "FoundationModule.h"
 
 #include <EASTL/unordered_map.h>
 #include <EASTL/string.h>
 #include <Core/Debug.h>
+#include <Core/Identification.h>
 
 using namespace eastl;
 
@@ -16,7 +18,7 @@ struct PersistancePoint {
 
 LocalFunction(OnStreamContentChanged, void, Entity persistancePoint) {
     // If serialized content has changed, re-deserialize (load) it!
-    if(HasComponent(persistancePoint, ComponentOf_PersistancePoint()) && IsEntityValid(GetFirstChild(persistancePoint)) && GetPersistancePointLoaded(persistancePoint)) {
+    if(HasComponent(persistancePoint, ComponentOf_PersistancePoint()) && !GetPersistancePointLoading(persistancePoint) && GetPersistancePointLoaded(persistancePoint)) {
         SetPersistancePointLoaded(persistancePoint, false);
         SetPersistancePointLoaded(persistancePoint, true);
     }
@@ -76,7 +78,8 @@ LocalFunction(OnPersistancePointLoadedChanged, void, Entity persistancePoint, bo
             char taskName[64];
             snprintf(taskName, 64, "LoadTask_%llu", persistancePoint);
 
-            auto task = CreateEntityFromName(NodeOf_TaskQueue(), taskName);
+            auto task = AddQueuedTasks(ModuleOf_Foundation());
+            SetName(task, taskName);
             SetInvocationFunction(task, FunctionOf_Load());
             TaskSchedule(task);
         } else {
@@ -84,16 +87,14 @@ LocalFunction(OnPersistancePointLoadedChanged, void, Entity persistancePoint, bo
         }
     } else {
         // Unload
-        for_children(child, persistancePoint) {
-            DestroyEntity(child);
-        }
-    }
-}
+        for_entity(component, componentData, Component) {
+            if(component == ComponentOf_PersistancePoint()
+               || component == ComponentOf_Ownership()
+               || component == ComponentOf_Stream()
+               ||component == ComponentOf_Identification()) continue;
 
-LocalFunction(OnParentChanged, void, Entity entity, Entity oldParent, Entity newParent) {
-    if(IsEntityValid(newParent) && HasComponent(newParent, ComponentOf_PersistancePoint())) {
-        auto data = GetPersistancePointData(newParent);
-        if(!data->PersistancePointLoaded && !data->PersistancePointLoading) Load(newParent);
+            RemoveComponent(persistancePoint, component);
+        }
     }
 }
 
@@ -137,6 +138,11 @@ API_EXPORT bool Save(Entity persistancePoint) {
     return result;
 }
 
+// Tries to load all persistance point entities in the given path
+API_EXPORT bool LoadEntityPath(StringRef entityPath) {
+    return false;
+}
+
 BeginUnit(PersistancePoint)
     BeginComponent(PersistancePoint)
         RegisterProperty(bool, PersistancePointAsync)
@@ -147,14 +153,9 @@ BeginUnit(PersistancePoint)
         RegisterBase(Stream)
     EndComponent()
 
-    BeginComponent(Serializer)
-        RegisterProperty(StringRef, SerializerMimeType)
-    EndComponent()
-
     RegisterFunction(Save)
 
     RegisterSubscription(StreamContentChanged, OnStreamContentChanged, 0)
     RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
     RegisterSubscription(PersistancePointLoadedChanged, OnPersistancePointLoadedChanged, 0)
-    RegisterSubscription(ParentChanged, OnParentChanged, 0)
 EndUnit()

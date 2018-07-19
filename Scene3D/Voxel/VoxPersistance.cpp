@@ -95,8 +95,8 @@ static bool ReadChunk(Entity stream, Entity parent, v3i* chunkSizeStore, u32 *ch
                 voxelChunkData[chunkSizeStore->x * chunkSizeStore->y * voxels[i].y + chunkSizeStore->x * voxels[i].z + voxels[i].x] = voxels[i].w;
             }
 
-            char name[PATH_MAX];
-            snprintf(name, PATH_MAX, "Chunk_%lu", (unsigned long)++(*chunkCnt));
+            char name[PathMax];
+            snprintf(name, PathMax, "Chunk_%lu", (unsigned long)++(*chunkCnt));
 
             parent = CreateVoxelChunk(parent, name);
             SetVoxelChunkSize(parent, *chunkSizeStore);

@@ -15,8 +15,8 @@ struct Texture2DViewer {
 };
 
 void ViewTexture(Entity texture) {
-    char editorPath[PATH_MAX];
-    snprintf(editorPath, PATH_MAX, "/.editor/Texture2DViewer/%llu", texture);
+    char editorPath[PathMax];
+    snprintf(editorPath, PathMax, "/.editor/Texture2DViewer/%llu", texture);
 
     auto editor = CreateEntityFromPath(editorPath);
     SetTexture2DViewerTexture(editor, texture);
@@ -51,8 +51,8 @@ static void Draw(Entity context) {
         }
 
         bool show = true;
-        char title[PATH_MAX];
-        snprintf(title, PATH_MAX, "%s##%llu", GetEntityPath(texture), viewer);
+        char title[PathMax];
+        snprintf(title, PathMax, "%s##%llu", GetEntityPath(texture), viewer);
 
         ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
 

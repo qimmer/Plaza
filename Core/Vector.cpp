@@ -4,38 +4,41 @@
 
 #include "Vector.h"
 #include "Types.h"
+#include "Math.h"
 
 API_EXPORT void __SetVectorAmount(
     unsigned int* num,
     unsigned int newNum,
     unsigned int* dynCap,
     unsigned int staCap,
-    void **curData,
+    void **dynBuf,
     void *staBuf,
     unsigned int elementSize
 ) {
-    if(*curData == NULL) *curData = staBuf;
     if(*num == newNum) return;
 
     if(newNum > staCap) {
-        if(*curData == staBuf) {
-            *curData = calloc(newNum, elementSize);
+        if(!*dynBuf) {
+            *dynBuf = calloc(newNum, elementSize);
             *dynCap = newNum;
-            memcpy(*curData, staBuf, *num);
+            memcpy(*dynBuf, staBuf, *num);
         } else {
             if(*dynCap < newNum) {
-                *curData = realloc(*curData, newNum * elementSize);
+                *dynBuf = realloc(*dynBuf, newNum * elementSize);
                 *dynCap = newNum;
             }
 
             if(newNum > *num) {
-                memset((char*)*curData + *num, 0, newNum - *num);
+                memset((char*)*dynBuf + *num, 0, newNum - *num);
             }
         }
     } else {
-        if(*curData != staBuf) free(*curData);
+        if(*dynBuf) {
+            memcpy(staBuf, *dynBuf, Min(staCap, *dynCap));
+            free(*dynBuf);
+        }
         *dynCap = 0;
-        *curData = staBuf;
+        *dynBuf = NULL;
     }
 
     *num = newNum;

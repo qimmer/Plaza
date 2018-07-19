@@ -4,7 +4,6 @@
 
 #include <Rendering/CommandList.h>
 #include <bgfx/bgfx.h>
-#include <Core/Node.h>
 #include <Rendering/Batch.h>
 #include <Rendering/Uniform.h>
 #include <Rendering/VertexBuffer.h>

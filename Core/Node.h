@@ -7,7 +7,7 @@
 Unit(Node)
 __Component(Node)
     Property(bool, IsLocked)
-    Declare(Property, Parent, 0)
+    Declare(Property, Parent)
     static StringRef __Parent__Meta = "";
     static StringRef __Name__Meta = "";
     Event(ParentChanged)

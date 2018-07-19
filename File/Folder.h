@@ -10,6 +10,8 @@
 Unit(Folder)
     Component(Folder)
         Property(StringRef, FolderPath)
+        ArrayProperty(Folder, FolderSubfolders)
+        ArrayProperty(Stream, FolderFiles)
 
 Function(IsFolder, bool, StringRef absolutePath)
 Function(CreateDirectories, bool, StringRef fullPath)

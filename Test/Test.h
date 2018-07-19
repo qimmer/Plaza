@@ -6,7 +6,7 @@
 
 typedef u32 TestResult;
 
-#define Verify(test, message, ...) if (!(test)) { printf(message, ##__VA_ARGS__); return -1; } while (0)
+#define Verify(test, message, ...) if (!(test)) { printf("Verification '" #test "' Failed: " message "\n", ##__VA_ARGS__); return -1; } while (0)
 
 #define Success 0
 

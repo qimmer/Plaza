@@ -14,13 +14,13 @@ typedef bool(*FunctionCaller)(
 );
 
 Unit(Function)
+    Component(FunctionArgument)
+        Property(Entity, FunctionArgumentType)
 
-Component(Function)
-    Property(u64, FunctionImplementation)
-    Property(Entity, FunctionReturnType)
-
-Component(FunctionArgument)
-    Property(Entity, FunctionArgumentType)
+    Component(Function)
+        Property(u64, FunctionImplementation)
+        Property(Entity, FunctionReturnType)
+        ArrayProperty(FunctionArgument, FunctionArguments)
 
 Function(FindFunctionByName, Entity, StringRef name)
 FunctionCaller GetFunctionCaller(Entity function);

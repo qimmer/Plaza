@@ -7,3 +7,5 @@ add_library(JavaScript duktape-2.2.1/src/duktape.c JavaScriptModule.cpp JavaScri
 
 target_link_libraries(JavaScript PRIVATE Core Foundation)
 target_include_directories(JavaScript PUBLIC ".." "duktape-2.2.1/src")
+
+install (TARGETS JavaScript RUNTIME DESTINATION bin)

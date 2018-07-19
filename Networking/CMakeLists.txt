@@ -11,3 +11,5 @@ target_include_directories(Networking PUBLIC ".." "asio/include")
 if(WIN32)
     target_link_libraries(Networking ws2_32 wsock32)
 endif()
+
+install (TARGETS Networking RUNTIME DESTINATION bin)

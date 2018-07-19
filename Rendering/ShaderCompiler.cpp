@@ -26,8 +26,8 @@ API_EXPORT void CompileShader(Entity binaryShader) {
 }
 
 LocalFunction(OnServiceStart, void, Service service) {
-    char cwd[PATH_MAX];
-    getcwd(cwd, PATH_MAX);
+    char cwd[PathMax];
+    getcwd(cwd, PathMax);
     strcat(cwd, "/Shaders");
 
     ShaderIncludeDirectory = cwd;

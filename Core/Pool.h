@@ -32,7 +32,6 @@ public:
     Pool() {
         blockSize = 0;
         elementSize = 0;
-        SetElementSize(1);
     }
 
     inline char* operator[] (u32 index);
@@ -56,17 +55,22 @@ inline char* Pool::operator[](u32 index)
 }
 
 inline void Pool::SetElementSize(u32 size) {
+    Assert(0, size > 0);
+
     auto oldBlockSize = blockSize;
+    auto oldElementSize = elementSize;
     elementSize = size;
-    blockSize = upper_power_of_two(std::max(size + 1, (u32)16));
+    blockSize = upper_power_of_two(size + 1);
 
     // Make sure to expand every single existing element with the new size by allocating new pages
     for(auto i = 0; i < entryPages.size(); ++i) {
-        auto newPage = (char*)malloc(blockSize * PoolPageElements);
+        auto newPage = (char*)calloc(PoolPageElements, blockSize);
         auto oldPage = entryPages[i];
-        for(auto j = 0; j < PoolPageElements; ++j) {
-            memcpy(newPage + (j * blockSize), oldPage + (j * oldBlockSize), Min(elementSize, oldBlockSize));
-            newPage[j * blockSize + blockSize - 1] = oldPage[j * oldBlockSize + oldBlockSize - 1]; // Make sure to copy occupied flag
+
+        if(oldBlockSize > 0) {
+            for (auto j = 0; j < PoolPageElements; ++j) {
+                memcpy(newPage + (j * blockSize), oldPage + (j * oldBlockSize), Min(elementSize, oldBlockSize));
+            }
         }
         free(oldPage);
         entryPages[i] = newPage;
@@ -90,13 +94,14 @@ inline u32 Pool::End() const
 
 inline bool Pool::Insert(u32 index)
 {
+    Assert(0, this->elementSize > 0);
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
 
     if(page >= this->entryPages.size())
     {
         for(auto i = this->entryPages.size(); i <= page; ++i) {
-            this->entryPages.emplace_back((char*)calloc(PoolPageElements, blockSize));
+            this->entryPages.push_back((char*)calloc(PoolPageElements, blockSize));
         }
     }
 
@@ -136,6 +141,8 @@ inline bool Pool::Remove(u32 index)
 }
 
 inline u32 Pool::Add() {
+    Assert(0, this->elementSize > 0);
+
     u32 index = this->End();
     if(this->freeIndices.size() > 0) {
         index = this->freeIndices[this->freeIndices.size() - 1];

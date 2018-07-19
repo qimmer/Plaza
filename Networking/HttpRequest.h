@@ -15,7 +15,7 @@ Unit(HttpRequest)
         Property(StringRef, HttpRequestMethod)
         Property(StringRef, HttpRequestUrl)
         Property(StringRef, HttpRequestVersion)
-        Property(Entity, HttpRequestResponse)
+        ChildProperty(HttpResponse, HttpRequestResponse)
 
     Component(HttpResponse)
         Property(u16, HttpResponseCode)

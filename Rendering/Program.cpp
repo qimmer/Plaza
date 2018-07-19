@@ -51,11 +51,11 @@ void GetBinaryShaderStreamPath(Entity shader, u8 profile, Entity shaderVariation
     auto fileName = GetFileName(originalPath);
 
     auto flagIndex = GetEnumFlagIndexByValue(EnumOf_ShaderProfile(), profile);
-    char variationName[PATH_MAX];
+    char variationName[PathMax];
     strcpy(variationName, "default");
 
     if(IsEntityValid(shaderVariation)) {
-        strncpy(variationName, GetShaderVariationDefines(shaderVariation), PATH_MAX);
+        strncpy(variationName, GetShaderVariationDefines(shaderVariation), PathMax);
         auto varNameLen = strlen(variationName);
         for(auto i = 0; i < varNameLen; ++i) {
             variationName[i] = tolower(variationName[i]);
@@ -68,12 +68,12 @@ void GetBinaryShaderStreamPath(Entity shader, u8 profile, Entity shaderVariation
 
 static Entity CreateCompositionProgram(Entity vertexShader, Entity pixelShader, u8 profile, Entity shaderVariation) {
     auto hash = HashCombination(vertexShader, pixelShader, profile, shaderVariation);
-    char name[PATH_MAX];
-    snprintf(name, PATH_MAX, "Program_%lu", hash);
+    char name[PathMax];
+    snprintf(name, PathMax, "Program_%lu", hash);
     auto program = CreateProgram(ProgramRoot, name);
 
     auto binaryVertexShader = CreateBinaryShader(program, "VertexShaderBinary");
-    GetBinaryShaderStreamPath(vertexShader, profile, shaderVariation, name, PATH_MAX);
+    GetBinaryShaderStreamPath(vertexShader, profile, shaderVariation, name, PathMax);
     SetStreamPath(binaryVertexShader, name);
     SetBinaryShaderProfile(binaryVertexShader, profile);
     SetBinaryShaderVariation(binaryVertexShader, shaderVariation);
@@ -81,7 +81,7 @@ static Entity CreateCompositionProgram(Entity vertexShader, Entity pixelShader, 
     SetProgramBinaryVertexShader(program, binaryVertexShader);
 
     auto binaryPixelShader = CreateBinaryShader(program, "PixelShaderBinary");
-    GetBinaryShaderStreamPath(pixelShader, profile, shaderVariation, name, PATH_MAX);
+    GetBinaryShaderStreamPath(pixelShader, profile, shaderVariation, name, PathMax);
     SetStreamPath(binaryPixelShader, name);
     SetBinaryShaderProfile(binaryPixelShader, profile);
     SetBinaryShaderVariation(binaryPixelShader, shaderVariation);

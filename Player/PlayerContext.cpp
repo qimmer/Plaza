@@ -23,13 +23,13 @@ API_EXPORT int PlayerMain(int argc, char** argv, Module *modules, const StringRe
         InitializeModule(ModuleOf_Foundation());
 
         while(virtualPathMappings && *virtualPathMappings) {
-            char name[PATH_MAX];
+            char name[PathMax];
             sprintf(name, "/.vpaths/%llu", (u64)*virtualPathMappings);
             auto entity = CreateEntityFromPath(name);
             SetVirtualPathTrigger(entity, *virtualPathMappings);
             virtualPathMappings++;
 
-            char cleanPath[PATH_MAX];
+            char cleanPath[PathMax];
             strcpy(cleanPath, *virtualPathMappings);
             CleanupPath(cleanPath);
 
@@ -44,10 +44,10 @@ API_EXPORT int PlayerMain(int argc, char** argv, Module *modules, const StringRe
         }
 
         while(assets && *assets) {
-            char path[PATH_MAX];
+            char path[PathMax];
 			auto protocolOffset = strstr(*assets, "://");
 			Assert(protocolOffset);
-            snprintf(path, PATH_MAX, "/%s", protocolOffset + 3);
+            snprintf(path, PathMax, "/%s", protocolOffset + 3);
             auto assetStream = CreateEntityFromPath(path);
             SetStreamPath(assetStream, *assets);
             Load(assetStream);

@@ -11,8 +11,6 @@ Unit(RestRouting)
     Component(RestRouting)
         Property(StringRef, RestRoutingRoute)
 
-    Event(RestRequest, Entity requestStream, Entity responseStream)
-
-
+    Event(RestRoutingRequest, Entity request)
 
 #endif //PLAZA_RESTROUTING_H

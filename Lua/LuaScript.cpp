@@ -42,8 +42,8 @@ static void LoadScript(Entity entity) {
 
     lua_pushcfunction(L, Traceback);
 
-    char scriptPath[PATH_MAX];
-    snprintf(scriptPath, PATH_MAX, "@%s", GetStreamPath(entity));
+    char scriptPath[PathMax];
+    snprintf(scriptPath, PathMax, "@%s", GetStreamPath(entity));
 
     // Load, compile and push global function scope onto the stack
     if(luaL_loadbuffer(L, buffer.data(), buffer.size() - 1, scriptPath)) {

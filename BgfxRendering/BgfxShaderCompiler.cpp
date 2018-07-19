@@ -14,7 +14,6 @@
 #include <string>
 #include <iterator>
 #include <climits>
-#include <Core/Node.h>
 #include <Rendering/Program.h>
 #include <Foundation/Stream.h>
 #include <File/Folder.h>
@@ -75,8 +74,8 @@ API_EXPORT int Compile(StringRef sourceFilePath,
         return -1;
     }
 
-    char parentPath[PATH_MAX];
-    GetParentFolder(outputFilePath, parentPath, PATH_MAX);
+    char parentPath[PathMax];
+    GetParentFolder(outputFilePath, parentPath, PathMax);
     CreateDirectories(parentPath);
 
     sourceFilePath += 7;

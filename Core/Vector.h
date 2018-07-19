@@ -12,24 +12,33 @@
 
 #include <Core/StackContainer.h>
 #include <Core/AlignedAllocator.h>
+#include "Types.h"
 
 template<typename T, size_t fixedCapacity = 128> using Vector = std::vector<T>;
 template<typename T> using Set = eastl::unordered_set<T, std::hash<T>, std::equal_to<T>>;
 template<typename T, typename Comparator = std::less<T>> using OrderedSet = eastl::set<T, Comparator>;
 
 #define Vector(NAME, TYPE, SMALLCAP) \
-    static const u32 StaticCap ## NAME = SMALLCAP;\
-    static const u32 ElementSize_ ## NAME = sizeof(TYPE);\
-    u32 Num ## NAME; \
-    u32 Cap ## NAME; \
-    TYPE * NAME; \
-    TYPE Buf ## NAME [SMALLCAP];
+    struct {\
+        u32 Count; \
+        u32 DynCapacity; \
+        TYPE * DynBuf; \
+        TYPE StaBuf [SMALLCAP];\
+    } NAME;
 
-#define SetVectorAmount(DATA, NAME, NEWCOUNT) __SetVectorAmount(& DATA -> Num ## NAME, (NEWCOUNT), & DATA -> Cap ## NAME, DATA -> StaticCap ## NAME, (void**)& DATA -> NAME, &DATA -> Buf ## NAME[0], DATA->ElementSize_ ## NAME )
-#define VectorRemove(DATA, NAME, INDEX) DATA -> NAME [INDEX] = DATA -> NAME [DATA -> Num ## NAME - 1]; SetVectorAmount(DATA, NAME, DATA -> Num ## NAME - 1)
-#define VectorAdd(DATA, NAME, VALUE) SetVectorAmount(DATA, NAME, DATA -> Num ## NAME + 1); DATA -> NAME [DATA -> Num ## NAME - 1] = VALUE
-#define VectorClear(DATA, NAME) SetVectorAmount(DATA, NAME, 0)
+struct VectorStruct {
+    u32 Count;
+    u32 DynCapacity;
+    char *DynBuf;
+    char StaBuf[1];
+};
 
-void __SetVectorAmount(unsigned int* num, unsigned int newNum, unsigned int* dynCap, unsigned int staCap, void **curData, void *staBuf, unsigned int elementSize);
+#define GetVector(VSTRUCT) ((VSTRUCT).DynBuf ? (VSTRUCT).DynBuf : (VSTRUCT).StaBuf)
+#define SetVectorAmount(VSTRUCT, NEWCOUNT) __SetVectorAmount(& VSTRUCT.Count, (NEWCOUNT), & VSTRUCT.DynCapacity, sizeof(VSTRUCT.StaBuf)/sizeof(VSTRUCT.StaBuf[0]), (void**)& VSTRUCT.DynBuf, &VSTRUCT.StaBuf[0], sizeof(VSTRUCT.StaBuf[0]) )
+#define VectorRemove(VSTRUCT, INDEX) GetVector(VSTRUCT)[INDEX] = GetVector(VSTRUCT)[VSTRUCT.Count - 1]; SetVectorAmount(VSTRUCT, VSTRUCT.Count - 1)
+#define VectorAdd(VSTRUCT, VALUE) SetVectorAmount(VSTRUCT, VSTRUCT.Count + 1); GetVector(VSTRUCT)[VSTRUCT.Count - 1] = VALUE
+#define VectorClear(VSTRUCT) SetVectorAmount(VSTRUCT, 0)
+
+void __SetVectorAmount(unsigned int* num, unsigned int newNum, unsigned int* dynCap, unsigned int staCap, void **dynBuf, void *staBuf, unsigned int elementSize);
 
 #endif //PLAZA_VECTOR_H

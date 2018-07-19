@@ -8,6 +8,9 @@
 #include <Core/Module.h>
 
 Module(Foundation)
-
+    Unit(Foundation)
+        Component(FoundationData)
+            ChildProperty(TaskQueue, TaskQueue)
+            ChildProperty(Timer, FilesystemUpdateTimer)
 
 #endif //PLAZA_FOUNDATIONMODULE_H

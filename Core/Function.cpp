@@ -13,9 +13,9 @@
 #include <Core/Types.h>
 #include <cstdarg>
 #include "Entity.h"
-#include "Node.h"
 #include "Component.h"
 #include "Property.h"
+#include "Identification.h"
 
 static DCCallVM *CallVM = 0;
 static DCstruct *Struct_v2i, *Struct_v3i, *Struct_v4i, *Struct_v2f, *Struct_v3f, *Struct_v4f, *Struct_m3x3f, *Struct_m4x4f;
@@ -31,22 +31,19 @@ struct Function {
     Type FunctionReturnType;
     FunctionCaller FunctionCaller;
 
-    Vector(FunctionArguments, FunctionArgument*, 32)
+    Vector(FunctionArguments, Entity, 16)
 };
-
-ChildCache(Function, FunctionArgument, FunctionArguments)
 
 BeginUnit(Function)
     BeginComponent(Function)
         RegisterProperty(u64, FunctionImplementation)
         RegisterProperty(Type, FunctionReturnType)
+        RegisterArrayProperty(FunctionArgument, FunctionArguments)
     EndComponent()
 
     BeginComponent(FunctionArgument)
         RegisterProperty(Type, FunctionArgumentType)
     EndComponent()
-
-    RegisterChildCache(FunctionArgument)
 EndUnit()
 
 
@@ -55,7 +52,7 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
     auto offset = 0;
     auto byteOffset = 0;
 
-    char argumentSplits[PATH_MAX];
+    char argumentSplits[PathMax];
     strcpy(argumentSplits, arguments);
 
     while(offset < len) {
@@ -80,7 +77,8 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
             typeSignatureEnd--;
         }
 
-        auto argumentEntity = CreateEntityFromName(f, name);
+        auto argumentEntity = AddFunctionArguments(f);
+        SetName(argumentEntity, name);
 
         auto type = 0;
         for(auto i = 0; i < TypeOf_MAX; ++i) {
@@ -288,11 +286,18 @@ API_EXPORT bool CallFunction(
 
 void __InitializeFunction() {
     auto component = ComponentOf_Function();
-    __Property(PropertyOf_FunctionImplementation(), offsetof(Function, FunctionImplementation), sizeof(Function::FunctionImplementation), TypeOf_u64,  component);
-    __Property(PropertyOf_FunctionReturnType(), offsetof(Function, FunctionReturnType), sizeof(Function::FunctionReturnType), TypeOf_Type,  component);
+    AddComponent(component, ComponentOf_Component());
+    SetComponentSize(component, sizeof(Function));
+    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
+    __Property(PropertyOf_FunctionImplementation(), offsetof(Function, FunctionImplementation), sizeof(Function::FunctionImplementation), TypeOf_u64,  component, 0, PropertyKind_Value);
+    __Property(PropertyOf_FunctionReturnType(), offsetof(Function, FunctionReturnType), sizeof(Function::FunctionReturnType), TypeOf_Type,  component, 0, PropertyKind_Value);
+    __Property(PropertyOf_FunctionArguments(), offsetof(Function, FunctionArguments), sizeof(Function::FunctionArguments), TypeOf_Entity,  component, ComponentOf_FunctionArgument(), PropertyKind_Array);
 
     component = ComponentOf_FunctionArgument();
-    __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component);
+    AddComponent(component, ComponentOf_Component());
+    SetComponentSize(component, sizeof(FunctionArgument));
+    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
+    __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component, 0, PropertyKind_Value);
 }
 
 int __ArgStackOffset(int value) {
@@ -304,11 +309,12 @@ int __ArgStackOffset(int value) {
 API_EXPORT u32 GetFunctionArguments(u32 functionIndex, u32 maxArguments, Type *argumentTypes) {
     auto data = (Function*)GetComponentData(ComponentOf_Function(), functionIndex);
 
-    for(auto i = 0; i < data->NumFunctionArguments; ++i) {
-        argumentTypes[i] = data->FunctionArguments[i]->FunctionArgumentType;
+    for(auto i = 0; i < data->FunctionArguments.Count; ++i) {
+        auto argumentData = GetFunctionArgumentData(GetVector(data->FunctionArguments)[i]);
+        argumentTypes[i] = argumentData->FunctionArgumentType;
     }
 
-    return data->NumFunctionArguments;
+    return data->FunctionArguments.Count;
 }
 
 API_EXPORT Type GetFunctionReturnTypeByIndex(u32 functionIndex) {

@@ -6,18 +6,39 @@
 #include <cstring>
 #include "Entity.h"
 #include "Debug.h"
+#include "Vector.h"
 
 typedef Entity(*ModuleOfSignature)();
+
+struct ModuleRoot {
+    Vector(Modules, Entity, 64)
+};
 
 struct Module {
     char ModuleVersion[128];
     char ModuleSourcePath[512];
+
+    Vector(Components, Entity, 64)
+    Vector(Events, Entity, 64)
+    Vector(Functions, Entity, 128)
+    Vector(Extensions, Entity, 64)
+    Vector(Subscriptions, Entity, 128)
 };
 
 BeginUnit(Module)
+    BeginComponent(ModuleRoot)
+        RegisterArrayProperty(Module, Modules)
+    EndComponent()
+
     BeginComponent(Module)
         RegisterProperty(StringRef, ModuleVersion)
         RegisterProperty(StringRef, ModuleSourcePath)
+
+        RegisterArrayProperty(Component, Components)
+        RegisterArrayProperty(Event, Events)
+        RegisterArrayProperty(Function, Functions)
+        RegisterArrayProperty(Extension, Extensions)
+        RegisterArrayProperty(Subscription, Subscriptions)
     EndComponent()
 
     RegisterFunction(GetModuleRoot)
@@ -30,7 +51,6 @@ API_EXPORT Entity GetModuleRoot() {
     static Entity root = 0;
     if(root == 0) {
         root = CreateEntity();
-        SetName(root, "Modules");
     }
     return root;
 }
@@ -118,4 +138,19 @@ API_EXPORT Entity LoadModule(StringRef libraryPath) {
 #endif
 
     return false;
+}
+
+
+void __InitializeModule() {
+    auto component = ComponentOf_Module();
+    AddComponent(component, ComponentOf_Component());
+    SetComponentSize(component, sizeof(Module));
+    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
+    __Property(PropertyOf_Components(), offsetof(Module, Components), sizeof(Module::Components), TypeOf_Entity, component, ComponentOf_Component(), PropertyKind_Array);
+    __Property(PropertyOf_Events(), offsetof(Module, Events), sizeof(Module::Events), TypeOf_Entity, component, ComponentOf_Event(), PropertyKind_Array);
+    __Property(PropertyOf_Functions(), offsetof(Module, Functions), sizeof(Module::Functions), TypeOf_Entity, component, ComponentOf_Function(), PropertyKind_Array);
+    __Property(PropertyOf_Extensions(), offsetof(Module, Extensions), sizeof(Module::Extensions), TypeOf_Entity, component, ComponentOf_Extension(), PropertyKind_Array);
+    __Property(PropertyOf_Subscriptions(), offsetof(Module, Subscriptions), sizeof(Module::Subscriptions), TypeOf_Entity, component, ComponentOf_Subscription(), PropertyKind_Array);
+
+
 }

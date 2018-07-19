@@ -15,15 +15,16 @@
 #include <Foundation/MemoryStream.h>
 #include <Json/JsonPersistance.h>
 #include <Networking/HttpServer.h>
+#include <Core/Identification.h>
 #include "TestNetworking.h"
 
 Test(TestNetworking) {
 
-    auto server = CreateEntityFromName(test, "Server");
+    auto server = CreateEntity();
     AddComponent(server, ComponentOf_HttpServer());
     SetServerPort(server, 8000);
 
-    auto appLoop = CreateEntityFromName(test, "AppLoop");
+    auto appLoop = CreateEntity();
     AddComponent(appLoop, ComponentOf_AppLoop());
     RunAppLoop(appLoop);
 
@@ -31,16 +32,14 @@ Test(TestNetworking) {
 }
 
 LocalFunction(OnHttpServerRequest, void, Entity server, Entity request) {
-    auto response = CreateEntityFromName(request, "Response");
-    SetHttpResponseCode(response, 200);
-    SetStreamPath(response, "memory://response.json");
-
+    auto response = GetHttpRequestResponse(request);
     auto url = GetHttpRequestUrl(request);
     auto root = FindEntityByPath(url);
 
     if(IsEntityValid(root)) {
         SerializeJson(response, root);
-        SetHttpRequestResponse(request, response);
+        SetHttpResponseCode(response, 200);
+        SetStreamPath(response, "memory://response.json");
     }
 }
 

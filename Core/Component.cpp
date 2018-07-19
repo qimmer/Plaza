@@ -7,14 +7,17 @@
 #include <Core/Entity.h>
 #include <Core/Event.h>
 #include <Core/Pool.h>
-#include <Core/Node.h>
+#include "Identification.h"
 
 static bool __isComponentInitialized = false;
 
-struct Component {
-    u16 ComponentSize;
-    bool ComponentAbstract;
+struct ComponentTypeData {
+    Pool DataBuffer;
+    Vector<u32> EntityComponentIndices;
 };
+
+static Vector<ComponentTypeData> ComponentDataList;
+static Vector<u16> ComponentDataIndices;
 
 struct Extension {
     Entity ExtensionComponent;
@@ -24,27 +27,29 @@ struct Base {
     Entity BaseComponent;
 };
 
-struct ComponentTypeData {
-    ComponentTypeData() {
-        DataBuffer.SetElementSize(64);
-    }
-
-    Pool DataBuffer;
-    Vector<u32> EntityComponentIndices;
+struct Component {
+    Vector(Properties, Entity, 32)
+    Vector(Bases, Entity, 8)
+    u16 ComponentDataIndex;
+    u16 ComponentSize;
 };
 
-static Vector<ComponentTypeData> componentTypeList;
-
-static inline ComponentTypeData *GetComponentType(Entity component) {
-    auto index = GetEntityIndex(component);
-    if(index >= componentTypeList.size()) {
-        componentTypeList.resize(index + 1);
+static ComponentTypeData *GetComponentType(Entity component) {
+    auto entityIndex = GetEntityIndex(component);
+    if(entityIndex >= ComponentDataIndices.size()) {
+        ComponentDataIndices.resize(upper_power_of_two(Max(entityIndex + 1, 8)), UINT16_MAX);
     }
 
-    return &componentTypeList[index];
+    auto componentIndex = ComponentDataIndices[entityIndex];
+    if(componentIndex == UINT16_MAX) {
+        ComponentDataList.resize(ComponentDataList.size() + 1);
+        ComponentDataIndices[entityIndex] = componentIndex = ComponentDataList.size() - 1;
+    }
+
+    return &ComponentDataList[componentIndex];
 }
 
-API_EXPORT u32 GetNumComponents (Entity component) {
+API_EXPORT u32 GetComponentMax (Entity component) {
     return GetComponentType(component)->DataBuffer.End();
 }
 
@@ -74,7 +79,7 @@ API_EXPORT bool HasComponent (Entity entity, Entity component) {
 }
 
 API_EXPORT char * GetComponentData (Entity component, u32 index) {
-    if(index == InvalidIndex) return NULL;
+    if(index == InvalidIndex || !IsEntityValid(component)) return NULL;
 
     auto componentData = GetComponentType(component);
     return componentData->DataBuffer[index] + sizeof(Entity);
@@ -98,18 +103,18 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
 
         memset(componentData->DataBuffer[componentIndex] + sizeof(Entity), 0, componentData->DataBuffer.GetElementSize() - sizeof(Entity));
 
-        for_children(child, component) {
-            if(HasComponent(child, ComponentOf_Base())) {
-                auto dependency = GetBaseComponent(child);
+        if(__isComponentInitialized) {
+            auto bases = GetBases(component);
+            for(auto i = 0; i < GetNumBases(component); ++i) {
+                auto base = bases[i];
+                auto dependency = GetBaseComponent(base);
                 AddComponent(entity, dependency);
             }
-        }
 
-        if(__isComponentInitialized) {
             FireEvent(EventOf_EntityComponentAdded(), component, entity);
         }
 
-        Verbose("Component %s has been added to Entity %s.", GetName(component), GetName(entity));
+        Verbose("Component %llu has been added to Entity %llu.", component, entity);
 
         return true;
     }
@@ -121,7 +126,7 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     Assert(component, IsEntityValid(component));
 
     if(HasComponent(entity, component)) {
-        Verbose("Removing Component %s from Entity %s ...", GetName(component), GetName(entity));
+        Verbose("Removing Component %llu from Entity %llu ...", component, entity);
 
         FireEvent(EventOf_EntityComponentRemoved(), component, entity);
 
@@ -147,7 +152,7 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
 API_EXPORT u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Entity *entity) {
     ++index;
 
-    auto componentData = &componentTypeList[GetEntityIndex(component)];
+    auto componentData = GetComponentType(component);
     auto amount = componentData->DataBuffer.End();
     while(!componentData->DataBuffer.IsValid(index)) {
         ++index;
@@ -166,6 +171,18 @@ API_EXPORT u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Ent
     return index;
 }
 
+API_EXPORT void SetComponentSize(Entity entity, u16 value) {
+    if(HasComponent(entity, ComponentOf_Component())) {
+        GetComponentData(entity)->ComponentSize = value;
+    }
+
+    auto componentData = GetComponentType(entity);
+    componentData->DataBuffer.SetElementSize(value + sizeof(Entity));
+}
+
+__ArrayPropertyCoreImpl(Base, Bases, Component)
+__ArrayPropertyCoreImpl(Property, Properties, Component)
+
 LocalFunction(OnEntityDestroyed, void, Entity entity) {
     for_entity(component, data, Component) {
         RemoveComponent(entity, component);
@@ -174,8 +191,9 @@ LocalFunction(OnEntityDestroyed, void, Entity entity) {
 
 BeginUnit(Component)
     BeginComponent(Component)
+        RegisterArrayProperty(Property, Properties)
+        RegisterArrayProperty(Base, Bases)
         RegisterProperty(u16, ComponentSize)
-        RegisterProperty(bool, ComponentAbstract)
     EndComponent()
 
     BeginComponent(Extension)
@@ -197,6 +215,9 @@ EndUnit()
 
 void __InitializeComponent() {
     auto component = ComponentOf_Component();
-    __Property(PropertyOf_ComponentSize(), offsetof(Component, ComponentSize), sizeof(Component::ComponentSize), TypeOf_u16,  component);
     AddComponent(component, ComponentOf_Component());
+    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
+    __Property(PropertyOf_Bases(), offsetof(Component, Bases), sizeof(Component::Bases), TypeOf_Entity, component, ComponentOf_Base(), PropertyKind_Array);
+    __Property(PropertyOf_Properties(), offsetof(Component, Properties), sizeof(Component::Properties), TypeOf_Entity, component, ComponentOf_Property(), PropertyKind_Array);
+    __Property(PropertyOf_ComponentSize(), offsetof(Component, ComponentSize), sizeof(Component::ComponentSize), TypeOf_u16, component, 0, PropertyKind_Value);
 }

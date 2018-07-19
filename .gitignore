@@ -38,3 +38,4 @@ obj/
 .vscode/
 cmake-build-*/
 \.install/
+node_modules/

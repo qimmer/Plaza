@@ -11,15 +11,7 @@ Unit(PersistancePoint)
         Property(bool, PersistancePointLoading, PropertyFlag_ReadOnly, PropertyFlag_Transient)
         Property(bool, PersistancePointSaving, PropertyFlag_ReadOnly, PropertyFlag_Transient)
 
-    Component(Serializer)
-        Property(StringRef, SerializerMimeType)
-
     Function(Save, bool, Entity persistancePoint)
-
-struct Serializer {
-    char SerializerMimeType[64];
-    bool(*SerializeHandler)(Entity entity);
-    bool(*DeserializeHandler)(Entity entity);
-};
+    Function(LoadEntityPath, bool, StringRef pathToEnsureLoaded)
 
 #endif //PersistancePoint_H

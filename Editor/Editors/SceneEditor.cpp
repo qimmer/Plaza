@@ -37,8 +37,8 @@ EndComponent()
 RegisterProperty(Entity, SceneEditorScene)
 
 void EditScene(Entity scene) {
-    char editorPath[PATH_MAX];
-    snprintf(editorPath, PATH_MAX, "/.editor/SceneEditor/%llu", scene);
+    char editorPath[PathMax];
+    snprintf(editorPath, PathMax, "/.editor/SceneEditor/%llu", scene);
 
     auto editor = CreateEntityFromPath(editorPath);
     SetSceneEditorScene(editor, scene);
@@ -57,8 +57,8 @@ static void Draw(Entity context) {
         auto scene = GetSceneEditorScene(sceneEditor);
 
         bool show = true;
-        char title[PATH_MAX];
-        snprintf(title, PATH_MAX, "Scene Editor - %s", GetEntityPath(scene));
+        char title[PathMax];
+        snprintf(title, PathMax, "Scene Editor - %s", GetEntityPath(scene));
 
         if(ImGui::Begin(title, &show)) {
             auto size = ImGui::GetContentRegionAvail();

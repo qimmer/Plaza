@@ -9,6 +9,7 @@
 
 Unit(HttpServer)
     Component(HttpServer)
+        ArrayProperty(HttpRequest, HttpServerRequests)
 
     Event(HttpServerRequest, Entity request)
 

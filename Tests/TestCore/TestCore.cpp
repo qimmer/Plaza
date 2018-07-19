@@ -26,23 +26,23 @@ Test(TestVector) {
     SetPersonAge(person, 20);
     auto data = GetPersonData(person);
 
-    VectorAdd(data, PersonChildren, 1);
-    VectorAdd(data, PersonChildren, 2);
-    VectorAdd(data, PersonChildren, 3);
-    VectorAdd(data, PersonChildren, 4);
-    VectorAdd(data, PersonChildren, 5);
-    VectorAdd(data, PersonChildren, 6);
+    VectorAdd(data->PersonChildren, 1);
+    VectorAdd(data->PersonChildren, 2);
+    VectorAdd(data->PersonChildren, 3);
+    VectorAdd(data->PersonChildren, 4);
+    VectorAdd(data->PersonChildren, 5);
+    VectorAdd(data->PersonChildren, 6);
 
     const u64 expectedAddedValues[] = {1, 2, 3, 4, 5, 6};
 
-    Verify(memcmp(data->PersonChildren, expectedAddedValues, sizeof(expectedAddedValues)) == 0, "Vector values are not as expected after add");
+    Verify(memcmp(GetVector(data->PersonChildren), expectedAddedValues, sizeof(expectedAddedValues)) == 0, "Vector values are not as expected after add");
 
-    VectorRemove(data, PersonChildren, 1);
-    VectorRemove(data, PersonChildren, 3);
+    VectorRemove(data->PersonChildren, 1);
+    VectorRemove(data->PersonChildren, 3);
 
     const u64 expectedRemovedValues[] = {1, 6, 3, 5};
 
-    Verify(memcmp(data->PersonChildren, expectedRemovedValues, sizeof(expectedRemovedValues)) == 0, "Vector values are not as expected after removal");
+    Verify(memcmp(GetVector(data->PersonChildren), expectedRemovedValues, sizeof(expectedRemovedValues)) == 0, "Vector values are not as expected after removal");
 
     return Success;
 }
@@ -73,11 +73,11 @@ Test(TestEntity) {
 }
 
 Test(TestComponent) {
-    auto entity = CreateEntityFromName(FunctionOf_TestComponent(), "Person2");
+    auto entity = CreateEntity();
 
-    Verify(!HasComponent(ComponentOf_Person(), entity), "Should have no person");
-    Verify(AddComponent(ComponentOf_Person(), entity), "Should have added person");
-    Verify(HasComponent(ComponentOf_Person(), entity), "Should have person");
+    Verify(!HasComponent(entity, ComponentOf_Person()), "Should have no person");
+    Verify(AddComponent(entity, ComponentOf_Person()), "Should have added person");
+    Verify(HasComponent(entity, ComponentOf_Person()), "Should have person");
     Verify(GetPersonAge(entity) == 0, "Age should be 0 (default)");
     Verify(strcmp(GetPersonFirstName(entity), "") == 0, "FirstName should be empty (default)");
 
@@ -102,7 +102,9 @@ LocalFunction(OnAgeChanged, void, Entity person, u8 oldValue, u8 newValue) {
 }
 
 Test(TestEvent) {
-    auto entity = CreateEntityFromName(0, "Person1");
+    auto entity = CreateEntity();
+
+    auto event = GetPropertyChangedEvent(PropertyOf_PersonAge());
 
     auto subscription = CreateEntity();
     SetSubscriptionEvent(subscription, EventOf_PersonAgeChanged());
@@ -135,6 +137,13 @@ BeginModule(TestCore)
     RegisterDependency(Test)
     RegisterUnit(TestCore)
 EndModule()
+
+struct Property {
+    Entity PropertyEnum, PropertyChangedEvent, PropertyChildComponent;
+    u32 PropertyOffset, PropertySize, PropertyFlags;
+    Type PropertyType;
+    u8 PropertyKind;
+};
 
 BeginUnit(TestCore)
     BeginComponent(Person)

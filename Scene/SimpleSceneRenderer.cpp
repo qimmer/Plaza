@@ -65,8 +65,8 @@ static void UpdateBatches(Entity sceneRenderer) {
         if(!meshInstanceScene || meshInstanceScene != scene || (HasComponent(meshInstance, ComponentOf_Visibility()) && GetHidden(meshInstance))) continue;
 
         if(!IsEntityValid(batch)) {
-            char name[PATH_MAX];
-            snprintf(name, PATH_MAX, "Batch_%i", batchIndex);
+            char name[PathMax];
+            snprintf(name, PathMax, "Batch_%i", batchIndex);
             batch = CreateBatch(data->CommandList, name);
         }
 

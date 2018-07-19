@@ -45,8 +45,8 @@ LocalFunction(OnCommandReleased, void, Entity command) {
 }
 
 void EditCode(Entity stream) {
-    char editorPath[PATH_MAX];
-    snprintf(editorPath, PATH_MAX, "/.editor/CodeEditor/%llu", stream);
+    char editorPath[PathMax];
+    snprintf(editorPath, PathMax, "/.editor/CodeEditor/%llu", stream);
 
     auto editor = CreateEntityFromPath(editorPath);
     SetCodeEditorStream(editor, stream);
@@ -60,8 +60,8 @@ static void Draw(Entity context) {
         auto stream = GetCodeEditorStream(codeEditor);
 
         bool show = true;
-        char title[PATH_MAX];
-        snprintf(title, PATH_MAX, "%s##%llu", GetStreamPath(stream), codeEditor);
+        char title[PathMax];
+        snprintf(title, PathMax, "%s##%llu", GetStreamPath(stream), codeEditor);
 
         ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
 

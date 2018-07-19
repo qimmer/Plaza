@@ -4,17 +4,17 @@
 #include <Core/NativeUtils.h>
 
 Unit(Event)
+    Component(EventArgument)
+        __PropertyCore(EventArgument, Type, EventArgumentType)
+        __PropertyCore(EventArgument, u32, EventArgumentOffset)
 
-__Component(Event)
-
-Component(EventArgument)
-        Property(Type, EventArgumentType)
-        Property(u32, EventArgumentOffset)
+    Component(Event)
+        __ArrayPropertyCore(EventArgument, EventArguments)
 
     Component(Subscription)
-        __PropertyCore(Entity, SubscriptionEvent)
-        __PropertyCore(Entity, SubscriptionSender)
-        __PropertyCore(Entity, SubscriptionHandler)
+        __PropertyCore(Subscription, Entity, SubscriptionEvent)
+        __PropertyCore(Subscription, Entity, SubscriptionSender)
+        __PropertyCore(Subscription, Entity, SubscriptionHandler)
 
 void SetEventArgsByDecl(Entity entity, StringRef decl);
 void FireEvent(Entity event, Entity context, ...);

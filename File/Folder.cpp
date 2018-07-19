@@ -4,7 +4,6 @@
 
 #include <Foundation/Stream.h>
 #include "Folder.h"
-#include "Core/Node.h"
 #include <Foundation/VirtualPath.h>
 
 #include <unistd.h>
@@ -15,14 +14,17 @@
 #include <sys/stat.h>
 #include <sstream>
 #include <iterator>
+#include <Core/Identification.h>
 
 struct Folder {
-    char FolderPath[512];
+    char FolderPath[PATH_MAX];
+    Vector(FolderSubfolders, Entity, 32);
+    Vector(FolderFiles, Entity, 128);
 };
 
 API_EXPORT void ScanFolder(Entity entity) {
-    while(IsEntityValid(GetFirstChild(entity))) {
-        DestroyEntity(GetFirstChild(entity));
+    while(GetNumFolderFiles(entity)) {
+        RemoveFolderFiles(entity, 0);
     }
 
     DIR *dir;
@@ -33,22 +35,21 @@ API_EXPORT void ScanFolder(Entity entity) {
 
             if(ent->d_name[0] == '.') continue;
 
-            char entryPath[PATH_MAX];
-            snprintf(entryPath, PATH_MAX, "%s/%s", GetFolderPath(entity), ent->d_name);
-
-            char entityPath[PATH_MAX];
-            snprintf(entityPath, PATH_MAX, "%s/%s", GetEntityPath(entity), ent->d_name);
+            char entryPath[PathMax];
+            snprintf(entryPath, PathMax, "%s/%s", GetFolderPath(entity), ent->d_name);
 
             struct stat ent_stat;
             stat(entryPath, &ent_stat);
 
             switch(ent_stat.st_mode & S_IFMT) {
                 case S_IFDIR:
-                    entryEntity = CreateEntityFromName(entity, ent->d_name);
+                    entryEntity = AddFolderSubfolders(entity);
+                    SetName(entryEntity, ent->d_name);
                     SetFolderPath(entryEntity, entryPath);
                     break;
                 case S_IFREG:
-                    entryEntity = CreateEntityFromName(entity, ent->d_name);
+                    entryEntity = AddFolderFiles(entity);
+                    SetName(entryEntity, ent->d_name);
                     SetStreamPath(entryEntity, entryPath);
                     break;
             }
@@ -94,8 +95,8 @@ API_EXPORT bool CreateDirectories(StringRef fullPath) {
 }
 
 API_EXPORT bool IsFolder(StringRef absolutePath) {
-    char resolvedPath[PATH_MAX];
-    ResolveVirtualPath(absolutePath, PATH_MAX, resolvedPath);
+    char resolvedPath[PathMax];
+    ResolveVirtualPath(absolutePath, PathMax, resolvedPath);
 
     auto isVirtualPath = strstr(resolvedPath, "://") != NULL;
 
@@ -129,7 +130,6 @@ LocalFunction(OnFolderRemoved, void, Entity component, Entity entity) {
 
 BeginUnit(Folder)
     BeginComponent(Folder)
-        RegisterBase(Node)
         RegisterProperty(StringRef, FolderPath)
     EndComponent()
 

@@ -8,13 +8,13 @@
 #include <Core/NativeUtils.h>
 
 Unit(Invocation)
+    Component(InvocationArgument)
+        Property(Variant, InvocationArgumentValue);
+
     Component(Invocation)
         Property(Entity, InvocationFunction)
         Property(Variant, InvocationResult)
-
-Unit(InvocationArgument)
-    Component(InvocationArgument)
-        Property(Variant, InvocationArgumentValue);
+        ArrayProperty(InvocationArgument, InvocationArguments)
 
 Function(Invoke, bool, Entity invocation);
 

@@ -6,12 +6,12 @@
 #include "Folder.h"
 #include <Foundation/Stream.h>
 #include <stdio.h>
-#include <Core/Node.h>
 #include <Foundation/MemoryStream.h>
 #include <Foundation/AppLoop.h>
 #include <Core/Debug.h>
 #include <Foundation/Timer.h>
 #include <Foundation/NativeUtils.h>
+#include <Core/Identification.h>
 #include "FileWatcher/FileWatcher.h"
 
 #define ProtocolIdentifier "file"
@@ -137,8 +137,8 @@ LocalFunction(OnStreamPathChanged, void, Entity stream, StringRef oldPath, Strin
 
         nativePath += 7; // Remove 'file://'
 
-        char parentFolder[PATH_MAX];
-        GetParentFolder(nativePath, parentFolder, PATH_MAX);
+        char parentFolder[PathMax];
+        GetParentFolder(nativePath, parentFolder, PathMax);
         data->watchID = fileWatcher.addWatch(parentFolder, &listener, false);
     }
 }
@@ -171,7 +171,6 @@ BeginUnit(FileStream)
         RegisterBase(Stream)
     EndComponent()
 
-    RegisterTimer(OnFileWatcherUpdate, 1.0)
     RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
     RegisterSubscription(EntityComponentAdded, OnFileStreamAdded, ComponentOf_FileStream())
     RegisterSubscription(EntityComponentRemoved, OnFileStreamRemoved, ComponentOf_FileStream())

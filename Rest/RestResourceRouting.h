@@ -5,10 +5,11 @@
 #ifndef PLAZA_RESTRESOURCEROUTING_H
 #define PLAZA_RESTRESOURCEROUTING_H
 
+#include <Core/NativeUtils.h>
 
-class RestResourceRouting {
-
-};
-
+Unit(RestResourceRouting)
+    Component(RestResourceRouting)
+        Property(StringRef, RestResourceRoutingRoot)
+        Property(StringRef, RestResourceRoutingDefaultFile)
 
 #endif //PLAZA_RESTRESOURCEROUTING_H

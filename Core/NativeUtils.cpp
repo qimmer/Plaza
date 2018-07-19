@@ -19,6 +19,7 @@ API_EXPORT Entity GetUniqueEntity(StringRef name, bool *firstTime) {
     if(it == entityLookup.end()) {
         auto entity = entityLookup[uniqueNameStr] = CreateEntity();
         if(firstTime) *firstTime = true;
+        Verbose("%s: %llu\n", name, entity);
         return entity;
     }
 

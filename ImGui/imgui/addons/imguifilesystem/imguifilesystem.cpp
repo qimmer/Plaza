@@ -55,27 +55,27 @@
 #endif
 
 #ifdef IMGUIFS_NO_EXTRA_METHODS
-// We copy the code for FILENAME_MAX and PATH_MAX
+// We copy the code for FILENAME_MAX and PathMax
 #   include <stdint.h>             // this is included by imgui.cpp, and the following headers might redefine incorrectly some types otherwise.
 #   include <stdio.h>              // just for FILENAME_MAX
-#   include <limits.h>             // just for PATH_MAX
-#   if (defined(__linux__) && !defined(PATH_MAX))
+#   include <limits.h>             // just for PathMax
+#   if (defined(__linux__) && !defined(PathMax))
 #       include <linux/limits.h>
-#   endif //(defined(__linux__) && !defined(PATH_MAX))
-#   ifndef PATH_MAX
-#       define PATH_MAX 1024    // Or 4096 ?
+#   endif //(defined(__linux__) && !defined(PathMax))
+#   ifndef PathMax
+#       define PathMax 1024    // Or 4096 ?
 #   endif //IMGUIFS_NO_EXTRA_METHODS
 #   ifndef FILENAME_MAX
-#       define FILENAME_MAX PATH_MAX
+#       define FILENAME_MAX PathMax
 #   endif //FILENAME_MAX
 #   ifdef _WIN32
 #   include <windef.h> // On Windows we have MAX_PATH too
 #   endif //_WIN32
-#   if (defined(MAX_PATH) && MAX_PATH>PATH_MAX)
+#   if (defined(MAX_PATH) && MAX_PATH>PathMax)
 #       define DIRENT_MAX_PATH MAX_PATH
-#   else // (defined(MAX_PATH) && MAX_PATH>PATH_MAX)
-#       define DIRENT_MAX_PATH PATH_MAX
-#   endif // (defined(MAX_PATH) && MAX_PATH>PATH_MAX)
+#   else // (defined(MAX_PATH) && MAX_PATH>PathMax)
+#       define DIRENT_MAX_PATH PathMax
+#   endif // (defined(MAX_PATH) && MAX_PATH>PathMax)
 
 namespace ImGuiFs {
 
@@ -280,7 +280,7 @@ public:
         //printf("GetAbsolutePath(\"%s\",\"%s\");\n",path,rv);fflush(stdout);
 #   else //_WIN32
         //fprintf(stderr,"GetAbsolutePath(\"%s\"); (len:%d)\n",path,(int) strlen(path)); // TO remove!
-        static const int bufferSize = DIRENT_MAX_PATH+1;   // 4097 is good (PATH_MAX should be in <limits.h>, or something like that)
+        static const int bufferSize = DIRENT_MAX_PATH+1;   // 4097 is good (PathMax should be in <limits.h>, or something like that)
         static wchar_t buffer[bufferSize];
         static wchar_t wpath[bufferSize];
         String::utf8_to_wide((path && strlen(path)>0) ? path : "./",wpath);

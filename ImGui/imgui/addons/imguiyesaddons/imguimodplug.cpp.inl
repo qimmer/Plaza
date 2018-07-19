@@ -17938,11 +17938,11 @@ BOOL CSoundFile::ReadOKT(const BYTE *lpStream, DWORD dwMemLength)
 #include <math.h>
 #include <ctype.h>
 #ifndef _WIN32
-#include <limits.h> // for PATH_MAX
+#include <limits.h> // for PathMax
 #include <unistd.h> // for sleep
 #endif
-#ifndef PATH_MAX
-#define PATH_MAX 256
+#ifndef PathMax
+#define PathMax 256
 #endif
 
 
@@ -17956,9 +17956,9 @@ BOOL CSoundFile::ReadOKT(const BYTE *lpStream, DWORD dwMemLength)
 
 // 128 gm and 63 drum
 #define MAXSMP				191
-static char midipat[MAXSMP][PATH_MAX];
-static char pathforpat[PATH_MAX] = {};
-static char timiditycfg[PATH_MAX] = {};
+static char midipat[MAXSMP][PathMax];
+static char pathforpat[PathMax] = {};
+static char timiditycfg[PathMax] = {};
 
 #pragma pack(1)
 
@@ -18255,19 +18255,19 @@ void pat_init_patnames(void)
 {
 	int z, i, nsources, isdrumset, nskip, pfnlen;
 	char *p, *q;
-	char line[PATH_MAX];
-	char cfgsources[5][PATH_MAX] = {{0}, {0}, {0}, {0}, {0}};
+	char line[PathMax];
+	char cfgsources[5][PathMax] = {{0}, {0}, {0}, {0}, {0}};
 	MMSTREAM *mmcfg;
-	strncpy(pathforpat, PATHFORPAT, PATH_MAX);
-	strncpy(timiditycfg, TIMIDITYCFG, PATH_MAX);
+	strncpy(pathforpat, PATHFORPAT, PathMax);
+	strncpy(timiditycfg, TIMIDITYCFG, PathMax);
 	p = getenv(PAT_ENV_PATH2CFG);
 	if( p ) {
-		strncpy(timiditycfg, p, PATH_MAX - 14);
-		strncpy(pathforpat, p, PATH_MAX - 13);
+		strncpy(timiditycfg, p, PathMax - 14);
+		strncpy(pathforpat, p, PathMax - 13);
 		strcat(timiditycfg, "/timidity.cfg");
 		strcat(pathforpat, "/instruments");
 	}
-	strncpy(cfgsources[0], timiditycfg, PATH_MAX - 1);
+	strncpy(cfgsources[0], timiditycfg, PathMax - 1);
 	nsources = 1;
 
 	for( i=0; i<MAXSMP; i++ )	midipat[i][0] = '\0';
@@ -18281,7 +18281,7 @@ void pat_init_patnames(void)
 		else {
 			// read in bank 0 and drum patches
 			isdrumset = 0;
-			_mm_fgets(mmcfg, line, PATH_MAX);
+			_mm_fgets(mmcfg, line, PathMax);
 			while( !_mm_feof(mmcfg) ) {
 			if( isdigit(line[0]) || (isblank(line[0]) && isdigit(line[1])) ) {
 				p = line;
@@ -18327,7 +18327,7 @@ void pat_init_patnames(void)
 				*q = 0; // null termination
 				nsources++;
 			}
-			_mm_fgets(mmcfg, line, PATH_MAX);
+			_mm_fgets(mmcfg, line, PathMax);
 
 			} /* end file parsing */
 			_mm_fclose(mmcfg);
