@@ -16,8 +16,8 @@ struct ComponentTypeData {
     Vector<u32> EntityComponentIndices;
 };
 
-static Vector<ComponentTypeData> ComponentDataList;
-static Vector<u16> ComponentDataIndices;
+API_EXPORT Vector<ComponentTypeData> ComponentDataList;
+API_EXPORT Vector<u16> ComponentDataIndices;
 
 struct Extension {
     Entity ExtensionComponent;
@@ -64,6 +64,10 @@ API_EXPORT Entity GetComponentEntity(Entity component, u32 index) {
 }
 
 API_EXPORT u32 GetComponentIndex(Entity component, Entity entity) {
+    if(!IsEntityValid(entity)) {
+        return InvalidIndex;
+    }
+
     auto componentData = GetComponentType(component);
     auto entityIndex = GetEntityIndex(entity);
 
@@ -111,10 +115,21 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
                 AddComponent(entity, dependency);
             }
 
+            auto properties = GetProperties(component);
+            for(auto i = 0; i < GetNumProperties(component); ++i) {
+                auto property = properties[i];
+                if(GetPropertyKind(property) == PropertyKind_Child) {
+                    auto child = CreateEntity();
+                    SetOwner(child, entity, property);
+                    __InjectChildPropertyValue(property, entity, child);
+                    AddComponent(child, GetPropertyChildComponent(property));
+                }
+            }
+
             FireEvent(EventOf_EntityComponentAdded(), component, entity);
         }
 
-        Verbose("Component %llu has been added to Entity %llu.", component, entity);
+        Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Component %s has been added to Entity %s.", GetDebugName(component), GetDebugName(entity));
 
         return true;
     }
@@ -126,8 +141,6 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     Assert(component, IsEntityValid(component));
 
     if(HasComponent(entity, component)) {
-        Verbose("Removing Component %llu from Entity %llu ...", component, entity);
-
         FireEvent(EventOf_EntityComponentRemoved(), component, entity);
 
         if(HasComponent(entity, component)) {
@@ -142,7 +155,7 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
             componentData->DataBuffer.Remove(deletionComponentIndex);
         }
 
-        Verbose("Component %s has been removed from Entity %s.", GetName(component), GetName(entity));
+        Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Component %s has been removed from Entity %s.", GetDebugName(component), GetDebugName(entity));
 
         return true;
     }

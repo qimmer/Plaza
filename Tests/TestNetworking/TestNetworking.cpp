@@ -16,10 +16,10 @@
 #include <Json/JsonPersistance.h>
 #include <Networking/HttpServer.h>
 #include <Core/Identification.h>
+#include <Core/Debug.h>
 #include "TestNetworking.h"
 
 Test(TestNetworking) {
-
     auto server = CreateEntity();
     AddComponent(server, ComponentOf_HttpServer());
     SetServerPort(server, 8000);
@@ -33,6 +33,7 @@ Test(TestNetworking) {
 
 LocalFunction(OnHttpServerRequest, void, Entity server, Entity request) {
     auto response = GetHttpRequestResponse(request);
+    SetStreamPath(response, "memory://response.json");
     auto url = GetHttpRequestUrl(request);
     auto root = FindEntityByPath(url);
 

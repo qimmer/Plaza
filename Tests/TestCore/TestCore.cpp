@@ -61,12 +61,12 @@ Test(TestEntity) {
         Verify(IsEntityValid(entities[i]), "Entity should be valid");
     }
 
-    DestroyEntity(entities[0]);
+    __DestroyEntity(entities[0]);
     Verify(!IsEntityValid(entities[0]), "Entity should be invalid");
 
     for(auto i = 0; entities[i]; ++i)
     {
-        DestroyEntity(entities[i]);
+        __DestroyEntity(entities[i]);
     }
 
     return Success;
@@ -90,7 +90,7 @@ Test(TestComponent) {
     auto personComponent = ComponentOf_Person();
     auto index = GetComponentIndex(ComponentOf_Component(), personComponent);
 
-    DestroyEntity(entity);
+    __DestroyEntity(entity);
 
     return Success;
 }
@@ -126,8 +126,8 @@ Test(TestEvent) {
 
     Verify(ageDifference == 1, "Event is triggered on wrong entity");
 
-    DestroyEntity(entity);
-    DestroyEntity(subscription);
+    __DestroyEntity(entity);
+    __DestroyEntity(subscription);
 
     return Success;
 }

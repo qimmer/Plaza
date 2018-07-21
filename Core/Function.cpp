@@ -274,6 +274,8 @@ API_EXPORT bool CallFunction(
 ) {
     auto data = GetFunctionData(f);
 
+    Verbose(VerboseLevel_Invocations, "Calling function %s ...", GetName(f));
+
     return data->FunctionCaller(
             data->FunctionImplementation,
             data->FunctionReturnType,

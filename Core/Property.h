@@ -40,6 +40,7 @@ Component(Binding)
 
 void SetPropertyValue(Entity property, Entity entity, const void *valueData);
 bool GetPropertyValue(Entity property, Entity entity, void *dataOut);
+Entity *GetArrayPropertyElements(Entity property, Entity entity);
 
 Function(GetArrayPropertyCount, u32, Entity property, Entity entity);
 Function(AddArrayPropertyElement, u32, Entity property, Entity entity);

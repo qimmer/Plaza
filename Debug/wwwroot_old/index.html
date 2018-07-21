@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html ng-app="plaza" style="overflow: visible;">
+
+<head>
+    <title>Plaza Debugger</title>
+
+    <link rel="stylesheet" type="text/css" href="node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="node_modules/@shagstrom/split-pane/split-pane.css"/>
+    <link rel="stylesheet" type="text/css" href="node_modules/@shagstrom/split-pane/pretty-split-pane.css"/>
+    <link rel="stylesheet" type="text/css" href="App/Controllers/MainView.css"/>
+    <link rel="stylesheet" type="text/css" href="App/Themes/superhero.css"/>
+    <link rel="stylesheet" type="text/css" href="App/Directives/EntityTree.css"/>
+    <link rel="stylesheet" type="text/css" href="App/Directives/PropertyEditor.css"/>
+    <link rel="stylesheet" type="text/css" href="App/Fonts/iconmonstr-iconic-font.min.css"/>
+
+</head>
+
+<body>      
+        <div style="width: 100%; height: 100%;" ng-include="'App/Controllers/MainView.html'"/>
+    
+        <script src="node_modules/jquery/dist/jquery.js"></script>
+        <script src="node_modules/angular/angular.js"></script>
+        <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
+        <script src="node_modules/angular-tree-control/angular-tree-control.js"></script>
+        <script src="node_modules/angular-tree-control/context-menu.js"></script>
+        <script src="node_modules/@shagstrom/split-pane/split-pane.js"></script>
+        <script src="node_modules/@shagstrom/angular-split-pane/angular-split-pane.js"></script>
+        
+        <script src="App/app.js"></script>
+        <script src="App/Services/EventService.js"></script>
+        <script src="App/Services/EntityService.js"></script>
+        <script src="App/Controllers/mainController.js"></script>
+        <script src="App/Directives/EntityTree.js"></script>
+        <script src="App/Directives/PropertyEditor.js"></script>
+        <script src="App/Directives/TopBar.js"></script>
+        
+    
+</body>
+
+</html>

@@ -1,0 +1,91 @@
+[treecontrol] {
+    /* prevent user selection */
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    /* default */
+    
+    text-decoration: none;
+    width: 100%;
+}
+
+[treecontrol] ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: none;
+    overflow: hidden;
+    width: 100%;
+    white-space: nowrap;
+}
+
+[treecontrol] li {
+    position: relative;
+    padding: 0 0 0 20px;
+    /* line-height: 20px; */
+}
+
+[treecontrol] li.tree-expanded i.tree-leaf-head, [treecontrol] li.tree-collapsed i.tree-leaf-head {display:none;}
+[treecontrol] li.tree-expanded i.tree-branch-head, [treecontrol] li.tree-collapsed i.tree-branch-head {display:inline-block;}
+[treecontrol] li.tree-leaf i.tree-branch-head {display:none;}
+[treecontrol] li.tree-leaf i.tree-leaf-head {display:inline-block;}
+
+[treecontrol] li i {
+    cursor: pointer;
+}
+
+[treecontrol] li .tree-label {
+    cursor: pointer;
+    display: inline;
+    white-space: nowrap;
+}
+
+[treecontrol].tree-boot {
+    color: #aaa;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+[treecontrol].tree-boot > ul > li {
+    padding: 0;
+}
+
+[treecontrol].tree-boot li > .tree-label {
+    display: block;
+    padding: 0px;
+    border-radius: 0px;
+}
+
+[treecontrol].tree-boot i.tree-branch-head,
+[treecontrol].tree-boot i.tree-leaf-head {
+    display: inline-block;
+    float: left;
+    white-space:nowrap;
+    height: 13px;
+    margin: 2px 0px 4px 4px;
+}
+
+[treecontrol].tree-boot li.tree-expanded i.tree-branch-head {
+    display: none;
+}
+
+[treecontrol].tree-boot li.tree-collapsed i.tree-branch-head {
+    display: none;
+}
+
+[treecontrol].tree-boot li.tree-leaf i.tree-leaf-head {
+    display: none;
+}
+
+[treecontrol].tree-boot .tree-label.tree-selected,
+[treecontrol].tree-boot .tree-label.tree-selected:hover {
+    
+    background-color: #354350;
+}
+
+[treecontrol].tree-boot .tree-label:hover {
+    background-color: #323232;
+}

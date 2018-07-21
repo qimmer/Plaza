@@ -68,7 +68,7 @@ API_EXPORT Entity CreateEntity () {
     
     auto entity = GetEntity(index, Generations[index]);
 
-    Verbose("Entity Created: { index: %i, gen: %u }", index, Generations[index]);
+    Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Entity Created: %s", GetDebugName(entity));
 
     if(__IsCoreInitialized) {
         FireEvent(EventOf_EntityCreated(), entity);
@@ -109,5 +109,5 @@ API_EXPORT void __DestroyEntity(Entity entity) {
     ++ Generations[index];
     
     Assert(0, Generations[index] % 2 == 0);
-    Verbose("Entity Destroyed: { index: %d, gen: %d }", index, GetEntityGeneration(entity));
+    Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Entity Destroyed: %s", GetDebugName(entity));
 }

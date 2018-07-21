@@ -130,27 +130,38 @@ API_EXPORT u32 GetArrayPropertyCount(Entity property, Entity entity) {
 }
 
 API_EXPORT u32 __InjectArrayPropertyElement(Entity property, Entity entity, Entity element) {
+    Assert(property, IsEntityValid(element));
+
     auto propertyData = GetPropertyData(property);
 
     VectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
+    Assert(entity, s);
 
     auto elementSize = GetTypeSize(propertyData->PropertyType);
-    __SetVectorAmount(&s->Count, s->Count + 1, &s->DynCapacity, sizeof(s->StaBuf)/elementSize, (void**)&s->DynBuf, s->StaBuf, elementSize);
+    auto staticCap = (propertyData->PropertySize - sizeof(u32) * 2 - sizeof(char*)) / elementSize;
+    __SetVectorAmount(&s->Count, s->Count + 1, &s->DynCapacity, staticCap, (void**)&s->DynBuf, s->StaBuf, elementSize);
 
     auto elementData = &(GetVector(*s)[sizeof(Entity) * (s->Count-1)]);
 
     *(Entity*)elementData = element;
     AddComponent(element, ComponentOf_Ownership());
-    GetOwnershipData(element)->Owner = entity;
+
+    auto ownership = GetOwnershipData(element);
+    ownership->Owner = entity;
+    ownership->OwnerProperty = property;
 
     AddComponent(element, propertyData->PropertyChildComponent);
+
+    GetArrayPropertyElement(property, entity, s->Count - 1);
 
     return s->Count - 1;
 }
 
 
 API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Entity value) {
+    Assert(property, IsEntityValid(value));
+
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
     auto propertyData = (Property*)GetComponentData(ComponentOf_Property(), propertyIndex);
 
@@ -208,7 +219,8 @@ API_EXPORT bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 i
 
     // Now, cut the last element off from the end, shrinking the array
     auto elementSize = GetTypeSize(propertyData->PropertyType);
-    __SetVectorAmount(&s->Count, s->Count - 1, &s->DynCapacity, sizeof(s->StaBuf)/elementSize, (void**)&s->DynBuf, s->StaBuf, elementSize);
+    auto staticCap = (propertyData->PropertySize - sizeof(u32) * 2 - sizeof(char*)) / elementSize;
+    __SetVectorAmount(&s->Count, s->Count - 1, &s->DynCapacity, staticCap, (void**)&s->DynBuf, s->StaBuf, elementSize);
 
     return true;
 }
@@ -219,8 +231,19 @@ API_EXPORT Entity GetArrayPropertyElement(Entity property, Entity entity, u32 in
     VectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
 
-    Assert(entity, s->Count > index);
-    return ((Entity*)GetVector(*s))[index];
+    Assert(entity, s && s->Count > index);
+    auto child = ((Entity*)GetVector(*s))[index];
+    Assert(entity, IsEntityValid(child));
+    return child;
+}
+
+API_EXPORT Entity *GetArrayPropertyElements(Entity property, Entity entity) {
+    auto propertyData = GetPropertyData(property);
+
+    VectorStruct *s = 0;
+    GetPropertyValue(property, entity, &s);
+
+    return ((Entity*)GetVector(*s));
 }
 
 void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind) {
@@ -256,6 +279,9 @@ __PropertyCoreGet(Entity, Owner, Ownership)
 __PropertyCoreGet(Entity, OwnerProperty, Ownership)
 
 API_EXPORT void SetOwner(Entity entity, Entity owner, Entity ownerProperty) {
+    Assert(entity, IsEntityValid(owner));
+    Assert(entity, IsEntityValid(ownerProperty));
+
     AddComponent(entity, ComponentOf_Ownership());
     auto data = GetOwnershipData(entity);
     data->Owner = owner;
@@ -281,7 +307,7 @@ BeginUnit(Property)
         RegisterProperty(Type, PropertyType)
         RegisterProperty(u32, PropertyFlags)
         RegisterProperty(u8, PropertyKind)
-        RegisterChildProperty(Enum, PropertyEnum)
+        RegisterProperty(Entity, PropertyEnum)
         RegisterChildProperty(Event, PropertyChangedEvent)
         RegisterProperty(Entity, PropertyChildComponent)
     EndComponent()
@@ -290,6 +316,10 @@ BeginUnit(Property)
         RegisterProperty(Entity, BindingSourceProperty)
         RegisterProperty(Entity, BindingTargetEntity)
         RegisterProperty(Entity, BindingTargetProperty)
+    EndComponent()
+    BeginComponent(Ownership)
+        RegisterProperty(Entity, Owner)
+        RegisterProperty(Entity, OwnerProperty)
     EndComponent()
 EndUnit()
 

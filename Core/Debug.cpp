@@ -18,6 +18,8 @@
 
 #ifdef WIN32
 #include <Windows.h>
+#include "Identification.h"
+
 #endif
 
 BeginUnit(Debug)
@@ -72,4 +74,75 @@ API_EXPORT void DebuggerBreak() {
 
 API_EXPORT void Exit(s32 returnCode) {
     ::exit(returnCode);
+}
+
+API_EXPORT StringRef GetDebugName(Entity entity) {
+    typedef char Path[PathMax];
+    static Path paths[8];
+    static int currentPath = 0;
+
+    currentPath = (currentPath + 1) % 8;
+
+    if(!IsEntityValid(entity)) return "<Invalid>";
+
+    auto name = GetName(entity);
+    if(!name || name[0] == '\0') {
+        snprintf(paths[currentPath], PathMax, "%llu", entity);
+        return paths[currentPath];
+    }
+
+    sprintf(paths[currentPath], "%s (%llu)", name, entity);
+
+    return paths[currentPath];
+}
+
+static void PrintNode(int level, Entity entity) {
+    static const int identation = 4;
+
+    if(!IsEntityValid(entity)) {
+        printf("<Invalid>\n");
+        return;
+    }
+
+    printf("{ (%s) (", GetDebugName(entity));
+
+    for_entity(component2, componentData2, Component) {
+        if (!HasComponent(entity, component2)) continue;
+        printf("%s, ", GetName(component2));
+    }
+
+    printf(")\n");
+
+    for_entity(component, componentData, Component) {
+        if(!HasComponent(entity, component)) continue;
+
+        auto properties = GetProperties(component);
+        for(auto i = 0; i < GetNumProperties(component); ++i) {
+            auto property = properties[i];
+            Entity value = 0;
+            GetPropertyValue(property, entity, &value);
+            switch(GetPropertyKind(property)) {
+                case PropertyKind_Child:
+                    printf("%*s%s: ", (level + 1) * identation, " ", GetDebugName(property));
+                    PrintNode(level+1, value);
+                    break;
+                case PropertyKind_Array:
+                    printf("%*s%s: [\n", (level + 1) * identation, " ", GetDebugName(property));
+                    auto elements = GetArrayPropertyElements(property, entity);
+                    for(auto j = 0; j < GetArrayPropertyCount(property, entity); ++j) {
+                        printf("%*s [%d]: ", (level + 2) * identation, " ", j);
+                        PrintNode(level+2, elements[j]);
+                    }
+                    printf("%*s]\n", (level + 1) * identation, " ");
+                    break;
+            }
+
+        }
+    }
+
+    printf("%*s}\n", level * identation, " ");
+}
+
+API_EXPORT void DumpNode() {
+    PrintNode(0, GetModuleRoot());
 }

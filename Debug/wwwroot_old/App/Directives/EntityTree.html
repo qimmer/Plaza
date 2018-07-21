@@ -1,0 +1,24 @@
+<div style="width: 100%; height: 100%">
+        <div style="width: 100%; height: 50px;">
+                <div class="bg-toolbox-face">
+                    <div class="toolbox">
+                            <input class="form-control" placeholder="Filter" type="text" ng-model="filterText">
+                    </div>
+                    
+                </div>
+                
+            </div>
+            <div style="width: 100%; height: calc(100% - 50px); overflow: auto;">
+                <div treecontrol class="tree-boot"
+                    tree-model="organizedEntities"
+                    options="treeOptions"
+                    on-selection="toggle(node)"
+                    selected-nodes="selectedNodes"
+                    expanded-nodes="expandedNodes"
+                    filter-expression="filterText">
+                <i style="display: inline-block; font-size: 0.6em; line-height:20px; margin-left: 4px; vertical-align: top; padding: 0px 4px 0px 4px; width: 16px;" ng-class="getAngleIcon(node)"/>
+                <i style="display: inline-block; font-size: 1em; line-height:20px; padding: 0px 2px 0px 4px; vertical-align: top;" class="im" ng-class="getIcon(node)" /> 
+                <span style="display: inline-block; line-height:20px; vertical-align: top;">{{(node.original && node.original.Name) ? node.original.Name : node.name}}</span>
+                </div>
+            </div>
+</div>

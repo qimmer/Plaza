@@ -21,7 +21,7 @@ API_EXPORT void __SetVectorAmount(
         if(!*dynBuf) {
             *dynBuf = calloc(newNum, elementSize);
             *dynCap = newNum;
-            memcpy(*dynBuf, staBuf, *num);
+            memcpy(*dynBuf, staBuf, *num * elementSize);
         } else {
             if(*dynCap < newNum) {
                 *dynBuf = realloc(*dynBuf, newNum * elementSize);
@@ -34,7 +34,7 @@ API_EXPORT void __SetVectorAmount(
         }
     } else {
         if(*dynBuf) {
-            memcpy(staBuf, *dynBuf, Min(staCap, *dynCap));
+            memcpy(staBuf, *dynBuf, Min(staCap, *dynCap) * elementSize);
             free(*dynBuf);
         }
         *dynCap = 0;

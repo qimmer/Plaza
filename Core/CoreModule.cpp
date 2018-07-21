@@ -4,6 +4,7 @@
 
 #include "CoreModule.h"
 #include "Identification.h"
+#include "Enum.h"
 #include <Core/Types.h>
 #include <Core/Component.h>
 #include <Core/Entity.h>
@@ -28,6 +29,8 @@ void __InitializeBase() {
     SetComponentSize(ComponentOf_FunctionArgument(), 8);
     SetComponentSize(ComponentOf_Module(), 8196);
     SetComponentSize(ComponentOf_ModuleRoot(), 720);
+    SetComponentSize(ComponentOf_Enum(), 4);
+    SetComponentSize(ComponentOf_EnumFlag(), 4);
 
     __InitializeComponent();
     __InitializeModule();
@@ -56,8 +59,10 @@ void __InitModule_Core (Entity module) {
     RegisterUnit(Property)
     RegisterUnit(Event)
     RegisterUnit(Function)
+    RegisterUnit(Enum)
     RegisterUnit(Entity)
     RegisterUnit(Debug)
+    RegisterUnit(Identification)
 
     SetName(GetModuleRoot(), "Modules");
     AddComponent(GetModuleRoot(), ComponentOf_ModuleRoot());

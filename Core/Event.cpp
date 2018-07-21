@@ -20,7 +20,6 @@ struct Subscription {
 
 struct Event {
     Vector(SubscriptionCache, Subscription, 64)
-    Vector(EventArgumentCache, EventArgument*, 8)
     Vector(EventArguments, Entity, 8)
 };
 
@@ -41,27 +40,6 @@ LocalFunction(OnEventArgumentTypeChanged, void, Entity argument, Type oldType, T
 
     data->EventArgumentType = TypeOf_unknown;
     Log(argument, LogSeverity_Error, "Type not supported as argument: %s", GetTypeName(newType));
-}
-
-LocalFunction(OnEventArgumentParentChanged, void, Entity context, Entity oldParent, Entity newParent) {
-    static auto parentComponent = ComponentOf_Event();
-    static auto childComponent = ComponentOf_EventArgument();
-    if(HasComponent(context, childComponent)) {
-        auto childData = GetEventArgumentData(context);
-        if(HasComponent(oldParent, parentComponent)) {
-            auto data = GetEventData(oldParent);
-            for(auto i = 0; i < data->EventArgumentCache.Count; ++i) {
-                if(GetVector(data->EventArgumentCache)[i] == childData) {
-                    VectorRemove(data->EventArgumentCache, i);
-                    break;
-                }
-            }
-        }
-        if(HasComponent(newParent, parentComponent)) {
-            auto data = GetEventData(newParent);
-            VectorAdd(data->EventArgumentCache, childData);
-        }
-    }
 }
 
 LocalFunction(OnSubscriptionHandlerChanged, void, Entity context, Entity oldValue, Entity newValue) {
@@ -124,7 +102,12 @@ LocalFunction(OnSubscriptionEventChanged, void, Entity context, Entity oldValue,
 }
 
 void __InitializeEvent() {
-    auto component = ComponentOf_EventArgument();
+    auto component = ComponentOf_Event();
+    AddComponent(component, ComponentOf_Component());
+    SetComponentSize(component, sizeof(Event));
+    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
+
+    component = ComponentOf_EventArgument();
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(EventArgument));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
@@ -140,20 +123,9 @@ void __InitializeEvent() {
     __Property(PropertyOf_SubscriptionSender(), offsetof(Subscription, SubscriptionSender), sizeof(Subscription::SubscriptionSender), TypeOf_Entity,  component, 0, PropertyKind_Value);
 }
 
-void __ForceArgumentParse(Entity eventEntity) {
-    auto data = GetEventData(eventEntity);
-
-    VectorClear(data->EventArgumentCache);
-
-    for(auto i = 0; i < data->EventArguments.Count; ++i) {
-        auto childData = GetEventArgumentData(GetVector(data->EventArguments)[i]);
-        VectorAdd(data->EventArgumentCache, childData);
-    }
-}
-
 API_EXPORT void FireEventFast(Entity event, u32 numArguments, const u8* argumentTypeIndices, const void **argumentDataPtrs) {
 
-    Verbose("Firing event %llu ...", event);
+    Verbose(VerboseLevel_Invocations, "Firing event %llu ...", event);
 
     auto data = GetEventData(event);
 
@@ -182,7 +154,7 @@ API_EXPORT void FireEvent(Entity event, Entity sender, ...) {
         argPtr += sizeof(TYPE);\
         break;
 
-    Verbose("Firing event %llu ...", event);
+    Verbose(VerboseLevel_Invocations, "Firing event %llu ...", event);
 
     char argBuffer[256];
     char *argPtr = argBuffer;
@@ -193,12 +165,7 @@ API_EXPORT void FireEvent(Entity event, Entity sender, ...) {
     auto eventData = GetEventData(event);
 
     if(eventData) {
-        size_t numArguments = eventData->EventArgumentCache.Count;
-
-        if(numArguments == 0) {
-            __ForceArgumentParse(event);
-            numArguments = eventData->EventArgumentCache.Count;
-        }
+        size_t numArguments = eventData->EventArguments.Count;
 
         va_list vl;
         va_start(vl, numArguments);
@@ -209,7 +176,9 @@ API_EXPORT void FireEvent(Entity event, Entity sender, ...) {
         argumentPtrs[0] = &sender;
 
         for(auto i = 0; i < numArguments; ++i) {
-            auto type = GetVector(eventData->EventArgumentCache)[i]->EventArgumentType;
+            auto argumentEntity = GetVector(eventData->EventArguments)[i];
+            auto argumentData = GetEventArgumentData(argumentEntity);
+            auto type = argumentData->EventArgumentType;
 
             switch(type) {
                 __HANDLE_VA_ARG(bool, int)
@@ -355,12 +324,13 @@ __PropertyCoreImpl(Type, EventArgumentType, EventArgument)
 __ArrayPropertyCoreImpl(EventArgument, EventArguments, Event)
 
 BeginUnit(Event)
-    BeginComponent(Event)
-    EndComponent()
-
     BeginComponent(EventArgument)
         RegisterProperty(u32, EventArgumentOffset)
         RegisterProperty(Type, EventArgumentType)
+    EndComponent()
+
+    BeginComponent(Event)
+        RegisterArrayProperty(EventArgument, EventArguments)
     EndComponent()
 
     BeginComponent(Subscription)
@@ -368,10 +338,6 @@ BeginUnit(Event)
         RegisterProperty(Entity, SubscriptionSender)
         RegisterProperty(Entity, SubscriptionEvent)
     EndComponent()
-
-    __ForceArgumentParse(EventOf_SubscriptionEventChanged());
-    __ForceArgumentParse(EventOf_SubscriptionHandlerChanged());
-    __ForceArgumentParse(EventOf_SubscriptionSenderChanged());
 
     RegisterFunction(OnSubscriptionHandlerChanged)
     RegisterFunction(OnSubscriptionEventChanged)

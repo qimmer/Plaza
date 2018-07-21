@@ -27,6 +27,7 @@ u32 GetArrayPropertyCount(Entity property, Entity entity);
 u32 AddArrayPropertyElement(Entity property, Entity entity);
 bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 index);
 Entity GetArrayPropertyElement(Entity property, Entity entity, u32 index);
+Entity *GetArrayPropertyElements(Entity property, Entity entity);
 
 void SetModuleSourcePath(Entity module, StringRef sourcePath);
 void SetModuleVersion(Entity module, StringRef version);
@@ -349,7 +350,6 @@ inline void __FireEventVa(Entity event, T... args) {
             ModuleOf_Core();\
             module = GetUniqueEntity("Module " #NAME, &firstTime);\
             if(firstTime) {\
-                __InjectArrayPropertyElement(PropertyOf_Modules(), GetModuleRoot(), module);\
                 SetName(module, #NAME);\
                 SetModuleSourcePath(module, __FILE__);\
                 SetModuleVersion(module, __DATE__ " " __TIME__);\
@@ -358,6 +358,7 @@ inline void __FireEventVa(Entity event, T... args) {
                 for(auto i = 1; dataComponents[i]; ++i) {\
                     AddComponent(module, dataComponents[i]);\
                 }\
+                __InjectArrayPropertyElement(PropertyOf_Modules(), GetModuleRoot(), module);\
             }\
         }\
         return module;\

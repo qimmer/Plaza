@@ -19,57 +19,52 @@ struct Identification {
     char Name[256];
 };
 
-static eastl::unordered_multimap<eastl::string, Entity> EntityPathMap;
-
-static Entity FirstRoot = 0;
-
 API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity) {
-    char path[PathMax];
-    char path2[PathMax];
-    snprintf(path, PathMax, "");
-    snprintf(path2, PathMax, "");
+    typedef char Path[PathMax];
+    Path paths[2];
 
-    while(IsEntityValid(entity)) {
+    snprintf(paths[0], PathMax, "");
+    snprintf(paths[1], PathMax, "");
+
+    int currentPath = 0;
+
+    while(IsEntityValid(entity) && entity != GetModuleRoot()) {
         auto owner = GetOwner(entity);
-        for_entity(component, componentData, Component) {
-            if(HasComponent(entity, component)) {
-                auto properties = GetProperties(component);
-                for(auto i = 0; i < GetNumProperties(component); ++i) {
-                    auto property = properties[i];
-                    auto kind = GetPropertyKind(property);
+        auto ownerProperty = GetOwnerProperty(entity);
 
-                    if(kind == PropertyKind_Child) {
-                        Entity value = 0;
-                        GetPropertyValue(property, owner, &value);
-                        if(value == entity) {
-                            snprintf(path2, PathMax, "/%s%s", GetName(property), path);
-                            entity = owner;
-                            continue;
-                        }
-                    }
-
-                    else if(kind == PropertyKind_Array) {
-                        auto count = GetArrayPropertyCount(property, owner);
-                        for(auto i = 0; i < count; ++i) {
-                            auto element = GetArrayPropertyElement(property, owner, i);
-                            if(element == entity) {
-                                snprintf(path2, PathMax, "/%s/%s%s", GetName(property), GetName(element), path);
-                                entity = owner;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+        if(!IsEntityValid(owner)) {
+            Log(entity, LogSeverity_Error, "Entity has no owner: %s", GetDebugName(entity));
+            return;
         }
-        entity =
 
-        snprintf(path2, PathMax, "/%s%s", GetName(entity), path);
+        if(!IsEntityValid(ownerProperty)) {
+            Log(entity, LogSeverity_Error, "Entity has no owner property: %s", GetDebugName(entity));
+            return;
+        }
 
-        strncpy(path, path2, PathMax);
+        auto ownerPropertyKind = GetPropertyKind(ownerProperty);
+
+        char elementName[PathMax];
+        switch(ownerPropertyKind) {
+            case PropertyKind_Child:
+                snprintf(elementName, PathMax, "%s", GetName(ownerProperty));
+                entity = owner;
+                break;
+            case PropertyKind_Array:
+                snprintf(elementName, PathMax, "%s/%s", GetName(ownerProperty), GetName(entity));
+                entity = owner;
+                break;
+            default:
+                Assert(entity, false);
+                break;
+        }
+
+        snprintf(paths[currentPath], PathMax, "/%s%s", elementName, paths[1 - currentPath]);
+        currentPath = 1 - currentPath;
     }
 
-    strncpy(dest, path2, bufMax);
+    StringRef finalPath = paths[1 - currentPath];
+    strncpy(dest, finalPath, bufMax);
 }
 
 API_EXPORT Entity FindEntityByName(Entity component, StringRef typeName) {
@@ -83,10 +78,72 @@ API_EXPORT Entity FindEntityByName(Entity component, StringRef typeName) {
 }
 
 API_EXPORT Entity FindEntityByPath(StringRef path) {
-    auto it = EntityPathMap.find(path);
-    if(it == EntityPathMap.end()) return 0;
+    while(path[0] == '/') path++; // Cut await leading slashes
 
-    return it->second;
+    char pathSplits[PathMax];
+    memset(pathSplits, 0, PathMax);
+    strncpy(pathSplits, path, PathMax);
+
+    auto len = strlen(pathSplits);
+
+    // Split path into elements
+    for(auto i = 0; i < len; ++i) {
+        if(pathSplits[i] == '/') pathSplits[i] = '\0';
+    }
+
+    Entity currentEntity = GetModuleRoot();
+    Entity currentArrayProperty = 0;
+
+    char *element = pathSplits;
+    while(element < pathSplits + len) {
+        auto elementLength = strlen(element);
+
+        if(currentArrayProperty != 0) { // Path element is a name of one child element of the current array property
+            auto childCount = GetArrayPropertyCount(currentArrayProperty, currentEntity);
+            auto children = GetArrayPropertyElements(currentArrayProperty, currentEntity);
+            for(auto i = 0; i < childCount; ++i) {
+                if(strcmp(GetName(children[i]), element)) {
+                    currentArrayProperty = 0;
+                    currentEntity = children[i];
+                    break;
+                }
+            }
+
+            if(currentArrayProperty) { // If still set, we did not find a matching child
+                Log(0, LogSeverity_Error, "%s '%s' not found on entity '%s'.", GetName(currentArrayProperty), element, GetName(currentEntity));
+                return 0;
+            }
+        } else { // Path element is a property of the current entity
+            auto foundProperty = FindEntityByName(ComponentOf_Property(), element);
+
+            if(!IsEntityValid(foundProperty)) {
+                Log(0, LogSeverity_Error, "Property '%s' not found.", element);
+                return 0;
+            }
+
+            switch(GetPropertyKind(foundProperty)) {
+                case PropertyKind_Child:
+                    GetPropertyValue(foundProperty, currentEntity, &currentEntity);
+                    if(!IsEntityValid(currentEntity)) {
+                        Log(0, LogSeverity_Error, "Entity '%s' has no %s.", GetName(currentEntity), element);
+                        return 0;
+                    }
+                    break;
+                case PropertyKind_Array:
+                    currentArrayProperty = foundProperty;
+                    break;
+            }
+        }
+
+        element += elementLength + 1;
+    }
+
+    if(currentArrayProperty != 0) {
+        Log(0, LogSeverity_Error, "Incomplete entity path: Path '%s' ended with array property.", path);
+        return 0;
+    }
+
+    return currentEntity;
 }
 
 API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo) {
@@ -104,7 +161,7 @@ API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relative
     return relativePath;
 }
 
-API_EXPORT Entity CopyEntity(Entity templateEntity, StringRef copyPath) {
+API_EXPORT Entity CopyEntity(Entity templateEntity, Entity destinationEntity) {
     char buffer[128];
 
     auto copy = CreateEntity();

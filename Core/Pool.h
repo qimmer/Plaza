@@ -10,6 +10,14 @@
 #define MaxPages 4096
 #define PoolPageElements 256
 
+#define MemoryGuard 1
+
+#define AvailableBlock 0
+#define OccupiedBlock 32
+
+static const u64 MemoryMagic = 0xdeadbeefdeadbeef;
+static const size_t MemoryGuardSize = sizeof(u64);
+
 inline unsigned long upper_power_of_two(unsigned long v)
 {
     v--;
@@ -25,13 +33,14 @@ inline unsigned long upper_power_of_two(unsigned long v)
 class Pool
 {
 private:
-    u32 elementSize, blockSize;
+    u32 elementSize, blockSize, endIndex;
     Vector<char*> entryPages;
     Vector<u32> freeIndices;
 public:
     Pool() {
         blockSize = 0;
         elementSize = 0;
+        endIndex = 0;
     }
 
     inline char* operator[] (u32 index);
@@ -51,7 +60,20 @@ inline char* Pool::operator[](u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
-    return &this->entryPages[page][index * elementSize];
+    auto block = &this->entryPages[page][index * blockSize];
+
+#if MemoryGuard
+    auto firstGuard = (u64*)block;
+    auto element = block + MemoryGuardSize;
+    auto lastGuard = (u64*)(element + elementSize);
+
+    Assert(0, *firstGuard == MemoryMagic);
+    Assert(0, *lastGuard == MemoryMagic);
+
+    return element;
+#else
+    return block;
+#endif
 }
 
 inline void Pool::SetElementSize(u32 size) {
@@ -60,19 +82,42 @@ inline void Pool::SetElementSize(u32 size) {
     auto oldBlockSize = blockSize;
     auto oldElementSize = elementSize;
     elementSize = size;
-    blockSize = upper_power_of_two(size + 1);
 
+#if MemoryGuard
+    blockSize = upper_power_of_two(size + 1 + MemoryGuardSize * 2);
+#else
+    blockSize = upper_power_of_two(size + 1);
+#endif
     // Make sure to expand every single existing element with the new size by allocating new pages
     for(auto i = 0; i < entryPages.size(); ++i) {
         auto newPage = (char*)calloc(PoolPageElements, blockSize);
+
+#if MemoryGuard
+        // Set magic numbers before and after element data
+        for(auto j = 0; j < PoolPageElements; ++j) {
+            auto firstMagic = (u64*)&newPage[j * blockSize];
+            auto lastMagic = (u64*)&newPage[j * blockSize + elementSize + MemoryGuardSize];
+            *firstMagic = *lastMagic = MemoryMagic;
+        }
+#endif
+
         auto oldPage = entryPages[i];
 
         if(oldBlockSize > 0) {
             for (auto j = 0; j < PoolPageElements; ++j) {
-                memcpy(newPage + (j * blockSize), oldPage + (j * oldBlockSize), Min(elementSize, oldBlockSize));
+                auto newBlock = newPage + (j * blockSize);
+                auto oldBlock = oldPage + (j * oldBlockSize);
+#if MemoryGuard
+                memcpy(newBlock + MemoryGuardSize, oldBlock + MemoryGuardSize, Min(elementSize, oldElementSize));
+#else
+                memcpy(newBlock, oldBlock, Min(elementSize, oldElementSize));
+#endif
+                newBlock[blockSize - 1] = oldBlock[oldBlockSize - 1];
             }
+
+            free(oldPage);
         }
-        free(oldPage);
+
         entryPages[i] = newPage;
     }
 }
@@ -84,16 +129,31 @@ inline bool Pool::IsValid(u32 index) const
 
     if(this->entryPages.size() <= page) return false;
 
-    return this->entryPages[page][index * blockSize + blockSize - 1];
+    auto block = &this->entryPages[page][index * blockSize];
+    auto blockState = block[blockSize - 1];
+
+#if MemoryGuard
+    auto firstGuard = (u64*)block;
+    auto element = block + MemoryGuardSize;
+    auto lastGuard = (u64*)(element + elementSize);
+
+    Assert(0, *firstGuard == MemoryMagic);
+    Assert(0, *lastGuard == MemoryMagic);
+    Assert(0, blockState == AvailableBlock || blockState == OccupiedBlock);
+#endif
+
+    return blockState == OccupiedBlock;
 }
 
 inline u32 Pool::End() const
 {
-    return this->entryPages.size() * PoolPageElements;
+    return this->endIndex;
 }
 
 inline bool Pool::Insert(u32 index)
 {
+    auto absoluteIndex = index;
+
     Assert(0, this->elementSize > 0);
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
@@ -101,42 +161,67 @@ inline bool Pool::Insert(u32 index)
     if(page >= this->entryPages.size())
     {
         for(auto i = this->entryPages.size(); i <= page; ++i) {
-            this->entryPages.push_back((char*)calloc(PoolPageElements, blockSize));
+            auto newPage = (char*)calloc(PoolPageElements, blockSize);
+            this->entryPages.push_back(newPage);
+
+#if MemoryGuard
+            // Set magic numbers before and after element data
+            for(auto j = 0; j < PoolPageElements; ++j) {
+                auto firstMagic = (u64*)&newPage[j * blockSize];
+                auto lastMagic = (u64*)&newPage[j * blockSize + elementSize + MemoryGuardSize];
+                *firstMagic = *lastMagic = MemoryMagic;
+            }
+#endif
         }
     }
 
-    if(this->entryPages[page][index * blockSize + blockSize - 1])
+    auto block = &this->entryPages[page][index * blockSize];
+    auto blockState = block[blockSize - 1];
+
+#if MemoryGuard
+    Assert(0, blockState == AvailableBlock || blockState == OccupiedBlock);
+#endif
+
+    if(blockState == OccupiedBlock)
     {
         return false;
     }
 
-    memset(&this->entryPages[page][index * blockSize], 0, blockSize);
-    this->entryPages[page][index * blockSize + blockSize - 1] = true;
+#if MemoryGuard
+    memset(block + MemoryGuardSize, 0, elementSize);
+#else
+    memset(block, 0, elementSize);
+#endif
+    block[blockSize - 1] = OccupiedBlock;
 
     for(u32 i = 0; i < this->freeIndices.size(); ++i) {
-        if(this->freeIndices[i] == index) {
+        if(this->freeIndices[i] == absoluteIndex) {
             this->freeIndices.erase(this->freeIndices.begin() + i);
             break;
         }
     }
+
+    this->endIndex = Max(this->endIndex, absoluteIndex + 1);
 
     return true;
 }
 
 inline bool Pool::Remove(u32 index)
 {
+    auto absoluteIndex = index;
+
     auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
 
     if(this->entryPages.size() <= page) return false;
 
-    auto& data = this->entryPages[page][index];
+    auto block = &this->entryPages[page][index * blockSize];
 
-    if(!this->entryPages[page][index * blockSize + blockSize - 1]) return false;
+    if(block[blockSize - 1] == AvailableBlock) return false;
 
-    this->entryPages[page][index * blockSize + blockSize - 1] = false;
+    block[blockSize - 1] = AvailableBlock;
 
-    this->freeIndices.push_back(index);
+    this->freeIndices.push_back(absoluteIndex);
     return true;
 }
 

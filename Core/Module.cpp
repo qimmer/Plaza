@@ -51,6 +51,8 @@ API_EXPORT Entity GetModuleRoot() {
     static Entity root = 0;
     if(root == 0) {
         root = CreateEntity();
+        AddComponent(root, ComponentOf_ModuleRoot());
+        SetName(root, "ModuleRoot");
     }
     return root;
 }
@@ -152,5 +154,9 @@ void __InitializeModule() {
     __Property(PropertyOf_Extensions(), offsetof(Module, Extensions), sizeof(Module::Extensions), TypeOf_Entity, component, ComponentOf_Extension(), PropertyKind_Array);
     __Property(PropertyOf_Subscriptions(), offsetof(Module, Subscriptions), sizeof(Module::Subscriptions), TypeOf_Entity, component, ComponentOf_Subscription(), PropertyKind_Array);
 
-
+    component = ComponentOf_ModuleRoot();
+    AddComponent(component, ComponentOf_Component());
+    SetComponentSize(component, sizeof(ModuleRoot));
+    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
+    __Property(PropertyOf_Modules(), offsetof(ModuleRoot, Modules), sizeof(ModuleRoot::Modules), TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
 }

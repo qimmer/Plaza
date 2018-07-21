@@ -114,6 +114,7 @@ using namespace eastl;
 static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer);
 
 static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer) {
+    char entityPath[PathMax];
     char valueData[64];
     auto type = GetPropertyType(property);
     GetPropertyValue(property, entity, valueData);
@@ -145,8 +146,7 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjso
         {
             auto entity = *(Entity*)valueData;
             if(IsEntityValid(entity)) {
-                char entityPath[2048];
-                CalculateEntityPath(entityPath, 2048, entity);
+                CalculateEntityPath(entityPath, PathMax, entity);
                 writer.String(GetEntityRelativePath(entityPath, root));
             } else {
                 writer.Null();
@@ -168,45 +168,60 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
 
     writer.StartObject();
 
-    for_entity(property, propertyData, Property) {
-        auto component = GetOwner(property);
-
+    for_entity(component, componentData, Component) {
         if(!HasComponent(parent, component)
            || (parent == root && (component == ComponentOf_PersistancePoint()))
-           || GetPropertyFlags(component) & PropertyFlag_Transient
-           || GetPropertyFlags(component) & PropertyFlag_ReadOnly) {
+           || component == ComponentOf_Ownership()) {
             continue;
         }
 
-        if(property == PropertyOf_Owner()) continue;
+        auto numProperties = GetNumProperties(component);
+        auto properties = GetProperties(component);
+        for(auto pi = 0; pi < numProperties; ++pi) {
+            auto property = properties[pi];
+            auto name = GetName(property);
 
-        writer.String(GetName(property));
+            auto flags = GetPropertyFlags(property);
+            if(flags & PropertyFlag_Transient || flags & PropertyFlag_ReadOnly) continue;
 
-        switch(GetPropertyKind(property)) {
-            case PropertyKind_String:
-            case PropertyKind_Value:
-                result &= SerializeValue(parent, property, root, writer);
-                break;
-            case PropertyKind_Child:
-            {
-                Entity child = 0;
-                GetPropertyValue(property, parent, &child);
-                result &= SerializeNode(child, root, writer);
-            }
-            break;
-            case PropertyKind_Array:
-            {
-                auto count = GetArrayPropertyCount(property, parent);
-                writer.StartArray();
-                for(auto i = 0; i < count; ++i) {
-                    auto child = GetArrayPropertyElement(property, parent, i);
-                    result &= SerializeNode(child, root, writer);
+            switch(GetPropertyKind(property)) {
+                case PropertyKind_String:
+                case PropertyKind_Value:
+                    writer.String(GetName(property));
+                    result &= SerializeValue(parent, property, root, writer);
+                    break;
+                case PropertyKind_Child:
+                {
+                    Entity child = 0;
+                    GetPropertyValue(property, parent, &child);
+                    if(IsEntityValid(child)) {
+                        writer.String(GetName(property));
+                        result &= SerializeNode(child, root, writer);
+                    }
                 }
+                    break;
+                case PropertyKind_Array:
+                {
+                    writer.String(GetName(property));
+
+                    auto count = GetArrayPropertyCount(property, parent);
+                    writer.StartArray();
+                    for(auto i = 0; i < count; ++i) {
+                        auto child = GetArrayPropertyElement(property, parent, i);
+                        if(IsEntityValid(child)) {
+                            result &= SerializeNode(child, root, writer);
+                        } else {
+                            writer.Null();
+                        }
+
+                    }
+                    writer.EndArray();
+                }
+                    break;
+                default:
+                    Log(property, LogSeverity_Error, "Unknown property kind: %d", GetPropertyKind(property));
+                    break;
             }
-                break;
-            default:
-                Log(property, LogSeverity_Warning, "Unknown property kind: %d", GetPropertyKind(property));
-                break;
         }
     }
 

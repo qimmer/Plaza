@@ -1,0 +1,19 @@
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <a class="navbar-brand" href><i class="im im-bug" style="vertical-align: text-bottom; margin-right: 10px;"/>Plaza Debug Interface</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="collapsibleNavbar">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <span class="nav-link">IP</span>
+            </li>
+            <li class="nav-item">
+                <input class="form-control" type="text" ng-model="ip">
+            </li>
+            <li class="nav-item">
+                <button class="btn" ng-disabled="getConnectionState() == 1" ng-class="(getConnectionState() == 0) ? 'btn-success' : ((getConnectionState() == 2) ? 'btn-danger' : '')" ng-click="connect()">{{getConnectionState() == 0 ? 'Connect' : getConnectionState() == 2 ? 'Disconnect' : 'Connecting ...'}}</button>
+            </li>
+        </ul>
+    </div>
+</nav>

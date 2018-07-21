@@ -8,12 +8,23 @@
 #include <stdio.h>
 #include <Core/Types.h>
 
-#define Assert(CONTEXT, x) if(!(x)) { Log( CONTEXT, LogSeverity_Fatal, "Assertion failed at line %d in %s: %s", __LINE__, __FILE__, #x ); Exit(-1); } do{} while(false)
+#define VerboseLevel_Invocations 0
+#define VerboseLevel_PropertyChanges 1
+#define VerboseLevel_ComponentEntityCreationDeletion 2
+#define VerboseLevel_Common 3
 
-#ifdef VERBOSE
-#define Verbose(fmt, ...) printf(fmt "\n", ##__VA_ARGS__)
+#define VerboseLevel 1
+
+#define Assert(CONTEXT, x) \
+    if(!(x)) {\
+        Log( CONTEXT, LogSeverity_Fatal, "Assertion failed for %s at line %d in %s: %s", GetDebugName(CONTEXT), __LINE__, __FILE__, #x );\
+        Exit(-1);\
+     } do{} while(false)
+
+#if VerboseLevel
+#define Verbose(verboseLevel, fmt, ...) if(verboseLevel >= VerboseLevel) { printf(fmt "\n", ##__VA_ARGS__); } do {} while(false)
 #else
-#define Verbose(fmt, ...)
+#define Verbose(verboseLevel, fmt, ...)
 #endif
 
 #define LogSeverity_Info 0
@@ -24,6 +35,9 @@
 void Log(Entity context, int severity, StringRef format, ...);
 void DebuggerBreak();
 void Exit(s32 returnCode);
+
+StringRef GetDebugName(Entity entity);
+void DumpNode();
 
 #include <Core/NativeUtils.h>
 

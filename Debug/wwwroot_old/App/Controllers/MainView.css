@@ -1,0 +1,72 @@
+html, body {
+    height: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+}
+/* The styling bolow is very simple. You can style things your own way. */
+body {
+    box-sizing: border-box;
+}
+.split-pane-divider {
+    background: #373737;
+}
+
+.split-pane-divider:hover {
+    background: #444;
+}
+
+.split-pane-component {
+    background: #222;
+}
+
+.table {height:100%; padding:0; margin:0;}
+
+.table {display:table; width:100%; height:100%}
+.table .row {display:table-row;}
+.table .cell {display:table-cell;}
+
+.overflow {height:100%; overflow:auto;}
+
+/* scrollbar */
+::-webkit-scrollbar {
+    width: 12px;
+    opacity: 0.5;
+}
+
+::-webkit-scrollbar-track {
+    background: #353535; 
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+}
+
+.toolbox-header {
+    font-size: 140%;
+    font-weight: 200;
+    padding: 4px 4px 4px 4px;
+    width: 100%;
+    text-align: center;
+    border-top: solid 1px #111;
+    border-bottom: solid 1px #111;
+}
+
+.bg-toolbox-header {
+    background-color: #3C4B5A;
+}
+.bg-toolbox-face {
+    background-color: #333;
+}
+
+.toolbox {
+    padding: 10px 10px 10px 10px;
+}
+
+.toolbox input {
+    padding: 2px 2px 2px 10px;
+}
