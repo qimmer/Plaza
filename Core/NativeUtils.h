@@ -192,9 +192,7 @@ inline void __FireEventVa(Entity event, T... args) {
     static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
     inline const Entity* Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        Entity *value = 0;\
-        GetPropertyValue(prop, entity, &value);\
-        return value;\
+        return GetArrayPropertyElements(prop, entity);\
     }\
     inline u32 GetNum ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
@@ -486,6 +484,13 @@ inline void __FireEventVa(Entity event, T... args) {
 
 #define EndUnit() \
     }
+
+#define for_children(VARNAME, PROPERTY, PARENTENTITY) \
+    Entity VARNAME = 0;\
+    auto count_ ## __LINE__ = GetNum ## PROPERTY (PARENTENTITY);\
+    auto entries_ ## __LINE__ = Get ## PROPERTY (PARENTENTITY);\
+    auto i = 0;\
+    for(VARNAME = entries_ ## __LINE__ [i]; i < count_ ## __LINE__; i++ & (VARNAME = entries_ ## __LINE__ [i]))
 
 #include <Core/Module.h>
 #include <Core/Property.h>

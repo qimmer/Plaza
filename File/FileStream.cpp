@@ -125,6 +125,18 @@ static bool IsOpen(Entity entity) {
     return data->fd;
 }
 
+static bool Delete(Entity entity) {
+    auto nativePath = GetStreamResolvedPath(entity);
+    if(strlen(nativePath) < 7 || memcmp(nativePath, "file://", 7) != 0) {
+        Log(entity, LogSeverity_Error, "%s", "File stream has wrong protocol identifier.");
+        return false;
+    }
+
+    nativePath += 7; // Remove 'file://'
+
+    return remove(nativePath) == 0;
+}
+
 LocalFunction(OnStreamPathChanged, void, Entity stream, StringRef oldPath, StringRef newPath) {
     if(HasComponent(stream, ComponentOf_FileStream())) {
         auto data = GetFileStreamData(stream);

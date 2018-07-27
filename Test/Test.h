@@ -12,5 +12,6 @@ typedef u32 TestResult;
 
 Unit(Test)
     Component(Test)
+        ArrayProperty(Ownership, TestEntities)
 
 #endif

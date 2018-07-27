@@ -22,9 +22,7 @@
 #include "TestRest.h"
 
 Test(TestRest) {
-    auto appLoop = CreateEntityFromName(test, "AppLoop");
-    AddComponent(appLoop, ComponentOf_AppLoop());
-    RunAppLoop(appLoop);
+    RunAppLoop(AddTestEntities(test));
 
     return Success;
 }

@@ -319,7 +319,6 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
     bool result = true;
 
     auto components = value.FindMember("$components");
-    auto children = value.FindMember("$children");
 
     for (auto propertyIterator = value.MemberBegin();
          propertyIterator != value.MemberEnd(); ++propertyIterator)
@@ -339,7 +338,7 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
             continue;
         }
 
-        if(property == PropertyOf_Owner() || property == PropertyOf_Name()) continue;
+        if(property == PropertyOf_Owner()) continue;
 
         auto propertyKind = GetPropertyKind(property);
         auto& reader = propertyIterator->value;
@@ -354,15 +353,47 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
             {
                 Entity child = 0;
                 GetPropertyValue(property, parent, &child);
-                result &= DeserializeNode(child, root, value, onlyHierarchy);
+                result &= DeserializeNode(child, root, reader, onlyHierarchy);
             }
             break;
             case PropertyKind_Array:
             {
-                auto count = value.MemberCount();
+                if(!reader.IsArray()) {
+                    StringRef jsonType;
+                    switch(value.GetType()) {
+                        case rapidjson::kNullType:      //!< null
+                            jsonType = "Null";
+                            break;
+                        case rapidjson::kFalseType:     //!< false
+                            jsonType = "False";
+                            break;
+                        case rapidjson::kTrueType:      //!< true
+                            jsonType = "True";
+                            break;
+                        case rapidjson::kObjectType:    //!< object
+                            jsonType = "Object";
+                            break;
+                        case rapidjson::kArrayType:     //!< array
+                            jsonType = "Array";
+                            break;
+                        case rapidjson::kStringType:    //!< string
+                            jsonType = "String";
+                            break;
+                        case rapidjson::kNumberType:     //!< number
+                            jsonType = "Number";
+                            break;
+                        default:
+                            jsonType = "Unknown";
+                            break;
+                    }
+                    Log(parent, LogSeverity_Error, "Property %s is an array property, but JSON value is %s. Skipping this property", GetName(property), jsonType);
+                    continue;
+                }
+                AddComponent(parent, GetOwner(property));
+                auto count = reader.Size();
                 auto existingCount = GetArrayPropertyCount(property, parent);
                 for(auto i = 0; i < count; ++i) {
-                    auto& element = value[i];
+                    auto& element = reader[i];
 
                     if(i >= existingCount) {
                         AddArrayPropertyElement(property, parent); // Add missing element
@@ -372,7 +403,7 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
                     DeserializeNode(child, root, element, onlyHierarchy);
                 }
 
-                for(auto i = count; count <= existingCount; ++i) { // Remove excess elements
+                for(auto i = count; count < existingCount; ++i) { // Remove excess elements
                     RemoveArrayPropertyElement(property, parent, count);
                 }
             }

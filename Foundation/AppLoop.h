@@ -12,6 +12,7 @@ Unit(AppLoop)
         Property(u64, AppLoopFrame)
 
     Function(RunAppLoop, void, Entity appLoop)
+    Function(RunMainAppLoop, void)
 
 
 #endif //PLAZA_APPLOOP_H

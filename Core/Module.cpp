@@ -7,6 +7,7 @@
 #include "Entity.h"
 #include "Debug.h"
 #include "Vector.h"
+#include "Identification.h"
 
 typedef Entity(*ModuleOfSignature)();
 
@@ -23,6 +24,7 @@ struct Module {
     Vector(Functions, Entity, 128)
     Vector(Extensions, Entity, 64)
     Vector(Subscriptions, Entity, 128)
+    Vector(Roots, Entity, 128)
 };
 
 BeginUnit(Module)
@@ -39,6 +41,7 @@ BeginUnit(Module)
         RegisterArrayProperty(Function, Functions)
         RegisterArrayProperty(Extension, Extensions)
         RegisterArrayProperty(Subscription, Subscriptions)
+        RegisterArrayProperty(Identification, Roots)
     EndComponent()
 
     RegisterFunction(GetModuleRoot)

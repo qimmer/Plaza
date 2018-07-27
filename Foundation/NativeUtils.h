@@ -23,7 +23,8 @@
     COMPONENT ## protocolData->StreamWriteHandler = Write; \
     COMPONENT ## protocolData->StreamIsOpenHandler = IsOpen; \
     COMPONENT ## protocolData->StreamOpenHandler = Open; \
-    COMPONENT ## protocolData->StreamCloseHandler = Close;
+    COMPONENT ## protocolData->StreamCloseHandler = Close; \
+    COMPONENT ## protocolData->StreamDeleteHandler = Delete;
 
 #define RegisterStreamCompressor(COMPONENT, MIMETYPE) \
     AddComponent(module, ComponentOf_StreamExtensionModule());\

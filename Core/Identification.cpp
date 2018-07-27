@@ -102,7 +102,7 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
             auto childCount = GetArrayPropertyCount(currentArrayProperty, currentEntity);
             auto children = GetArrayPropertyElements(currentArrayProperty, currentEntity);
             for(auto i = 0; i < childCount; ++i) {
-                if(strcmp(GetName(children[i]), element)) {
+                if(strcmp(GetName(children[i]), element) == 0) {
                     currentArrayProperty = 0;
                     currentEntity = children[i];
                     break;
@@ -110,7 +110,7 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
             }
 
             if(currentArrayProperty) { // If still set, we did not find a matching child
-                Log(0, LogSeverity_Error, "%s '%s' not found on entity '%s'.", GetName(currentArrayProperty), element, GetName(currentEntity));
+                Log(0, LogSeverity_Info, "%s '%s' not found on entity '%s'.", GetName(currentArrayProperty), element, GetName(currentEntity));
                 return 0;
             }
         } else { // Path element is a property of the current entity
@@ -216,4 +216,21 @@ void __InitializeNode() {
 API_EXPORT StringRef GetName(Entity entity)  {
     auto data = GetIdentificationData(entity);
     return data->Name;
+}
+
+API_EXPORT bool GetParentPath(StringRef childPath, u32 bufLen, char *parentPath) {
+    strncpy(parentPath, childPath, bufLen);
+
+    auto len = strlen(childPath);
+    while(len > 0 && parentPath[len] != '/') {
+        len--;
+    }
+
+    if(parentPath[len] != '/' && len > 0) {
+        return false;
+    }
+
+    parentPath[len] = '\0';
+
+    return true;
 }

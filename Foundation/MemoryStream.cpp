@@ -11,6 +11,13 @@ struct MemoryStream {
     bool Open;
 };
 
+static bool Delete(Entity entity) {
+    auto streamData = GetMemoryStreamData(entity);
+    VectorClear(streamData->Bytes);
+    streamData->Offset = 0;
+    return true;
+}
+
 static u64 Read(Entity entity, u64 size, void *data) {
     auto streamData = GetMemoryStreamData(entity);
     size = Min((u64)streamData->Bytes.Count - streamData->Offset, size);

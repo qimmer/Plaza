@@ -53,7 +53,7 @@ angular.module('plaza').service('entityService', function($http, $timeout, $root
     }
 
     service.getEntity = function(conn, path) {
-        return $http.get('http://' + conn.ip + ':8000' + path).then(function(response) {
+        return $http.get('http://' + conn.ip + ':8080/api' + path).then(function(response) {
             conn.isConnected = true;
             conn.onEntityReceived.emit(response.data);
             return response.data;

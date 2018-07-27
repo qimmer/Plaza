@@ -8,12 +8,16 @@
 #define ASIO_NO_EXCEPTIONS 1
 #define _WIN32_WINNT 0x0501
 
+#define HEADER_SIZE_MAX 4096
+
 #include <asio.hpp>
 #include <unordered_map>
 #include <chrono>
 #include <Foundation/Stream.h>
 #include <Foundation/AppLoop.h>
 #include <Core/Debug.h>
+#include <Core/Identification.h>
+#include <Core/Math.h>
 
 #include "HttpServer.h"
 #include "HttpRequest.h"
@@ -23,55 +27,44 @@ using namespace asio;
 
 template <typename Exception>
 void asio::detail::throw_exception(const Exception& e) {
-    Log(0, LogSeverity_Error, "Http Error: %s", e.what());
+    Log(0, LogSeverity_Error, "%s", e.what());
 }
 
-struct RequestData
-{
-    std::string method;
-    std::string url;
-    std::string version;
+static std::unordered_map<int, StringRef> responseCodeNames = {
+    { 200, "OK" },
+    { 201, "Created" },
+    { 202, "Accepted" },
+    { 204, "No Content" },
 
-    std::unordered_map<std::string, std::string> headers;
+    { 301, "Moved Permanently" },
+    { 302, "Found" },
+    { 303, "See Other" },
+    { 304, "Not Modified" },
+    { 307, "Temporary Redirect" },
 
-    int content_length()
-    {
-        auto request = headers.find("content-length");
-        if(request != headers.end())
-        {
-            std::stringstream ssLength(request->second);
-            int content_length;
-            ssLength >> content_length;
-            return content_length;
-        }
-        return 0;
-    }
+    { 400, "Bad Request" },
+    { 401, "Unauthorized" },
+    { 403, "Forbidden" },
+    { 404, "Not Found" },
+    { 405, "Method Not Allowed" },
+    { 406, "Not Acceptable" },
+    { 412, "Precondition Failed" },
+    { 415, "Unsupported Media Type" },
 
-    void on_read_header(std::string line)
-    {
-        std::stringstream ssHeader(line);
-        std::string headerName;
-        std::getline(ssHeader, headerName, ':');
-
-        std::string value;
-        std::getline(ssHeader, value);
-        headers[headerName] = value;
-    }
-
-    void on_read_request_line(std::string line)
-    {
-        std::stringstream ssRequestLine(line);
-        ssRequestLine >> method;
-        ssRequestLine >> url;
-        ssRequestLine >> version;
-    }
+    { 500, "Internal Server Error" },
+    { 501, "Not Implemented" }
 };
 
-class RequestSession
+struct RequestSession
 {
-public:
-    asio::streambuf buff;
-    RequestData headers;
+    asio::streambuf requestHeadersBuffer;
+
+    std::unordered_map<std::string, std::string> headerData;
+    std::string url;
+    std::string method;
+    std::string httpVersion;
+    std::vector<char> contentData, responseData;
+
     ip::tcp::socket socket;
 
     RequestSession(io_service& io_service)
@@ -81,44 +74,64 @@ public:
 };
 
 
-static void HandleResponse(Entity server, RequestSession *data, std::stringstream& ssOut) {
-    auto request = AddHttpServerRequests(server);
-    SetHttpRequestMethod(request, data->headers.method.c_str());
-    SetHttpRequestUrl(request, data->headers.url.c_str());
-    SetHttpRequestVersion(request, data->headers.version.c_str());
-
-    FireEvent(EventOf_HttpServerRequest(), server, request);
-
+static void HandleResponse(Entity server, Entity request, std::shared_ptr<RequestSession> pThis) {
     auto response = GetHttpRequestResponse(request);
+
     Entity streamFileType = GetStreamFileType(response);
+    auto responseCode = GetHttpResponseCode(response);
+    StringRef responseCodeName = 0;
+
+    if(responseCode == 0) {
+        responseCode = 400;
+    }
+
+    auto responseNameIt = responseCodeNames.find(responseCode);
+    if(responseNameIt == responseCodeNames.end()) {
+        responseCodeName = "Unknown";
+    } else {
+        responseCodeName = responseNameIt->second;
+    }
+
     if(HasComponent(response, ComponentOf_Stream()) && StreamOpen(response, StreamMode_Read)) {
         StreamSeek(response, StreamSeek_End);
-        auto size = StreamTell(response);
+        auto contentLength = StreamTell(response);
         StreamSeek(response, 0);
 
-        auto streamData = (char*)malloc(size+1);
-        StreamRead(response, size, streamData);
+        char headerData[2048];
+        snprintf(headerData, 2048,
+            "HTTP/1.1 %d %s\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Access-Control-Allow-Credentials: true\r\n"
+            "Access-Control-Allow-Headers: Content-Type, Accept, X-Requested-With, remember-me\r\n"
+            "Content-Type: %s\r\n"
+            "Content-Length: %d\r\n"
+            "\r\n",
+                 responseCode, responseCodeName,
+                 (IsEntityValid(streamFileType) ? GetFileTypeMimeType(streamFileType) : "application/octet-stream"),
+                 contentLength
+        );
+
+        auto headerLength = strlen(headerData);
+        pThis->responseData.resize(headerLength + contentLength);
+
+        memcpy(pThis->responseData.data(), headerData, headerLength);
+
+        StreamRead(response, contentLength, pThis->responseData.data() + headerLength);
         StreamClose(response);
-
-        streamData[size] = '\0';
-
-        ssOut << "HTTP/1.1 " << GetHttpResponseCode(response) << " OK" << std::endl;
-
-        ssOut << "Access-Control-Allow-Origin: *" << std::endl;
-        ssOut << "Access-Control-Allow-Credentials: true" << std::endl;
-        ssOut << "Access-Control-Allow-Headers: Content-Type, Accept, X-Requested-With, remember-me" << std::endl;
-
-        ssOut << "content-type: " << (IsEntityValid(streamFileType) ? GetFileTypeMimeType(streamFileType) : "application/octet-stream") << std::endl;
-        ssOut << "content-length: " << size << std::endl;
-        ssOut << std::endl;
-
-        ssOut.write(streamData, size);
-
-        free(streamData);
     } else {
-        ssOut << "HTTP/1.1 404 Not Found" << std::endl;
-        ssOut << "content-length: 0" << std::endl;
-        ssOut << std::endl;
+        char headerData[2048];
+        snprintf(headerData, 2048,
+                 "HTTP/1.1 %d %s\r\n"
+                 "Content-Length: %d\r\n"
+                 "\r\n",
+                 responseCode, responseCodeName,
+                 0
+        );
+
+        auto headerLength = strlen(headerData);
+
+        pThis->responseData.resize(headerLength);
+        memcpy(pThis->responseData.data(), headerData, headerLength);
     }
 
     auto requests = GetHttpServerRequests(server);
@@ -128,71 +141,94 @@ static void HandleResponse(Entity server, RequestSession *data, std::stringstrea
             break;
         }
     }
-}
 
-
-static void read_body(std::shared_ptr<RequestSession> pThis, Entity server)
-{
-    int nbuffer = pThis->headers.content_length();
-    std::shared_ptr<std::vector<char>> bufptr = std::make_shared<std::vector<char>>(nbuffer);
-
-    asio::async_read(pThis->socket, asio::buffer(*bufptr, nbuffer),
-                     [pThis, server](const error_code& e, std::size_t s)
-                     {
-                         std::stringstream ssOut;
-                         HandleResponse(server, pThis.get(), ssOut);
-                         auto str = ssOut.str();
-                         asio::async_write(pThis->socket, asio::buffer(str.c_str(), str.length()), [pThis, str](const error_code& e, std::size_t s) {});
-                     });
-}
-
-static void read_next_line(std::shared_ptr<RequestSession> pThis, Entity server)
-{
-    asio::async_read_until(pThis->socket, pThis->buff, '\r', [pThis, server](const error_code& e, std::size_t s) {
-        std::string line, ignore;
-        std::istream stream {&pThis->buff};
-        std::getline(stream, line, '\r');
-        std::getline(stream, ignore, '\n');
-        pThis->headers.on_read_header(line);
-
-        if(line.length() == 0)
-        {
-            if(pThis->headers.content_length() == 0)
-            {
-                std::stringstream ssOut;
-                HandleResponse(server, pThis.get(), ssOut);
-                auto str = ssOut.str();
-                asio::write(pThis->socket, asio::buffer(str.c_str(), str.length()));
-            }
-            else
-            {
-                read_body(pThis, server);
-            }
-        }
-        else
-        {
-            read_next_line(pThis, server);
-        }
+    asio::async_write(pThis->socket, asio::const_buffer(pThis->responseData.data(), pThis->responseData.size()), [pThis](const error_code& e, std::size_t s){
+        pThis->socket.close();
     });
 }
 
-static void read_first_line(std::shared_ptr<RequestSession> pThis, Entity server)
-{
-    asio::async_read_until(pThis->socket, pThis->buff, '\r',
-                           [pThis, server](const error_code& e, std::size_t s)
-                           {
-                               std::string line, ignore;
-                               std::istream stream {&pThis->buff};
-                               std::getline(stream, line, '\r');
-                               std::getline(stream, ignore, '\n');
-                               pThis->headers.on_read_request_line(line);
-                               read_next_line(pThis, server);
-                           });
-}
 
-static void interact(std::shared_ptr<RequestSession> pThis, Entity server)
+static void HandleRequest(std::shared_ptr<RequestSession> pThis, Entity server)
 {
-    read_first_line(pThis, server);
+    auto request = AddHttpServerRequests(server);
+
+    asio::async_read_until(
+            pThis->socket,
+            pThis->requestHeadersBuffer,
+            "\r\n\r\n",
+            [pThis, server, request](const error_code& e, std::size_t s)
+            {
+                Assert(server, s < HEADER_SIZE_MAX);
+
+                std::istream is(&pThis->requestHeadersBuffer);
+
+                // Parse initial HTTP line
+                std::getline(is, pThis->method, ' ');
+                std::getline(is, pThis->url, ' ');
+
+                std::replace(pThis->url.begin(), pThis->url.end(), '?', '\0'); // End url at eventual query parameter list start
+
+                std::getline(is, pThis->httpVersion, '\r');
+                is.get(); // \n
+
+                SetHttpRequestMethod(request, pThis->method.c_str());
+                SetHttpRequestUrl(request, pThis->url.c_str());
+                SetHttpRequestVersion(request, pThis->httpVersion.c_str());
+
+                // Parse n number of header lines
+                std::string headerName, headerValue;
+                while(is.peek() != '\r' && !is.eof()) {
+                    std::getline(is, headerName, ':');
+
+                    is.get(); // space
+                    std::getline(is, headerValue, '\r');
+
+                    is.get(); // \n
+
+                    std::transform(headerName.begin(), headerName.end(), headerName.begin(), ::tolower);
+                    pThis->headerData[headerName] = headerValue;
+
+                    if(headerName == "content-length") {
+                        pThis->contentData.resize(strtol(headerValue.c_str(), NULL, 10));
+                    }
+
+                    if(headerName == "content-type") {
+                        std::string mimeType, charSet;
+
+                        std::istringstream iss(headerValue);
+                        std::getline(iss, mimeType, ';');
+                        std::getline(iss, charSet, ';');
+
+                        for_entity(fileType, fileTypeData, FileType) {
+                            if(strcmp(GetFileTypeMimeType(fileType), mimeType.c_str()) == 0) {
+
+                                char streamPath[PathMax];
+                                snprintf(streamPath, PathMax, "memory://request%s", GetFileTypeExtension(fileType));
+
+                                SetStreamPath(request, streamPath);
+                            }
+                        }
+                    }
+                }
+
+                is.get(); // \r
+                is.get(); // \n
+
+                auto remainingBytes = pThis->contentData.size() - Min(s, pThis->contentData.size());
+
+                asio::async_read(pThis->socket, pThis->requestHeadersBuffer, asio::transfer_at_least(remainingBytes), [pThis, server, request](const error_code& e, std::size_t s) {
+                    pThis->requestHeadersBuffer.sgetn(pThis->contentData.data(), pThis->contentData.size());
+
+                    if(StreamOpen(request, StreamMode_Write)) {
+                        StreamWrite(request, pThis->contentData.size(), pThis->contentData.data());
+                        StreamClose(request);
+                    }
+
+                    FireEvent(EventOf_HttpServerRequest(), server, request);
+
+                    HandleResponse(server, request, pThis);
+                });
+            });
 }
 
 void accept_and_run(ip::tcp::acceptor& acceptor, io_service& io_service, Entity server)
@@ -202,7 +238,7 @@ void accept_and_run(ip::tcp::acceptor& acceptor, io_service& io_service, Entity 
         accept_and_run(acceptor, io_service, server);
         if(!accept_error)
         {
-            interact(sesh, server);
+            HandleRequest(sesh, server);
         }
     });
 }

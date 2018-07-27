@@ -13,7 +13,7 @@
 #define VerboseLevel_ComponentEntityCreationDeletion 2
 #define VerboseLevel_Common 3
 
-#define VerboseLevel 1
+#define VerboseLevel 4
 
 #define Assert(CONTEXT, x) \
     if(!(x)) {\

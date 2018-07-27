@@ -19,6 +19,9 @@ Unit(Identification)
 void CalculateEntityPath(char *dest, size_t bufMax, Entity entity);
 StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo);
 Entity FindEntityByPath(StringRef path);
+Entity FindEntityByName(Entity component, StringRef typeName);
+
+bool GetParentPath(StringRef childPath, u32 bufLen, char *parentPath);
 
 #define PathMax 2048
 

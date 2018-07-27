@@ -1,12 +1,27 @@
 {
-  "$children": [
+  "Components": [
+    {
+      "Name": "TestRestModule",
+      "ComponentSize": 1024,
+      "Properties": [
+        {
+          "Name": "TestServers",
+          "PropertyType": "Entity",
+          "PropertySize": 1024,
+          "PropertyOffset": 0,
+          "PropertyKind": 3,
+          "PropertyChildComponent": "/Modules/Networking/Components/HttpServer"
+        }
+      ]
+    }
+  ],
+  "TestEntities": [
     {
       "Name": "WebServer",
       "ServerPort": 8080,
-      "$components": ["HttpServer"],
-      "$children": [
+      "RestServerRoutes": [
         {
-          "Name": "Route",
+          "Name": "WebRoute",
           "RestResourceRoutingRoot": "file://wwwroot",
           "RestRoutingRoute": "/"
         }
@@ -15,15 +30,16 @@
     {
       "Name": "ApiServer",
       "ServerPort": 8000,
-      "$components": ["HttpServer"],
-      "$children": [
+      "RestServerRoutes": [
         {
-          "Name": "Route",
-          "RestEntityRoutingRoot": "/Modules",
+          "Name": "EntityRoute",
+          "RestEntityRoutingRoot": "/",
           "RestRoutingRoute": "/"
         }
       ]
-    },
+    }
+  ],
+  "ModuleFileTypes": [
     {
       "Name": "Html",
       "FileTypeExtension": ".html",

@@ -67,6 +67,7 @@ struct StreamProtocol {
     StreamBoolHandler StreamIsOpenHandler;
     StreamOpenHandler StreamOpenHandler;
     StreamBoolHandler StreamCloseHandler;
+    StreamBoolHandler StreamDeleteHandler;
     StreamMimeTypeHandler StreamGetMimeTypeHandler;
 };
 
@@ -82,6 +83,9 @@ struct StreamCompressor {
 
 StringRef GetStreamResolvedPath(Entity entity);
 
+bool StreamCopy(Entity source, Entity destination);
+
+bool StreamDelete(Entity entity);
 bool StreamSeek(Entity entity, s32 offset);
 s32 StreamTell(Entity entity);
 u64 StreamRead(Entity entity, u64 size, void *data);

@@ -21,6 +21,7 @@
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
 #include <Core/Identification.h>
+#include <Core/Math.h>
 
 using namespace eastl;
 
@@ -139,7 +140,21 @@ API_EXPORT bool StreamOpen(Entity entity, int mode) {
         return true;
     } else {
         data->StreamMode = 0;
-        Log(entity, LogSeverity_Error, "Stream '%s' could not be opened.", data->StreamPath);
+        //Log(entity, LogSeverity_Error, "Stream '%s' could not be opened.", data->StreamPath);
+    }
+
+    return false;
+}
+
+API_EXPORT bool StreamDelete(Entity entity) {
+    auto data = GetStreamData(entity);
+    if (!data) return false;
+
+    auto protocolData = GetStreamProtocolData(data->StreamProtocol);
+    if (!protocolData) return false;
+
+    if (protocolData->StreamDeleteHandler) {
+        return protocolData->StreamDeleteHandler(entity);
     }
 
     return false;
@@ -335,6 +350,37 @@ API_EXPORT bool SetStreamData(Entity stream, u32 offset, u32 numBytes, const cha
     return true;
 }
 
+
+API_EXPORT bool StreamCopy(Entity source, Entity destination) {
+    bool sourceWasOpen = IsStreamOpen(source);
+    bool destinationWasOpen = IsStreamOpen(destination);
+    if(!sourceWasOpen && !StreamOpen(source, StreamMode_Read)) return false;
+    if(!destinationWasOpen && !StreamOpen(destination, StreamMode_Write)) return false;
+
+    StreamSeek(source, StreamSeek_End);
+    auto size = StreamTell(source);
+    StreamSeek(source, 0);
+
+    char buffer[4096];
+    u32 numWrittenTotal = 0;
+    while(numWrittenTotal < size) {
+        auto numRead = StreamRead(source, Min(4096, size - numWrittenTotal), buffer);
+        auto numWritten = StreamWrite(destination, numRead, buffer);
+
+        if(numWritten < numRead || numWritten == 0) {
+            if(!sourceWasOpen) StreamClose(source);
+            if(!destinationWasOpen) StreamClose(destination);
+
+            return false;
+        }
+    }
+
+    if(!sourceWasOpen) StreamClose(source);
+    if(!destinationWasOpen) StreamClose(destination);
+
+    return true;
+}
+
 LocalFunction(OnStreamFileTypeChanged, void, Entity stream, Entity oldFileType, Entity newFileType) {
     if(IsEntityValid(oldFileType)) {
         auto fileTypeComponent = GetFileTypeComponent(oldFileType);
@@ -517,3 +563,5 @@ BeginUnit(Stream)
     RegisterSubscription(StreamCompressorMimeTypeChanged, OnCompressorChanged, 0)
     RegisterSubscription(StreamFileTypeChanged, OnStreamFileTypeChanged, 0)
 EndUnit()
+
+

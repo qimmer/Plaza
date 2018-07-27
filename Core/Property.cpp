@@ -126,7 +126,7 @@ API_EXPORT u32 GetArrayPropertyCount(Entity property, Entity entity) {
     VectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
 
-    return s->Count;
+    return s ? s->Count : 0;
 }
 
 API_EXPORT u32 __InjectArrayPropertyElement(Entity property, Entity entity, Entity element) {

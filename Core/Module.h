@@ -23,6 +23,7 @@ Component(Module)
     ArrayProperty(Event, Events)
     ArrayProperty(Extension, Extensions)
     ArrayProperty(Subscription, Subscriptions)
+    ArrayProperty(Identification, Roots)
 
 Event(ModuleInitialized)
 

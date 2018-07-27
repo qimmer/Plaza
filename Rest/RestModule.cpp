@@ -9,6 +9,7 @@
 #include "RestRouting.h"
 #include "RestEntityRouting.h"
 #include "RestResourceRouting.h"
+#include "RestServer.h"
 
 BeginModule(Rest)
     RegisterDependency(Core)
@@ -19,4 +20,5 @@ BeginModule(Rest)
     RegisterUnit(RestRouting)
     RegisterUnit(RestEntityRouting)
     RegisterUnit(RestResourceRouting)
+    RegisterUnit(RestServer)
 EndModule()

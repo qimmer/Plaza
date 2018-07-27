@@ -1,0 +1,20 @@
+{
+  "Roots": [
+    {
+      "Name": "DebugServer",
+      "ServerPort": 8080,
+      "RestServerRoutes": [
+        {
+          "Name": "WebRoute",
+          "RestResourceRoutingRoot": "file://wwwroot",
+          "RestRoutingRoute": "/"
+        },
+        {
+          "Name": "EntityRoute",
+          "RestEntityRoutingRoot": "/",
+          "RestRoutingRoute": "/api"
+        }
+      ]
+    }
+  ]
+}
