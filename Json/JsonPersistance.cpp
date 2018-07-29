@@ -318,6 +318,10 @@ static bool DeserializeValue(Entity parent, Entity property, Entity root, const 
 static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& value, bool onlyHierarchy) {
     bool result = true;
 
+    if(!value.IsObject()) {
+        return false;
+    }
+
     auto components = value.FindMember("$components");
 
     for (auto propertyIterator = value.MemberBegin();
@@ -403,7 +407,7 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
                     DeserializeNode(child, root, element, onlyHierarchy);
                 }
 
-                for(auto i = count; count < existingCount; ++i) { // Remove excess elements
+                for(auto i = count; i < existingCount; ++i) { // Remove excess elements
                     RemoveArrayPropertyElement(property, parent, count);
                 }
             }

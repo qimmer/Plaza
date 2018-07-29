@@ -38,6 +38,8 @@ Component(Binding)
     Property(Entity, BindingTargetEntity)
     Property(Entity, BindingTargetProperty)
 
+Event(PropertyChanged, Entity property, Entity context)
+
 void SetPropertyValue(Entity property, Entity entity, const void *valueData);
 bool GetPropertyValue(Entity property, Entity entity, void *dataOut);
 Entity *GetArrayPropertyElements(Entity property, Entity entity);

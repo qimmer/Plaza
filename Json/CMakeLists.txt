@@ -8,4 +8,7 @@ add_library(Json JsonPersistance.h JsonPersistance.cpp JsonModule.cpp JsonModule
 target_include_directories(Json PUBLIC ".." ".")
 
 target_link_libraries(Json Foundation Core)
+
+if(BUILD_SHARED_LIBS)
 install (TARGETS Json RUNTIME DESTINATION bin)
+    endif()

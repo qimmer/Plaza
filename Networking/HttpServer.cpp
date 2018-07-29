@@ -287,7 +287,7 @@ LocalFunction(OnAppLoopChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame
     for_entity(httpServer, httpServerData, HttpServer) {
         if(!httpServerData->impl) continue;
 
-        httpServerData->impl->io_service.run_for(chrono::milliseconds(10));
+        httpServerData->impl->io_service.run_for(chrono::milliseconds(1));
     }
 }
 

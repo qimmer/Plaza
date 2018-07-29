@@ -10,4 +10,7 @@ target_include_directories(Scene2D PUBLIC ".." ".")
 target_link_libraries(Scene2D Core Rendering Scene File)
 
 INSTALL(DIRECTORY Assets DESTINATION bin)
+
+if(BUILD_SHARED_LIBS)
 install (TARGETS Scene2D RUNTIME DESTINATION bin)
+    endif()

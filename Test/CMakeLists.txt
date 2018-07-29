@@ -11,5 +11,7 @@ add_executable(TestRunner TestRunner.h TestRunner.cpp TestRunner.cpp TestRunner.
 target_include_directories(TestRunner PUBLIC "..")
 target_link_libraries(TestRunner Core Test)
 
+if(BUILD_SHARED_LIBS)
 install (TARGETS Test RUNTIME DESTINATION bin)
+    endif()
 install (TARGETS TestRunner RUNTIME DESTINATION bin)

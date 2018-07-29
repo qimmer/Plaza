@@ -89,3 +89,9 @@
 [treecontrol].tree-boot .tree-label:hover {
     background-color: #323232;
 }
+
+.tree-node-element {
+    display: inline-block; 
+    line-height:20px; 
+    vertical-align: top;
+}

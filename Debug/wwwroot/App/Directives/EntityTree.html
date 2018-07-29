@@ -10,15 +10,15 @@
             </div>
             <div style="width: 100%; height: calc(100% - 50px); overflow: auto;">
                 <div treecontrol class="tree-boot"
-                    tree-model="organizedEntities"
+                    tree-model="connection.root"
                     options="treeOptions"
                     on-selection="toggle(node)"
                     selected-nodes="selectedNodes"
                     expanded-nodes="expandedNodes"
-                    filter-expression="filterText">
+                    context-menu="contextMenu">
                 <i style="display: inline-block; font-size: 0.6em; line-height:20px; margin-left: 4px; vertical-align: top; padding: 0px 4px 0px 4px; width: 16px;" ng-class="getAngleIcon(node)"/>
                 <i style="display: inline-block; font-size: 1em; line-height:20px; padding: 0px 2px 0px 4px; vertical-align: top;" class="im" ng-class="getIcon(node)" /> 
-                <span style="display: inline-block; line-height:20px; vertical-align: top;">{{(node.original && node.original.Name) ? node.original.Name : node.name}}</span>
+                <span title="{{node.$path || JSON.stringify(node)}}" style="display: inline-block; line-height:20px; vertical-align: top;">{{node.Name}}</span>
                 </div>
             </div>
 </div>

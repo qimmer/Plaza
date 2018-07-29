@@ -41,4 +41,6 @@ target_link_libraries(Core PUBLIC dyncall eastl)
 target_include_directories(Core PUBLIC ".." "cglm/include" "${ex_dyncall_inc_dir}" "${ex_eastl_inc_dir}" "${ex_eastl_inc_dir}/../test/packages/EABase/include/Common")
 target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions" "-std=c++14")
 
-install (TARGETS Core RUNTIME DESTINATION bin)
+if(BUILD_SHARED_LIBS)
+    install (TARGETS Core RUNTIME DESTINATION bin)
+endif()

@@ -14,6 +14,8 @@
 #include "Enum.h"
 #include "Identification.h"
 
+static Entity nullEntity = 0;
+
 struct Ownership {
     Entity Owner, OwnerProperty;
 };
@@ -62,23 +64,38 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
     auto componentIndex = GetComponentIndex(component, context);
     auto componentData = GetComponentData(component, componentIndex);
     Assert(property, componentData);
+
     auto valueData = componentData + offset;
 
-    const Type argumentTypes[] = {TypeOf_Entity, propertyData->PropertyType, propertyData->PropertyType};
-    const void * argumentData[] = {&context, valueData, newValueData};
+    char *oldValueData = (char*)alloca(propertyData->PropertySize);
 
-    // If property data is a char array, change valueData to point to a char pointer (StringRef) instead of the actual char data.
+    bool changed = false;
     if(propertyData->PropertyKind == PropertyKind_String) {
-        argumentData[1] = (char*)&valueData;
-        if(strcmp(valueData, *(const char**)newValueData) != 0) {
-            FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+        if(strcmp(oldValueData, *(const char**)newValueData) != 0) {
             strcpy(valueData, *(const char**)newValueData);
+            changed = true;
         }
     } else {
-        if(memcmp(valueData, newValueData, propertyData->PropertySize) != 0) {
-            FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+        if(memcmp(oldValueData, newValueData, propertyData->PropertySize) != 0) {
             memcpy(valueData, newValueData, propertyData->PropertySize);
+            changed = true;
         }
+    }
+
+    if(changed) {
+        const Type argumentTypes[] = {TypeOf_Entity, propertyData->PropertyType, propertyData->PropertyType};
+        const void * argumentData[] = {&context, oldValueData, newValueData};
+
+        const Type genericArgumentTypes[] = {TypeOf_Entity, TypeOf_Entity};
+        const void * genericArgumentData[] = {&property, &context};
+
+        // If property data is a char array, change valueData to point to a char pointer (StringRef) instead of the actual char data.
+        if(propertyData->PropertyKind == PropertyKind_String) {
+            argumentData[1] = (char *) &newValueData;
+        }
+
+        FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+        FireEventFast(EventOf_PropertyChanged(), 2, genericArgumentTypes, genericArgumentData);
     }
 }
 
@@ -87,7 +104,9 @@ API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut)
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
     auto propertyData = (Property*)GetComponentData(ComponentOf_Property(), propertyIndex);
 
-    if(!propertyData) return false;
+    if(!propertyData) {
+        return false;
+    }
 
     auto component = GetOwner(property);
 
@@ -155,6 +174,15 @@ API_EXPORT u32 __InjectArrayPropertyElement(Entity property, Entity entity, Enti
 
     GetArrayPropertyElement(property, entity, s->Count - 1);
 
+    const Type argumentTypes[] = {TypeOf_Entity, TypeOf_Entity, TypeOf_Entity};
+    const void * argumentData[] = {&entity, &nullEntity, &element};
+
+    const Type genericArgumentTypes[] = {TypeOf_Entity, TypeOf_Entity};
+    const void * genericArgumentData[] = {&property, &entity};
+
+    FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+    FireEventFast(EventOf_PropertyChanged(), 2, genericArgumentTypes, genericArgumentData);
+
     return s->Count - 1;
 }
 
@@ -204,10 +232,21 @@ API_EXPORT bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 i
     VectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
 
+    if(!s) return false;
+
     auto removalElementData = &GetVector(*s)[sizeof(Entity) * index];
     auto lastElementData = &GetVector(*s)[sizeof(Entity) * (s->Count - 1)];
 
     auto removalEntity = *(Entity*)removalElementData;
+
+    const Type argumentTypes[] = {TypeOf_Entity, TypeOf_Entity, TypeOf_Entity};
+    const void * argumentData[] = {&entity, &removalEntity, &nullEntity};
+
+    const Type genericArgumentTypes[] = {TypeOf_Entity, TypeOf_Entity};
+    const void * genericArgumentData[] = {&property, &entity};
+
+    FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+    FireEventFast(EventOf_PropertyChanged(), 2, genericArgumentTypes, genericArgumentData);
 
     // Destroy removed entity if it is owned by the array carrier
     if(GetOwner(removalEntity) == entity) {
@@ -231,6 +270,8 @@ API_EXPORT Entity GetArrayPropertyElement(Entity property, Entity entity, u32 in
     VectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
 
+    if(!s) return 0;
+
     Assert(entity, s && s->Count > index);
     auto child = ((Entity*)GetVector(*s))[index];
     Assert(entity, IsEntityValid(child));
@@ -243,7 +284,7 @@ API_EXPORT Entity *GetArrayPropertyElements(Entity property, Entity entity) {
     VectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
 
-    return ((Entity*)GetVector(*s));
+    return s ? ((Entity*)GetVector(*s)) : NULL;
 }
 
 void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind) {
@@ -301,6 +342,7 @@ API_EXPORT void SetPropertyMeta(Entity property, StringRef metaString) {
 }
 
 BeginUnit(Property)
+    RegisterEvent(PropertyChanged)
     BeginComponent(Property)
         RegisterProperty(u32, PropertyOffset)
         RegisterProperty(u32, PropertySize)

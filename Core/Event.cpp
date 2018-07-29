@@ -139,7 +139,9 @@ API_EXPORT void FireEventFast(Entity event, u32 numArguments, const u8* argument
         for(auto i = 0; i < data->SubscriptionCache.Count; ++i) {
             auto subscription = &GetVector(data->SubscriptionCache)[i];
             if(!subscription->SubscriptionSender || !sender || subscription->SubscriptionSender == sender) {
-                CallFunction(subscription->SubscriptionHandler, NULL, numArguments, argumentTypeIndices, argumentDataPtrs);
+                if(IsEntityValid(subscription->SubscriptionHandler)) {
+                    CallFunction(subscription->SubscriptionHandler, NULL, numArguments, argumentTypeIndices, argumentDataPtrs);
+                }
             }
         }
     }

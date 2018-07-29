@@ -9,7 +9,7 @@
                 <span class="nav-link">IP</span>
             </li>
             <li class="nav-item">
-                <input class="form-control" type="text" ng-model="ip">
+                <input class="form-control" type="text" ng-model="connection.ip">
             </li>
             <li class="nav-item">
                 <button class="btn" ng-disabled="getConnectionState() == 1" ng-class="(getConnectionState() == 0) ? 'btn-success' : ((getConnectionState() == 2) ? 'btn-danger' : '')" ng-click="connect()">{{getConnectionState() == 0 ? 'Connect' : getConnectionState() == 2 ? 'Disconnect' : 'Connecting ...'}}</button>

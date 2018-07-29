@@ -70,7 +70,7 @@ API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity) {
 API_EXPORT Entity FindEntityByName(Entity component, StringRef typeName) {
     for(auto i = 0; i < GetComponentMax(component); ++i) {
         auto entity = GetComponentEntity(component, i);
-        if(strcmp(GetName(entity), typeName) == 0) {
+        if(IsEntityValid(entity) && strcmp(GetName(entity), typeName) == 0) {
             return entity;
         }
     }

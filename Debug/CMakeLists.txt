@@ -3,13 +3,15 @@ project(Debug)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Debug DebugModule.cpp DebugModule.h Debug.json)
+add_library(Debug DebugModule.cpp DebugModule.h Debug.json EntityTracker.cpp EntityTracker.h)
 
 target_include_directories(Debug PUBLIC "..")
 
 target_link_libraries(Debug Core Foundation Networking Json File Rest)
 
+if(BUILD_SHARED_LIBS)
 install (TARGETS Debug RUNTIME DESTINATION bin)
+endif()
 INSTALL(FILES Debug.json DESTINATION bin )
 
 add_executable(Debugger Debugger.cpp)

@@ -5,7 +5,7 @@ String.prototype.prettify = function() {
 }
 
 angular.module('plaza')
-.directive('propertyEditor', function($rootScope) {
+.directive('propertyEditor', function($rootScope, entityService) {
 
     var componentPriorities = {
         Identification: 0,
@@ -19,8 +19,9 @@ angular.module('plaza')
     function link($scope, $element, $attrs) {
         $scope.collapsedComponents = [];
 
+       
         $scope.hasComponent = function(item) {
-            var componentList = selectedEntity['$components'];
+            var componentList = $scope.connection.selectedEntity['$components'];
             return componentList && componentList[name];
         }
 
@@ -31,13 +32,13 @@ angular.module('plaza')
           };
 
         $scope.filterComponents = function() {
-            if(!$scope.selectedEntity || !$scope.properties) {
+            if(!$scope.connection.selectedEntity || !$scope.connection.properties) {
                 $scope.filteredComponents = [];
                 return;
             }
-
-            var availableComponents = Object.keys($scope.properties);
-            var entityComponents = $scope.selectedEntity['$components'];
+            
+            var availableComponents = Object.keys($scope.connection.properties);
+            var entityComponents = $scope.connection.selectedEntity['$components'];
 
             $scope.filteredComponents = availableComponents
             .filter(function(componentName) {
@@ -46,17 +47,23 @@ angular.module('plaza')
             .sort($scope.componentComparator);
         }
 
-        $scope.$watch('properties', $scope.filterComponents);
-        $scope.$watch('selectedEntity', $scope.filterComponents);
+        $scope.apply = function() {
+            var strippedEntity = {};
+            for(var key in $scope.connection.selectedEntity) {
+                if(key[0] == "$") continue;
+                strippedEntity[key] = $scope.connection.selectedEntity[key];
+            }
+
+            entityService.updateEntity($scope, $scope.connection.selectedEntity.$path, strippedEntity);
+        }
+
+        $scope.$watch('connection.properties', $scope.filterComponents);
+        $scope.$watch('connection.selectedEntity', $scope.filterComponents);
 
     }
 
     return {
         restrict: 'AE',
-        scope: {
-            selectedEntity: '=',
-            properties: '='
-        },
         link: link,
         templateUrl: 'App/Directives/PropertyEditor.html'
     };

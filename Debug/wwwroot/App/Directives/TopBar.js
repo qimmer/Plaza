@@ -1,29 +1,23 @@
 angular.module('plaza')
 .directive('topBar', function(entityService) {
 
-    function link($scope, $element, $attrs) {
-        $scope.connection.ip = $scope.ip;
-        
+    function link($scope, $element, $attrs) {        
         $scope.connect = function() {
-            if($scope.connection.ip) {
-                $scope.connection.ip = "";
-            } else {
-                $scope.connection.ip = $scope.ip;
-            }
+            if($scope.connection) {
+                entityService.close($scope);
+            } 
+
+            entityService.createConnection($scope);
             
         }
 
         $scope.getConnectionState = function () {
-            return ($scope.connection.ip !== $scope.ip) ? 0 : ($scope.connection.isConnected ? 2 : 1)
+            return ($scope.connection) ? 0 : ($scope.connection.isConnected ? 2 : 1)
         }
     }
 
     return {
         restrict: 'AE',
-        scope: {
-            ip: '@',
-            connection: '='
-        },
         link: link,
         templateUrl: 'App/Directives/TopBar.html'
     };

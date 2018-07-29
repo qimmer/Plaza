@@ -10,4 +10,7 @@ target_include_directories(Scene3D PUBLIC ".." ".")
 target_link_libraries(Scene3D Core Rendering Scene)
 
 INSTALL(DIRECTORY Assets DESTINATION bin)
+
+if(BUILD_SHARED_LIBS)
 install (TARGETS Scene3D RUNTIME DESTINATION bin)
+    endif()

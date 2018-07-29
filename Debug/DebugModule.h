@@ -9,6 +9,8 @@
 
 Module(Debug)
 
-Unit(Debug)
+Unit(DebugServer)
+    Component(Debug)
+        ChildProperty(EntityTracker, EntityTracker)
 
 #endif //PLAZA_DEBUGMODULE_H
