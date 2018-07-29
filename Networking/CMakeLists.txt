@@ -12,4 +12,6 @@ if(WIN32)
     target_link_libraries(Networking ws2_32 wsock32)
 endif()
 
-install (TARGETS Networking RUNTIME DESTINATION bin)
+if(BUILD_SHARED_LIBS)
+    install (TARGETS Networking RUNTIME DESTINATION bin)
+endif()

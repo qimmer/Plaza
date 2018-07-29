@@ -8,8 +8,10 @@
     "dependencies": {
         "@shagstrom/angular-split-pane": "^1.3.2",
         "angular": "^1.7.2",
+        "angular-bootstrap-contextmenu": "git+https://github.com/Templarian/ui.bootstrap.contextMenu.git",
         "angular-tree-control": "git+https://github.com/wix/angular-tree-control.git",
         "angularjs": "0.0.1",
+        "angularjs-tooltips": "^1.0.5",
         "bootstrap": "^4.1.2",
         "jquery": "^3.3.1",
         "popper.js": "^1.14.3"

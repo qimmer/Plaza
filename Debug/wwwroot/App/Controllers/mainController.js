@@ -1,13 +1,16 @@
 angular.module('plaza').controller('mainController', function($scope, entityService) {
-    $scope.entityTree = {};
-    $scope.conn = entityService.createConnection($scope, $scope.ip);
-    $scope.selectedEntity = null;
-    $scope.conn.onEntityReceived.subscribe($scope, function (entities) {
-        $scope.entityTree = entities;
-        $scope.properties = entityService.parseProperties(entities);
-    });
+    $scope.treeOptions = {
+        equality: function(a, b) {
+            if(!a || !b) return false;
 
-    $scope.setSelection = function(entity) {
-        $scope.selectedEntity = entity;
-    }
+            return a === b;
+        },
+        nodeChildren: "$children",
+        dirSelectable: true,
+        multiSelection: false,
+        allowDeselect: false,
+        isLeaf: function(node) { return (node.$isLeaf === undefined) ? true : node.$isLeaf; }
+    };
+
+    entityService.createConnection($scope);
 });

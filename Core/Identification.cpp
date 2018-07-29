@@ -51,8 +51,19 @@ API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity) {
                 entity = owner;
                 break;
             case PropertyKind_Array:
-                snprintf(elementName, PathMax, "%s/%s", GetName(ownerProperty), GetName(entity));
+            {
+                unsigned long index = -1;
+                auto elements = GetArrayPropertyElements(ownerProperty, owner);
+                for(auto i = 0; i < GetArrayPropertyCount(ownerProperty, owner); ++i) {
+                    if(elements[i] == entity) {
+                        index = i;
+                        break;
+                    }
+                }
+                snprintf(elementName, PathMax, "%s/%lu", GetName(ownerProperty), index);
                 entity = owner;
+            }
+
                 break;
             default:
                 Assert(entity, false);
@@ -70,7 +81,7 @@ API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity) {
 API_EXPORT Entity FindEntityByName(Entity component, StringRef typeName) {
     for(auto i = 0; i < GetComponentMax(component); ++i) {
         auto entity = GetComponentEntity(component, i);
-        if(strcmp(GetName(entity), typeName) == 0) {
+        if(IsEntityValid(entity) && strcmp(GetName(entity), typeName) == 0) {
             return entity;
         }
     }
@@ -101,11 +112,21 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
         if(currentArrayProperty != 0) { // Path element is a name of one child element of the current array property
             auto childCount = GetArrayPropertyCount(currentArrayProperty, currentEntity);
             auto children = GetArrayPropertyElements(currentArrayProperty, currentEntity);
+
             for(auto i = 0; i < childCount; ++i) {
                 if(strcmp(GetName(children[i]), element) == 0) {
                     currentArrayProperty = 0;
                     currentEntity = children[i];
                     break;
+                }
+            }
+
+            if(currentArrayProperty) { // If still set, no matching child found by name. Try parse element as index
+                char *endptr = NULL;
+                auto index = strtol(element, &endptr, 10);
+                if (element != endptr && index < childCount) {
+                    currentArrayProperty = 0;
+                    currentEntity = children[index];
                 }
             }
 

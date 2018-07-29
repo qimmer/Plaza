@@ -58,7 +58,7 @@ static u16 handlePost(StringRef entityPath, Entity request) {
     strcpy(childName, entityPath + strlen(propertyName) + 1);
 
     // Remove parent path from property path so the property name remains
-    memmove(propertyName, propertyName + strlen(parentPath), strlen(entityPath) - strlen(parentPath) + 1);
+    memmove(propertyName, propertyName + strlen(parentPath) + 1, strlen(entityPath) - strlen(parentPath) + 1);
 
     auto parent = FindEntityByPath(parentPath);
     if(!IsEntityValid(parent)) return 404;
@@ -74,8 +74,14 @@ static u16 handlePost(StringRef entityPath, Entity request) {
     auto newEntity = GetArrayPropertyElement(property, parent, newIndex);
     SetName(newEntity, childName);
 
-    if(!DeserializeJson(request, newEntity)) {
-        RemoveArrayPropertyElement(property, parent, newIndex);
+    if(HasComponent(request, ComponentOf_Stream())) {
+        DeserializeJson(request, newEntity);
+    }
+
+    auto response = GetHttpRequestResponse(request);
+    SetStreamPath(response, "memory://response.json");
+
+    if(!SerializeJson(response, newEntity)) {
         return 500;
     }
 
@@ -93,11 +99,11 @@ static u16 handleDelete(StringRef entityPath, Entity request) {
     char propertyName[PathMax];
     char childName[PathMax];
 
-    if(!GetParentPath(entityPath, PathMax, propertyName)) return 500;
-    if(!GetParentPath(parentPath, PathMax, parentPath)) return 500;
+    if(!GetParentPath(entityPath, PathMax, propertyName)) return 404;
+    if(!GetParentPath(propertyName, PathMax, parentPath)) return 404;
 
     // Remove parent path from property path so the property name remains
-    memmove(propertyName, propertyName + strlen(parentPath), strlen(entityPath) - strlen(parentPath) + 1);
+    memmove(propertyName, propertyName + strlen(parentPath) + 1, strlen(entityPath) - strlen(parentPath) + 1);
 
     auto parent = FindEntityByPath(parentPath);
     if(!IsEntityValid(parent)) return 500;

@@ -76,4 +76,7 @@ IF(WITH_SHADER_COMPILER)
 ENDIF(WITH_SHADER_COMPILER)
 
 INSTALL(FILES ${ex_bgfx_shader_dir}/shaderlib.sh ${ex_bgfx_shader_dir}/common.sh ${ex_bgfx_src_dir}/bgfx_shader.sh ${ex_bgfx_src_dir}/bgfx_compute.sh DESTINATION bin/Assets/Shaders)
+
+if(BUILD_SHARED_LIBS)
 install (TARGETS BgfxRendering RUNTIME DESTINATION bin)
+    endif()

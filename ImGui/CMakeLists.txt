@@ -8,4 +8,7 @@ target_link_libraries(ImGui Core Foundation Rendering File)
 target_compile_definitions(ImGui PUBLIC DIMGUI_INCLUDE_IMGUI_USER_H)
 
 INSTALL(DIRECTORY Assets DESTINATION bin)
+
+if(BUILD_SHARED_LIBS)
 install (TARGETS ImGui RUNTIME DESTINATION bin)
+    endif()

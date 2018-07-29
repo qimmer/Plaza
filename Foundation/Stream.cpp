@@ -446,19 +446,21 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
         return;
     }
 
-    // Find Filetype (optional)
-    for_entity(fileTypeEntity, fileTypeData, FileType) {
-        if(strcmp(extension, fileTypeData->FileTypeExtension) == 0) {
-            SetStreamFileType(entity, fileTypeEntity);
-            if(fileTypeData->FileTypeMimeType) {
-                mimeType = fileTypeData->FileTypeMimeType;
-                break;
+    if(strlen(extension) > 0) {
+        // Find Filetype (optional)
+        for_entity(fileTypeEntity, fileTypeData, FileType) {
+            if(strcmp(extension, fileTypeData->FileTypeExtension) == 0) {
+                SetStreamFileType(entity, fileTypeEntity);
+                if(fileTypeData->FileTypeMimeType) {
+                    mimeType = fileTypeData->FileTypeMimeType;
+                    break;
+                }
             }
         }
-    }
 
-    if(!IsEntityValid(GetStreamFileType(entity))) {
-        Log(entity, LogSeverity_Warning, "Unknown file type: %s", extension);
+        if(!IsEntityValid(GetStreamFileType(entity))) {
+            Log(entity, LogSeverity_Warning, "Unknown file type: %s", extension);
+        }
     }
 
     // Find compressor (optional)

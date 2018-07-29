@@ -8,4 +8,6 @@ add_library(Scene Transform.cpp Transform.h Camera.cpp Camera.h MeshInstance.cpp
 target_include_directories(Scene PUBLIC ".." ".")
 
 target_link_libraries(Scene Core Rendering)
+if(BUILD_SHARED_LIBS)
 install (TARGETS Scene RUNTIME DESTINATION bin)
+    endif()

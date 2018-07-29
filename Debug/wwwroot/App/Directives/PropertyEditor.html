@@ -1,28 +1,27 @@
 <div style="width: 100%; height: 100%; overflow: auto;">
-    <div ng-if="selectedEntity">
+    <div ng-if="draft">
         <div ng-repeat="componentName in filteredComponents" ng-hide="collapsedComponents.includes(componentName)">
             <div class="component-header">
                 {{componentName}}
             </div>
             <div class="property-container">
                 <div class="table">
-                    <div class="row" ng-repeat="property in properties[componentName]" ng-if="property.PropertyKind <= 2">
+                    <div class="row" ng-repeat="property in connection.properties[componentName]" ng-if="property.PropertyKind <= 2">
                         <div class="cell label">
                             {{property.Name.replace(componentName,'').prettify()}}
                         </div>
                         <div class="cell value">
-                            <input class="form-control" ng-if="property.PropertyType == 'StringRef'" ng-model="selectedEntity[property.Name]"/>
-                            <input class="form-control" ng-if="property.PropertyType[0] == 'u' || property.PropertyType[0] == 's'" ng-model="selectedEntity[property.Name]"/>
-                            <input class="form-control" ng-if="property.PropertyType == 'float' || property.PropertyType == 'double'" ng-model="selectedEntity[property.Name]"/>
-                            <button style="width: 100%;" class="btn" ng-class="selectedEntity[property.Name] ? 'btn-success' : 'btn-disabled'" ng-if="property.PropertyType == 'bool'" ng-click="selectedEntity[property.Name] = !selectedEntity[property.Name]">{{selectedEntity[property.Name].toString()}}</button>
+                            <input class="form-control" ng-focus="isDraftLocked=true" ng-blur="isDraftLocked=false" ng-if="property.PropertyType == 'StringRef'" ng-model="draft[property.Name]" ng-change="applyDraft()"/>
+                            <input class="form-control" ng-focus="isDraftLocked=true" ng-blur="isDraftLocked=false" type="number" ng-if="property.PropertyType[0] == 'u' || property.PropertyType[0] == 's'" ng-model="draft[property.Name]" ng-change="applyDraft()"/>
+                            <input class="form-control" ng-focus="isDraftLocked=true" ng-blur="isDraftLocked=false" type="number" ng-if="property.PropertyType == 'float' || property.PropertyType == 'double'" ng-model="draft[property.Name]" ng-change="applyDraft()"/>
+                            <button style="width: 100%;" class="btn" ng-class="draft[property.Name] ? 'btn-success' : 'btn-disabled'" ng-if="property.PropertyType == 'bool'" ng-click="draft[property.Name] = !draft[property.Name]; applyDraft()">{{draft[property.Name].toString()}}</button>
                         </div>
-
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div align="center" ng-if="!selectedEntity" style="display: table; width: 100%; height: 100%; color: #353535;">
+    <div align="center" ng-if="!draft" style="display: table; width: 100%; height: 100%; color: #353535;">
         <h1 style="display: table-cell; vertical-align: middle; user-select: none; font-weight: 200;">No entity selected</h1>
     </div>
 </div>
