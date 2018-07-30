@@ -46,9 +46,6 @@ angular.module('plaza')
                 return componentList && componentList[name];
             }
             
-            var availableComponents = Object.keys($scope.connection.properties);
-            var entityComponents = $scope.connection.selectedEntity['$components'];
-
             $scope.componentComparator = function (c1, c2) {
                 var c1p = componentPriorities[c1] || 9999;
                 var c2p = componentPriorities[c2] || 9999;

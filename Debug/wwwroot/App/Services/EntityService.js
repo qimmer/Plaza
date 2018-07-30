@@ -97,7 +97,7 @@ angular.module('plaza').service('entityService', function($http, $timeout, $root
         window.root = scope.connection.root;
 
         if(!scope.connection.ip) {
-            scope.connection.ip = "localhost";
+            scope.connection.ip = "127.0.0.1";
         }
         
         scope.connection.isConnected = false;
