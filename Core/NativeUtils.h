@@ -378,12 +378,12 @@ inline void __FireEventVa(Entity event, T... args) {
                 SetName(module, #NAME);\
                 SetModuleSourcePath(module, __FILE__);\
                 SetModuleVersion(module, __DATE__ " " __TIME__);\
+                __InjectArrayPropertyElement(PropertyOf_Modules(), GetModuleRoot(), module);\
                 __InitModule_ ## NAME(module);\
                 Entity dataComponents[] = {0, ##__VA_ARGS__, 0};\
                 for(auto i = 1; dataComponents[i]; ++i) {\
                     AddComponent(module, dataComponents[i]);\
                 }\
-                __InjectArrayPropertyElement(PropertyOf_Modules(), GetModuleRoot(), module);\
             }\
         }\
         return module;\

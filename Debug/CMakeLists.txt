@@ -3,7 +3,7 @@ project(Debug)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Debug DebugModule.cpp DebugModule.h Debug.json EntityTracker.cpp EntityTracker.h)
+add_library(Debug DebugModule.cpp DebugModule.h EntityTracker.cpp EntityTracker.h)
 
 target_include_directories(Debug PUBLIC "..")
 

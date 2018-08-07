@@ -169,30 +169,33 @@ angular.module('plaza').service('entityService', function($http, $timeout, $root
         return root;
     }
 
+    service.getChanges = function(scope) {
+        return $http.get('http://' + scope.connection.ip + ':8080/changes').then(function(response) {
+            scope.connection.isConnected = true;
+
+            var changedEntities = response.data.EntityModifications;
+            for(var i = 0; i < changedEntities.length; ++i) {
+                var changedEntity = changedEntities[i].EntityModificationEntity;
+                var entity = service.findEntity(scope, changedEntity.$path);
+
+                if(entity !== undefined) {
+                    service.mergeObject(entity, changedEntity);
+        
+                    if(changedEntity.$path.length == 0) { // Root entity
+                        organize(entity);
+                    } else {
+                        organize(entity, entity.$parent);
+                    }
+                }              
+            }
+
+            return entity;
+        });
+    }
+
     service.update = function(scope) {
         if(scope.connection && scope.connection.ip) {
-            return service.getEntity(scope, "/Modules/Debug/EntityTracker").then(function(tracker) {
-                var modifiedEntities = tracker.EntityModifications;
-
-                var getJobs = [
-                ];
-
-                // Update changed entities
-                for(var i = 0; i < modifiedEntities.length; ++i) {
-                    var path = modifiedEntities[i].EntityModificationEntity;
-                    var modificationPath = "/Modules/Debug/EntityTracker/EntityModifications/" + modifiedEntities[i].Name;
-                    if(path) {
-                        getJobs.push(service.getEntity(scope, path));
-                    }
-                    getJobs.push(service.deleteEntity(scope, modificationPath));
-                }
-
-                if(scope.connection.selectedEntity) {
-                    getJobs.push(service.getEntity(scope, service.calculatePath(scope.connection.selectedEntity)));
-                }
-
-                return Promise.all(getJobs);                
-            });
+            return service.getChanges(scope);
         }
     }
 

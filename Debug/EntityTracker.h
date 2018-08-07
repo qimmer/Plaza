@@ -7,15 +7,14 @@
 
 #include <Core/NativeUtils.h>
 
-#define EntityModificationType_Add 1
-#define EntityModificationType_Remove 2
-
 Unit(EntityTracker)
-
     Component(EntityModification)
         Property(Entity, EntityModificationEntity)
 
     Component(EntityTracker)
         ArrayProperty(EntityModification, EntityModifications)
+        Property(bool, EntityTrackerTrackValues)
+
+    Function(GetChanges, u16, Entity responseStream)
 
 #endif //PLAZA_ENTITYTRACKER_H

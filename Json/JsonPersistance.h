@@ -10,7 +10,7 @@
 
 Unit(JsonPersistance)
 
-bool SerializeJson(Entity stream, Entity entity, bool includeChildren = true);
+bool SerializeJson(Entity stream, Entity entity, s16 includeChildLevels = 100, s16 includeReferenceLevels = 0);
 bool DeserializeJson(Entity stream, Entity entity);
 
 Function(DeserializeJsonFromString, bool, Entity stream, Entity entity, StringRef jsonString)

@@ -90,12 +90,15 @@ static Entity handlePost(StringRef entityPath, Entity request, Entity response) 
     auto responseStream = GetHttpResponseContentStream(response);
 
     if(HasComponent(requestStream, ComponentOf_Stream())) {
-        DeserializeJson(requestStream, newEntity);
+        auto fileType = GetStreamFileType(requestStream);
+        if(IsEntityValid(fileType) && strcmp(GetFileTypeMimeType(fileType), "application/json") == 0) {
+            DeserializeJson(requestStream, newEntity);
+        }
     }
 
     SetStreamPath(responseStream, "memory://response.json");
 
-    if(!SerializeJson(responseStream, newEntity)) {
+    if(!SerializeJson(responseStream, newEntity, 100, 0)) {
         return FindResponseCode(500);
     }
 

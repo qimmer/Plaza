@@ -226,6 +226,17 @@ API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Enti
     SetOwner(value, context, property);
 
     AddComponent(value, propertyData->PropertyChildComponent);
+
+    {
+        const Type argumentTypes[] = { TypeOf_Entity, TypeOf_Entity, TypeOf_Entity };
+        const void * argumentData[] = { &context, &nullEntity, &value };
+
+        const Type genericArgumentTypes[] = { TypeOf_Entity, TypeOf_Entity };
+        const void * genericArgumentData[] = { &property, &context };
+
+        FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+        FireEventFast(EventOf_PropertyChanged(), 2, genericArgumentTypes, genericArgumentData);
+    }
 }
 
 API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity) {

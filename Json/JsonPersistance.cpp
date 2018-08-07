@@ -114,7 +114,7 @@ using namespace eastl;
         }\
         break;
 
-static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer, bool includeChildren);
+static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer, s16 includeChildLevels, s16 includeReferenceLevels);
 
 static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer) {
     char entityPath[PathMax];
@@ -166,7 +166,7 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjso
     return true;
 }
 
-static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer, bool includeChildren) {
+static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer, s16 includeChildLevels, s16 includeReferenceLevels) {
     bool result = true;
 
     writer.StartObject();
@@ -191,21 +191,34 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
                 case PropertyKind_String:
                 case PropertyKind_Value:
                     writer.String(GetName(property));
-                    result &= SerializeValue(parent, property, root, writer);
+
+                    if(includeReferenceLevels > 0 && GetPropertyType(property) == TypeOf_Entity) {
+                        Entity child = 0;
+                        GetPropertyValue(property, parent, &child);
+
+                        if(IsEntityValid(child)) {
+                            result &= SerializeNode(child, root, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0));
+                        } else {
+                            writer.Null();
+                        }
+                    } else {
+                        result &= SerializeValue(parent, property, root, writer);
+                    }
+
                     break;
                 case PropertyKind_Child:
                 {
                     Entity child = 0;
                     GetPropertyValue(property, parent, &child);
-                    if(IsEntityValid(child) && includeChildren) {
+                    if(IsEntityValid(child) && includeChildLevels > 0) {
                         writer.String(GetName(property));
-                        result &= SerializeNode(child, root, writer, includeChildren);
+                        result &= SerializeNode(child, root, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0));
                     }
                 }
                     break;
                 case PropertyKind_Array:
                 {
-                    if(includeChildren) {
+                    if(includeChildLevels > 0) {
                         writer.String(GetName(property));
 
                         auto count = GetArrayPropertyCount(property, parent);
@@ -213,7 +226,7 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
                         for(auto i = 0; i < count; ++i) {
                             auto child = GetArrayPropertyElement(property, parent, i);
                             if(IsEntityValid(child)) {
-                                result &= SerializeNode(child, root, writer, includeChildren);
+                                result &= SerializeNode(child, root, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0));
                             } else {
                                 writer.Null();
                             }
@@ -239,6 +252,14 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
             }
         }
         writer.EndArray();
+
+        //if(parent == root) {
+            char path[2048];
+            CalculateEntityPath(path, sizeof(path), parent);
+
+            writer.String("$path");
+            writer.String(path);
+        //}
     }
 
     writer.EndObject();
@@ -391,6 +412,7 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
                 break;
             case PropertyKind_Child:
             {
+                AddComponent(parent, GetOwner(property));
                 Entity child = 0;
                 GetPropertyValue(property, parent, &child);
                 result &= DeserializeNode(child, root, reader, onlyHierarchy);
@@ -466,11 +488,11 @@ API_EXPORT bool DeserializeJsonFromString(Entity stream, Entity entity, StringRe
     return result;
 }
 
-API_EXPORT bool SerializeJson(Entity stream, Entity entity, bool includeChildren) {
+API_EXPORT bool SerializeJson(Entity stream, Entity entity, s16 includeChildLevels, s16 includeReferenceLevels) {
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-    auto result = SerializeNode(entity, entity, writer, includeChildren);
+    auto result = SerializeNode(entity, entity, writer, includeChildLevels, includeReferenceLevels);
 
     writer.Flush();
 
@@ -492,7 +514,10 @@ API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
     bool streamWasOpen = IsStreamOpen(stream);
     auto startOffset = 0;
     if(!streamWasOpen) {
-        Assert(stream, StreamOpen(stream, StreamMode_Read));
+        if(!StreamOpen(stream, StreamMode_Read)) {
+            Log(stream, LogSeverity_Error, "Could not open stream '%s' for deserialization.", GetStreamPath(stream));
+            return false;
+        }
     } else {
         startOffset = StreamTell(stream);
     }

@@ -28,7 +28,35 @@ BeginUnit(DebugServer)
 				{ "FileTypeExtension": ".css", "FileTypeMimeType" : "text/css" },
 				{ "FileTypeExtension": ".map", "FileTypeMimeType" : "text/map" },
 				{ "FileTypeExtension": ".js", "FileTypeMimeType" : "application/javascript" }
-			]
+			],
+            "Roots": [
+                {
+                    "Name": "Debug Server",
+                    "ServerPort": 8080,
+                    "HttpServerKeepAliveTimeout": 5,
+                    "HttpServerKeepAliveMaxConnections": 100,
+                    "RestServerRoutes": [
+                    {
+                        "Name": "WebRoute",
+                        "RestResourceRoutingRoot": "file://wwwroot",
+                        "RestRoutingRoute": "/"
+                    },
+                    {
+                        "Name": "EntityRoute",
+                        "RestEntityRoutingRoot": "/",
+                        "RestRoutingRoute": "/api"
+                    },
+                    {
+                        "Name": "ChangesRoute",
+                        "RestFunctionRoutingFunction": "/Modules/Debug/Functions/GetChanges",
+                        "RestRoutingRoute": "/changes"
+                    }
+                    ]
+                }
+            ],
+            "EntityTracker": {
+			    "EntityTrackerTrackValues": true
+			}
 		}
 	);
 EndUnit()
@@ -40,9 +68,7 @@ BeginModule(Debug)
     RegisterDependency(Networking)
     RegisterDependency(Json)
     RegisterDependency(Rest)
-    RegisterUnit(DebugServer)
-    RegisterUnit(EntityTracker)
-    RegisterData("file://Debug.json")
 
-    AddComponent(module, ComponentOf_Debug());
+    RegisterUnit(EntityTracker)
+    RegisterUnit(DebugServer)
 EndModule()

@@ -2,53 +2,67 @@
 // Created by Kim on 06-08-2018.
 //
 
+#include <Networking/HttpRequest.h>
+#include <Foundation/Stream.h>
 #include "RestFunctionRouting.h"
+#include "RestRouting.h"
 
 struct RestFunctionRouting {
     Entity RestFunctionRoutingFunction;
 };
 
-static Entity handleGet(StringRef path, Entity request, Entity response) {
-    auto responseStream = GetHttpResponseContentStream(response);
-    SetStreamPath(responseStream, path);
-    if(!StreamOpen(responseStream, StreamMode_Read)) {
-        RemoveComponent(responseStream, ComponentOf_Stream());
-        return FindResponseCode(404);
-    }
-
-    StreamClose(responseStream);
-
-    return FindResponseCode(200);
-}
-
 LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity response) {
     auto data = GetRestFunctionRoutingData(routing);
 
     if(data) {
-        char completeRoute[1024];
         auto requestUrl = GetHttpRequestUrl(request);
-        auto relativeUrl = requestUrl + strlen(GetRestRoutingRoute(routing));
-        snprintf(completeRoute, 1024, "%s/%s", data->RestFunctionRoutingRoot, relativeUrl);
+        auto relativeUrl = requestUrl + strlen(GetRestRoutingRoute(routing)) + 1;
+
+        char arguments[2048];
+        strncpy(arguments, relativeUrl, sizeof(arguments));
 
         // 501 if handlers do not set any response code
-        auto responseCode = FindResponseCode(501);
+        u16 responseCode = 501;
 
         auto method = GetHttpRequestMethod(request);
-        if(strcmp(method, "GET") == 0) responseCode = handleGet(completeRoute, request, response);
-        else if(strcmp(method, "PUT") == 0) responseCode =handlePut(completeRoute, request, response);
-        else if(strcmp(method, "POST") == 0) responseCode =handlePost(completeRoute, request, response);
-        else if(strcmp(method, "DELETE") == 0) responseCode =handleDelete(completeRoute, request, response);
-        else responseCode = FindResponseCode(405);
+        auto responseStream = GetHttpResponseContentStream(response);
 
-        SetHttpResponseCode(response, responseCode);
+        eastl::fixed_vector<Type, 32> argumentTypes;
+        eastl::fixed_vector<const void*, 32> argumentData;
+
+        argumentTypes.push_back(TypeOf_Entity);
+        argumentData.push_back(&responseStream);
+
+        u32 argumentLength = 0;
+        u32 offset = 0;
+        while(arguments[offset] != '\0') {
+            if(arguments[offset] == '/') {
+                argumentTypes.push_back(TypeOf_StringRef);
+                argumentData.push_back(&arguments[offset - argumentLength]);
+                arguments[offset] = '\0';
+                argumentLength = 0;
+            } else {
+                argumentLength++;
+            }
+
+            offset++;
+        }
+
+        auto numArguments = GetNumFunctionArguments(data->RestFunctionRoutingFunction);
+        if(numArguments != argumentTypes.size()) {
+            responseCode = 400;
+        } else {
+            CallFunction(data->RestFunctionRoutingFunction, &responseCode, argumentData.size(), argumentTypes.data(), argumentData.data());
+        }
+
+        SetHttpResponseCode(response, FindResponseCode(responseCode));
     }
 }
 
 BeginUnit(RestFunctionRouting)
     BeginComponent(RestFunctionRouting)
         RegisterBase(RestRouting)
-        RegisterProperty(StringRef, RestFunctionRoutingRoot)
-        RegisterProperty(StringRef, RestFunctionRoutingDefaultFile)
+        RegisterReferenceProperty(Function, RestFunctionRoutingFunction)
     EndComponent()
 
     RegisterSubscription(RestRoutingRequest, OnRestRoutingRequest, 0)
