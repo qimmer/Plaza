@@ -34,9 +34,9 @@ struct VectorStruct {
 };
 
 #define GetVector(VSTRUCT) ((VSTRUCT).DynBuf ? (VSTRUCT).DynBuf : (VSTRUCT).StaBuf)
-#define SetVectorAmount(VSTRUCT, NEWCOUNT) __SetVectorAmount(& VSTRUCT.Count, (NEWCOUNT), & VSTRUCT.DynCapacity, sizeof(VSTRUCT.StaBuf)/sizeof(VSTRUCT.StaBuf[0]), (void**)& VSTRUCT.DynBuf, &VSTRUCT.StaBuf[0], sizeof(VSTRUCT.StaBuf[0]) )
-#define VectorRemove(VSTRUCT, INDEX) GetVector(VSTRUCT)[INDEX] = GetVector(VSTRUCT)[VSTRUCT.Count - 1]; SetVectorAmount(VSTRUCT, VSTRUCT.Count - 1)
-#define VectorAdd(VSTRUCT, VALUE) SetVectorAmount(VSTRUCT, VSTRUCT.Count + 1); GetVector(VSTRUCT)[VSTRUCT.Count - 1] = VALUE
+#define SetVectorAmount(VSTRUCT, NEWCOUNT) __SetVectorAmount(& (VSTRUCT).Count, (NEWCOUNT), & (VSTRUCT).DynCapacity, sizeof((VSTRUCT).StaBuf)/sizeof((VSTRUCT).StaBuf[0]), (void**)& (VSTRUCT).DynBuf, &(VSTRUCT).StaBuf[0], sizeof((VSTRUCT).StaBuf[0]) )
+#define VectorRemove(VSTRUCT, INDEX) GetVector(VSTRUCT)[INDEX] = GetVector(VSTRUCT)[(VSTRUCT).Count - 1]; SetVectorAmount(VSTRUCT, (VSTRUCT).Count - 1)
+#define VectorAdd(VSTRUCT, VALUE) SetVectorAmount(VSTRUCT, (VSTRUCT).Count + 1); GetVector(VSTRUCT)[(VSTRUCT).Count - 1] = VALUE
 #define VectorClear(VSTRUCT) SetVectorAmount(VSTRUCT, 0)
 
 void __SetVectorAmount(unsigned int* num, unsigned int newNum, unsigned int* dynCap, unsigned int staCap, void **dynBuf, void *staBuf, unsigned int elementSize);

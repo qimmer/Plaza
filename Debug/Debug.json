@@ -1,8 +1,10 @@
 {
   "Roots": [
     {
-      "Name": "DebugServer",
+      "Name": "Debug Server",
       "ServerPort": 8080,
+      "HttpServerKeepAliveTimeout": 5,
+      "HttpServerKeepAliveMaxConnections": 100,
       "RestServerRoutes": [
         {
           "Name": "WebRoute",

@@ -82,7 +82,7 @@ API_EXPORT bool HasComponent (Entity entity, Entity component) {
     return GetComponentIndex(component, entity) != InvalidIndex;
 }
 
-API_EXPORT char * GetComponentData (Entity component, u32 index) {
+API_EXPORT char * GetComponentBytes(Entity component, u32 index) {
     if(index == InvalidIndex || !IsEntityValid(component)) return NULL;
 
     auto componentData = GetComponentType(component);
@@ -112,21 +112,25 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
             for(auto i = 0; i < GetNumBases(component); ++i) {
                 auto base = bases[i];
                 auto dependency = GetBaseComponent(base);
-                AddComponent(entity, dependency);
+                if(IsEntityValid(dependency)) {
+                    AddComponent(entity, dependency);
+                }
             }
 
             auto properties = GetProperties(component);
             for(auto i = 0; i < GetNumProperties(component); ++i) {
                 auto property = properties[i];
                 if(GetPropertyKind(property) == PropertyKind_Child) {
-                    auto child = CreateEntity();
+                    auto child = __CreateEntity();
                     SetOwner(child, entity, property);
                     __InjectChildPropertyValue(property, entity, child);
                     AddComponent(child, GetPropertyChildComponent(property));
                 }
             }
 
-            FireEvent(EventOf_EntityComponentAdded(), component, entity);
+			Type types[] = { TypeOf_Entity, TypeOf_Entity };
+			const void* values[] = { &component, &entity };
+			FireEventFast(EventOf_EntityComponentAdded(), 2, types, values);
         }
 
         Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Component %s has been added to Entity %s.", GetDebugName(component), GetDebugName(entity));
@@ -141,7 +145,9 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     Assert(component, IsEntityValid(component));
 
     if(HasComponent(entity, component)) {
-        FireEvent(EventOf_EntityComponentRemoved(), component, entity);
+		Type types[] = { TypeOf_Entity, TypeOf_Entity };
+		const void* values[] = { &component, &entity };
+		FireEventFast(EventOf_EntityComponentRemoved(), 2, types, values);
 
         if(HasComponent(entity, component)) {
             auto componentData = GetComponentType(component);

@@ -12,6 +12,10 @@ target_include_directories(File PUBLIC ".." ".")
 
 target_link_libraries(File Foundation Core)
 
+if(MSVC)
+    target_sources(File PRIVATE File.def)
+endif()
+
 if(BUILD_SHARED_LIBS)
 install (TARGETS File RUNTIME DESTINATION bin)
     endif()

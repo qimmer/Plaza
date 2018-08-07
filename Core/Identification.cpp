@@ -138,7 +138,7 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
             auto foundProperty = FindEntityByName(ComponentOf_Property(), element);
 
             if(!IsEntityValid(foundProperty)) {
-                Log(0, LogSeverity_Error, "Property '%s' not found.", element);
+                Log(0, LogSeverity_Warning, "Property '%s' not found.", element);
                 return 0;
             }
 
@@ -146,7 +146,7 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
                 case PropertyKind_Child:
                     GetPropertyValue(foundProperty, currentEntity, &currentEntity);
                     if(!IsEntityValid(currentEntity)) {
-                        Log(0, LogSeverity_Error, "Entity '%s' has no %s.", GetName(currentEntity), element);
+                        Log(0, LogSeverity_Warning, "Entity '%s' has no %s.", GetName(currentEntity), element);
                         return 0;
                     }
                     break;
@@ -182,29 +182,6 @@ API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relative
     return relativePath;
 }
 
-API_EXPORT Entity CopyEntity(Entity templateEntity, Entity destinationEntity) {
-    char buffer[128];
-
-    auto copy = CreateEntity();
-
-    for(auto i = 0; i < GetComponentMax(ComponentOf_Component()); ++i) {
-        auto component = GetComponentEntity(ComponentOf_Component(), i);
-
-        if(HasComponent(templateEntity, component)) {
-            for(auto j = 0; j < GetComponentMax(ComponentOf_Property()); ++j) {
-                auto property = GetComponentEntity(ComponentOf_Property(), j);
-
-                if(GetOwner(property) != component) continue;
-
-                GetPropertyValue(property, templateEntity, buffer);
-                SetPropertyValue(property, copy, buffer);
-            }
-        }
-    }
-
-    return copy;
-}
-
 API_EXPORT void SetName(Entity entity, StringRef name) {
     AddComponent(entity, ComponentOf_Identification());
 
@@ -236,6 +213,10 @@ void __InitializeNode() {
 
 API_EXPORT StringRef GetName(Entity entity)  {
     auto data = GetIdentificationData(entity);
+	if (!data) {
+		return 0;
+	}
+
     return data->Name;
 }
 

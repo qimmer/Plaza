@@ -10,7 +10,9 @@
 
 Unit(JsonPersistance)
 
-bool SerializeJson(Entity stream, Entity entity);
+bool SerializeJson(Entity stream, Entity entity, bool includeChildren = true);
 bool DeserializeJson(Entity stream, Entity entity);
+
+Function(DeserializeJsonFromString, bool, Entity stream, Entity entity, StringRef jsonString)
 
 #endif //PLAZA_JSONPERSISTANCEPOINT_H

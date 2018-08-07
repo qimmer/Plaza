@@ -28,7 +28,7 @@ Component(Module)
 Event(ModuleInitialized)
 
 Function(GetModuleRoot, Entity)
-Function(LoadModule, Entity, StringRef libraryPath)
+Function(LoadPlazaModule, Entity, StringRef libraryPath)
 
 void __InitializeModule();
 

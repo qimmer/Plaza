@@ -16,6 +16,13 @@
 
 static Entity nullEntity = 0;
 
+struct EntityVectorStruct {
+	u32 Count;
+	u32 DynCapacity;
+	Entity *DynBuf;
+	Entity StaBuf[1];
+};
+
 struct Ownership {
     Entity Owner, OwnerProperty;
 };
@@ -42,7 +49,7 @@ struct ArrayProperty {
 API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *newValueData) {
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
-    auto propertyData = (Property*)GetComponentData(ComponentOf_Property(), propertyIndex);
+    auto propertyData = (Property*) GetComponentBytes(ComponentOf_Property(), propertyIndex);
 
     if(!propertyData) {
         Log(context, LogSeverity_Error, "Property has not been registered.");
@@ -62,7 +69,7 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
     auto offset = propertyData->PropertyOffset;
 
     auto componentIndex = GetComponentIndex(component, context);
-    auto componentData = GetComponentData(component, componentIndex);
+    auto componentData = GetComponentBytes(component, componentIndex);
     Assert(property, componentData);
 
     auto valueData = componentData + offset;
@@ -102,7 +109,7 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
 API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut) {
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
-    auto propertyData = (Property*)GetComponentData(ComponentOf_Property(), propertyIndex);
+    auto propertyData = (Property*) GetComponentBytes(ComponentOf_Property(), propertyIndex);
 
     if(!propertyData) {
         return false;
@@ -113,7 +120,7 @@ API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut)
     auto offset = propertyData->PropertyOffset;
 
     auto componentIndex = GetComponentIndex(component, context);
-    auto componentData = GetComponentData(component, componentIndex);
+    auto componentData = GetComponentBytes(component, componentIndex);
 
     if(componentIndex == InvalidIndex || !componentData) {
         if(propertyData->PropertyKind == PropertyKind_String) {
@@ -153,7 +160,7 @@ API_EXPORT u32 __InjectArrayPropertyElement(Entity property, Entity entity, Enti
 
     auto propertyData = GetPropertyData(property);
 
-    VectorStruct *s = 0;
+	EntityVectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
     Assert(entity, s);
 
@@ -161,9 +168,12 @@ API_EXPORT u32 __InjectArrayPropertyElement(Entity property, Entity entity, Enti
     auto staticCap = (propertyData->PropertySize - sizeof(u32) * 2 - sizeof(char*)) / elementSize;
     __SetVectorAmount(&s->Count, s->Count + 1, &s->DynCapacity, staticCap, (void**)&s->DynBuf, s->StaBuf, elementSize);
 
-    auto elementData = &(GetVector(*s)[sizeof(Entity) * (s->Count-1)]);
+	{
+		auto elementData = &(GetVector(*s)[s->Count - 1]);
 
-    *(Entity*)elementData = element;
+		*(Entity*)elementData = element;
+	}
+    
     AddComponent(element, ComponentOf_Ownership());
 
     auto ownership = GetOwnershipData(element);
@@ -172,17 +182,17 @@ API_EXPORT u32 __InjectArrayPropertyElement(Entity property, Entity entity, Enti
 
     AddComponent(element, propertyData->PropertyChildComponent);
 
-    GetArrayPropertyElement(property, entity, s->Count - 1);
+	{
+		const Type argumentTypes[] = { TypeOf_Entity, TypeOf_Entity, TypeOf_Entity };
+		const void * argumentData[] = { &entity, &nullEntity, &element };
 
-    const Type argumentTypes[] = {TypeOf_Entity, TypeOf_Entity, TypeOf_Entity};
-    const void * argumentData[] = {&entity, &nullEntity, &element};
+		const Type genericArgumentTypes[] = { TypeOf_Entity, TypeOf_Entity };
+		const void * genericArgumentData[] = { &property, &entity };
 
-    const Type genericArgumentTypes[] = {TypeOf_Entity, TypeOf_Entity};
-    const void * genericArgumentData[] = {&property, &entity};
-
-    FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
-    FireEventFast(EventOf_PropertyChanged(), 2, genericArgumentTypes, genericArgumentData);
-
+		FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+		FireEventFast(EventOf_PropertyChanged(), 2, genericArgumentTypes, genericArgumentData);
+	}
+    
     return s->Count - 1;
 }
 
@@ -191,7 +201,7 @@ API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Enti
     Assert(property, IsEntityValid(value));
 
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
-    auto propertyData = (Property*)GetComponentData(ComponentOf_Property(), propertyIndex);
+    auto propertyData = (Property*) GetComponentBytes(ComponentOf_Property(), propertyIndex);
 
     if(!propertyData) {
         Log(context, LogSeverity_Error, "Property has not been registered.");
@@ -207,7 +217,7 @@ API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Enti
     auto offset = propertyData->PropertyOffset;
 
     auto componentIndex = GetComponentIndex(component, context);
-    auto componentData = GetComponentData(component, componentIndex);
+    auto componentData = GetComponentBytes(component, componentIndex);
     Assert(property, componentData);
     auto valueData = componentData + offset;
 
@@ -219,7 +229,7 @@ API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Enti
 }
 
 API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity) {
-    auto element = CreateEntity();
+    auto element = __CreateEntity();
     char name[512];
     snprintf(name, 512, "%s_%lu", GetName(property), GetEntityIndex(element));
     SetName(element, name);
@@ -229,13 +239,13 @@ API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity) {
 API_EXPORT bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 index) {
     auto propertyData = GetPropertyData(property);
 
-    VectorStruct *s = 0;
+	EntityVectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
 
     if(!s) return false;
 
-    auto removalElementData = &GetVector(*s)[sizeof(Entity) * index];
-    auto lastElementData = &GetVector(*s)[sizeof(Entity) * (s->Count - 1)];
+    auto removalElementData = &GetVector(*s)[index];
+    auto lastElementData = &GetVector(*s)[s->Count - 1];
 
     auto removalEntity = *(Entity*)removalElementData;
 
@@ -254,12 +264,17 @@ API_EXPORT bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 i
     }
 
     // First, replace removal element with last element
-    memmove(removalElementData, lastElementData, sizeof(Entity));
+	if (removalElementData != lastElementData) {
+		memmove(removalElementData, lastElementData, sizeof(Entity));
+	}
 
     // Now, cut the last element off from the end, shrinking the array
-    auto elementSize = GetTypeSize(propertyData->PropertyType);
-    auto staticCap = (propertyData->PropertySize - sizeof(u32) * 2 - sizeof(char*)) / elementSize;
-    __SetVectorAmount(&s->Count, s->Count - 1, &s->DynCapacity, staticCap, (void**)&s->DynBuf, s->StaBuf, elementSize);
+	GetVector(*s)[index] = GetVector(*s)[s->Count - 1];
+	GetVector(*s)[s->Count - 1] = 0;
+	
+	auto elementSize = GetTypeSize(propertyData->PropertyType);
+	auto staticCap = (propertyData->PropertySize - sizeof(u32) * 2 - sizeof(char*)) / elementSize;
+	__SetVectorAmount(&s->Count, s->Count - 1, &s->DynCapacity, staticCap, (void**)&s->DynBuf, s->StaBuf, elementSize);
 
     return true;
 }
@@ -267,24 +282,42 @@ API_EXPORT bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 i
 API_EXPORT Entity GetArrayPropertyElement(Entity property, Entity entity, u32 index) {
     auto propertyData = GetPropertyData(property);
 
-    VectorStruct *s = 0;
+	EntityVectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
 
     if(!s) return 0;
 
     Assert(entity, s && s->Count > index);
-    auto child = ((Entity*)GetVector(*s))[index];
-    Assert(entity, IsEntityValid(child));
+    auto child = (GetVector(*s))[index];
     return child;
 }
 
 API_EXPORT Entity *GetArrayPropertyElements(Entity property, Entity entity) {
     auto propertyData = GetPropertyData(property);
 
-    VectorStruct *s = 0;
+    EntityVectorStruct *s = 0;
     GetPropertyValue(property, entity, &s);
 
-    return s ? ((Entity*)GetVector(*s)) : NULL;
+    return s ? (GetVector(*s)) : NULL;
+}
+
+API_EXPORT void CopyEntity(Entity templateEntity, Entity destinationEntity) {
+	char buffer[128];
+
+	for (auto i = 0; i < GetComponentMax(ComponentOf_Component()); ++i) {
+		auto component = GetComponentEntity(ComponentOf_Component(), i);
+
+		if (HasComponent(templateEntity, component)) {
+			for (auto j = 0; j < GetComponentMax(ComponentOf_Property()); ++j) {
+				auto property = GetComponentEntity(ComponentOf_Property(), j);
+
+				if (GetOwner(property) != component) continue;
+
+				GetPropertyValue(property, templateEntity, buffer);
+				SetPropertyValue(property, destinationEntity, buffer);
+			}
+		}
+	}
 }
 
 void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind) {

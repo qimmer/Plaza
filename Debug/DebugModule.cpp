@@ -6,6 +6,7 @@
 #include <Foundation/FoundationModule.h>
 #include <Networking/NetworkingModule.h>
 #include <Json/JsonModule.h>
+#include <Json/NativeUtils.h>
 #include <Rest/RestModule.h>
 #include <File/FileModule.h>
 #include "DebugModule.h"
@@ -20,18 +21,25 @@ BeginUnit(DebugServer)
         RegisterChildProperty(EntityTracker, EntityTracker)
     EndComponent()
 
-    RegisterFileType(".html", "text/html", 0)
-    RegisterFileType(".css", "text/css", 0)
-    RegisterFileType(".js", "application/javascript", 0)
+	ModuleData(
+		{
+			"FileTypes": [
+				{ "FileTypeExtension": ".html", "FileTypeMimeType" : "text/html" },
+				{ "FileTypeExtension": ".css", "FileTypeMimeType" : "text/css" },
+				{ "FileTypeExtension": ".map", "FileTypeMimeType" : "text/map" },
+				{ "FileTypeExtension": ".js", "FileTypeMimeType" : "application/javascript" }
+			]
+		}
+	);
 EndUnit()
 
 BeginModule(Debug)
     RegisterDependency(Core)
     RegisterDependency(Foundation)
+    RegisterDependency(File)
     RegisterDependency(Networking)
     RegisterDependency(Json)
     RegisterDependency(Rest)
-    RegisterDependency(File)
     RegisterUnit(DebugServer)
     RegisterUnit(EntityTracker)
     RegisterData("file://Debug.json")

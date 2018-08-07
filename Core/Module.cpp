@@ -45,7 +45,7 @@ BeginUnit(Module)
     EndComponent()
 
     RegisterFunction(GetModuleRoot)
-    RegisterFunction(LoadModule)
+    RegisterFunction(LoadPlazaModule)
 
     RegisterEvent(ModuleInitialized)
 EndUnit()
@@ -53,18 +53,9 @@ EndUnit()
 API_EXPORT Entity GetModuleRoot() {
     static Entity root = 0;
     if(root == 0) {
-        root = CreateEntity();
+        root = __CreateEntity();
         AddComponent(root, ComponentOf_ModuleRoot());
         SetName(root, "ModuleRoot");
-    }
-    return root;
-}
-
-API_EXPORT Entity GetUnregisteredEntitiesRoot() {
-    static Entity root = 0;
-    if(root == 0) {
-        root = CreateEntity();
-        SetName(root, "Unregistered");
     }
     return root;
 }
@@ -137,7 +128,7 @@ static Entity LoadModuleWin32(StringRef dllPath) {
 
 #endif
 
-API_EXPORT Entity LoadModule(StringRef libraryPath) {
+API_EXPORT Entity LoadPlazaModule(StringRef libraryPath) {
 #ifdef WIN32
     return LoadModuleWin32(libraryPath);
 #endif

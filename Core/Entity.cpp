@@ -52,7 +52,7 @@ API_EXPORT Entity GetNextEntity (Entity entity) {
     return GetEntity(index, gen); 
 } 
 
-API_EXPORT Entity CreateEntity () {
+Entity __CreateEntity () {
     u32 index;
     if (FreeSlots.size()) {
         index = FreeSlots[FreeSlots.size() - 1];
@@ -71,13 +71,15 @@ API_EXPORT Entity CreateEntity () {
     Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Entity Created: %s", GetDebugName(entity));
 
     if(__IsCoreInitialized) {
-        FireEvent(EventOf_EntityCreated(), entity);
+		Type types[] = { TypeOf_Entity };
+		const void* values[] = { &entity };
+        FireEventFast(EventOf_EntityCreated(), 1, types, values);
     }
 
     return entity;
 }
 
-API_EXPORT void __DestroyEntity(Entity entity) {
+void __DestroyEntity(Entity entity) {
     if (!IsEntityValid(entity)) {
         return;
     }
@@ -102,7 +104,9 @@ API_EXPORT void __DestroyEntity(Entity entity) {
         }
     }
 
-    FireEvent(EventOf_EntityDestroyed(), entity);
+	Type types[] = { TypeOf_Entity };
+	const void* values[] = { &entity };
+	FireEventFast(EventOf_EntityDestroyed(), 1, types, values);
     
     auto index = GetEntityIndex(entity);
     FreeSlots.push_back(index);

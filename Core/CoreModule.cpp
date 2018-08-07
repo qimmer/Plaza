@@ -73,13 +73,3 @@ void __InitModule_Core (Entity module) {
     SetModuleSourcePath(module, __FILE__);
     SetModuleVersion(module, __DATE__ " " __TIME__);
 EndModule()
-
-API_EXPORT void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
-{
-    return ::malloc(size);
-}
-
-API_EXPORT void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
-{
-    return ::malloc(size);
-}

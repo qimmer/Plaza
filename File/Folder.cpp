@@ -17,7 +17,7 @@
 #include <Core/Identification.h>
 
 struct Folder {
-    char FolderPath[PATH_MAX];
+    char FolderPath[PathMax];
     Vector(FolderSubfolders, Entity, 32);
     Vector(FolderFiles, Entity, 128);
 };

@@ -22,11 +22,18 @@ struct FoundationData {
     Entity TaskQueue, FilesystemUpdateTimer;
 };
 
+struct FoundationModule {
+	Vector(FileTypes, Entity, 32)
+};
+
 BeginUnit(Foundation)
     BeginComponent(FoundationData)
         RegisterChildProperty(TaskQueue, TaskQueue)
         RegisterChildProperty(Timer, FilesystemUpdateTimer)
     EndComponent()
+	BeginComponent(FoundationModule)
+		RegisterArrayProperty(FileType, FileTypes)
+	EndComponent()
 EndUnit()
 
 BeginModule(Foundation, ComponentOf_FoundationData())

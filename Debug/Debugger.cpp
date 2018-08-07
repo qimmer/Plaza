@@ -22,7 +22,7 @@ int main(int argc, char** argv) { \
     ModuleOf_Debug();
 
     for(auto i = 1; i < argc; ++i) {
-        auto module = LoadModule(argv[i]);
+        auto module = LoadPlazaModule(argv[i]);
         if(IsEntityValid(module)) {
             printf("Module '%s' Loaded from '%s'.\n", GetName(module), argv[i]);
         }

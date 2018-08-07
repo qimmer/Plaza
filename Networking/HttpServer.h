@@ -10,7 +10,12 @@
 Unit(HttpServer)
     Component(HttpServer)
         ArrayProperty(HttpRequest, HttpServerRequests)
+        ArrayProperty(HttpResponse, HttpServerResponses)
+        Property(u16, HttpServerKeepAliveTimeout)
+        Property(u16, HttpServerKeepAliveMaxConnections)
 
-    Event(HttpServerRequest, Entity request)
+    Component(HttpStream)
+
+    Event(HttpServerRequest, Entity request, Entity response)
 
 #endif //PLAZA_HTTPSERVER_H

@@ -14,7 +14,7 @@ angular.module('plaza').service('entityService', function($http, $timeout, $root
         }
         
         for(var key in newObject) {
-            if(typeof newObject[key] == 'object') {
+            if(typeof newObject[key] == 'object' && newObject[key] != null) {
                 if(original[key] === undefined) {
                     original[key] = newObject[key];
                 }
@@ -181,7 +181,9 @@ angular.module('plaza').service('entityService', function($http, $timeout, $root
                 for(var i = 0; i < modifiedEntities.length; ++i) {
                     var path = modifiedEntities[i].EntityModificationEntity;
                     var modificationPath = "/Modules/Debug/EntityTracker/EntityModifications/" + modifiedEntities[i].Name;
-                    getJobs.push(service.getEntity(scope, path));
+                    if(path) {
+                        getJobs.push(service.getEntity(scope, path));
+                    }
                     getJobs.push(service.deleteEntity(scope, modificationPath));
                 }
 

@@ -12,6 +12,18 @@
 #include <stdio.h>
 #include <Core/Vector.h>
 
+
+inline void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
+{
+	return ::malloc(size);
+}
+
+inline void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
+{
+	return ::malloc(size);
+}
+
+
 typedef u64 Entity;
 
 typedef bool(*FunctionCaller)(u64 functionImplementation, Type returnArgumentTypeIndex, void *returnData, u32 numArguments, const Type *argumentTypes, const void **argumentDataPtrs);
@@ -39,8 +51,8 @@ bool AddComponent(Entity entity, Entity type);
 bool HasComponent(Entity entity, Entity component);
 u32 GetComponentMax(Entity component);
 Entity GetComponentEntity(Entity component, u32 index);
-char * GetComponentData(Entity component, u32 index);
-u32 GetComponentIndex(Entity entity, Entity component);
+char * GetComponentBytes(Entity component, u32 index);
+u32 GetComponentIndex(Entity component, Entity entity);
 Entity GetComponentAddedEvent(Entity component);
 Entity GetComponentRemovedEvent(Entity component);
 void SetComponentSize(Entity entity, u16 size);
@@ -56,7 +68,6 @@ void SetPropertyChildComponent(Entity entity, Entity component);
 void SetPropertyKind(Entity property, u8 kind);
 bool GetPropertyValue(Entity entity, Entity context, void *dataOut);
 Entity GetOwner(Entity entity);
-void FireEvent(Entity event, Entity context, ...);
 void FireEventFast(
         Entity event,
         u32 numArguments,
@@ -104,22 +115,23 @@ inline void __FireEventVa(Entity event, T... args) {
     struct NAME;\
     Declare(Component, NAME)\
     inline NAME * Get ## NAME ## Data(Entity entity) {\
-        return (NAME*)GetComponentData(ComponentOf_ ## NAME(), GetComponentIndex(ComponentOf_ ## NAME(), entity));\
+        return (NAME*)GetComponentBytes(ComponentOf_ ## NAME(), GetComponentIndex(ComponentOf_ ## NAME(), entity));\
     }
 
-#define Module(NAME) \
-    Entity ModuleOf_ ## NAME ();
 
 #define Unit(NAME) \
     void __InitUnit_ ## NAME (Entity module);
 
+#define Module(NAME) \
+    Entity ModuleOf_ ## NAME ();
+
 #define Event(NAME, ...) \
-    static const StringRef __Event ## NAME = #__VA_ARGS__;\
+    static const StringRef __Event ## NAME = (#__VA_ARGS__ "");\
     Declare(Event, NAME)
 
 #define __PropertyCoreGetOnly(COMPONENT, PROPERTYTYPE, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
-    static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
+    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     Event(PROPERTYNAME ## Changed, Entity changedEntity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue)\
     PROPERTYTYPE Get ## PROPERTYNAME(Entity entity);\
 
@@ -148,7 +160,7 @@ inline void __FireEventVa(Entity event, T... args) {
 
 #define Property(PROPERTYTYPE, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
-    static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
+    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     Event(PROPERTYNAME ## Changed, Entity changedEntity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue)\
     inline PROPERTYTYPE Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
@@ -162,9 +174,24 @@ inline void __FireEventVa(Entity event, T... args) {
         SetPropertyValue(prop, entity, &value);\
     }
 
+
+#define ReferenceProperty(REFERENCECOMPONENT, PROPERTYNAME, ...) \
+    Declare(Property, PROPERTYNAME) \
+    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
+    inline Entity Get ## PROPERTYNAME(Entity entity) {\
+        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
+        Entity value = 0;\
+        GetPropertyValue(prop, entity, &value);\
+        return value;\
+    }\
+    inline void Set ## PROPERTYNAME(Entity entity, Entity value) {\
+        static Entity prop = PropertyOf_ ## PROPERTYNAME ();\
+        SetPropertyValue(prop, entity, &value);\
+    }
+
 #define ChildProperty(CHILDCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
-    static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
+    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     inline Entity Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         Entity value = 0;\
@@ -175,7 +202,7 @@ inline void __FireEventVa(Entity event, T... args) {
 
 #define __ChildPropertyCore(CHILDCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
-    static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
+    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     Entity Get ## PROPERTYNAME(Entity entity);
 
 
@@ -189,7 +216,7 @@ inline void __FireEventVa(Entity event, T... args) {
 
 #define ArrayProperty(ELEMENTCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
-    static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
+    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     inline const Entity* Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         return GetArrayPropertyElements(prop, entity);\
@@ -211,7 +238,7 @@ inline void __FireEventVa(Entity event, T... args) {
 
 #define __ArrayPropertyCore(ELEMENTCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
-    static const StringRef __ ## PROPERTYNAME ## __Meta = #__VA_ARGS__;\
+    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     const Entity* Get ## PROPERTYNAME(Entity entity);\
     u32 GetNum ## PROPERTYNAME(Entity entity);\
     Entity Add ## PROPERTYNAME(Entity entity);\
@@ -232,7 +259,7 @@ inline void __FireEventVa(Entity event, T... args) {
         return 0;\
     }\
     API_EXPORT Entity Add ## PROPERTYNAME(Entity entity) {\
-        auto element = CreateEntity();\
+        auto element = __CreateEntity();\
         auto valueData = Get ## COMPONENT ## Data(entity);\
         VectorAdd(valueData->PROPERTYNAME, element);\
         AddComponent(element, ComponentOf_Ownership());\
@@ -370,7 +397,9 @@ inline void __FireEventVa(Entity event, T... args) {
         ModuleOf_ ## MODULE (); // Reference and call module initializer
 
 #define EndModule() \
-        FireEvent(EventOf_ModuleInitialized(), module);\
+		Type types[] = { TypeOf_Entity };\
+		const void* values[] = { &module };\
+        FireEventFast(EventOf_ModuleInitialized(), 1, types, values);\
     }
 
 #define BeginUnit(NAME) \
@@ -440,6 +469,19 @@ inline void __FireEventVa(Entity event, T... args) {
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
     SetPropertyKind(property, PropertyKind_Child);
 
+
+#define RegisterReferenceProperty(COMPONENTTYPE, PROPERTYNAME)\
+    property = PropertyOf_ ## PROPERTYNAME ();\
+    __InjectArrayPropertyElement(PropertyOf_Properties(), component, property);\
+    SetName(property, #PROPERTYNAME);\
+    SetPropertyType(property, TypeOf_Entity);\
+    SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
+    SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
+    SetPropertyMeta(property, __ ## PROPERTYNAME ## __Meta);\
+    SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
+    SetPropertyKind(property, PropertyKind_Value);
+
+
 #define RegisterBase(BASECOMPONENT) \
     base = GetArrayPropertyElement(PropertyOf_Bases(), component, AddArrayPropertyElement(PropertyOf_Bases(), component));\
     SetName(base, #BASECOMPONENT);\
@@ -487,10 +529,10 @@ inline void __FireEventVa(Entity event, T... args) {
 
 #define for_children(VARNAME, PROPERTY, PARENTENTITY) \
     Entity VARNAME = 0;\
-    auto count_ ## __LINE__ = GetNum ## PROPERTY (PARENTENTITY);\
-    auto entries_ ## __LINE__ = Get ## PROPERTY (PARENTENTITY);\
+    auto count = GetNum ## PROPERTY (PARENTENTITY);\
+    auto entries = Get ## PROPERTY (PARENTENTITY);\
     auto i = 0;\
-    for(VARNAME = entries_ ## __LINE__ [i]; i < count_ ## __LINE__; i++ & (VARNAME = entries_ ## __LINE__ [i]))
+    for(VARNAME = entries[i]; i < count; VARNAME = entries [++i])
 
 #include <Core/Module.h>
 #include <Core/Property.h>

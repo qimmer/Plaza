@@ -17,7 +17,6 @@ Unit(Event)
         __PropertyCore(Subscription, Entity, SubscriptionHandler)
 
 void SetEventArgsByDecl(Entity entity, StringRef decl);
-void FireEvent(Entity event, Entity context, ...);
 
 void FireEventFast(
     Entity event,

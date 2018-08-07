@@ -8,17 +8,31 @@
 #include <Core/NativeUtils.h>
 
 Unit(HttpRequest)
+    Component(HttpHeaderType)
+        Property(StringRef, HttpHeaderTypeIdentifier)
+
+    Component(HttpResponseCode)
+        Property(StringRef, HttpResponseCodeMessage)
+        Property(u16, HttpResponseCodeNumber)
+
     Component(HttpHeader)
+        ReferenceProperty(HttpHeaderType, HttpHeaderType)
         Property(StringRef, HttpHeaderValue)
 
     Component(HttpRequest)
         Property(StringRef, HttpRequestMethod)
         Property(StringRef, HttpRequestUrl)
         Property(StringRef, HttpRequestVersion)
-        ChildProperty(HttpResponse, HttpRequestResponse)
+        ArrayProperty(HttpHeader, HttpRequestHeaders)
+        ChildProperty(Stream, HttpRequestContentStream)
 
     Component(HttpResponse)
-        Property(u16, HttpResponseCode)
+        ReferenceProperty(HttpResponseType, HttpResponseCode)
+        ArrayProperty(HttpHeader, HttpResponseHeaders)
+        ChildProperty(Stream, HttpResponseContentStream)
+
+    Function(FindResponseCode, Entity, u16 responseCodeNumber)
+    Function(FindHeaderType, Entity, StringRef identifier)
 
 
 

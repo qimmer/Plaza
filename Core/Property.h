@@ -57,4 +57,7 @@ void SetPropertyMeta(Entity property, StringRef metaString);
 void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind);
 void __InitializeProperty();
 
+void AddElementFromDecl(Entity property, Entity module, StringRef decl);
+void SetChildFromDecl(Entity property, Entity module, StringRef decl);
+
 #endif //PLAZA_PROPERTY_H

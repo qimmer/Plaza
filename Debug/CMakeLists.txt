@@ -9,9 +9,15 @@ target_include_directories(Debug PUBLIC "..")
 
 target_link_libraries(Debug Core Foundation Networking Json File Rest)
 
-if(BUILD_SHARED_LIBS)
-install (TARGETS Debug RUNTIME DESTINATION bin)
+if(MSVC)
+    target_sources(Debug PRIVATE Debug.def)
 endif()
+
+
+if(BUILD_SHARED_LIBS)
+    install (TARGETS Debug RUNTIME DESTINATION bin)
+endif()
+
 INSTALL(FILES Debug.json DESTINATION bin )
 
 add_executable(Debugger Debugger.cpp)

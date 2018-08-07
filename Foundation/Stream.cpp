@@ -84,7 +84,7 @@ API_EXPORT u64 StreamRead(Entity entity, u64 size, void *data){
     if(!protocolData) return false;
 
     if(!protocolData->StreamReadHandler || !(streamData->StreamMode & StreamMode_Read)) {
-        return false;
+        return 0;
     }
 
     return protocolData->StreamReadHandler(entity, size, data);
@@ -121,7 +121,9 @@ API_EXPORT bool IsStreamOpen(Entity entity) {
 }
 
 API_EXPORT bool StreamOpen(Entity entity, int mode) {
-    Assert(entity, IsEntityValid(entity));
+    if(!IsEntityValid(entity)) {
+        return false;
+    }
 
     auto data = GetStreamData(entity);
     if(!data) return false;
@@ -173,7 +175,10 @@ API_EXPORT bool StreamClose(Entity entity) {
         if(data->InvalidationPending) {
             data->InvalidationPending = false;
             data->StreamMode = 0;
-            FireEvent(EventOf_StreamContentChanged(), entity);
+
+			Type types[] = { TypeOf_Entity };
+			const void* values[] = { &entity };
+			FireEventFast(EventOf_StreamContentChanged(), 1, types, values);
         }
 
         return true;
@@ -252,6 +257,8 @@ API_EXPORT StringRef GetFileName(StringRef absolutePath) {
 }
 
 API_EXPORT StringRef GetFileExtension(StringRef absolutePath) {
+    auto lastSlash = strrchr(absolutePath, '/');
+    if(lastSlash) absolutePath = lastSlash + 1;
     auto extension = strrchr(absolutePath, '.');
     if(!extension) return "";
     return extension;
@@ -428,7 +435,8 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     strncpy(protocolIdentifier, resolvedPath, len);
     protocolIdentifier[len] = 0;
 
-    auto extension = GetFileExtension(GetStreamResolvedPath(entity));
+	auto path = GetStreamResolvedPath(entity);
+    auto extension = GetFileExtension(path);
 
     StringRef mimeType = "application/octet-stream";
     auto oldProtocol = data->StreamProtocol;
@@ -493,7 +501,9 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
         }
     }
 
-    FireEvent(EventOf_StreamContentChanged(), entity);
+	Type types[] = { TypeOf_Entity };
+	const void* values[] = { &entity };
+	FireEventFast(EventOf_StreamContentChanged(), 1, types, values);
 }
 
 LocalFunction(OnProtocolChanged, void, Entity protocol) {

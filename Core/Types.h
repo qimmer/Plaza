@@ -2,8 +2,11 @@
 #define PLAZA_TYPES_H
 
 #if defined(_WIN32) || defined(_WIN64)
+#   if !defined(_MSVC_LANG)
 #       define API_EXPORT __declspec(dllexport)
-#       define API_IMPORT __declspec(dllimport)
+#   else
+#       define API_EXPORT
+#   endif
 #else
 #   define API_EXPORT __attribute__((visibility("default")))
 #   define API_IMPORT

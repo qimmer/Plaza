@@ -34,7 +34,9 @@ public:
             for_entity(fileStream, data, FileStream) {
                 auto data = GetFileStreamData(fileStream);
                 if(data->watchID == watchid) {
-                    FireEvent(EventOf_StreamContentChanged(), fileStream);
+					Type types[] = { TypeOf_Entity };
+					const void* values[] = { &fileStream };
+					FireEventFast(EventOf_StreamContentChanged(), 1, types, values);
                     break;
                 }
             }

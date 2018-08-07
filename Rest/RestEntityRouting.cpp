@@ -6,6 +6,7 @@
 #include <Foundation/Stream.h>
 #include <Json/JsonPersistance.h>
 #include <Core/Identification.h>
+#include <Core/Debug.h>
 #include "RestEntityRouting.h"
 #include "RestRouting.h"
 
@@ -13,121 +14,139 @@ struct RestEntityRouting {
     Entity RestEntityRoutingRoot;
 };
 
-static u16 handleGet(StringRef entityPath, Entity request) {
+static Entity handleGet(StringRef entityPath, Entity request, Entity response) {
+    auto responseStream = GetHttpResponseContentStream(response);
+
     auto requestedEntity = FindEntityByPath(entityPath);
 
-    if(!IsEntityValid(requestedEntity)) return 404;
+	if (!IsEntityValid(requestedEntity)) {
+		Log(request, LogSeverity_Error, "GET: Entity not found: %s", entityPath);
+		return FindResponseCode(404);
+	}
 
-    auto response = GetHttpRequestResponse(request);
-    SetStreamPath(response, "memory://response.json");
+    SetStreamPath(responseStream, "memory://response.json");
 
-    if(!SerializeJson(response, requestedEntity)) {
-        return 500;
+    if(!SerializeJson(responseStream, requestedEntity)) {
+		Log(request, LogSeverity_Error, "GET: Error serializing %s", entityPath);
+
+        return FindResponseCode(500);
     }
 
-    return 200;
+    return FindResponseCode(200);
 }
 
-static u16 handlePut(StringRef entityPath, Entity request) {
+static Entity handlePut(StringRef entityPath, Entity request, Entity response) {
+    auto requestStream = GetHttpRequestContentStream(request);
+
     auto requestedEntity = FindEntityByPath(entityPath);
 
-    if(!IsEntityValid(requestedEntity)) return 404;
+	if (!IsEntityValid(requestedEntity)) {
+		Log(request, LogSeverity_Error, "PUT: Entity not found: %s", entityPath);
+		return FindResponseCode(404);
+	}
 
-    auto response = GetHttpRequestResponse(request);
-
-    if(!DeserializeJson(request, requestedEntity)) {
-        return 500;
+    if(!DeserializeJson(requestStream, requestedEntity)) {
+		Log(request, LogSeverity_Error, "PUT: Error serializing %s", entityPath);
+        return FindResponseCode(500);
     }
 
-    return 200;
+    return FindResponseCode(200);
 }
 
-static u16 handlePost(StringRef entityPath, Entity request) {
+static Entity handlePost(StringRef entityPath, Entity request, Entity response) {
     auto existing = FindEntityByPath(entityPath);
 
     if(IsEntityValid(existing)) {
-        return 409; // Conflict
+		Log(request, LogSeverity_Error, "POST: Entity already exists: %s", entityPath);
+        return FindResponseCode(409); // Conflict
     }
 
     char parentPath[PathMax];
     char propertyName[PathMax];
     char childName[PathMax];
 
-    if(!GetParentPath(entityPath, PathMax, propertyName)) return 404;
-    if(!GetParentPath(propertyName, PathMax, parentPath)) return 404;
+    if(!GetParentPath(entityPath, PathMax, propertyName)) return FindResponseCode(404);
+    if(!GetParentPath(propertyName, PathMax, parentPath)) return FindResponseCode(404);
     strcpy(childName, entityPath + strlen(propertyName) + 1);
 
     // Remove parent path from property path so the property name remains
     memmove(propertyName, propertyName + strlen(parentPath) + 1, strlen(entityPath) - strlen(parentPath) + 1);
 
     auto parent = FindEntityByPath(parentPath);
-    if(!IsEntityValid(parent)) return 404;
+    if(!IsEntityValid(parent)) return FindResponseCode(404);
 
     auto property = FindEntityByName(ComponentOf_Property(), propertyName);
-    if(!IsEntityValid(property)) return 404;
+    if(!IsEntityValid(property)) return FindResponseCode(404);
 
     if(GetPropertyKind(property) != PropertyKind_Array) {
-        return 404;
+        return FindResponseCode(404);
     }
 
     u32 newIndex = AddArrayPropertyElement(property, parent);
     auto newEntity = GetArrayPropertyElement(property, parent, newIndex);
     SetName(newEntity, childName);
 
-    if(HasComponent(request, ComponentOf_Stream())) {
-        DeserializeJson(request, newEntity);
+    auto requestStream = GetHttpRequestContentStream(request);
+    auto responseStream = GetHttpResponseContentStream(response);
+
+    if(HasComponent(requestStream, ComponentOf_Stream())) {
+        DeserializeJson(requestStream, newEntity);
     }
 
-    auto response = GetHttpRequestResponse(request);
-    SetStreamPath(response, "memory://response.json");
+    SetStreamPath(responseStream, "memory://response.json");
 
-    if(!SerializeJson(response, newEntity)) {
-        return 500;
+    if(!SerializeJson(responseStream, newEntity)) {
+        return FindResponseCode(500);
     }
 
-    return 201;
+    return FindResponseCode(201);
 }
 
-static u16 handleDelete(StringRef entityPath, Entity request) {
+static Entity handleDelete(StringRef entityPath, Entity request, Entity response) {
     auto existing = FindEntityByPath(entityPath);
 
-    if(!IsEntityValid(existing)) {
-        return 404;
-    }
+	if (!IsEntityValid(existing)) {
+		Log(request, LogSeverity_Error, "DELETE: Entity not found: %s", entityPath);
+		return FindResponseCode(404);
+	}
 
     char parentPath[PathMax];
     char propertyName[PathMax];
     char childName[PathMax];
 
-    if(!GetParentPath(entityPath, PathMax, propertyName)) return 404;
-    if(!GetParentPath(propertyName, PathMax, parentPath)) return 404;
+    if(!GetParentPath(entityPath, PathMax, propertyName)) return FindResponseCode(404);
+    if(!GetParentPath(propertyName, PathMax, parentPath)) return FindResponseCode(404);
 
     // Remove parent path from property path so the property name remains
     memmove(propertyName, propertyName + strlen(parentPath) + 1, strlen(entityPath) - strlen(parentPath) + 1);
 
     auto parent = FindEntityByPath(parentPath);
-    if(!IsEntityValid(parent)) return 500;
+    if(!IsEntityValid(parent)) return FindResponseCode(500);
 
     auto property = FindEntityByName(ComponentOf_Property(), propertyName);
-    if(!IsEntityValid(property)) return 500;
+    if(!IsEntityValid(property)) return FindResponseCode(500);
 
     if(GetPropertyKind(property) != PropertyKind_Array) {
-        return 500;
+		Log(request, LogSeverity_Error, "DELETE: Entity is not a removable array element: %s", entityPath);
+        return FindResponseCode(403);
     }
 
     auto children = GetArrayPropertyElements(property, parent);
     auto numChildren = GetArrayPropertyCount(property, parent);
     for(auto i = 0; i < numChildren; ++i) {
         if(children[i] == existing) {
-            RemoveArrayPropertyElement(property, parent, i);
-            return 200;
+			if (!RemoveArrayPropertyElement(property, parent, i)) {
+				return FindResponseCode(500);
+			}
+
+            return FindResponseCode(200);
         }
     }
 
-    return 404;
+    return FindResponseCode(500);
 }
 
-LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request) {
+LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity response) {
     auto data = GetRestEntityRoutingData(routing);
 
     if(data && IsEntityValid(data->RestEntityRoutingRoot)) {
@@ -140,18 +159,21 @@ LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request) {
 
         snprintf(completeRoute, 1024, "%s%s", entityPath, relativeUrl);
 
-        // 500 if handlers do not set any response code
-        SetHttpResponseCode(GetHttpRequestResponse(request), 500);
-
         auto method = GetHttpRequestMethod(request);
-        auto responseCode = 500;
-        if(strcmp(method, "GET") == 0) responseCode = handleGet(completeRoute, request);
-        else if(strcmp(method, "PUT") == 0) responseCode = handlePut(completeRoute, request);
-        else if(strcmp(method, "POST") == 0) responseCode = handlePost(completeRoute, request);
-        else if(strcmp(method, "DELETE") == 0) responseCode = handleDelete(completeRoute, request);
-        else responseCode = 405;
+        auto responseCode = FindResponseCode(500);
+		if (strcmp(method, "GET") == 0) {
+			responseCode = handleGet(completeRoute, request, response);
+		} else if (strcmp(method, "PUT") == 0) {
+			responseCode = handlePut(completeRoute, request, response);
+		} else if (strcmp(method, "POST") == 0) {
+			responseCode = handlePost(completeRoute, request, response);
+		} else if (strcmp(method, "DELETE") == 0) {
+			responseCode = handleDelete(completeRoute, request, response);
+		} else {
+			responseCode = FindResponseCode(405);
+		}
 
-        SetHttpResponseCode(GetHttpRequestResponse(request), responseCode);
+        SetHttpResponseCode(response, responseCode);
     }
 }
 

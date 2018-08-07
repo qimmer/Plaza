@@ -9,4 +9,9 @@
 
 Module(Networking)
 
+Unit(Networking)
+    Component(Networking)
+        ArrayProperty(HttpHeaderType, HttpHeaderTypes)
+        ArrayProperty(HttpResponseCode, HttpResponseCodes)
+
 #endif //PLAZA_NETWORKINGMODULE_H

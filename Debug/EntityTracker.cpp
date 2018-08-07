@@ -22,7 +22,7 @@ LocalFunction(OnPropertyChanged, void, Entity property, Entity entity) {
                 auto modification = GetVector(trackerData->EntityModifications)[i];
                 auto modificationData = GetEntityModificationData(modification);
 
-                if(modificationData->EntityModificationEntity == entity) {
+                if(modificationData && modificationData->EntityModificationEntity == entity) {
                     found = true;
                     break;
                 }

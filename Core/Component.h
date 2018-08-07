@@ -33,7 +33,7 @@ Unit(Component)
     Event(EntityComponentAdded, Entity entity)
     Event(EntityComponentRemoved, Entity entity)
 
-char * GetComponentData(Entity component, u32 index);
+char * GetComponentBytes(Entity component, u32 index);
 
 u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Entity *entity);
 

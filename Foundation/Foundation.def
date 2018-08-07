@@ -1,0 +1,17 @@
+LIBRARY Foundation
+EXPORTS
+	ModuleOf_Foundation
+	StreamOpen
+	IsStreamOpen
+	StreamSeek
+	StreamTell
+	StreamClose
+	StreamRead
+	StreamWrite
+	LoadEntityPath
+	ResolveVirtualPath
+	GetStreamResolvedPath
+	GetParentFolder
+	StreamCopy
+	StreamDelete
+	RunMainAppLoop

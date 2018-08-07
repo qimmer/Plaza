@@ -3,7 +3,11 @@ project(Rest)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Rest RestModule.cpp RestModule.h RestEntityRouting.cpp RestEntityRouting.h RestResourceRouting.cpp RestResourceRouting.h RestRouting.cpp RestRouting.h RestServer.cpp RestServer.h)
+add_library(Rest RestModule.cpp RestModule.h RestEntityRouting.cpp RestEntityRouting.h RestResourceRouting.cpp RestResourceRouting.h RestRouting.cpp RestRouting.h RestServer.cpp RestServer.h RestFunctionRouting.cpp RestFunctionRouting.h)
+
+if(MSVC)
+    target_sources(Rest PRIVATE Rest.def)
+endif()
 
 target_link_libraries(Rest PRIVATE Core Foundation Json Networking)
 target_include_directories(Rest PUBLIC "..")

@@ -12,19 +12,19 @@ struct RestRouting {
     char RestRoutingRoute[128];
 };
 
-LocalFunction(OnHttpServerRequest, void, Entity server, Entity request) {
+LocalFunction(OnHttpServerRequest, void, Entity server, Entity request, Entity response) {
     auto routes = GetRestServerRoutes(server);
     for(auto i = 0; i < GetNumRestServerRoutes(server); ++i) {
         auto data = GetRestRoutingData(routes[i]);
         if(data) {
-            if(memcmp(GetHttpRequestUrl(request), data->RestRoutingRoute, Min(strlen(GetHttpRequestUrl(request)), strlen(data->RestRoutingRoute))) == 0) {
-                FireEvent(EventOf_RestRoutingRequest(), routes[i], request);
+            auto requestUrl = GetHttpRequestUrl(request);
+            if(memcmp(GetHttpRequestUrl(request), data->RestRoutingRoute, Min(strlen(requestUrl), strlen(data->RestRoutingRoute))) == 0) {
+
+				Type types[] = { TypeOf_Entity, TypeOf_Entity, TypeOf_Entity };
+				const void* values[] = { &routes[i], &request, &response };
+				FireEventFast(EventOf_RestRoutingRequest(), 3, types, values);
             }
         }
-    }
-
-    for_children(child, RestServerRoutes, server) {
-
     }
 }
 

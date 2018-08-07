@@ -309,7 +309,7 @@ int __ArgStackOffset(int value) {
 }
 
 API_EXPORT u32 GetFunctionArguments(u32 functionIndex, u32 maxArguments, Type *argumentTypes) {
-    auto data = (Function*)GetComponentData(ComponentOf_Function(), functionIndex);
+    auto data = (Function*) GetComponentBytes(ComponentOf_Function(), functionIndex);
 
     for(auto i = 0; i < data->FunctionArguments.Count; ++i) {
         auto argumentData = GetFunctionArgumentData(GetVector(data->FunctionArguments)[i]);
@@ -320,7 +320,7 @@ API_EXPORT u32 GetFunctionArguments(u32 functionIndex, u32 maxArguments, Type *a
 }
 
 API_EXPORT Type GetFunctionReturnTypeByIndex(u32 functionIndex) {
-    auto data = (Function*)GetComponentData(ComponentOf_Function(), functionIndex);
+    auto data = (Function*) GetComponentBytes(ComponentOf_Function(), functionIndex);
     return data->FunctionReturnType;
 }
 

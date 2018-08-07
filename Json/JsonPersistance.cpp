@@ -5,6 +5,7 @@
 #include "JsonPersistance.h"
 #include <Core/Types.h>
 #include <Foundation/Stream.h>
+#include <Json/NativeUtils.h>
 #include <Foundation/PersistancePoint.h>
 #include <File/FileStream.h>
 #include <sstream>
@@ -15,11 +16,13 @@
 
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
 
 #include <EASTL/string.h>
 #include <EASTL/fixed_vector.h>
 #include <Foundation/NativeUtils.h>
 #include <Core/Identification.h>
+#include <Core/Math.h>
 
 using namespace eastl;
 
@@ -111,7 +114,7 @@ using namespace eastl;
         }\
         break;
 
-static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer);
+static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer, bool includeChildren);
 
 static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer) {
     char entityPath[PathMax];
@@ -163,7 +166,7 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjso
     return true;
 }
 
-static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer) {
+static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer, bool includeChildren) {
     bool result = true;
 
     writer.StartObject();
@@ -194,28 +197,30 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
                 {
                     Entity child = 0;
                     GetPropertyValue(property, parent, &child);
-                    if(IsEntityValid(child)) {
+                    if(IsEntityValid(child) && includeChildren) {
                         writer.String(GetName(property));
-                        result &= SerializeNode(child, root, writer);
+                        result &= SerializeNode(child, root, writer, includeChildren);
                     }
                 }
                     break;
                 case PropertyKind_Array:
                 {
-                    writer.String(GetName(property));
+                    if(includeChildren) {
+                        writer.String(GetName(property));
 
-                    auto count = GetArrayPropertyCount(property, parent);
-                    writer.StartArray();
-                    for(auto i = 0; i < count; ++i) {
-                        auto child = GetArrayPropertyElement(property, parent, i);
-                        if(IsEntityValid(child)) {
-                            result &= SerializeNode(child, root, writer);
-                        } else {
-                            writer.Null();
+                        auto count = GetArrayPropertyCount(property, parent);
+                        writer.StartArray();
+                        for(auto i = 0; i < count; ++i) {
+                            auto child = GetArrayPropertyElement(property, parent, i);
+                            if(IsEntityValid(child)) {
+                                result &= SerializeNode(child, root, writer, includeChildren);
+                            } else {
+                                writer.Null();
+                            }
+
                         }
-
+                        writer.EndArray();
                     }
-                    writer.EndArray();
                 }
                     break;
                 default:
@@ -315,10 +320,41 @@ static bool DeserializeValue(Entity parent, Entity property, Entity root, const 
     return true;
 }
 
+static StringRef GetJsonTypeName(const rapidjson::Value& value) {
+    StringRef jsonType = NULL;
+    switch(value.GetType()) {
+        case rapidjson::kNullType:      //!< null
+            jsonType = "Null";
+            break;
+        case rapidjson::kFalseType:     //!< false
+            jsonType = "False";
+            break;
+        case rapidjson::kTrueType:      //!< true
+            jsonType = "True";
+            break;
+        case rapidjson::kObjectType:    //!< object
+            jsonType = "Object";
+            break;
+        case rapidjson::kArrayType:     //!< array
+            jsonType = "Array";
+            break;
+        case rapidjson::kStringType:    //!< string
+            jsonType = "String";
+            break;
+        case rapidjson::kNumberType:     //!< number
+            jsonType = "Number";
+            break;
+        default:
+            jsonType = "Unknown";
+            break;
+    }
+    return jsonType;
+}
 static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& value, bool onlyHierarchy) {
     bool result = true;
 
     if(!value.IsObject()) {
+        Log(parent, LogSeverity_Error, "Json value for %s is not an object, but a %s. Skipping this node.", GetName(parent), GetJsonTypeName(value));
         return false;
     }
 
@@ -363,34 +399,7 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
             case PropertyKind_Array:
             {
                 if(!reader.IsArray()) {
-                    StringRef jsonType;
-                    switch(value.GetType()) {
-                        case rapidjson::kNullType:      //!< null
-                            jsonType = "Null";
-                            break;
-                        case rapidjson::kFalseType:     //!< false
-                            jsonType = "False";
-                            break;
-                        case rapidjson::kTrueType:      //!< true
-                            jsonType = "True";
-                            break;
-                        case rapidjson::kObjectType:    //!< object
-                            jsonType = "Object";
-                            break;
-                        case rapidjson::kArrayType:     //!< array
-                            jsonType = "Array";
-                            break;
-                        case rapidjson::kStringType:    //!< string
-                            jsonType = "String";
-                            break;
-                        case rapidjson::kNumberType:     //!< number
-                            jsonType = "Number";
-                            break;
-                        default:
-                            jsonType = "Unknown";
-                            break;
-                    }
-                    Log(parent, LogSeverity_Error, "Property %s is an array property, but JSON value is %s. Skipping this property", GetName(property), jsonType);
+                    Log(parent, LogSeverity_Error, "Property %s is an array property, but JSON value is %s. Skipping this property", GetName(property), GetJsonTypeName(reader));
                     continue;
                 }
                 AddComponent(parent, GetOwner(property));
@@ -439,34 +448,79 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
     return result;
 }
 
-API_EXPORT bool SerializeJson(Entity stream, Entity entity) {
+API_EXPORT bool DeserializeJsonFromString(Entity stream, Entity entity, StringRef jsonString) {
+    rapidjson::Document document;
+    auto size = strlen(jsonString);
+    auto parseResult = (rapidjson::ParseResult)document.Parse(jsonString, size);
+
+    if(parseResult.IsError()) {
+        char snippet[4096];
+        snprintf(snippet, 4096, ">> %s <<\n\n%s", jsonString + Min(size, parseResult.Offset()), jsonString);
+
+        Log(stream, LogSeverity_Error, "JSON parse error: %s %s", GetParseError_En(parseResult.Code()), snippet);
+        return false;
+    }
+
+    auto result = DeserializeNode(stream, entity, document, true) && DeserializeNode(entity, entity, document, false);
+
+    return result;
+}
+
+API_EXPORT bool SerializeJson(Entity stream, Entity entity, bool includeChildren) {
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-    auto result = SerializeNode(entity, entity, writer);
+    auto result = SerializeNode(entity, entity, writer, includeChildren);
 
     writer.Flush();
 
-    Assert(stream, StreamOpen(stream, StreamMode_Write));
+    bool streamWasOpen = IsStreamOpen(stream);
+    if(!streamWasOpen) {
+        Assert(stream, StreamOpen(stream, StreamMode_Write));
+    }
+
     Assert(stream, StreamWrite(stream, buffer.GetLength(), buffer.GetString()));
-    StreamClose(stream);
+
+    if(!streamWasOpen) {
+        StreamClose(stream);
+    }
 
     return result;
 }
 
 API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
-    Assert(stream, StreamOpen(stream, StreamMode_Read));
+    bool streamWasOpen = IsStreamOpen(stream);
+    auto startOffset = 0;
+    if(!streamWasOpen) {
+        Assert(stream, StreamOpen(stream, StreamMode_Read));
+    } else {
+        startOffset = StreamTell(stream);
+    }
+
+
     Assert(stream, StreamSeek(stream, StreamSeek_End));
     auto size = StreamTell(stream);
     char *data = (char*)malloc(size + 1);
     Assert(stream, data);
-    Assert(stream, StreamSeek(stream, 0));
+    Assert(stream, StreamSeek(stream, startOffset));
     Assert(stream, StreamRead(stream, size, data));
-    StreamClose(stream);
+
+    if(!streamWasOpen) {
+        StreamClose(stream);
+    }
+
     data[size] = '\0';
 
     rapidjson::Document document;
-    document.Parse(data, size);
+    auto parseResult = (rapidjson::ParseResult)document.Parse(data, size);
+
+    if(parseResult.IsError()) {
+        char snippet[4096];
+        snprintf(snippet, 4096, ">> %s <<\n\n%s", data + Min(size, parseResult.Offset()), data);
+
+        Log(stream, LogSeverity_Error, "JSON parse error: %s %s", GetParseError_En(parseResult.Code()), snippet);
+        return false;
+    }
 
     auto result = DeserializeNode(entity, entity, document, true) && DeserializeNode(entity, entity, document, false);
 
@@ -485,5 +539,12 @@ static bool Deserialize(Entity persistancePoint) {
 
 BeginUnit(JsonPersistance)
     RegisterSerializer(JsonSerializer, "application/json")
-    RegisterFileType(".json", "application/json", 0)
+
+	ModuleData(
+		{
+			"FileTypes": [
+				{ "FileTypeExtension": ".json", "FileTypeMimeType" : "application/json" }
+			]
+		}
+	);
 EndUnit()

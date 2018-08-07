@@ -17,7 +17,7 @@ API_EXPORT Entity GetUniqueEntity(StringRef name, bool *firstTime) {
 
     auto it = entityLookup.find(uniqueNameStr);
     if(it == entityLookup.end()) {
-        auto entity = entityLookup[uniqueNameStr] = CreateEntity();
+        auto entity = entityLookup[uniqueNameStr] = __CreateEntity();
         if(firstTime) *firstTime = true;
         Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Unique Entity %s Created: %s", name, GetDebugName(entity));
         return entity;

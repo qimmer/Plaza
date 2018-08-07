@@ -13,76 +13,81 @@ struct RestResourceRouting {
     char RestResourceRoutingDefaultFile[64];
 };
 
-static u16 handleGet(StringRef path, Entity request) {
-    auto response = GetHttpRequestResponse(request);
-    SetStreamPath(response, path);
-    if(!StreamOpen(response, StreamMode_Read)) {
-        RemoveComponent(response, ComponentOf_Stream());
-        return 404;
+static Entity handleGet(StringRef path, Entity request, Entity response) {
+    auto responseStream = GetHttpResponseContentStream(response);
+    SetStreamPath(responseStream, path);
+    if(!StreamOpen(responseStream, StreamMode_Read)) {
+        RemoveComponent(responseStream, ComponentOf_Stream());
+        return FindResponseCode(404);
     }
 
-    StreamClose(response);
+    StreamClose(responseStream);
 
-    return 200;
+    return FindResponseCode(200);
 }
 
-static u16 handlePut(StringRef path, Entity request) {
-    auto response = GetHttpRequestResponse(request);
-    SetStreamPath(response, path);
-    if(!StreamOpen(response, StreamMode_Read)) {
-        RemoveComponent(response, ComponentOf_Stream());
-        return 404;
+static Entity handlePut(StringRef path, Entity request, Entity response) {
+    auto requestStream = GetHttpRequestContentStream(request);
+    auto responseStream = GetHttpResponseContentStream(response);
+
+    SetStreamPath(responseStream, path);
+    if(!StreamOpen(responseStream, StreamMode_Read)) {
+        RemoveComponent(responseStream, ComponentOf_Stream());
+        return FindResponseCode(404);
     }
 
-    StreamClose(response);
-    if(!StreamOpen(response, StreamMode_Write)) {
-        return 403;
+    StreamClose(responseStream);
+    if(!StreamOpen(responseStream, StreamMode_Write)) {
+        return FindResponseCode(403);
     }
 
-    StreamCopy(request, response);
-    StreamClose(response);
+    StreamCopy(requestStream, responseStream);
+    StreamClose(responseStream);
 
-    RemoveComponent(response, ComponentOf_Stream());
+    RemoveComponent(responseStream, ComponentOf_Stream());
 
-    return 204;
+    return FindResponseCode(204);
 }
 
-static u16 handlePost(StringRef path, Entity request) {
-    auto response = GetHttpRequestResponse(request);
-    SetStreamPath(response, path);
+static Entity handlePost(StringRef path, Entity request, Entity response) {
+    auto requestStream = GetHttpRequestContentStream(request);
+    auto responseStream = GetHttpResponseContentStream(response);
 
-    if(StreamOpen(response, StreamMode_Read)) {
-        StreamClose(response);
-        return 403;
+    SetStreamPath(responseStream, path);
+
+    if(StreamOpen(responseStream, StreamMode_Read)) {
+        StreamClose(responseStream);
+        return FindResponseCode(403);
     }
 
-    if(!StreamOpen(response, StreamMode_Write)) {
-        RemoveComponent(response, ComponentOf_Stream());
-        return 403;
+    if(!StreamOpen(responseStream, StreamMode_Write)) {
+        RemoveComponent(responseStream, ComponentOf_Stream());
+        return FindResponseCode(403);
     }
 
-    StreamCopy(request, response);
-    StreamClose(response);
+    StreamCopy(requestStream, responseStream);
+    StreamClose(responseStream);
 
-    RemoveComponent(response, ComponentOf_Stream());
+    RemoveComponent(responseStream, ComponentOf_Stream());
 
-    return 201;
+    return FindResponseCode(201);
 }
 
-static u16 handleDelete(StringRef path, Entity request) {
-    auto response = GetHttpRequestResponse(request);
-    SetStreamPath(response, path);
-    if(!StreamDelete(response)) {
-        RemoveComponent(response, ComponentOf_Stream());
-        return 403;
+static Entity handleDelete(StringRef path, Entity request, Entity response) {
+    auto responseStream = GetHttpResponseContentStream(response);
+
+    SetStreamPath(responseStream, path);
+    if(!StreamDelete(responseStream)) {
+        RemoveComponent(responseStream, ComponentOf_Stream());
+        return FindResponseCode(403);
     }
 
-    RemoveComponent(response, ComponentOf_Stream());
+    RemoveComponent(responseStream, ComponentOf_Stream());
 
-    return 200;
+    return FindResponseCode(200);
 }
 
-LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request) {
+LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity response) {
     auto data = GetRestResourceRoutingData(routing);
 
     if(data) {
@@ -91,17 +96,17 @@ LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request) {
         auto relativeUrl = requestUrl + strlen(GetRestRoutingRoute(routing));
         snprintf(completeRoute, 1024, "%s/%s", data->RestResourceRoutingRoot, relativeUrl);
 
-        // 500 if handlers do not set any response code
-        auto responseCode = 500;
+        // 501 if handlers do not set any response code
+        auto responseCode = FindResponseCode(501);
 
         auto method = GetHttpRequestMethod(request);
-        if(strcmp(method, "GET") == 0) responseCode = handleGet(completeRoute, request);
-        else if(strcmp(method, "PUT") == 0) responseCode =handlePut(completeRoute, request);
-        else if(strcmp(method, "POST") == 0) responseCode =handlePost(completeRoute, request);
-        else if(strcmp(method, "DELETE") == 0) responseCode =handleDelete(completeRoute, request);
-        else responseCode = 405;
+        if(strcmp(method, "GET") == 0) responseCode = handleGet(completeRoute, request, response);
+        else if(strcmp(method, "PUT") == 0) responseCode =handlePut(completeRoute, request, response);
+        else if(strcmp(method, "POST") == 0) responseCode =handlePost(completeRoute, request, response);
+        else if(strcmp(method, "DELETE") == 0) responseCode =handleDelete(completeRoute, request, response);
+        else responseCode = FindResponseCode(405);
 
-        SetHttpResponseCode(GetHttpRequestResponse(request), responseCode);
+        SetHttpResponseCode(response, responseCode);
     }
 }
 

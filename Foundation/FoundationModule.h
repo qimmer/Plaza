@@ -12,5 +12,7 @@ Module(Foundation)
         Component(FoundationData)
             ChildProperty(TaskQueue, TaskQueue)
             ChildProperty(Timer, FilesystemUpdateTimer)
+		Component(FoundationModule)
+			ArrayProperty(FileType, FileTypes)
 
 #endif //PLAZA_FOUNDATIONMODULE_H
