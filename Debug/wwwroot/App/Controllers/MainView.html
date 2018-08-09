@@ -1,8 +1,5 @@
 <div class="table" style="width: 100%; height: 100%;" ng-controller="mainController">
     <div class="row">
-            <top-bar class="cell"/>
-    </div>
-    <div class="row">
         <div class="cell" data-split-pane>
             <div data-split-pane-component data-width="20em" style="height: 100%">
                 <div style="width: 100%; height: 100%;">
@@ -10,15 +7,24 @@
                             Entities
                     </div>                        
                     <div style="width: 100%; height: calc(100% - 40px);">
-                            <entity-tree/>
+                            <entity-tree connection="connection" on-open="openEntity(entity)"/>
                     </div>
                 </div>
             </div>
             <div data-split-pane-divider data-width="0px"></div>
             <div data-split-pane-component>
                 <div data-split-pane>
-                    <div data-split-pane-component style="overflow-y: auto; background-color: #151515;">
-
+                    <div data-split-pane-component style="overflow: hidden; background-color: #151515;">
+                        <ul class="nav nav-tabs">
+                            <li ng-repeat="tab in editor.tabs">
+                                <div ng-class="(editor.currentTab === tab) ? 'btn-primary btn-bordered' : 'btn-secondary btn-bordered'" class="btn" ng-click="editor.currentTab = tab">
+                                                {{tab.Name}}
+                                            <a class="tab-close" ng-click="closeEntity(tab)" style="margin-left: 5px;"><i class="im im-x-mark"></i></a>
+                                </div>
+                                
+                            </li>
+                        </ul>
+                        <div ng-repeat="tab in editor.tabs" ng-show="editor.currentTab === tab" style="width: 100%; height: calc(100% - 40px); border-left: 1px solid #111; border-right: 1px solid #111;" ng-include="getEditorTemplate(tab)"/>
                     </div>
                     <div data-split-pane-divider data-width="0px"></div>
                     <div data-split-pane-component data-width="20em" style="overflow-y: auto;">
@@ -27,7 +33,7 @@
                                         Properties
                                     </div>                        
                                     <div style="width: 100%; height: calc(100% - 40px);">
-                                            <property-editor/>
+                                            <property-editor connection="connection"/>
                                     </div>
                                 </div>
                     </div>

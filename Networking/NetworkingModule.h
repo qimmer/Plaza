@@ -13,5 +13,6 @@ Unit(Networking)
     Component(Networking)
         ArrayProperty(HttpHeaderType, HttpHeaderTypes)
         ArrayProperty(HttpResponseCode, HttpResponseCodes)
+        Property(bool, TcpWaitOnNoWork)
 
 #endif //PLAZA_NETWORKINGMODULE_H

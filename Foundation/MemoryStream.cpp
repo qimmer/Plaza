@@ -70,10 +70,17 @@ static bool IsOpen(Entity entity) {
     return GetMemoryStreamData(entity)->Open;
 }
 
+LocalFunction(OnMemoryStreamRemoved, void, Entity component, Entity entity) {
+    auto data = GetMemoryStreamData(entity);
+    SetVectorAmount(data->Bytes, 0);
+}
+
 BeginUnit(MemoryStream)
     BeginComponent(MemoryStream)
         RegisterBase(Stream)
     EndComponent()
 
     RegisterStreamProtocol(MemoryStream, "memory")
+
+    RegisterSubscription(EntityComponentRemoved, OnMemoryStreamRemoved, ComponentOf_MemoryStream())
 EndUnit()

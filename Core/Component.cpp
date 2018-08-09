@@ -154,6 +154,22 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
             auto deletionEntityIndex = GetEntityIndex(entity);
             auto deletionComponentIndex = componentData->EntityComponentIndices[deletionEntityIndex];
 
+            auto properties = GetProperties(component);
+            for(auto i = 0; i < GetNumProperties(component); ++i) {
+                auto property = properties[i];
+                auto kind = GetPropertyKind(property);
+
+                if(kind == PropertyKind_Child) {
+                    Entity childEntity = 0;
+                    GetPropertyValue(property, entity, &childEntity);
+                    __DestroyEntity(childEntity);
+                } else if(kind == PropertyKind_Array) {
+                    while(GetArrayPropertyCount(property, entity)) {
+                        RemoveArrayPropertyElement(property, entity, 0);
+                    }
+                }
+            }
+
             componentData->EntityComponentIndices[deletionEntityIndex] = InvalidIndex;
 
             memset(componentData->DataBuffer[deletionComponentIndex], 0, componentData->DataBuffer.GetElementSize());

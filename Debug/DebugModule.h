@@ -13,4 +13,7 @@ Unit(DebugServer)
     Component(Debug)
         ChildProperty(EntityTracker, EntityTracker)
 
+    Function(DebugAddComponent, u16, Entity responseStream, StringRef path)
+    Function(DebugRemoveComponent, u16, Entity responseStream, StringRef path)
+
 #endif //PLAZA_DEBUGMODULE_H

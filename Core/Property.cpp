@@ -78,11 +78,13 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
 
     bool changed = false;
     if(propertyData->PropertyKind == PropertyKind_String) {
+        strncpy(oldValueData, valueData, propertyData->PropertySize);
         if(strcmp(oldValueData, *(const char**)newValueData) != 0) {
             strcpy(valueData, *(const char**)newValueData);
             changed = true;
         }
     } else {
+        memcpy(oldValueData, valueData, propertyData->PropertySize);
         if(memcmp(oldValueData, newValueData, propertyData->PropertySize) != 0) {
             memcpy(valueData, newValueData, propertyData->PropertySize);
             changed = true;
@@ -241,8 +243,9 @@ API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Enti
 
 API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity) {
     auto element = __CreateEntity();
+    auto propertyName = GetName(property);
     char name[512];
-    snprintf(name, 512, "%s_%lu", GetName(property), GetEntityIndex(element));
+    snprintf(name, 512, "%s_%lu", propertyName, GetEntityIndex(element));
     SetName(element, name);
     return __InjectArrayPropertyElement(property, entity, element);
 }

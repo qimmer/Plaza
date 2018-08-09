@@ -190,7 +190,7 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
             switch(GetPropertyKind(property)) {
                 case PropertyKind_String:
                 case PropertyKind_Value:
-                    writer.String(GetName(property));
+                    writer.String(name);
 
                     if(includeReferenceLevels > 0 && GetPropertyType(property) == TypeOf_Entity) {
                         Entity child = 0;

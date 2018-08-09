@@ -22,7 +22,7 @@ API_EXPORT void RunAppLoop(Entity appLoop) {
 
     if(data) {
         while(IsEntityValid(appLoop)) {
-            SetAppLoopFrame(appLoop, ++data->AppLoopFrame);
+            SetAppLoopFrame(appLoop, data->AppLoopFrame + 1);
         }
     }
 }

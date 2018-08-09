@@ -16,6 +16,7 @@
 struct Networking {
     Vector(HttpHeaderTypes, Entity, 64)
     Vector(HttpResponseCodes, Entity, 64)
+    bool TcpWaitOnNoWork;
 };
 
 BeginModule(Networking)
@@ -31,6 +32,7 @@ BeginModule(Networking)
 
     ModuleData(
         {
+            "TcpWaitOnNoWork": true,
             "HttpResponseCodes": [
                 { "HttpResponseCodeNumber": 200, "HttpResponseCodeMessage": "OK" },
                 { "HttpResponseCodeNumber": 201, "HttpResponseCodeMessage": "Created" },
@@ -79,9 +81,15 @@ BeginModule(Networking)
     )
 EndModule()
 
+LocalFunction(OnTcpWaitOnNoWorkChanged, void, Entity entity, bool oldValue, bool newValue) {
+    Log(0, LogSeverity_Info, "Changed from %d to %d", oldValue, newValue);
+}
+
 BeginUnit(Networking)
     BeginComponent(Networking)
         RegisterArrayProperty(HttpHeaderType, HttpHeaderTypes)
         RegisterArrayProperty(HttpResponseCode, HttpResponseCodes)
+        RegisterProperty(bool, TcpWaitOnNoWork)
+        RegisterSubscription(TcpWaitOnNoWorkChanged, OnTcpWaitOnNoWorkChanged, 0)
     EndComponent()
 EndUnit()

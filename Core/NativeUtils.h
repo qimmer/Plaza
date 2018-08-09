@@ -94,11 +94,6 @@ Entity EventOf_ParentChanged();
 
 Entity GetUniqueEntity(StringRef name, bool *firstTime);
 
-template <class... T>
-inline void __FireEventVa(Entity event, T... args) {
-    FireEvent(event, args...);
-}
-
 // Declaration Macros
 
 #define Declare(TYPE, NAME) \

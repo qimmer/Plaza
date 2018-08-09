@@ -4,6 +4,7 @@
 
 #include <Json/NativeUtils.h>
 #include <Foundation/Stream.h>
+#include <Core/Identification.h>
 #include "EntityTracker.h"
 #include "DebugModule.h"
 
@@ -72,7 +73,23 @@ LocalFunction(OnPropertyChanged, void, Entity property, Entity entity) {
     }
 }
 
-API_EXPORT u16 GetChanges(Entity responseStream) {
+LocalFunction(OnComponentAdded, void, Entity component, Entity context) {
+    if(component == ComponentOf_EntityModification() || component == ComponentOf_Ownership() ||component == ComponentOf_Identification()) return;
+
+    for_entity(tracker, trackerData, EntityTracker) {
+        TriggerChange(tracker, context);
+    }
+}
+
+LocalFunction(OnComponentRemoved, void, Entity component, Entity context) {
+    if(component == ComponentOf_EntityModification() || component == ComponentOf_Ownership() ||component == ComponentOf_Identification()) return;
+
+    for_entity(tracker, trackerData, EntityTracker) {
+        TriggerChange(tracker, context);
+    }
+}
+
+API_EXPORT u16 GetChanges(Entity responseStream, StringRef path) {
     SetStreamPath(responseStream, "memory://response.json");
 
     auto entityTracker = GetEntityTracker(ModuleOf_Debug());
@@ -105,5 +122,7 @@ BeginUnit(EntityTracker)
     RegisterFunction(GetChanges)
 
     RegisterSubscription(PropertyChanged, OnPropertyChanged, 0)
+    RegisterSubscription(EntityComponentAdded, OnComponentAdded, 0)
+    RegisterSubscription(EntityComponentRemoved, OnComponentRemoved, 0)
     RegisterSubscription(EntityDestroyed, OnEntityDestroyed, 0)
 EndUnit()

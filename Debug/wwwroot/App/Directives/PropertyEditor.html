@@ -6,7 +6,7 @@
             </div>
             <div class="property-container">
                 <div class="table">
-                    <div class="row" ng-repeat="property in connection.properties[componentName]" ng-if="property.PropertyKind <= 2">
+                    <div class="row" ng-repeat="property in connection.components[componentName].Properties" ng-if="property.PropertyKind <= 2">
                         <div class="cell label">
                             {{property.Name.replace(componentName,'').prettify()}}
                         </div>

@@ -85,23 +85,7 @@ void __DestroyEntity(Entity entity) {
     }
 
     for_entity(component, componentData, Component) {
-        if(HasComponent(entity, component)) {
-            auto properties = GetProperties(component);
-            for(auto i = 0; i < GetNumProperties(component); ++i) {
-                auto property = properties[i];
-                auto kind = GetPropertyKind(property);
-
-                if(kind == PropertyKind_Child) {
-                    Entity childEntity = 0;
-                    GetPropertyValue(property, entity, &childEntity);
-                    __DestroyEntity(childEntity);
-                } else if(kind == PropertyKind_Array) {
-                    while(GetArrayPropertyCount(property, entity)) {
-                        RemoveArrayPropertyElement(property, entity, 0);
-                    }
-                }
-            }
-        }
+        RemoveComponent(entity, component);
     }
 
 	Type types[] = { TypeOf_Entity };

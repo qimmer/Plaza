@@ -95,3 +95,11 @@
     line-height:20px; 
     vertical-align: top;
 }
+
+.invalidated {
+    color: #ff625d;
+}
+
+.saved {
+    color: #97c4ff;
+}

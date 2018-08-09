@@ -1,0 +1,15 @@
+<div class="flow-node" ng-style="getNodeStyle(node)" ng-mousedown="mouseDown($event, node)">
+        <div class="header">
+            {{node.Name}}
+        </div>
+        <div class="content">
+                <table class="property-table">
+                    <tbody>
+                            <tr ng-repeat="key in getKeys(node)">
+                                    <td>{{key}}</td>
+                                </tr>
+                    </tbody>
+                </table>
+            </div>
+    </div>
+    

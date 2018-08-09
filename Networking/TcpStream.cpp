@@ -16,6 +16,7 @@
 #include <Foundation/AppLoop.h>
 #include "TcpStream.h"
 #include "Server.h"
+#include "NetworkingModule.h"
 
 using namespace asio;
 using namespace asio::ip;
@@ -208,7 +209,14 @@ LocalFunction(OnTcpServerPortChanged, void, Entity server, u16 oldPort, u16 newP
 }
 
 LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    s_io_service.poll();
+    if(s_io_service.poll() == 0 && GetTcpWaitOnNoWork(ModuleOf_Networking())) {
+#ifdef LINUX
+        usleep(1);
+#endif
+#if defined(_WIN32) || defined(_WIN64)
+        Sleep(1);
+#endif
+    }
 
     // Remove closed clients from server
     for_entity(server, serverData, TcpServer) {

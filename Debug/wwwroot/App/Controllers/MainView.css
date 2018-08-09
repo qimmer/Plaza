@@ -70,3 +70,31 @@ body {
 .toolbox input {
     padding: 2px 2px 2px 10px;
 }
+
+.btn-bordered {
+    border-left-color: #111 !important;
+    border-top-color: #111 !important;
+    border-bottom-color: #111 !important;
+    height: 40px;
+    padding-top: 7px !important;
+}
+
+.tab-close {
+    vertical-align: middle;
+}
+
+.tab-close i {
+    font-size: 100%;
+}
+
+.btn-primary .tab-close i {
+    color: #ff8555;
+}
+
+.btn-secondary .tab-close i {
+    color: #789;
+}
+
+.tab-close i:hover {
+    color: #fff;
+}
