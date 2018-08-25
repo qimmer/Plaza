@@ -138,6 +138,9 @@ enum {
     TypeOf_v3f,
     TypeOf_v4f,
 
+    TypeOf_m3x3f,
+    TypeOf_m4x4f,
+
     TypeOf_Entity,
     TypeOf_Type,
 

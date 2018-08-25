@@ -3,11 +3,7 @@
 //
 
 #include "RenderingModule.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-#include "BinaryShader.h"
-#include "ShaderCompiler.h"
-#include "Shader.h"
+#include "ShaderCache.h"
 #include "Program.h"
 #include "Uniform.h"
 #include "Texture.h"
@@ -15,38 +11,51 @@
 #include "RenderTarget.h"
 #include "Mesh.h"
 #include "Material.h"
-#include "UniformState.h"
-#include "Context.h"
-#include "VertexAttribute.h"
+#include "RenderContext.h"
 #include "SubTexture2D.h"
-#include "VertexDeclaration.h"
+#include "Batch.h"
+#include "CommandList.h"
+#include "Renderable.h"
+#include "Renderer.h"
 #include "OffscreenRenderTarget.h"
 #include <Foundation/FoundationModule.h>
 #include <Input/InputModule.h>
+#include <Core/NativeUtils.h>
+#include <Json/NativeUtils.h>
 
 BeginModule(Rendering)
-    ModuleDependency(Foundation)
-    ModuleDependency(Input)
+    RegisterDependency(Foundation)
+    RegisterDependency(Input)
 
-    ModuleService(ShaderCompiler)
-    ModuleService(Program)
-    ModuleService(Texture2D)
-    ModuleService(SubTexture2D)
-    ModuleService(OffscreenRenderTarget)
+    RegisterUnit(Batch)
+    RegisterUnit(CommandList)
+    RegisterUnit(OffscreenRenderTarget)
+    RegisterUnit(Renderable)
+    RegisterUnit(RenderContext)
+    RegisterUnit(Uniform)
+    RegisterUnit(Texture)
+    RegisterUnit(Texture2D)
+    RegisterUnit(SubTexture2D)
+    RegisterUnit(RenderTarget)
+    RegisterUnit(ShaderCache)
+    RegisterUnit(Program)
+    RegisterUnit(Mesh)
+    RegisterUnit(Material)
+    RegisterUnit(Renderer)
 
-    ModuleType(VertexDeclaration)
-    ModuleType(VertexAttribute)
-    ModuleType(VertexBuffer)
-    ModuleType(IndexBuffer)
-    ModuleType(Context)
-    ModuleType(Uniform)
-    ModuleType(UniformState)
-    ModuleType(Texture)
-    ModuleType(Texture2D)
-    ModuleType(RenderTarget)
-    ModuleType(Shader)
-    ModuleType(BinaryShader)
-    ModuleType(Program)
-    ModuleType(Mesh)
-    ModuleType(Material)
+    ModuleData({
+        "RenderingUvOffsetScaleUniform": {
+
+        }
+    })
 EndModule()
+
+struct Rendering {
+    Entity RenderingUvOffsetScaleUniform;
+};
+
+BeginUnit(Rendering)
+    BeginComponent(Rendering)
+        RegisterChildProperty(Uniform, RenderingUvOffsetScaleUniform)
+    EndComponent()
+EndUnit()

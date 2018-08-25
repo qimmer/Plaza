@@ -6,7 +6,7 @@
 #include <Scene/Camera.h>
 #include <cglm/cglm.h>
 #include <Rendering/RenderTarget.h>
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 
 struct Camera2D {
     Camera2D() : Camera2DPixelsPerUnit(32.0f) {}
@@ -19,8 +19,8 @@ BeginUnit(Camera2D)
     RegisterBase(Camera)
     RegisterProperty(float, Camera2DPixelsPerUnit)
 EndComponent()
-
-RegisterProperty(float, Camera2DPixelsPerUnit)
+EndUnit()
+(float, Camera2DPixelsPerUnit)
 
 static void UpdateProjectionMatrix(Entity entity) {
     if(!HasComponent(entity, ComponentOf_Camera2D())) return;

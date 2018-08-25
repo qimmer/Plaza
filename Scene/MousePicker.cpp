@@ -2,7 +2,7 @@
 // Created by Kim Johannsen on 30-03-2018.
 //
 
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 #include <Rendering/RenderTarget.h>
 #include <Foundation/AppLoop.h>
 #include "MousePicker.h"
@@ -19,8 +19,8 @@ BeginUnit(MousePicker)
     RegisterProperty(Entity, MousePickerContext)
     RegisterProperty(v4f, MousePickerViewport)
 EndComponent()
-
-RegisterProperty(v4f, MousePickerViewport)
+EndUnit()
+(v4f, MousePickerViewport)
 RegisterProperty(Entity, MousePickerContext)
 
 LocalFunction(OnAppUpdate, void, double deltaTime) {

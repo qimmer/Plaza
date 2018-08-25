@@ -60,4 +60,10 @@ void __InitializeProperty();
 void AddElementFromDecl(Entity property, Entity module, StringRef decl);
 void SetChildFromDecl(Entity property, Entity module, StringRef decl);
 
+Function(CopyEntity, void, Entity source, Entity destination)
+Function(MergeArray, void, Entity property, Entity left, Entity right, Entity destination)
+Function(ConcatArray, void, Entity property, Entity source, Entity destination)
+Function(ClearArray, void, Entity property, Entity entity)
+Function(MirrorArray, void, Entity property, Entity source, Entity destination)
+
 #endif //PLAZA_PROPERTY_H

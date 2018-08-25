@@ -48,4 +48,13 @@ angular.module('plaza').controller('mainController', function($scope, entityServ
     $scope.editorTemplates = {
         Module: 'App/Editors/Module.html'
     };
+
+    document.addEventListener("keydown", function(e) {
+    if ($scope.editor.currentTab && e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+      e.preventDefault();
+      
+      entityService.save($scope.connection, $scope.editor.currentTab);
+    }
+  }, false);
+
 });

@@ -11,6 +11,4 @@
 Unit(BgfxUniform)
     Component(BgfxUniform)
 
-u16 GetBgfxUniformHandle(Entity entity);
-
 #endif //PLAZA_BGFXUNIFORM_H

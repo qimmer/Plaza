@@ -4,56 +4,34 @@
 
 #include "BgfxTexture2D.h"
 #include "BgfxOffscreenRenderTarget.h"
+#include "BgfxResource.h"
 #include <bgfx/bgfx.h>
 #include <Foundation/Stream.h>
 #include <Rendering/Texture.h>
 #include <Rendering/OffscreenRenderTarget.h>
 #include <Rendering/Texture2D.h>
+#include <Foundation/Invalidation.h>
 
 struct BgfxTexture2D {
-    BgfxTexture2D() :
-            handle(BGFX_INVALID_HANDLE),
-            size(0), flag(0), invalidated(true) {}
-
-    bgfx::TextureHandle handle;
     u32 size, flag;
-    bool invalidated;
 };
 
-BeginUnit(BgfxTexture2D)
-    BeginComponent(BgfxTexture2D)
-EndComponent()
+LocalFunction(OnTexture2DRemoved, void, Entity entity) {
+    bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
 
-LocalFunction(OnChanged, void, Entity entity) {
+    if(bgfx::isValid(handle)) {
+        bgfx::destroy(handle);
+    }
+}
+
+LocalFunction(OnValidation, void, Entity entity) {
     if(HasComponent(entity, ComponentOf_BgfxTexture2D())) {
-        GetBgfxTexture2DData(entity)->invalidated = true;
-    }
-}
+        bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
+        auto data = GetBgfxTexture2DData(entity);
 
-void OnTexture2DRemoved(Entity entity) {
-    auto data = GetBgfxTexture2DData(entity);
-
-    if(bgfx::isValid(data->handle)) {
-        bgfx::destroy(data->handle);
-        data->handle = BGFX_INVALID_HANDLE;
-    }
-}
-
-DefineService(BgfxTexture2D)
-        RegisterSubscription(BgfxTexture2DRemoved, OnTexture2DRemoved, 0)
-        RegisterSubscription(TextureChanged, OnChanged, 0)
-        RegisterSubscription(Texture2DChanged, OnChanged, 0)
-        RegisterSubscription(StreamChanged, OnChanged, 0)
-        RegisterSubscription(StreamContentChanged, OnChanged, 0)
-EndService()
-
-u16 GetBgfxTexture2DHandle(Entity entity) {
-    if(!IsEntityValid(entity)) return bgfx::kInvalidHandle;
-
-    auto data = GetBgfxTexture2DData(entity);
-
-    if(data->invalidated) {
-        if(!StreamOpen(entity, StreamMode_Read)) return bgfx::kInvalidHandle;
+        if(!StreamOpen(entity, StreamMode_Read)) {
+            return;
+        }
 
         auto flag = GetTextureFlag(entity);
         auto dimensions = GetTextureSize2D(entity);
@@ -67,40 +45,33 @@ u16 GetBgfxTexture2DHandle(Entity entity) {
         StreamDecompress(entity, 0, info.storageSize, buffer);
 
         // Eventually free old buffers
-        if((data->flag != flag || data->size != info.storageSize || !GetTextureDynamic(entity)) || !bgfx::isValid(data->handle)) {
-            if(bgfx::isValid(data->handle)) {
-                bgfx::destroy(data->handle);
-                data->handle = BGFX_INVALID_HANDLE;
-            }
+        if((data->flag != flag || data->size != info.storageSize || !GetTextureDynamic(entity)) || !bgfx::isValid(handle)) {
+            OnTexture2DRemoved(entity);
 
             if(flag & TextureFlag_READ_BACK || flag & TextureFlag_RT) {
-                data->handle = bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag);
+                SetBgfxResourceHandle(entity, bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag).idx);
             } else {
-                data->handle = bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag, bgfx::copy(buffer, info.storageSize));
-            }
-
-            for_entity(renderTarget, data, BgfxOffscreenRenderTarget) {
-                if(GetRenderTargetTexture0(renderTarget) == entity ||
-                        GetRenderTargetTexture1(renderTarget) == entity ||
-                        GetRenderTargetTexture2(renderTarget) == entity ||
-                        GetRenderTargetTexture3(renderTarget) == entity ||
-                        GetRenderTargetTexture4(renderTarget) == entity ||
-                        GetRenderTargetTexture5(renderTarget) == entity ||
-                        GetRenderTargetTexture6(renderTarget) == entity ||
-                        GetRenderTargetTexture7(renderTarget) == entity) {
-                    FireEvent(EventOf_OffscreenRenderTargetChanged(), renderTarget);
-                    break;
-                }
+                SetBgfxResourceHandle(entity, bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag, bgfx::copy(buffer, info.storageSize)).idx);
             }
         } else {
-            bgfx::updateTexture2D(data->handle, 0, 0, 0, 0, dimensions.x, dimensions.y, bgfx::copy(buffer, info.storageSize));
+            bgfx::updateTexture2D(handle, 0, 0, 0, 0, dimensions.x, dimensions.y, bgfx::copy(buffer, info.storageSize));
         }
 
         free(buffer);
         data->size = info.storageSize;
-        data->invalidated = false;
     }
-
-    return data->handle.idx;
 }
 
+BeginUnit(BgfxTexture2D)
+    BeginComponent(BgfxTexture2D)
+        RegisterBase(BgfxResource)
+    EndComponent()
+
+    RegisterSubscription(EntityComponentRemoved, OnTexture2DRemoved, ComponentOf_BgfxTexture2D())
+    RegisterSubscription(Validate, OnValidation, 0)
+    RegisterSubscription(TextureSize2DChanged, Invalidate, 0)
+    RegisterSubscription(TextureFormatChanged, Invalidate, 0)
+    RegisterSubscription(TextureFlagChanged, Invalidate, 0)
+    RegisterSubscription(TextureDynamicChanged, Invalidate, 0)
+    RegisterSubscription(TextureMipLevelsChanged, Invalidate, 0)
+EndUnit()

@@ -3,7 +3,7 @@ project(Input)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Input InputState.cpp InputState.h InputModule.cpp InputModule.h Key.cpp Key.h)
+add_library(Input InputModule.cpp InputModule.h Key.cpp Key.h InputContext.cpp InputContext.h)
 
 target_include_directories(Input PUBLIC "..")
 

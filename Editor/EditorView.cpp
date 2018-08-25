@@ -17,6 +17,6 @@ struct EditorView {
 BeginUnit(EditorView)
     BeginComponent(EditorView)
 EndComponent()
-
-RegisterProperty(bool, EditorViewVisible)
+EndUnit()
+(bool, EditorViewVisible)
 RegisterProperty(EntityHandler, EditorViewDrawFunction)

@@ -15,8 +15,8 @@ BeginUnit(VoxelChunkSpawner)
     RegisterProperty(Entity, VoxelChunkSpawnerTemplateEntity))
     RegisterProperty(u8, VoxelChunkSpawnerRadius))
 EndComponent()
-
-RegisterProperty(Entity, VoxelChunkSpawnerCenterEntity)
+EndUnit()
+(Entity, VoxelChunkSpawnerCenterEntity)
 RegisterProperty(Entity, VoxelChunkSpawnerTemplateEntity)
 RegisterProperty(u8, VoxelChunkSpawnerRadius)
 

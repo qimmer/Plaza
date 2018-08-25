@@ -12,7 +12,7 @@
 #include <BgfxRendering/BgfxModule.h>
 #include <Rendering/RenderTarget.h>
 #include <Rendering/CommandList.h>
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 #include "Common.h"
 
 using namespace Plaza;

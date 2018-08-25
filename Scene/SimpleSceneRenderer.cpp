@@ -12,7 +12,7 @@
 #include <Scene/Transform.h>
 #include <Foundation/AppLoop.h>
 #include <cglm/cglm.h>
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 #include <Core/String.h>
 #include <Foundation/Visibility.h>
 #include <Rendering/RenderTarget.h>

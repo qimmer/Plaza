@@ -9,10 +9,8 @@
 
 Unit(Program)
     Component(Program)
-        Property(Entity, ProgramBinaryVertexShader);
-        Property(Entity, ProgramBinaryPixelShader);
-
-Entity ResolveProgram(Entity vertexShader, Entity pixelShader, u8 profile, Entity shaderVariation);
-
+        ChildProperty(Stream, ProgramVertexShaderSource)
+        ChildProperty(Stream, ProgramPixelShaderSource)
+        ChildProperty(Stream, ProgramDeclShaderSource)
 
 #endif //PLAZA_PROGRAM_H

@@ -9,11 +9,8 @@
 
 Unit(SubTexture2D)
     Component(SubTexture2D)
-
         Property(v2i, SubTexture2DOffset)
         Property(v2i, SubTexture2DSize)
-        Property(Entity, SubTexture2DTexture)
-
-Entity GetSubTexture2DUvOffsetScaleUniform();
+        ReferenceProperty(Texture2D, SubTexture2DTexture)
 
 #endif //PLAZA_SUBTEXTURE2D_H

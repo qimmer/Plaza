@@ -6,8 +6,10 @@
 #include <Networking/HttpRequest.h>
 #include <Networking/HttpServer.h>
 #include <Networking/Server.h>
+#include <Networking/Replication.h>
 #include <Networking/TcpStream.h>
 #include <Foundation/NativeUtils.h>
+#include <Foundation/AppLoop.h>
 #include <Json/NativeUtils.h>
 #include <Json/JsonPersistance.h>
 #include <Json/JsonModule.h>
@@ -17,6 +19,7 @@ struct Networking {
     Vector(HttpHeaderTypes, Entity, 64)
     Vector(HttpResponseCodes, Entity, 64)
     bool TcpWaitOnNoWork;
+    Entity ReplicationAppLoop;
 };
 
 BeginModule(Networking)
@@ -29,9 +32,13 @@ BeginModule(Networking)
     RegisterUnit(Server)
     RegisterUnit(TcpStream)
     RegisterUnit(Networking)
+    RegisterUnit(Replication)
 
     ModuleData(
         {
+            "ReplicationAppLoop": {
+
+            },
             "TcpWaitOnNoWork": true,
             "HttpResponseCodes": [
                 { "HttpResponseCodeNumber": 200, "HttpResponseCodeMessage": "OK" },
@@ -90,6 +97,8 @@ BeginUnit(Networking)
         RegisterArrayProperty(HttpHeaderType, HttpHeaderTypes)
         RegisterArrayProperty(HttpResponseCode, HttpResponseCodes)
         RegisterProperty(bool, TcpWaitOnNoWork)
-        RegisterSubscription(TcpWaitOnNoWorkChanged, OnTcpWaitOnNoWorkChanged, 0)
+        RegisterChildProperty(AppLoop, ReplicationAppLoop)
     EndComponent()
+
+    RegisterSubscription(TcpWaitOnNoWorkChanged, OnTcpWaitOnNoWorkChanged, 0)
 EndUnit()

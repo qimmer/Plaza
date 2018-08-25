@@ -427,7 +427,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     auto colonLocation = strstr(resolvedPath, "://");
 
     if(!colonLocation) {
-        Log(entity, LogSeverity_Error, "Malformed URI: %s (resolved from %s)", resolvedPath, data->StreamPath);
+        //Log(entity, LogSeverity_Error, "Malformed URI: %s (resolved from %s)", resolvedPath, data->StreamPath);
         return;
     }
 

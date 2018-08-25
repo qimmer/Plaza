@@ -7,22 +7,20 @@
 
 #include <Core/NativeUtils.h>
 
-DeclareEnum(TextureFormat)
-DeclareEnum(TextureFlag)
 Unit(Texture)
+    Enum(TextureFormat)
+    Enum(TextureFlag)
+
     Component(Texture)
-
-typedef void(*TextureReadbackHandler)(Entity sourceTexture, Entity blitTexture, const u8* readBackData);
-
-Event(TextureReadbackInitiated, TextureReadbackHandler handler)
-
         Property(u16, TextureFormat)
         Property(u32, TextureFlag)
         Property(bool, TextureDynamic)
         Property(u8, TextureMipLevels)
-        Property(Entity, TextureReadbackTarget)
 
-void TextureReadback(Entity texture, TextureReadbackHandler handler);
+    Component(TextureReader)
+        ReferenceProperty(Texture, TextureReaderSource)
+        ChildProperty(Texture, TextureReaderBlitTexture)
+        ChildProperty(Stream, TextureReaderTarget)
 
 #define TextureFlag_NONE                UINT32_C(0x00000000) //!<
 

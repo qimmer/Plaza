@@ -2,7 +2,7 @@
 // Created by Kim Johannsen on 20-03-2018.
 //
 
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 #include <Input/Key.h>
 #include "EditorStandardCommands.h"
 

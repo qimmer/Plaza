@@ -9,12 +9,14 @@
 #ifdef WIN32
 #ifdef WIN32
 #undef GetHandle
+#undef Enum
 #include <Windows.h>
 #endif
 
 struct StopWatch {
     bool StopWatchRunning;
     double StopWatchElapsedSeconds;
+    Entity StopWatchUpdateLoop;
 
 #ifdef WIN32
     LARGE_INTEGER lastTime;
@@ -37,21 +39,26 @@ static LARGE_INTEGER GetFrequency() {
 }
 
 LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    LARGE_INTEGER currentTime;
-    auto freq = GetFrequency();
+    auto stopWatch = GetOwner(appLoop);
+    auto data = GetStopWatchData(stopWatch);
+    if(data) {
+        LARGE_INTEGER currentTime;
+        auto freq = GetFrequency();
 
-    for_entity(entity, data, StopWatch) {
-        if(!data->StopWatchRunning) continue;
+        if(!data->StopWatchRunning) return;
 
         QueryPerformanceCounter(&currentTime);
 
         double deltaTime = (double)(currentTime.QuadPart - data->lastTime.QuadPart) / freq.QuadPart;
-        SetStopWatchElapsedSeconds(entity, data->StopWatchElapsedSeconds + deltaTime);
+        SetStopWatchElapsedSeconds(stopWatch, data->StopWatchElapsedSeconds + deltaTime);
         data->lastTime = currentTime;
+
     }
 }
 
 LocalFunction(OnStopWatchRunningChanged, void, Entity stopWatch, bool oldValue, bool newValue) {
+    SetAppLoopDisabled(GetStopWatchUpdateLoop(stopWatch), !newValue);
+
     if(newValue) {
         LARGE_INTEGER currentTime;
         QueryPerformanceCounter(&currentTime);
@@ -67,6 +74,10 @@ LocalFunction(OnStopWatchElapsedSecondsChanged, void, Entity stopWatch, double o
 
     auto data = GetStopWatchData(stopWatch);
     data->lastTime = currentTime;
+}
+
+LocalFunction(OnStopWatchAdded, void, Entity stopWatch) {
+    SetAppLoopDisabled(GetStopWatchUpdateLoop(stopWatch), true);
 }
 
 #endif
@@ -92,11 +103,13 @@ static double GetTimeSinceStart()
 
 BeginUnit(StopWatch)
     BeginComponent(StopWatch)
+        RegisterChildProperty(AppLoop, StopWatchUpdateLoop)
         RegisterProperty(bool, StopWatchRunning)
         RegisterProperty(double, StopWatchElapsedSeconds)
     EndComponent()
 
     RegisterSubscription(AppLoopFrameChanged, OnAppLoopFrameChanged, 0)
+    RegisterSubscription(EntityComponentAdded, OnStopWatchAdded, ComponentOf_StopWatch())
     RegisterSubscription(StopWatchRunningChanged, OnStopWatchRunningChanged, 0)
     RegisterSubscription(StopWatchElapsedSecondsChanged, OnStopWatchElapsedSecondsChanged, 0)
 EndUnit()

@@ -2,32 +2,37 @@
 // Created by Kim Johannsen on 17/01/2018.
 //
 
-#include <Rendering/Shader.h>
-#include <Rendering/BinaryShader.h>
 #include "BgfxShaderCompiler.h"
-#include <Core/String.h>
-#include <iostream>
-#include <sstream>
-#include <Rendering/ShaderCompiler.h>
-
-#include <sstream>
-#include <string>
-#include <iterator>
-#include <climits>
 #include <Rendering/Program.h>
 #include <Foundation/Stream.h>
 #include <File/Folder.h>
 #include <Core/Base64.h>
-#include <Rendering/ShaderVariation.h>
+#include <Core/Debug.h>
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <iterator>
+#include <climits>
+#include <Core/Identification.h>
+#include <Rendering/ShaderCache.h>
 
 static const StringRef shaderTypes[] = {
-    "",
     "vertex",
     "fragment",
     "geometry",
     "hull",
     "domain",
     "compute"
+};
+
+static const char shaderTypeProfiles[] = {
+        'v',
+        'p',
+        'g',
+        'h',
+        'd',
+        'c'
 };
 
 struct ErrorRedirector {
@@ -54,47 +59,53 @@ private:
     std::stringstream stream;
 };
 
-API_EXPORT int Compile(StringRef sourceFilePath,
-             StringRef varyingDefFilePath,
-             StringRef outputFilePath,
-             u8 shaderProfile,
-             u8 shaderType,
-             StringRef defines) {
-    if(!strlen(sourceFilePath) ||
-            !strlen(varyingDefFilePath) ||
-            !strlen(outputFilePath) ||
-            !shaderProfile) {
-        return -1;
-    }
+int Compile(StringRef sourcePath,
+            StringRef declSourcePath,
+            StringRef binaryPath,
+            StringRef includePath,
+            u8 shaderType,
+            u8 shaderProfile,
+            StringRef defines) {
 
-    if(memcmp(sourceFilePath, "file://", 7) != 0 ||
-            memcmp(varyingDefFilePath, "file://", 7) != 0 ||
-            memcmp(outputFilePath, "file://", 7) != 0) {
-        Log(LogChannel_ShaderCompiler, LogSeverity_Error, "Bgfx shader compiler tool only supports file:// paths.");
-        return -1;
+    StringRef *paths[] = {
+        &sourcePath,
+        &declSourcePath,
+        &binaryPath,
+        &includePath
+    };
+
+    auto numPaths = sizeof(paths) / sizeof(StringRef);
+
+    for(auto i = 0; i < numPaths; ++i) {
+        if(!strlen(*paths[i])) {
+            return -1;
+        }
+
+        if(memcmp(*paths[i], "file://", 7) != 0) {
+            Log(0, LogSeverity_Error, "Bgfx shader compiler tool only supports file:// paths.");
+            return -1;
+        }
+
+        *paths[i] += 7; // Skip 'file://'
     }
 
     char parentPath[PathMax];
-    GetParentFolder(outputFilePath, parentPath, PathMax);
+    GetParentFolder(binaryPath, parentPath, PathMax);
     CreateDirectories(parentPath);
-
-    sourceFilePath += 7;
-    varyingDefFilePath += 7;
-    outputFilePath += 7;
 
     char profile[128];
     const char *platform;
     switch(shaderProfile) {
         case ShaderProfile_HLSL_3_0:
-            sprintf(profile, "%s", "xs_3_0");
+            sprintf(profile, "%c%s", shaderTypeProfiles[shaderType], "s_3_0");
             platform = "windows";
             break;
         case ShaderProfile_HLSL_4_0:
-            sprintf(profile, "%s", "xs_4_0");
+            sprintf(profile, "%c%s", shaderTypeProfiles[shaderType], "s_4_0");
             platform = "windows";
             break;
         case ShaderProfile_HLSL_5_0:
-            sprintf(profile, "%s", "xs_5_0");
+            sprintf(profile, "%c%s", shaderTypeProfiles[shaderType], "s_5_0");
             platform = "windows";
             break;
         case ShaderProfile_GLSL_2_1:
@@ -121,26 +132,6 @@ API_EXPORT int Compile(StringRef sourceFilePath,
             return -1;
     }
 
-    if(profile[0] == 'x') {
-        switch(shaderType) {
-            case ShaderType_Vertex:
-                profile[0] = 'v';
-                break;
-            case ShaderType_Pixel:
-                profile[0] = 'p';
-                break;
-            case ShaderType_Geometry:
-                profile[0] = 'g';
-                break;
-            case ShaderType_Hull:
-                profile[0] = 'h';
-                break;
-            case ShaderType_Domain:
-                profile[0] = 'd';
-                break;
-        }
-    }
-
     static std::stringstream ss;
     ss.clear();
     FILE *fpipe;
@@ -157,19 +148,19 @@ API_EXPORT int Compile(StringRef sourceFilePath,
 #else
             "./shaderc",
 #endif
-            sourceFilePath,
-            outputFilePath,
+            sourcePath,
+            binaryPath,
             profile,
-            GetShaderIncludeDirectory(),
+            includePath,
             shaderTypes[shaderType],
             platform,
-            varyingDefFilePath,
+            declSourcePath,
              hasDefines ? "--define" : "",
              hasDefines ? defines : "");
 
     if (0 == (fpipe = (FILE*)popen(command, "r")))
     {
-        Log(LogChannel_Core, LogSeverity_Error, "Bgfx Shader Compiler 'shaderc' not found.");
+        Log(0, LogSeverity_Error, "Bgfx Shader Compiler 'shaderc' not found.");
         return -1;
     }
 
@@ -189,61 +180,51 @@ API_EXPORT int Compile(StringRef sourceFilePath,
 
     auto str = ss.str();
 
-    Log(LogChannel_ShaderCompiler, severity, "%s", str.c_str());
+    Log(0, severity, "%s", str.c_str());
 	
 	return 0;
 }
 
-void OnCompile(Entity binaryShader) {
+LocalFunction(OnShaderCompile, void, Entity binaryProgram) {
 
     //ErrorRedirector errors(std::cerr);
     //ErrorRedirector output(std::cout);
 
-    auto profile = GetBinaryShaderProfile(binaryShader);
-    auto shader = GetSourceShader(binaryShader);
+    auto shaderCache = GetOwner(binaryProgram);
+    auto shaderDefines = GetShaderCacheDefines(shaderCache);
+    auto profile = GetShaderCacheProfile(shaderCache);
 
-    if(!IsEntityValid(shader)) {
-        Log(LogChannel_Core, LogSeverity_Info, "Compilation of shader '%s' failed as no shader source is set.", GetStreamResolvedPath(binaryShader));
-        return;
-    }
+    auto binaryVertexShader = GetBinaryProgramVertexShader(binaryProgram);
+    auto binaryPixelShader = GetBinaryProgramPixelShader(binaryProgram);
 
-    Log(LogChannel_Core, LogSeverity_Info, "Compiling %s shader '%s' to '%s' with profile '%d' using program (varying def) '%s' ...",
-        shaderTypes[GetShaderType(shader)],
-        GetStreamResolvedPath(shader),
-        GetStreamResolvedPath(binaryShader),
-        profile,
-        GetStreamResolvedPath(GetShaderDeclaration(shader)));
+    auto program = GetBinaryProgramProgram(binaryProgram);
+    auto vertexShader = GetProgramVertexShaderSource(program);
+    auto pixelShader = GetProgramPixelShaderSource(program);
+    auto declShader = GetProgramDeclShaderSource(program);
 
-    auto shaderVariation = GetBinaryShaderVariation(binaryShader);
-    StringRef shaderVariationDefines = NULL;
-    if(IsEntityValid(shaderVariation)) {
-        shaderVariationDefines = GetShaderVariationDefines(shaderVariation);
-    }
+    bool hasErrors = false;
 
-
-    if(GetShaderType(shader) == ShaderType_Unknown) {
-        Log(LogChannel_Core, LogSeverity_Error, "Shader type of '%s' is unset", GetEntityPath(shader));
-        return;
-    }
-    if(!IsEntityValid(GetShaderDeclaration(shader))) {
-        Log(LogChannel_Core, LogSeverity_Error, "Shader declaration of '%s' is unset", GetEntityPath(shader));
-        return;
-    }
-
-
-    bool hasErrors = 0 != Compile(
-            GetStreamResolvedPath(shader),
-            GetStreamResolvedPath(GetShaderDeclaration(shader)),
-            GetStreamResolvedPath(binaryShader),
+    // Vertex Shader
+    hasErrors |= 0 != Compile(
+            GetStreamResolvedPath(vertexShader),
+            GetStreamResolvedPath(declShader),
+            GetStreamResolvedPath(binaryVertexShader),
+            GetShaderCacheIncludePath(shaderCache),
+            0,
             profile,
-            GetShaderType(shader),
-            shaderVariationDefines);
+            shaderDefines);
 
-    FireEvent(EventOf_ShaderCompilerFinished(), binaryShader, hasErrors, "");
-    FireEvent(EventOf_StreamContentChanged(), binaryShader);
+    // Pixel Shader
+    hasErrors |= 0 != Compile(
+            GetStreamResolvedPath(pixelShader),
+            GetStreamResolvedPath(declShader),
+            GetStreamResolvedPath(binaryPixelShader),
+            GetShaderCacheIncludePath(shaderCache),
+            1,
+            profile,
+            shaderDefines);
 }
 
-DefineService(BgfxShaderCompiler)
-        ServiceDependency(ShaderCompiler)
-        RegisterSubscription(ShaderCompile, OnCompile, 0)
-EndService()
+BeginUnit(BgfxShaderCompiler)
+    RegisterSubscription(ShaderCompile, OnShaderCompile, 0)
+EndUnit()

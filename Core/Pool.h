@@ -18,18 +18,6 @@
 static const u64 MemoryMagic = 0xdeadbeefdeadbeef;
 static const size_t MemoryGuardSize = sizeof(u64);
 
-inline unsigned long upper_power_of_two(unsigned long v)
-{
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    v++;
-    return v;
-}
-
 class Pool
 {
 private:
@@ -84,7 +72,7 @@ inline void Pool::SetElementSize(u32 size) {
     elementSize = size;
 
 #if MemoryGuard
-    blockSize = upper_power_of_two(size + 1 + MemoryGuardSize * 2);
+    blockSize = UpperPowerOf2(size + 1 + MemoryGuardSize * 2);
 #else
     blockSize = upper_power_of_two(size + 1);
 #endif

@@ -68,7 +68,7 @@ angular.module('plaza')
                 }
     
                 $scope.$watch('connection.components', $scope.filterComponents);
-                $scope.$watch('connection.selectedEntity', $scope.filterComponents);
+                $scope.$watch('connection.selectedEntity.$components', $scope.filterComponents);
                 $scope.$watch('connection.selectedEntity', $scope.updateDraft, true);
     
             },

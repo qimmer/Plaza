@@ -30,9 +30,9 @@ API_EXPORT void __SetVectorAmount(
 #ifdef _DEBUG
 			numExpansions[num] = 0;
 #endif
-
-            *dynBuf = calloc(newNum, elementSize);
-            *dynCap = newNum;
+            auto newCap = UpperPowerOf2(newNum);
+            *dynBuf = calloc(newCap, elementSize);
+            *dynCap = newCap;
             memcpy(*dynBuf, staBuf, *num * elementSize);
         } else {
             if(*dynCap < newNum) {
@@ -47,12 +47,14 @@ API_EXPORT void __SetVectorAmount(
 				}
 #endif
 
-                *dynBuf = realloc(*dynBuf, newNum * elementSize);
-                *dynCap = newNum;
+                auto newCap = UpperPowerOf2(newNum);
+                auto newBuf = calloc(newCap, elementSize);
+                memcpy(newBuf, *dynBuf, *num * elementSize);
 
-                if(newNum > *num) {
-                    memset((char*)*dynBuf + (*num * elementSize), 0, elementSize * (newNum - *num)); // Null all new elements added in the bigger array
-                }
+                free(*dynBuf);
+
+                *dynBuf = newBuf;
+                *dynCap = newCap;
             }
         }
     } else {

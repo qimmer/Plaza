@@ -8,17 +8,21 @@
 
 #include <Core/Entity.h>
 
-DeclareEnum(RenderState)
+Enum(RenderState)
 
 Unit(Material)
     Component(Material)
-
-        Property(Entity, MaterialVertexShader)
-        Property(Entity, MaterialPixelShader)
+        ReferenceProperty(Program, MaterialProgram)
         Property(u64, MaterialDepthTest)
         Property(u64, MaterialWriteMask)
         Property(u64, MaterialMultisampleMode)
         Property(u64, MaterialBlendMode)
+        ArrayProperty(UniformState, MaterialUniformStates)
+
+	Enum(DepthTest)
+	Enum(WriteMask)
+	Enum(MultisampleMode)
+	Enum(BlendMode)
 
 /// Color RGB/alpha/depth write. When it's not specified write will be disabled.
 #define RenderState_STATE_R_WRITE                 UINT64_C(0x0000000000000001) //!< Enable R write.

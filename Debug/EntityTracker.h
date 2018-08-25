@@ -13,7 +13,6 @@ Unit(EntityTracker)
 
     Component(EntityTracker)
         ArrayProperty(EntityModification, EntityModifications)
-        Property(bool, EntityTrackerTrackValues)
 
     Function(GetChanges, u16, Entity responseStream, StringRef path)
 

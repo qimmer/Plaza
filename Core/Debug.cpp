@@ -17,6 +17,7 @@
 #endif
 
 #ifdef WIN32
+#undef Enum
 #include <Windows.h>
 #include "Identification.h"
 
@@ -49,11 +50,17 @@ API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
     auto numWritten = vsnprintf(buffer + 9, 4084, format, arg);
     va_end(arg);
 
-    buffer[numWritten + 9] = '\n';
-    buffer[numWritten + 10] = '\0';
+    buffer[numWritten + 9] = '\0';
 
     setbuf(stdout, 0);
     printf("%s", buffer);
+
+    if(HasComponent(context, ComponentOf_Identification()) && IsEntityValid(GetOwner(context))) {
+        CalculateEntityPath(buffer, sizeof(buffer), context, true);
+        printf(" (%s)\n", buffer);
+    } else {
+        printf("\n");
+    }
 
     //FireEvent(EventOf_LogMessageReceived(), context, buffer, severity);
 
@@ -86,6 +93,11 @@ API_EXPORT StringRef GetDebugName(Entity entity) {
     if(!IsEntityValid(entity)) return "<Invalid>";
 
     auto name = GetName(entity);
+
+    if(!name || name[0] == '\0') {
+        name = GetUniqueEntityName(entity);
+    }
+
     if(!name || name[0] == '\0') {
         snprintf(paths[currentPath], PathMax, "%llu", entity);
         return paths[currentPath];

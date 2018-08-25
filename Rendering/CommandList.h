@@ -7,22 +7,24 @@
 
 #include <Core/NativeUtils.h>
 
-
-    Unit(CommandList)
+Unit(CommandList)
     Component(CommandList)
+        ReferenceProperty(RenderTarget, CommandListRenderTarget)
+        Property(u64, CommandListViewRenderState)
+        Property(m4x4f, CommandListViewMatrix)
+        Property(m4x4f, CommandListProjectionMatrix)
+        Property(rgba8, CommandListClearColor)
+        Property(float, CommandListClearDepth)
+        Property(u8, CommandListClearStencil)
+        Property(u8, CommandListClearTargets)
+        Property(bool, CommandListForceOrder)
+        Property(v4i, CommandListViewport)
+        Property(StringRef, CommandListShaderDefines)
+        ReferenceProperty(ShaderCache, CommandListShaderCache)
+        ArrayProperty(UniformState, CommandListUniformStates)
+        ArrayProperty(Batch, CommandListBatches)
 
-    DeclareComponentProperty(CommandList, Entity, CommandListRenderTarget)
-    DeclareComponentProperty(CommandList, u8, CommandListLayer)
-    DeclareComponentProperty(CommandList, u64, CommandListViewRenderState)
-    DeclareComponentProperty(CommandList, m4x4f, CommandListViewMatrix)
-    DeclareComponentProperty(CommandList, m4x4f, CommandListProjectionMatrix)
-    DeclareComponentProperty(CommandList, rgba8, CommandListClearColor)
-    DeclareComponentProperty(CommandList, float, CommandListClearDepth)
-    DeclareComponentProperty(CommandList, u8, CommandListClearStencil)
-    DeclareComponentProperty(CommandList, u8, CommandListClearTargets)
-    DeclareComponentProperty(CommandList, bool, CommandListForceOrder)
-    DeclareComponentProperty(CommandList, v4i, CommandListViewport)
-
+    Enum(ClearTarget)
 
 #define ClearTarget_None 0
 #define ClearTarget_Color 1

@@ -76,6 +76,7 @@ BeginUnit(DebugServer)
                 {
                     "Name": "Debug Server",
                     "ServerPort": 8080,
+                    "AppLoopKeepAlive": true,
                     "HttpServerKeepAliveTimeout": 5,
                     "HttpServerKeepAliveMaxConnections": 100,
                     "RestServerRoutes": [

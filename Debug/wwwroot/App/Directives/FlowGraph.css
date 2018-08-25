@@ -50,3 +50,13 @@
     border: none;
     padding: 2px 5px 2px 5px;
 }
+
+.flow-node .slot {
+    background-color: #000;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    width: 8px;
+    height: 8px;
+    display: inline-block;
+    vertical-align: center;
+}

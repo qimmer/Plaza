@@ -276,6 +276,18 @@ API_EXPORT bool CallFunction(
 
     Verbose(VerboseLevel_Invocations, "Calling function %s ...", GetName(f));
 
+    const void **finalArgumentPtrs = (const void **)alloca(numArguments * sizeof(void*));
+
+    static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+
+    for(auto i = 0; i < data->FunctionArguments.Count; ++i) {
+        if(i >= numArguments) {
+            finalArgumentPtrs[i] = nullData;
+        } else {
+            finalArgumentPtrs[i] = argumentDataPtrs[i];
+        }
+    }
+
     return data->FunctionCaller(
             data->FunctionImplementation,
             data->FunctionReturnType,

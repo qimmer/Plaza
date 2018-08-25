@@ -21,6 +21,7 @@ Unit(Component)
     Component(Extension)
         Property(Entity, ExtensionComponent)
         Property(Entity, ExtensionExtenderComponent)
+        Property(bool, ExtensionDisabled)
 
     Component(Base)
         Property(Entity, BaseComponent)

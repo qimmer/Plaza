@@ -3,17 +3,17 @@
 //
 
 #include "RenderTarget.h"
-#include "Context.h"
+#include "RenderContext.h"
+#include "Renderer.h"
 
 struct RenderTarget {
-    RenderTarget() : RenderTargetSize({256, 256}) {}
-
     v2i RenderTargetSize;
+    Vector(RenderTargetRenderers, Entity, 16)
 };
 
 BeginUnit(RenderTarget)
     BeginComponent(RenderTarget)
-    RegisterProperty(v2i, RenderTargetSize)
-EndComponent()
-
-RegisterProperty(v2i, RenderTargetSize)
+        RegisterProperty(v2i, RenderTargetSize)
+        RegisterArrayProperty(Renderer, RenderTargetRenderers)
+    EndComponent()
+EndUnit()

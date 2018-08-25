@@ -5,69 +5,34 @@
 #include "OffscreenRenderTarget.h"
 #include "RenderTarget.h"
 #include "Texture2D.h"
+#include "Texture.h"
 
 struct OffscreenRenderTarget {
-    Entity RenderTargetTexture0,
-            RenderTargetTexture1,
-            RenderTargetTexture2,
-            RenderTargetTexture3,
-            RenderTargetTexture4,
-            RenderTargetTexture5,
-            RenderTargetTexture6,
-            RenderTargetTexture7;
+    Vector(OffscreenRenderTargetTextures, Entity, 8)
 };
 
-BeginUnit(OffscreenRenderTarget)
-    BeginComponent(OffscreenRenderTarget)
-    RegisterProperty(Entity, RenderTargetTexture0)
-    RegisterProperty(Entity, RenderTargetTexture1)
-    RegisterProperty(Entity, RenderTargetTexture2)
-    RegisterProperty(Entity, RenderTargetTexture3)
-    RegisterProperty(Entity, RenderTargetTexture4)
-    RegisterProperty(Entity, RenderTargetTexture5)
-    RegisterProperty(Entity, RenderTargetTexture6)
-    RegisterProperty(Entity, RenderTargetTexture7)
-EndComponent()
+LocalFunction(OnOffscreenRenderTargetTexturesChanged, void, Entity stage, Entity oldTexture, Entity newTexture) {
+    auto renderTarget = GetOwner(stage);
 
-RegisterProperty(Entity, RenderTargetTexture0)
-RegisterProperty(Entity, RenderTargetTexture1)
-RegisterProperty(Entity, RenderTargetTexture2)
-RegisterProperty(Entity, RenderTargetTexture3)
-RegisterProperty(Entity, RenderTargetTexture4)
-RegisterProperty(Entity, RenderTargetTexture5)
-RegisterProperty(Entity, RenderTargetTexture6)
-RegisterProperty(Entity, RenderTargetTexture7)
+    SetTextureSize2D(newTexture, GetRenderTargetSize(renderTarget));
+}
 
-LocalFunction(OnChanged, void, Entity entity) {
+LocalFunction(OnRenderTargetSizeChanged, void, Entity entity, v2i oldSize, v2i newSize) {
     auto data = GetOffscreenRenderTargetData(entity);
-
-    Entity textures[] = {
-            data->RenderTargetTexture0,
-            data->RenderTargetTexture1,
-            data->RenderTargetTexture2,
-            data->RenderTargetTexture3,
-            data->RenderTargetTexture4,
-            data->RenderTargetTexture5,
-            data->RenderTargetTexture6,
-            data->RenderTargetTexture7
-    };
-
-    for(auto i = 0; i < 8; ++i) {
-        if(IsEntityValid(textures[i])) {
-            auto rtSize = GetRenderTargetSize(entity);
-            auto texSize = GetTextureSize2D(textures[i]);
-            if(memcmp(&rtSize, &texSize, sizeof(v2i)) != 0) {
-                SetTextureSize2D(textures[i], rtSize);
-            }
+    if(data) {
+        auto numStages = data->OffscreenRenderTargetTextures.Count;
+        auto stages = GetVector(data->OffscreenRenderTargetTextures);
+        for(auto i = 0; i < numStages; ++i) {
+            SetTextureSize2D(stages[i], newSize);
         }
     }
 }
 
-LocalFunction(OnRenderTargetSizeChanged, void, Entity entity, v2i oldSize, v2i newSize) {
-    if(HasComponent(entity, ComponentOf_OffscreenRenderTarget())) OnChanged(entity);
-}
+BeginUnit(OffscreenRenderTarget)
+    BeginComponent(OffscreenRenderTarget)
+        RegisterArrayProperty(Texture2D, OffscreenRenderTargetTextures)
+    EndComponent()
 
-DefineService(OffscreenRenderTarget)
-        RegisterSubscription(RenderTargetSizeChanged, OnRenderTargetSizeChanged, 0)
-        RegisterSubscription(OffscreenRenderTargetChanged, OnChanged, 0)
-EndService()
+    RegisterSubscription(RenderTargetSizeChanged, OnRenderTargetSizeChanged, 0)
+    RegisterSubscription(OffscreenRenderTargetTexturesChanged, OnOffscreenRenderTargetTexturesChanged, 0)
+EndUnit()

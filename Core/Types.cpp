@@ -30,6 +30,9 @@ static StringRef typeNames[] = {
         "v3f",
         "v4f",
 
+        "m3x3f",
+        "m4x4f",
+
         "Entity",
         "Type",
 
@@ -67,6 +70,9 @@ API_EXPORT u32 GetTypeSize(Type type) {
         sizeof(v2f),
         sizeof(v3f),
         sizeof(v4f),
+
+        sizeof(m3x3f),
+        sizeof(m4x4f),
 
         sizeof(Entity),
         sizeof(Type),

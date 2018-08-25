@@ -10,5 +10,6 @@
 Unit(RenderTarget)
     Component(RenderTarget)
         Property(v2i, RenderTargetSize)
+        ArrayProperty(Renderer, RenderTargetRenderers)
 
 #endif //PLAZA_RENDERTARGET_H

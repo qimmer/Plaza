@@ -13,7 +13,7 @@
 #include <Scene/Transform.h>
 #include <Foundation/AppLoop.h>
 #include <cglm/cglm.h>
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 #include <Core/String.h>
 #include <Foundation/Visibility.h>
 #include <Rendering/RenderTarget.h>
@@ -45,11 +45,11 @@ BeginUnit(ScenePicker)
     BeginComponent(ScenePicker)
     RegisterBase(Camera)
     RegisterProperty(v2f, ScenePickerViewportLocation)
-    DefinePropertyEnum(u8, ScenePickerLayers, Layer)
+    RegisterPropertyEnum(u8, ScenePickerLayers, Layer)
     RegisterProperty(Entity, ScenePickerPickedEntity)
 EndComponent()
-
-RegisterProperty(v2f, ScenePickerViewportLocation)
+EndUnit()
+(v2f, ScenePickerViewportLocation)
 RegisterProperty(u8, ScenePickerLayers)
 RegisterProperty(Entity, ScenePickerPickedEntity)
 

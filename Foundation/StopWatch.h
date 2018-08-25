@@ -9,6 +9,7 @@
 
 Unit(StopWatch)
     Component(StopWatch)
+        ChildProperty(AppLoop, StopWatchUpdateLoop)
         Property(bool, StopWatchRunning)
         Property(double, StopWatchElapsedSeconds)
 

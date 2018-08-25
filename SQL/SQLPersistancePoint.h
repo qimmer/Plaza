@@ -9,6 +9,6 @@
     Component(SQLPersistancePoint)
     DeclareService(SQLPersistancePoint)
 
-    DeclareComponentProperty(SQLPersistancePoint, StringRef, SelectCondition)
+    Property(StringRef, SelectCondition)
 
 #endif //SQLPersistancePoint_H

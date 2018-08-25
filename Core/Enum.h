@@ -8,11 +8,13 @@
 #include <Core/NativeUtils.h>
 
 Unit(Enum)
+    Component(Enum)
+        Property(bool, EnumCombinable)
+        ArrayProperty(EnumFlag, EnumFlags)
 
-Component(Enum)
-    Property(bool, EnumCombinable)
+    Component(EnumFlag)
+        Property(u64, EnumFlagValue)
 
-Component(EnumFlag)
-    Property(u32, EnumFlagValue)
+    Function(GetEnumName, StringRef, Entity e, u64 value)
 
 #endif //PLAZA_ENUM_H

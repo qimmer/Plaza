@@ -33,8 +33,8 @@ BeginUnit(SceneEditor)
     RegisterProperty(Entity, SceneEditorScene)
     DefineExtensionMethod(Scene, void, EditScene, Entity entity)
 EndComponent()
-
-RegisterProperty(Entity, SceneEditorScene)
+EndUnit()
+(Entity, SceneEditorScene)
 
 void EditScene(Entity scene) {
     char editorPath[PathMax];

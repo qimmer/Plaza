@@ -3,8 +3,10 @@
 //
 
 #include "InputModule.h"
-#include "InputState.h"
+#include "InputContext.h"
+#include "Key.h"
 
 BeginModule(Input)
-    ModuleType(InputState)
+    RegisterUnit(InputContext)
+    RegisterUnit(Key)
 EndModule()

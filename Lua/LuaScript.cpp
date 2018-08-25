@@ -16,8 +16,8 @@ BeginUnit(LuaScript)
 	RegisterBase(Stream)
     RegisterProperty(StringRef, LuaScriptErrors))
 EndComponent()
-
-RegisterProperty(StringRef, LuaScriptErrors)
+EndUnit()
+(StringRef, LuaScriptErrors)
 
 static void LoadScript(Entity entity) {
     if(!HasComponent(entity, ComponentOf_LuaScript())) return;

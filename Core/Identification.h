@@ -16,8 +16,8 @@ Unit(Identification)
         StringRef GetName(Entity entity);
         void SetName(Entity entity, StringRef value);
 
-void CalculateEntityPath(char *dest, size_t bufMax, Entity entity);
-StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo);
+void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bool preferNameToIndices);
+StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo, bool preferNameToIndex);
 Entity FindEntityByPath(StringRef path);
 Entity FindEntityByName(Entity component, StringRef typeName);
 

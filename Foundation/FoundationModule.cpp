@@ -16,6 +16,7 @@
 #include <Foundation/ValueConverter.h>
 #include <Foundation/VirtualPath.h>
 #include <Foundation/Visibility.h>
+#include <Foundation/Invalidation.h>
 #include "FoundationModule.h"
 
 struct FoundationData {
@@ -29,7 +30,6 @@ struct FoundationModule {
 BeginUnit(Foundation)
     BeginComponent(FoundationData)
         RegisterChildProperty(TaskQueue, TaskQueue)
-        RegisterChildProperty(Timer, FilesystemUpdateTimer)
     EndComponent()
 	BeginComponent(FoundationModule)
 		RegisterArrayProperty(FileType, FileTypes)
@@ -50,4 +50,5 @@ BeginModule(Foundation, ComponentOf_FoundationData())
     RegisterUnit(ValueConverter)
     RegisterUnit(VirtualPath)
     RegisterUnit(Visibility)
+    RegisterUnit(Invalidation)
 EndModule()

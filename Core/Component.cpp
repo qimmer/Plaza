@@ -20,7 +20,8 @@ API_EXPORT Vector<ComponentTypeData> ComponentDataList;
 API_EXPORT Vector<u16> ComponentDataIndices;
 
 struct Extension {
-    Entity ExtensionComponent;
+    Entity ExtensionComponent, ExtensionExtenderComponent;
+    bool ExtensionDisabled;
 };
 
 struct Base {
@@ -37,7 +38,7 @@ struct Component {
 static ComponentTypeData *GetComponentType(Entity component) {
     auto entityIndex = GetEntityIndex(component);
     if(entityIndex >= ComponentDataIndices.size()) {
-        ComponentDataIndices.resize(upper_power_of_two(Max(entityIndex + 1, 8)), UINT16_MAX);
+        ComponentDataIndices.resize(UpperPowerOf2(Max(entityIndex + 1, 8)), UINT16_MAX);
     }
 
     auto componentIndex = ComponentDataIndices[entityIndex];
@@ -64,6 +65,11 @@ API_EXPORT Entity GetComponentEntity(Entity component, u32 index) {
 }
 
 API_EXPORT u32 GetComponentIndex(Entity component, Entity entity) {
+    if(!IsEntityValid(component)) {
+        Log(0, LogSeverity_Error, "Cannot get index of invalid component");
+        return InvalidIndex;
+    }
+
     if(!IsEntityValid(entity)) {
         return InvalidIndex;
     }
@@ -90,7 +96,15 @@ API_EXPORT char * GetComponentBytes(Entity component, u32 index) {
 }
 
 API_EXPORT bool AddComponent (Entity entity, Entity component) {
-    Assert(entity, IsEntityValid(entity) && IsEntityValid(component));
+    if(!IsEntityValid(entity)) {
+        Log(0, LogSeverity_Error, "Invalid Entity when adding component %s: %s", GetDebugName(component), GetDebugName(entity));
+        return false;
+    }
+
+    if(!IsEntityValid(component)) {
+        Log(0, LogSeverity_Error, "Cannot add invalid Component");
+        return false;
+    }
 
     if(!HasComponent (entity, component)) {
         auto componentData = GetComponentType(component);
@@ -141,8 +155,15 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
 }
 
 API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
-    Assert(entity, IsEntityValid(entity));
-    Assert(component, IsEntityValid(component));
+    if(!IsEntityValid(entity)) {
+        Log(0, LogSeverity_Error, "Invalid Entity when removing component %s: %s", GetDebugName(component), GetDebugName(entity));
+        return false;
+    }
+
+    if(!IsEntityValid(component)) {
+        Log(0, LogSeverity_Error, "Cannot remove invalid Component");
+        return false;
+    }
 
     if(HasComponent(entity, component)) {
 		Type types[] = { TypeOf_Entity, TypeOf_Entity };
@@ -167,6 +188,13 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
                     while(GetArrayPropertyCount(property, entity)) {
                         RemoveArrayPropertyElement(property, entity, 0);
                     }
+                } else if(kind == PropertyKind_String) {
+                    static StringRef nullStr = "";
+                    SetPropertyValue(property, entity, &nullStr); // Reset value to default before removal
+                } else {
+                    static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+
+                    SetPropertyValue(property, entity, nullData); // Reset value to default before removal
                 }
             }
 
@@ -224,6 +252,62 @@ LocalFunction(OnEntityDestroyed, void, Entity entity) {
     }
 }
 
+static void RemoveExtensions(Entity component, Entity extensionComponent) {
+    Entity entity = 0;
+    void *data = 0;
+    for(u32 i = GetNextComponent(component, InvalidIndex, &data, &entity);
+        i != InvalidIndex;
+        i = GetNextComponent(component, i, &data, &entity)) {
+        RemoveComponent(entity, extensionComponent);
+    }
+}
+
+static void AddExtensions(Entity component, Entity extensionComponent) {
+    Entity entity = 0;
+    void *data = 0;
+    for(u32 i = GetNextComponent(component, InvalidIndex, &data, &entity);
+        i != InvalidIndex;
+        i = GetNextComponent(component, i, &data, &entity)) {
+        AddComponent(entity, extensionComponent);
+    }
+}
+
+LocalFunction(OnExtensionDisabledChanged,
+        void,
+        Entity extension,
+        bool oldValue,
+        bool newValue) {
+    if(newValue) {
+        AddExtensions(GetExtensionComponent(extension), GetExtensionExtenderComponent(extension));
+    }
+
+    if(!newValue) {
+        RemoveExtensions(GetExtensionComponent(extension), GetExtensionExtenderComponent(extension));
+    }
+}
+
+LocalFunction(OnExtensionComponentChanged,
+        void,
+        Entity extension,
+        Entity oldValue,
+        Entity newValue) {
+    if(!GetExtensionDisabled(extension)) {
+        RemoveExtensions(oldValue, GetExtensionExtenderComponent(extension));
+        AddExtensions(newValue, GetExtensionExtenderComponent(extension));
+    }
+}
+
+LocalFunction(OnExtensionExtenderComponentChanged,
+        void,
+        Entity extension,
+        Entity oldValue,
+        Entity newValue) {
+    if(!GetExtensionDisabled(extension)) {
+        RemoveExtensions(GetExtensionComponent(extension), oldValue);
+        AddExtensions(GetExtensionComponent(extension), newValue);
+    }
+}
+
 BeginUnit(Component)
     BeginComponent(Component)
         RegisterArrayProperty(Property, Properties)
@@ -233,6 +317,8 @@ BeginUnit(Component)
 
     BeginComponent(Extension)
         RegisterProperty(Entity, ExtensionComponent)
+        RegisterProperty(Entity, ExtensionExtenderComponent)
+        RegisterProperty(bool, ExtensionDisabled)
     EndComponent()
 
     BeginComponent(Base)
@@ -245,6 +331,10 @@ BeginUnit(Component)
     __isComponentInitialized = true;
 
     RegisterSubscription(EntityDestroyed, OnEntityDestroyed, 0)
+
+    RegisterSubscription(ExtensionDisabledChanged, OnExtensionDisabledChanged, 0)
+    RegisterSubscription(ExtensionComponentChanged, OnExtensionComponentChanged, 0)
+    RegisterSubscription(ExtensionExtenderComponentChanged, OnExtensionExtenderComponentChanged, 0)
 EndUnit()
 
 

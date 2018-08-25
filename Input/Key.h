@@ -5,7 +5,10 @@
 #ifndef PLAZA_KEY_H
 #define PLAZA_KEY_H
 
-DeclareEnum(Key)
+#include <Core/NativeUtils.h>
+
+Unit(Key)
+    Enum(Key)
 
 enum
 {
@@ -63,7 +66,7 @@ enum
     KEY_WORLD_2            =  162 /* non-US #2 */,
 
     /* Function keys */
-        KEY_ESCAPE            =   256,
+    KEY_ESCAPE            =   256,
     KEY_ENTER            =    257,
     KEY_TAB            =      258,
     KEY_BACKSPACE      =     259,
@@ -186,14 +189,13 @@ enum
 
 
     // Gamepad multipliers. Add these values to get GAMEPAD_* values for different gamepads
-        GAMEPAD_MULTIPLIER = 30,
+    GAMEPAD_MULTIPLIER = 30,
     GAMEPAD_1 = 0,
     GAMEPAD_2 = 30,
     GAMEPAD_3 = 60,
     GAMEPAD_4 = 90,
 
-    KEY_MAX = 640,
-    CURSOR_MAX = 8
+    KEY_MAX = 640
 };
 
 #endif //PLAZA_KEY_H

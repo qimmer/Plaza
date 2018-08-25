@@ -2,7 +2,7 @@
 // Created by Kim Johannsen on 31-03-2018.
 //
 
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 #include <Input/InputState.h>
 #include <ImGui/imgui/imgui.h>
 #include <ImGui/ImGuiRenderer.h>
@@ -23,8 +23,8 @@ struct EditorContext {
 BeginUnit(EditorContext)
     BeginComponent(EditorContext)
 EndComponent()
-
-RegisterProperty(bool, EditorContextVisible)
+EndUnit()
+(bool, EditorContextVisible)
 
 LocalFunction(OnEditorContextAdded, void, Entity editor) {
     auto data = GetEditorContext(editor);

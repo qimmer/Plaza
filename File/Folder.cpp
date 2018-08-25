@@ -6,6 +6,8 @@
 #include "Folder.h"
 #include <Foundation/VirtualPath.h>
 
+#undef Enum
+
 #include <unistd.h>
 #include <algorithm>
 #include <climits>

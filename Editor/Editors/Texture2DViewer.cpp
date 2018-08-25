@@ -70,8 +70,8 @@ BeginUnit(Texture2DViewer)
         RegisterProperty(Entity, Texture2DViewerTexture)
         DefineExtensionMethod(Texture2D, void, ViewTexture, Entity entity)
 EndComponent()
-
-RegisterProperty(Entity, Texture2DViewerTexture)
+EndUnit()
+(Entity, Texture2DViewerTexture)
 
 DefineService(Texture2DViewer)
     RegisterSubscription(ImGuiDraw, Draw, 0)

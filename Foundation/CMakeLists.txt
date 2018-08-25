@@ -3,7 +3,7 @@ project(Foundation)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Foundation CommandLine.h CommandLine.cpp AppLoop.cpp AppLoop.h Visibility.cpp Visibility.h FoundationModule.cpp FoundationModule.h Stream.cpp Stream.h MemoryStream.cpp MemoryStream.h PersistancePoint.cpp PersistancePoint.h VirtualPath.cpp VirtualPath.h Task.cpp Task.h ValueConverter.cpp ValueConverter.h Invocation.cpp Invocation.h Timer.cpp Timer.h StopWatch.cpp StopWatch.h NativeUtils.h unistd.h dirent.h)
+add_library(Foundation CommandLine.h CommandLine.cpp AppLoop.cpp AppLoop.h Visibility.cpp Visibility.h FoundationModule.cpp FoundationModule.h Stream.cpp Stream.h MemoryStream.cpp MemoryStream.h PersistancePoint.cpp PersistancePoint.h VirtualPath.cpp VirtualPath.h Task.cpp Task.h ValueConverter.cpp ValueConverter.h Invocation.cpp Invocation.h Timer.cpp Timer.h StopWatch.cpp StopWatch.h NativeUtils.h unistd.h dirent.h Invalidation.cpp Invalidation.h)
 
 target_include_directories(Foundation PUBLIC ".." ".")
 

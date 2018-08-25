@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <Core/Vector.h>
 
-
 inline void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
 {
 	return ::malloc(size);
@@ -59,6 +58,9 @@ void SetComponentSize(Entity entity, u16 size);
 void SetEventArgsByDecl(Entity entity, StringRef decl);
 void SetEventArgumentOffset(Entity entity, u32 offset);
 void SetEventArgumentType(Entity entity, Type type);
+void SetEnumCombinable(Entity entity, bool value);
+Entity AddEnumFlags(Entity entity);
+void SetEnumFlagValue(Entity entity, u64 value);
 void SetPropertyType(Entity entity, Type type);
 void SetPropertyValue(Entity entity, Entity context, const void *valueData);
 void SetPropertyOffset(Entity entity, u32 offset);
@@ -93,6 +95,7 @@ bool CallNativeFunction(
 Entity EventOf_ParentChanged();
 
 Entity GetUniqueEntity(StringRef name, bool *firstTime);
+StringRef GetUniqueEntityName(Entity entity);
 
 // Declaration Macros
 
@@ -123,6 +126,9 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
 #define Event(NAME, ...) \
     static const StringRef __Event ## NAME = (#__VA_ARGS__ "");\
     Declare(Event, NAME)
+
+#define Enum(NAME) \
+    Declare(Enum, NAME)\
 
 #define __PropertyCoreGetOnly(COMPONENT, PROPERTYTYPE, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
@@ -173,6 +179,7 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
 #define ReferenceProperty(REFERENCECOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
     static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
+    Event(PROPERTYNAME ## Changed, Entity changedEntity, Entity oldValue, Entity newValue)\
     inline Entity Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         Entity value = 0;\
@@ -211,6 +218,7 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
 
 #define ArrayProperty(ELEMENTCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
+    Event(PROPERTYNAME ## Changed, Entity changedEntity, Entity oldValue, Entity newValue)\
     static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     inline const Entity* Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
@@ -233,6 +241,7 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
 
 #define __ArrayPropertyCore(ELEMENTCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
+    Event(PROPERTYNAME ## Changed, Entity changedEntity, Entity oldValue, Entity newValue)\
     static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     const Entity* Get ## PROPERTYNAME(Entity entity);\
     u32 GetNum ## PROPERTYNAME(Entity entity);\
@@ -398,11 +407,11 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
     }
 
 #define BeginUnit(NAME) \
-    API_EXPORT void __InitUnit_ ## NAME (Entity module) {\
+    void __InitUnit_ ## NAME (Entity module) {\
         static bool initialized = false;\
         if(initialized) return;\
         initialized = true;\
-        Entity node = 0, type = 0, component = 0, property = 0, event = 0, argument = 0, argumentParent = 0, base = 0, extension = 0, function = 0, subscription = 0, subscriptionFunction = 0;\
+        Entity node = 0, type = 0, component = 0, property = 0, event = 0, argument = 0, argumentParent = 0, base = 0, extension = 0, function = 0, subscription = 0, subscriptionFunction = 0, eenum = 0, flag = 0;\
         auto unitName = #NAME;\
         char buffer[1024];
 
@@ -442,6 +451,10 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
     SetName(event, #PROPERTYNAME "Changed");\
     SetEventArgsByDecl(event, __Event ## PROPERTYNAME ## Changed);
 
+#define RegisterPropertyEnum(PROPERTYTYPE, PROPERTYNAME, ENUM) \
+    RegisterProperty(PROPERTYTYPE, PROPERTYNAME) \
+    SetPropertyEnum(property, EnumOf_ ## ENUM ());
+
 #define RegisterArrayProperty(COMPONENTTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
     __InjectArrayPropertyElement(PropertyOf_Properties(), component, property);\
@@ -451,7 +464,11 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
     SetPropertyMeta(property, __ ## PROPERTYNAME ## __Meta);\
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
-    SetPropertyKind(property, PropertyKind_Array);
+    SetPropertyKind(property, PropertyKind_Array);\
+    event = EventOf_ ## PROPERTYNAME ## Changed ();\
+    __InjectChildPropertyValue(PropertyOf_PropertyChangedEvent(), property, event);\
+    SetName(event, #PROPERTYNAME "Changed");\
+    SetEventArgsByDecl(event, __Event ## PROPERTYNAME ## Changed);
 
 #define RegisterChildProperty(COMPONENTTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
@@ -474,7 +491,11 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
     SetPropertyMeta(property, __ ## PROPERTYNAME ## __Meta);\
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
-    SetPropertyKind(property, PropertyKind_Value);
+    SetPropertyKind(property, PropertyKind_Value);\
+    event = EventOf_ ## PROPERTYNAME ## Changed ();\
+    __InjectChildPropertyValue(PropertyOf_PropertyChangedEvent(), property, event);\
+    SetName(event, #PROPERTYNAME "Changed");\
+    SetEventArgsByDecl(event, __Event ## PROPERTYNAME ## Changed);
 
 
 #define RegisterBase(BASECOMPONENT) \
@@ -502,12 +523,25 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
     subscription = AddSubscriptions(module);\
     SetName(subscription, buffer);\
     subscriptionFunction = FunctionOf_ ## FUNCTION ();\
+    SetSubscriptionSender(subscription, SENDER);\
     SetSubscriptionEvent(subscription, EventOf_ ## EVENT ());\
     SetSubscriptionHandler(subscription, subscriptionFunction);\
-    SetSubscriptionSender(subscription, SENDER);\
     if(!IsEntityValid(GetOwner(subscriptionFunction))) {\
         __InjectArrayPropertyElement(PropertyOf_Functions(), module, subscriptionFunction);\
     }
+
+#define BeginEnum(ENUM, COMBINABLE) \
+    eenum = EnumOf_ ## ENUM ();\
+    __InjectArrayPropertyElement(PropertyOf_Enums(), module, eenum);\
+    SetName(eenum, #ENUM); \
+    SetEnumCombinable(eenum, (COMBINABLE));
+
+#define RegisterFlag(FLAG) \
+    flag = AddEnumFlags(eenum);\
+    SetName(flag, #FLAG);\
+    SetEnumFlagValue(flag, (FLAG));
+
+#define EndEnum()
 
 #define RegisterReferenceTracker(TRACKEDPROPERTY, REFERENCEPROPERTY) \
     RegisterFunction(On ## TRACKEDPROPERTY ## Changed)\

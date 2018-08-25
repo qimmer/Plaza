@@ -158,7 +158,7 @@ LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity
         auto relativeUrl = requestUrl + strlen(GetRestRoutingRoute(routing));
 
         char entityPath[PathMax];
-        CalculateEntityPath(entityPath, PathMax, data->RestEntityRoutingRoot);
+        CalculateEntityPath(entityPath, PathMax, data->RestEntityRoutingRoot, false);
 
         snprintf(completeRoute, 1024, "%s%s", entityPath, relativeUrl);
 

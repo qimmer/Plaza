@@ -1,4 +1,4 @@
-<div class="table" style="width: 100%; height: 100%;" ng-controller="mainController">
+<div class="table" style="width: 100%; height: 100%;" ng-controller="mainController" ng-keypress="keyPress($event)">
     <div class="row">
         <div class="cell" data-split-pane>
             <div data-split-pane-component data-width="20em" style="height: 100%">
@@ -18,7 +18,7 @@
                         <ul class="nav nav-tabs">
                             <li ng-repeat="tab in editor.tabs">
                                 <div ng-class="(editor.currentTab === tab) ? 'btn-primary btn-bordered' : 'btn-secondary btn-bordered'" class="btn" ng-click="editor.currentTab = tab">
-                                                {{tab.Name}}
+                                                {{tab.$$invalidated ? '*' : ''}}{{tab.Name}}
                                             <a class="tab-close" ng-click="closeEntity(tab)" style="margin-left: 5px;"><i class="im im-x-mark"></i></a>
                                 </div>
                                 

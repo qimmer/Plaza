@@ -28,8 +28,8 @@ BeginUnit(Label)
     RegisterProperty(StringRef, LabelText))
     RegisterProperty(v2f, LabelAlignment))
 EndComponent()
-
-RegisterProperty(Entity, LabelFont)
+EndUnit()
+(Entity, LabelFont)
 RegisterProperty(StringRef, LabelText)
 RegisterProperty(v2f, LabelAlignment)
 

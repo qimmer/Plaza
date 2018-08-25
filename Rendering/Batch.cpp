@@ -2,29 +2,50 @@
 // Created by Kim Johannsen on 14/01/2018.
 //
 
-#include <Core/String.h>
 #include "Batch.h"
+#include "Material.h"
+#include "Mesh.h"
+#include "ShaderCache.h"
+#include "CommandList.h"
+#include "Uniform.h"
 
 struct Batch {
-    Batch() : BatchWorldMatrix(m4x4f_Identity), BatchProgram(0), BatchMaterial(0), BatchMesh(0) {}
-
-    Entity BatchMaterial, BatchMesh, BatchProgram;
+    Vector(BatchUniformStates, Entity, 8)
+    Entity BatchMaterial, BatchSubMesh, BatchBinaryProgram;
     v4i BatchScissor;
     m4x4f BatchWorldMatrix;
-    Entity BatchShaderVariation;
+    bool BatchDisabled;
 };
+
+LocalFunction(OnMaterialProgramChanged, void, Entity material, Entity oldProgram, Entity newProgram) {
+    for_entity(batch, batchData, Batch) {
+        if(batchData->BatchMaterial == material) {
+            auto commandList = GetOwner(batch);
+            auto shaderCache = GetCommandListShaderCache(commandList);
+
+            SetBatchBinaryProgram(batch, GetShaderCacheBinaryProgram(shaderCache, newProgram));
+        }
+    }
+}
+
+LocalFunction(OnBatchMaterialChanged, void, Entity batch, Entity oldMaterial, Entity newMaterial) {
+    auto commandList = GetOwner(batch);
+    auto shaderCache = GetCommandListShaderCache(commandList);
+
+    SetBatchBinaryProgram(batch, GetShaderCacheBinaryProgram(shaderCache, GetMaterialProgram(newMaterial)));
+}
 
 BeginUnit(Batch)
     BeginComponent(Batch)
-    RegisterProperty(v4i, BatchScissor))
-    RegisterProperty(Entity, BatchMaterial))
-    RegisterProperty(Entity, BatchMesh))
-    RegisterProperty(Entity, BatchShaderVariation))
-    RegisterProperty(m4x4f, BatchWorldMatrix))
-EndComponent()
+        RegisterProperty(bool, BatchDisabled)
+        RegisterProperty(v4i, BatchScissor)
+        RegisterReferenceProperty(Material, BatchMaterial)
+        RegisterReferenceProperty(SubMesh, BatchSubMesh)
+        RegisterReferenceProperty(BinaryProgram, BatchBinaryProgram)
+        RegisterProperty(m4x4f, BatchWorldMatrix)
+        RegisterArrayProperty(UniformState, BatchUniformStates)
+    EndComponent()
 
-RegisterProperty(v4i, BatchScissor)
-RegisterProperty(Entity, BatchMaterial)
-RegisterProperty(Entity, BatchMesh)
-RegisterProperty(Entity, BatchShaderVariation)
-RegisterProperty(m4x4f, BatchWorldMatrix)
+    RegisterSubscription(MaterialProgramChanged, OnMaterialProgramChanged, 0)
+    RegisterSubscription(BatchMaterialChanged, OnBatchMaterialChanged, 0)
+EndUnit()

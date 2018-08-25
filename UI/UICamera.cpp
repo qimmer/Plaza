@@ -6,7 +6,7 @@
 #include <Scene/Camera.h>
 #include <cglm/cglm.h>
 #include <Rendering/RenderTarget.h>
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 
 struct UICamera {
     UICamera() : UICameraPixelsPerUnit(1.0f) {}
@@ -19,8 +19,8 @@ BeginUnit(UICamera)
     RegisterBase(Camera)
     RegisterProperty(float, UICameraPixelsPerUnit)
 EndComponent()
-
-RegisterProperty(float, UICameraPixelsPerUnit)
+EndUnit()
+(float, UICameraPixelsPerUnit)
 
 static void UpdateProjectionMatrix(Entity entity) {
     if(!HasComponent(entity, ComponentOf_UICamera())) return;

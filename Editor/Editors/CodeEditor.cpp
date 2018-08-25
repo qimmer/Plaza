@@ -148,8 +148,8 @@ BeginUnit(CodeEditor)
         RegisterProperty(Entity, CodeEditorStream)
         DefineExtensionMethod(Stream, void, EditCode, Entity entity)
 EndComponent()
-
-RegisterProperty(Entity, CodeEditorStream)
+EndUnit()
+(Entity, CodeEditorStream)
 
 DefineService(CodeEditor)
     ServiceDependency(EditorStyle)

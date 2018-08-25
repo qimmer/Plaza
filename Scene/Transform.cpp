@@ -21,8 +21,8 @@ BeginUnit(Transform)
     RegisterProperty(m4x4f, LocalTransform)
     RegisterProperty(m4x4f, GlobalTransform)
 EndComponent()
-
-RegisterProperty(m4x4f, GlobalTransform)
+EndUnit()
+(m4x4f, GlobalTransform)
 RegisterProperty(m4x4f, LocalTransform)
 
 static void UpdateGlobal(Entity entity) {

@@ -2,7 +2,7 @@
 // Created by Kim Johannsen on 17/01/2018.
 //
 
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 #include <Rendering/CommandList.h>
 #include <Foundation/AppLoop.h>
 #include <Foundation/FoundationModule.h>

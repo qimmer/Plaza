@@ -8,5 +8,8 @@
 #include <Core/Module.h>
 
 Module(Rendering)
+    Unit(Rendering)
+        Component(Rendering)
+            ChildProperty(Uniform, RenderingUvOffsetScaleUniform)
 
 #endif //PLAZA_RENDERINGMODULE_H

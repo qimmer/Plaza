@@ -10,8 +10,4 @@
 Unit(BgfxOffscreenRenderTarget)
     Component(BgfxOffscreenRenderTarget)
 
-u16 GetBgfxOffscreenRenderTargetHandle(Entity entity);
-
-void UpdatOffscreenRenderTarget2D(Entity entity);
-
 #endif //PLAZA_BGFXOFFSCREENRENDERTARGET_H

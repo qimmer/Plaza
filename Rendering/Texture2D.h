@@ -9,7 +9,6 @@
 
 Unit(Texture2D)
     Component(Texture2D)
-
         Property(v2i, TextureSize2D)
 
 

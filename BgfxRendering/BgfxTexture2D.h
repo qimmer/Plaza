@@ -8,13 +8,7 @@
 #include <Core/NativeUtils.h>
 
 
-    Unit(BgfxTexture2D)
+Unit(BgfxTexture2D)
     Component(BgfxTexture2D)
-    DeclareService(BgfxTexture2D)
-
-    u16 GetBgfxTexture2DHandle(Entity entity);
-
-    void UpdateBgfxTexture2D(Entity entity);
-
 
 #endif //PLAZA_BGFXTEXTURE2D_H

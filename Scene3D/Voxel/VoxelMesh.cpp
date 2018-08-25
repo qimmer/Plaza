@@ -38,8 +38,8 @@ BeginUnit(VoxelMesh)
     RegisterProperty(Entity, VoxelMeshChunk)
     RegisterProperty(Entity, VoxelMeshPalette)
 EndComponent()
-
-RegisterProperty(Entity, VoxelMeshChunk)
+EndUnit()
+(Entity, VoxelMeshChunk)
 RegisterProperty(Entity, VoxelMeshPalette)
 
 Entity GetVoxelDataRoot() {

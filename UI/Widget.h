@@ -7,11 +7,11 @@
 
 #include <Core/NativeUtils.h>
 
-DeclareEnum(WidgetChildLayout)
+Enum(WidgetChildLayout)
 #define WidgetChildLayout_Horizontal 0
 #define WidgetChildLayout_Vertical 1
 
-DeclareEnum(WidgetSizing)
+Enum(WidgetSizing)
 #define WidgetSizing_Weighted 0
 #define WidgetSizing_Fixed 1
 

@@ -8,27 +8,32 @@
 
 struct AppLoop {
     u64 AppLoopFrame;
+    bool AppLoopDisabled, AppLoopKeepAlive;
 };
 
 BeginUnit(AppLoop)
     BeginComponent(AppLoop)
         RegisterProperty(u64, AppLoopFrame)
+        RegisterProperty(bool, AppLoopDisabled)
+        RegisterProperty(bool, AppLoopKeepAlive)
     EndComponent()
 EndUnit()
 
-API_EXPORT void RunAppLoop(Entity appLoop) {
-    AddComponent(appLoop, ComponentOf_AppLoop());
-    auto data = GetAppLoopData(appLoop);
+API_EXPORT void RunAppLoops() {
+    while(true) {
+        bool any = false;
+        for_entity(appLoop, appLoopData, AppLoop) {
+            if(!appLoopData->AppLoopDisabled) {
+                SetAppLoopFrame(appLoop, appLoopData->AppLoopFrame + 1);
 
-    if(data) {
-        while(IsEntityValid(appLoop)) {
-            SetAppLoopFrame(appLoop, data->AppLoopFrame + 1);
+                if(appLoopData->AppLoopKeepAlive) {
+                    any = true;
+                }
+            }
+        }
+
+        if(!any) {
+            break;
         }
     }
-}
-
-API_EXPORT void RunMainAppLoop() {
-    auto appLoop = ModuleOf_Foundation();
-
-    RunAppLoop(appLoop);
 }

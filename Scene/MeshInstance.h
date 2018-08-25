@@ -16,7 +16,7 @@
 #define Layer_6 (1 << 6)
 #define Layer_7 (1 << 7)
 
-DeclareEnum(Layer)
+Enum(Layer)
 
 Unit(MeshInstance)
     Component(MeshInstance)

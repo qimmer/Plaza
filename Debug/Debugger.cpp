@@ -6,6 +6,7 @@
 #include <fstream>
 #include <Foundation/AppLoop.h>
 #include <Core/Identification.h>
+#include <Networking/Replication.h>
 #include "DebugModule.h"
 
 static bool hasRunAsExpected = false;
@@ -28,7 +29,9 @@ int main(int argc, char** argv) { \
         }
     }
 
-    RunMainAppLoop();
+    AddComponent(GetModuleRoot(), ComponentOf_Replication());
+
+    RunAppLoops();
 
     hasRunAsExpected = true;
 

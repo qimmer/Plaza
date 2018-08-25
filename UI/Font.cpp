@@ -41,8 +41,8 @@ BeginUnit(Font)
     RegisterProperty(u32, FontFirstChar))
     RegisterProperty(u32, FontLastChar))
 EndComponent()
-
-RegisterProperty(float, FontSize)
+EndUnit()
+(float, FontSize)
 RegisterProperty(u32, FontFirstChar)
 RegisterProperty(u32, FontLastChar)
 

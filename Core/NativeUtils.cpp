@@ -10,9 +10,9 @@
 
 typedef eastl::string LookupString;
 
-API_EXPORT Entity GetUniqueEntity(StringRef name, bool *firstTime) {
-    static eastl::unordered_map<LookupString, Entity> entityLookup;
+static eastl::unordered_map<LookupString, Entity> entityLookup;
 
+API_EXPORT Entity GetUniqueEntity(StringRef name, bool *firstTime) {
     LookupString uniqueNameStr = name;
 
     auto it = entityLookup.find(uniqueNameStr);
@@ -26,4 +26,14 @@ API_EXPORT Entity GetUniqueEntity(StringRef name, bool *firstTime) {
     if(firstTime) *firstTime = false;
 
     return it->second;
+}
+
+API_EXPORT StringRef GetUniqueEntityName(Entity entity) {
+    for(auto& it : entityLookup) {
+        if(it.second == entity) {
+            return it.first.c_str();
+        }
+    }
+
+    return NULL;
 }

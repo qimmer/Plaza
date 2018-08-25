@@ -19,7 +19,7 @@ struct Identification {
     char Name[256];
 };
 
-API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity) {
+API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bool preferNamesToIndices) {
     typedef char Path[PathMax];
     Path paths[2];
 
@@ -60,7 +60,12 @@ API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity) {
                         break;
                     }
                 }
-                snprintf(elementName, PathMax, "%s/%lu", GetName(ownerProperty), index);
+                if(preferNamesToIndices) {
+                    snprintf(elementName, PathMax, "%s/%s", GetName(ownerProperty), GetName(elements[index]));
+                } else {
+                    snprintf(elementName, PathMax, "%s/%lu", GetName(ownerProperty), index);
+                }
+
                 entity = owner;
             }
 
@@ -167,9 +172,9 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
     return currentEntity;
 }
 
-API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo) {
+API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo, bool preferNameToIndex) {
     char parentPath[2048];
-    CalculateEntityPath(parentPath, 2048, relativeTo);
+    CalculateEntityPath(parentPath, 2048, relativeTo, preferNameToIndex);
 
     if(memcmp(entityPath, parentPath, Min(strlen(parentPath), strlen(entityPath))) != 0) {
         // Entity in entityPath is not a descendant of relativeTo. Return the absolute path given.

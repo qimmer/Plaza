@@ -16,8 +16,8 @@ struct MainMenu {
 BeginUnit(MainMenu)
     BeginComponent(MainMenu)
 EndComponent()
-
-RegisterProperty(bool, MainMenuVisible)
+EndUnit()
+(bool, MainMenuVisible)
 
 static void DrawMenu(Entity menu) {
     char title[256];

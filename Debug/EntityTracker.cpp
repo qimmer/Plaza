@@ -5,6 +5,9 @@
 #include <Json/NativeUtils.h>
 #include <Foundation/Stream.h>
 #include <Core/Identification.h>
+#include <Networking/Replication.h>
+#include <Networking/NetworkingModule.h>
+#include <Foundation/AppLoop.h>
 #include "EntityTracker.h"
 #include "DebugModule.h"
 
@@ -14,85 +17,22 @@ struct EntityModification {
 
 struct EntityTracker {
     Vector(EntityModifications, Entity, 128);
-    bool EntityTrackerTrackValues;
+    u64 LastFrame;
 };
-
-static Entity TriggerChange(Entity tracker, Entity changedEntity) {
-    auto trackerData = GetEntityTrackerData(tracker);
-
-    for(auto i = 0; i < trackerData->EntityModifications.Count; ++i) {
-        auto modification = GetVector(trackerData->EntityModifications)[i];
-        auto modificationData = GetEntityModificationData(modification);
-
-        if(modificationData && modificationData->EntityModificationEntity == changedEntity) {
-            return modification;
-        }
-    }
-
-    auto modification = AddEntityModifications(tracker);
-    SetEntityModificationEntity(modification, changedEntity);
-
-    return modification;
-}
-
-LocalFunction(OnEntityDestroyed, void, Entity entity) {
-    for_entity(tracker, trackerData, EntityTracker) {
-        auto trackerData = GetEntityTrackerData(tracker);
-
-        for(auto i = 0; i < trackerData->EntityModifications.Count; ++i) {
-            auto modification = GetVector(trackerData->EntityModifications)[i];
-            auto modificationData = GetEntityModificationData(modification);
-
-            if(modificationData && modificationData->EntityModificationEntity == entity) {
-                RemoveEntityModifications(tracker, i);
-                --i;
-            }
-        }
-    }
-}
-
-LocalFunction(OnPropertyChanged, void, Entity property, Entity entity) {
-    if(property == PropertyOf_EntityModificationEntity() || property == PropertyOf_EntityModifications()) return;
-
-    auto kind = GetPropertyKind(property);
-    if(kind == PropertyKind_Array) {
-        for_entity(tracker, trackerData, EntityTracker) {
-            TriggerChange(tracker, entity);
-        }
-    }
-    else if(kind == PropertyKind_Child) {
-        for_entity(tracker, trackerData, EntityTracker) {
-            TriggerChange(tracker, entity);
-        }
-    } else {
-        for_entity(tracker, trackerData, EntityTracker) {
-            if(trackerData->EntityTrackerTrackValues) {
-                TriggerChange(tracker, entity);
-            }
-        }
-    }
-}
-
-LocalFunction(OnComponentAdded, void, Entity component, Entity context) {
-    if(component == ComponentOf_EntityModification() || component == ComponentOf_Ownership() ||component == ComponentOf_Identification()) return;
-
-    for_entity(tracker, trackerData, EntityTracker) {
-        TriggerChange(tracker, context);
-    }
-}
-
-LocalFunction(OnComponentRemoved, void, Entity component, Entity context) {
-    if(component == ComponentOf_EntityModification() || component == ComponentOf_Ownership() ||component == ComponentOf_Identification()) return;
-
-    for_entity(tracker, trackerData, EntityTracker) {
-        TriggerChange(tracker, context);
-    }
-}
 
 API_EXPORT u16 GetChanges(Entity responseStream, StringRef path) {
     SetStreamPath(responseStream, "memory://response.json");
 
     auto entityTracker = GetEntityTracker(ModuleOf_Debug());
+    auto trackerData = GetEntityTrackerData(entityTracker);
+
+    for_entity(entity, data, Replication) {
+        if(*(u64*)data > trackerData->LastFrame) {
+            SetEntityModificationEntity(AddEntityModifications(entityTracker), entity);
+        }
+    }
+
+    trackerData->LastFrame = GetAppLoopFrame(GetReplicationAppLoop(ModuleOf_Networking()));
 
     if(!SerializeJson(
             responseStream,
@@ -116,13 +56,7 @@ BeginUnit(EntityTracker)
 
     BeginComponent(EntityTracker)
         RegisterArrayProperty(EntityModification, EntityModifications)
-        RegisterProperty(bool, EntityTrackerTrackValues)
     EndComponent()
 
     RegisterFunction(GetChanges)
-
-    RegisterSubscription(PropertyChanged, OnPropertyChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnComponentAdded, 0)
-    RegisterSubscription(EntityComponentRemoved, OnComponentRemoved, 0)
-    RegisterSubscription(EntityDestroyed, OnEntityDestroyed, 0)
 EndUnit()

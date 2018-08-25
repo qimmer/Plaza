@@ -26,8 +26,8 @@ BeginUnit(Transform3D)
     RegisterProperty(v3f, Scale3D)
     RegisterProperty(v3f, RotationEuler3D)
 EndComponent()
-
-RegisterProperty(v3f, Position3D)
+EndUnit()
+(v3f, Position3D)
 
 RegisterProperty(v3f, RotationEuler3D)
 

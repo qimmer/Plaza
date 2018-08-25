@@ -2,44 +2,101 @@
 // Created by Kim Johannsen on 15/01/2018.
 //
 
+#include <Json/NativeUtils.h>
+#include <Foundation/AppLoop.h>
+
 #include "BgfxModule.h"
-#include "BgfxContext.h"
+#include "BgfxResource.h"
+#include "BgfxRenderContext.h"
 #include "BgfxCommandList.h"
 #include "BgfxUniform.h"
 #include "BgfxTexture2D.h"
-#include "BgfxVertexBuffer.h"
-#include "BgfxIndexBuffer.h"
+#include "BgfxMesh.h"
 #include "BgfxShaderCompiler.h"
-#include "BgfxProgram.h"
-#include "BgfxBinaryShader.h"
-#include "BgfxVertexDeclaration.h"
+#include "BgfxShaderCache.h"
 #include "BgfxOffscreenRenderTarget.h"
 
+#include <Core/CoreModule.h>
+#include <Foundation/FoundationModule.h>
+#include <Json/JsonModule.h>
+#include <Rendering/RenderingModule.h>
 
 BeginModule(BgfxRendering)
-        ModuleService(BgfxContext)
-        ModuleService(BgfxUniform)
-        ModuleService(BgfxTexture2D)
-        ModuleService(BgfxVertexBuffer)
-        ModuleService(BgfxVertexDeclaration)
-        ModuleService(BgfxIndexBuffer)
-        ModuleService(BgfxBinaryShader)
-        ModuleService(BgfxProgram)
-        ModuleService(BgfxOffscreenRenderTarget)
+    RegisterDependency(Rendering)
+    RegisterDependency(Json)
+    RegisterDependency(Foundation)
+    RegisterDependency(Core)
 
-        ModuleType(BgfxCommandList)
-        ModuleType(BgfxContext)
-        ModuleType(BgfxUniform)
-        ModuleType(BgfxTexture2D)
-        ModuleType(BgfxVertexBuffer)
-        ModuleType(BgfxVertexDeclaration)
-        ModuleType(BgfxIndexBuffer)
-        ModuleType(BgfxBinaryShader)
-        ModuleType(BgfxProgram)
-        ModuleType(BgfxOffscreenRenderTarget)
+    RegisterUnit(BgfxShaderCompiler)
+    RegisterUnit(BgfxRenderContext)
+    RegisterUnit(BgfxCommandList)
+    RegisterUnit(BgfxUniform)
+    RegisterUnit(BgfxTexture2D)
+    RegisterUnit(BgfxMesh)
+    RegisterUnit(BgfxResource)
+    RegisterUnit(BgfxShaderCache)
+    RegisterUnit(BgfxOffscreenRenderTarget)
+    RegisterUnit(BgfxRendering)
 
 #ifdef BGFXRENDERING_WITH_SHADER_COMPILER
-        ModuleService(BgfxShaderCompiler)
+    RegisterUnit(BgfxShaderCompiler)
 #endif
-    EndModule()
 
+    ModuleData({
+        "BgfxRenderingLoop": {
+            "AppLoopDisabled": true
+        },
+        "Extensions": [
+           {
+                "ExtensionDisabled": true,
+                "ExtensionComponent": "/Modules/Rendering/Components/CommandList",
+                "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxCommandList"
+           },
+           {
+               "ExtensionDisabled": true,
+               "ExtensionComponent": "/Modules/Rendering/Components/VertexDeclaration",
+               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxVertexDeclaration"
+           },
+           {
+               "ExtensionDisabled": true,
+               "ExtensionComponent": "/Modules/Rendering/Components/VertexBuffer",
+               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxVertexBuffer"
+           },
+           {
+               "ExtensionDisabled": true,
+               "ExtensionComponent": "/Modules/Rendering/Components/IndexBuffer",
+               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxIndexBuffer"
+           },
+           {
+               "ExtensionDisabled": true,
+               "ExtensionComponent": "/Modules/Rendering/Components/OffscreenRenderTarget",
+               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxOffscreenRenderTarget"
+           },
+           {
+               "ExtensionDisabled": true,
+               "ExtensionComponent": "/Modules/Rendering/Components/BinaryProgram",
+               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxBinaryProgram"
+           },
+           {
+               "ExtensionDisabled": true,
+               "ExtensionComponent": "/Modules/Rendering/Components/Texture2D",
+               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxTexture2D"
+           },
+           {
+               "ExtensionDisabled": true,
+               "ExtensionComponent": "/Modules/Rendering/Components/Uniform",
+               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxUniform"
+           }
+        ]
+    })
+EndModule()
+
+struct BgfxRendering {
+    Entity BgfxRenderingLoop;
+};
+
+BeginUnit(BgfxRendering)
+    BeginComponent(BgfxRendering)
+        RegisterChildProperty(AppLoop, BgfxRenderingLoop)
+    EndComponent()
+EndUnit()

@@ -10,9 +10,10 @@
 Unit(AppLoop)
     Component(AppLoop)
         Property(u64, AppLoopFrame)
+        Property(bool, AppLoopDisabled)
+        Property(bool, AppLoopKeepAlive)
 
-    Function(RunAppLoop, void, Entity appLoop)
-    Function(RunMainAppLoop, void)
+    Function(RunAppLoops, void)
 
 
 #endif //PLAZA_APPLOOP_H

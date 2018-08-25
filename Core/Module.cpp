@@ -5,6 +5,7 @@
 #include <Core/Module.h>
 #include <cstring>
 #include "Entity.h"
+#include "Enum.h"
 #include "Debug.h"
 #include "Vector.h"
 #include "Identification.h"
@@ -21,6 +22,7 @@ struct Module {
 
     Vector(Components, Entity, 64)
     Vector(Events, Entity, 64)
+    Vector(Enums, Entity, 64)
     Vector(Functions, Entity, 128)
     Vector(Extensions, Entity, 64)
     Vector(Subscriptions, Entity, 128)
@@ -38,6 +40,7 @@ BeginUnit(Module)
 
         RegisterArrayProperty(Component, Components)
         RegisterArrayProperty(Event, Events)
+        RegisterArrayProperty(Enum, Enums)
         RegisterArrayProperty(Function, Functions)
         RegisterArrayProperty(Extension, Extensions)
         RegisterArrayProperty(Subscription, Subscriptions)
@@ -61,6 +64,7 @@ API_EXPORT Entity GetModuleRoot() {
 }
 
 #ifdef WIN32
+#undef Enum
 #include <Windows.h>
 #include <dbghelp.h>
 

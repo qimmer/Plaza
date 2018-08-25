@@ -149,8 +149,8 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjso
         {
             auto entity = *(Entity*)valueData;
             if(IsEntityValid(entity)) {
-                CalculateEntityPath(entityPath, PathMax, entity);
-                writer.String(GetEntityRelativePath(entityPath, root));
+                CalculateEntityPath(entityPath, PathMax, entity, false);
+                writer.String(GetEntityRelativePath(entityPath, root, false));
             } else {
                 writer.Null();
             }
@@ -255,7 +255,7 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
 
         //if(parent == root) {
             char path[2048];
-            CalculateEntityPath(path, sizeof(path), parent);
+            CalculateEntityPath(path, sizeof(path), parent, false);
 
             writer.String("$path");
             writer.String(path);
@@ -317,7 +317,7 @@ static bool DeserializeValue(Entity parent, Entity property, Entity root, const 
                 snprintf(absolutePath, PathMax, "%s", path);
             } else {
                 char rootPath[PathMax];
-                CalculateEntityPath(rootPath, PathMax, root);
+                CalculateEntityPath(rootPath, PathMax, root, false);
 
                 snprintf(absolutePath, PathMax, "%s/%s", rootPath, path);
             }

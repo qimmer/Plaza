@@ -30,16 +30,20 @@ angular.module('plaza')
                 }
 
                 $scope.getNodeStyle = function(node) {
-                    if(!node.$flow) {
-                        node.$flow = {
+                    if(!node.FlowNodeLocation) {
+                        node.FlowNodeLocation = {
                             x: Math.ceil(Math.random() * 1000),
                             y: Math.ceil(Math.random() * 1000)
                         };
+
+                        entityService.updateEntity($scope.connection, entityService.calculatePath(node), {
+                            FlowNodeLocation: node.FlowNodeLocation
+                        });
                     }
 
                     return {
-                        left: (node.$flow.x + $scope.scroll.x) + "px",
-                        top: (node.$flow.y + $scope.scroll.y) + "px",
+                        left: (node.FlowNodeLocation.x + $scope.scroll.x) + "px",
+                        top: (node.FlowNodeLocation.y + $scope.scroll.y) + "px",
                     };
                 }
 
@@ -89,8 +93,12 @@ angular.module('plaza')
 
                     dragScope.$apply(function() {
                         if(dragNode) {
-                            dragNode.$flow.x += dx / $scope.zoom;
-                            dragNode.$flow.y += dy / $scope.zoom;
+                            dragNode.FlowNodeLocation.x += dx / $scope.zoom;
+                            dragNode.FlowNodeLocation.y += dy / $scope.zoom;
+
+                            entityService.updateEntity($scope.connection, entityService.calculatePath(dragNode), {
+                                FlowNodeLocation: dragNode.FlowNodeLocation
+                            });
                         } else {
                             $scope.scroll.x += dx / $scope.zoom;
                             $scope.scroll.y += dy / $scope.zoom;
@@ -116,6 +124,7 @@ angular.module('plaza')
                     initialMouseY = $event.clientY;
                     $document.bind('mousemove', mousemove);
                     $document.bind('mouseup', mouseup);
+
                     return false;
                 }
 

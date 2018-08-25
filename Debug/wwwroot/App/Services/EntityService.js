@@ -85,6 +85,10 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
         }
     }
 
+    service.error = function(err) {
+        throw err;
+    }
+
     service.createConnection = function (endpoint) {
         var connection = {
             root: {},
@@ -117,7 +121,7 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
             connection.updateTask = true;
 
             infiniteUpdate();
-        });
+        }, service.error);
 
         return connection;
     };
@@ -176,13 +180,15 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
     }
 
     service.save = function (connection, entity) {
-        $http.get(connection.endpoint + '/save' + service.calculatePath(entity)).then(function (response) {
-            entity.$invalidated = false;
+        if(entity.$components && entity.$components.includes("PersistancePoint")) {
+            service.updateEntity(connection, service.calculatePath(entity), { 'PersistancePointSaving': true }).then(function (response) {
+                entity.$invalidated = false;
+            }, service.error);
+        }
 
-            if (entity.$children) {
-                entity.$children.forEach(service.save);
-            }
-        });
+        if (entity.$children) {
+            entity.$children.forEach(service.save);
+        }
     }
 
     service.getChanges = function (connection) {
@@ -208,7 +214,7 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
             }
 
             return entity;
-        });
+        }, service.error);
     }
 
     service.update = function (connection) {
@@ -236,7 +242,7 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
             }
 
             return entity;
-        });
+        }, service.error);
     }
 
     service.calculatePath = function (entity) {
@@ -257,31 +263,31 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
     service.addComponent = function (connection, path, componentName) {
         return $http.get(connection.endpoint + '/addcomponent/' + componentName + path).then(function (response) {
             connection.isConnected = true;
-        });
+        }, service.error);
     }
 
     service.removeComponent = function (connection, path, componentName) {
         return $http.get(connection.endpoint + '/removecomponent/' + componentName + path).then(function (response) {
             connection.isConnected = true;
-        });
+        }, service.error);
     }
 
     service.updateEntity = function (connection, path, newEntity) {
         return $http.put(connection.endpoint + '/entity' + path, newEntity).then(function (response) {
             connection.isConnected = true;
-        });
+        }, service.error);
     }
 
     service.createEntity = function (connection, path) {
         return $http.post(connection.endpoint + '/entity' + path).then(function (response) {
             connection.isConnected = true;
-        });
+        }, service.error);
     }
 
     service.deleteEntity = function (connection, path) {
         return $http.delete(connection.endpoint + '/entity' + path).then(function (response) {
             connection.isConnected = true;
-        });
+        }, service.error);
     }
 
     service.parseComponentModel = function (moduleRoot, moduleTable, componentTable, propertyTable) {

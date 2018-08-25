@@ -47,7 +47,15 @@ struct ArrayProperty {
 };
 
 API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *newValueData) {
+    auto component = GetOwner(property);
+
+    if(!IsEntityValid(component) || !IsEntityValid(property)) {
+        Log(context, LogSeverity_Error, "Invalid property when trying to set property");
+        return;
+    }
+
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+    char *emptyPtr = nullData;
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
     auto propertyData = (Property*) GetComponentBytes(ComponentOf_Property(), propertyIndex);
 
@@ -61,9 +69,6 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
         return;
     }
 
-    auto component = GetOwner(property);
-
-    Assert(property, IsEntityValid(component));
     AddComponent(context, component);
 
     auto offset = propertyData->PropertyOffset;
@@ -84,6 +89,8 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
             changed = true;
         }
     } else {
+        newValueData = newValueData ? newValueData : nullData;
+
         memcpy(oldValueData, valueData, propertyData->PropertySize);
         if(memcmp(oldValueData, newValueData, propertyData->PropertySize) != 0) {
             memcpy(valueData, newValueData, propertyData->PropertySize);
@@ -109,15 +116,21 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
 }
 
 API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut) {
+    auto component = GetOwner(property);
+
+    if(!IsEntityValid(component) || !IsEntityValid(property)) {
+        Log(context, LogSeverity_Error, "Invalid property when trying to set property");
+        return false;
+    }
+
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
     auto propertyData = (Property*) GetComponentBytes(ComponentOf_Property(), propertyIndex);
 
     if(!propertyData) {
+        Log(context, LogSeverity_Error, "Property has not been registered.");
         return false;
     }
-
-    auto component = GetOwner(property);
 
     auto offset = propertyData->PropertyOffset;
 
@@ -245,7 +258,8 @@ API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity) {
     auto element = __CreateEntity();
     auto propertyName = GetName(property);
     char name[512];
-    snprintf(name, 512, "%s_%lu", propertyName, GetEntityIndex(element));
+    auto index = GetEntityIndex(element);
+    snprintf(name, 512, "%s_%lu", propertyName, index);
     SetName(element, name);
     return __InjectArrayPropertyElement(property, entity, element);
 }
@@ -366,6 +380,14 @@ void __InitializeProperty() {
 __PropertyCoreGet(Entity, Owner, Ownership)
 __PropertyCoreGet(Entity, OwnerProperty, Ownership)
 
+__PropertyCoreImpl(u32, PropertyOffset, Property)
+__PropertyCoreImpl(u32, PropertySize, Property)
+__PropertyCoreImpl(Type, PropertyType, Property)
+__PropertyCoreImpl(Entity, PropertyEnum, Property)
+__PropertyCoreImpl(u32, PropertyFlags, Property)
+__PropertyCoreImpl(Entity, PropertyChildComponent, Property)
+__PropertyCoreImpl(u8, PropertyKind, Property)
+
 API_EXPORT void SetOwner(Entity entity, Entity owner, Entity ownerProperty) {
     Assert(entity, IsEntityValid(owner));
     Assert(entity, IsEntityValid(ownerProperty));
@@ -375,14 +397,6 @@ API_EXPORT void SetOwner(Entity entity, Entity owner, Entity ownerProperty) {
     data->Owner = owner;
     data->OwnerProperty = ownerProperty;
 }
-
-__PropertyCoreImpl(u32, PropertyOffset, Property)
-__PropertyCoreImpl(u32, PropertySize, Property)
-__PropertyCoreImpl(Type, PropertyType, Property)
-__PropertyCoreImpl(Entity, PropertyEnum, Property)
-__PropertyCoreImpl(u32, PropertyFlags, Property)
-__PropertyCoreImpl(Entity, PropertyChildComponent, Property)
-__PropertyCoreImpl(u8, PropertyKind, Property)
 
 API_EXPORT void SetPropertyMeta(Entity property, StringRef metaString) {
 

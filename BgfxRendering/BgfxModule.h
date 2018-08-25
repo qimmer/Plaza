@@ -8,7 +8,10 @@
 
 #include <Core/Module.h>
 
+Module(BgfxRendering)
 
-    Module(BgfxRendering)
+Unit(BgfxRendering)
+    Component(BgfxRendering)
+        ChildProperty(AppLoop, BgfxRenderingLoop)
 
 #endif //PLAZA_BGFXMODULE_H

@@ -14,8 +14,8 @@ BeginUnit(VoxelChunk)
     BeginComponent(VoxelChunk)
     RegisterBase(Stream)
 EndComponent()
-
-RegisterProperty(v3i, VoxelChunkSize)
+EndUnit()
+(v3i, VoxelChunkSize)
 
 #define GetStrideZ(SIZE, Z) ((SIZE).x * (SIZE).y * (Z))
 #define GetStrideY(SIZE, Y) ((SIZE).x * (Y))

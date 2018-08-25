@@ -5,7 +5,7 @@
 #include <Foundation/MemoryStream.h>
 #include <Foundation/AppLoop.h>
 
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 #include <Rendering/Texture2D.h>
 #include <Rendering/Texture.h>
 #include <Rendering/CommandList.h>
@@ -13,7 +13,7 @@
 #include <Rendering/IndexBuffer.h>
 
 #include "ImGuiRenderer.h"
-#include <Rendering/Context.h>
+#include <Rendering/RenderContext.h>
 
 #include <imgui/imgui.h>
 #include <cglm/cglm.h>

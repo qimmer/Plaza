@@ -10,5 +10,6 @@
 Unit(Server)
     Component(Server)
         Property(u16, ServerPort)
+        ChildProperty(AppLoop, ServerLoop)
 
 #endif //PLAZA_SERVER_H

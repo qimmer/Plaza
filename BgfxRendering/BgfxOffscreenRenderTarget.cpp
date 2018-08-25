@@ -4,67 +4,56 @@
 
 #include <bgfx/bgfx.h>
 #include <Rendering/OffscreenRenderTarget.h>
+#include <Rendering/Texture.h>
+#include <Foundation/Invalidation.h>
 #include "BgfxOffscreenRenderTarget.h"
 #include "BgfxTexture2D.h"
+#include "BgfxResource.h"
 
 struct BgfxOffscreenRenderTarget {
-    BgfxOffscreenRenderTarget() :
-            handle(BGFX_INVALID_HANDLE),
-            invalidated(true) {}
-
-    bgfx::FrameBufferHandle handle;
-    bool invalidated;
 };
+
+LocalFunction(OnBgfxOffscreenRenderTargetRemoved, void, Entity entity) {
+    bgfx::FrameBufferHandle handle = { GetBgfxResourceHandle(entity) };
+
+    if(bgfx::isValid(handle)) {
+        bgfx::destroy(handle);
+    }
+}
+
+LocalFunction(OnValidation, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_Texture())) {
+        auto owner = GetOwner(entity);
+        if(HasComponent(owner, ComponentOf_BgfxOffscreenRenderTarget())) {
+            Invalidate(owner);
+        }
+    }
+
+    if(HasComponent(entity, ComponentOf_BgfxOffscreenRenderTarget())) {
+        bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
+
+        OnBgfxOffscreenRenderTargetRemoved(entity);
+
+        auto numStages = GetNumOffscreenRenderTargetTextures(entity);
+        auto stages = GetOffscreenRenderTargetTextures(entity);
+        auto targets = (bgfx::TextureHandle*)alloca(numStages * sizeof(bgfx::TextureHandle));
+
+        for(auto i = 0; i < numStages; ++i) {
+            targets[i] = {
+                GetBgfxResourceHandle(stages[i])
+            };
+        }
+
+        SetBgfxResourceHandle(entity, bgfx::createFrameBuffer(numStages, targets).idx);
+    }
+}
 
 BeginUnit(BgfxOffscreenRenderTarget)
     BeginComponent(BgfxOffscreenRenderTarget)
-EndComponent()
+        RegisterBase(BgfxResource)
+    EndComponent()
 
-LocalFunction(OnChanged, void, Entity entity) {
-    if(HasComponent(entity, ComponentOf_BgfxOffscreenRenderTarget())) {
-        GetBgfxOffscreenRenderTargetData(entity)->invalidated = true;
-    }
-}
-
-void OnOffscreenRenderTargetRemoved(Entity entity) {
-    auto data = GetBgfxOffscreenRenderTargetData(entity);
-
-    if(bgfx::isValid(data->handle)) {
-        bgfx::destroy(data->handle);
-        data->handle = BGFX_INVALID_HANDLE;
-    }
-}
-
-u16 GetBgfxOffscreenRenderTargetHandle(Entity entity) {
-    auto data = GetBgfxOffscreenRenderTargetData(entity);
-
-    if(data->invalidated) {
-        if(bgfx::isValid(data->handle)) {
-            bgfx::destroy(data->handle);
-            data->handle = BGFX_INVALID_HANDLE;
-        }
-
-        bgfx::TextureHandle targets[8];
-        targets[0] = {GetBgfxTexture2DHandle(GetRenderTargetTexture0(entity))};
-        targets[1] = {GetBgfxTexture2DHandle(GetRenderTargetTexture1(entity))};
-        targets[2] = {GetBgfxTexture2DHandle(GetRenderTargetTexture2(entity))};
-        targets[3] = {GetBgfxTexture2DHandle(GetRenderTargetTexture3(entity))};
-        targets[4] = {GetBgfxTexture2DHandle(GetRenderTargetTexture4(entity))};
-        targets[5] = {GetBgfxTexture2DHandle(GetRenderTargetTexture5(entity))};
-        targets[6] = {GetBgfxTexture2DHandle(GetRenderTargetTexture6(entity))};
-        targets[7] = {GetBgfxTexture2DHandle(GetRenderTargetTexture7(entity))};
-
-        u8 numTargets = 0;
-        while(numTargets < 8 && targets[numTargets].idx != bgfx::kInvalidHandle) ++numTargets;
-
-        data->handle = bgfx::createFrameBuffer(numTargets, targets);
-        data->invalidated = false;
-    }
-
-    return data->handle.idx;
-}
-
-DefineService(BgfxOffscreenRenderTarget)
-        RegisterSubscription(BgfxOffscreenRenderTargetRemoved, OnOffscreenRenderTargetRemoved, 0)
-        RegisterSubscription(OffscreenRenderTargetChanged, OnChanged, 0)
-EndService()
+    RegisterSubscription(EntityComponentRemoved, OnBgfxOffscreenRenderTargetRemoved, ComponentOf_BgfxOffscreenRenderTarget())
+    RegisterSubscription(Validate, OnValidation, 0)
+    RegisterSubscription(OffscreenRenderTargetTexturesChanged, Invalidate, 0)
+EndUnit()
