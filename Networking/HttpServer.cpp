@@ -10,6 +10,7 @@
 
 #define HEADER_SIZE_MAX 4096
 
+#include <unistd.h>
 #include <asio.hpp>
 #include <unordered_map>
 #include <chrono>
@@ -25,6 +26,10 @@
 #include "HttpRequest.h"
 #include "Server.h"
 #include "TcpStream.h"
+
+#ifndef WIN32
+#define stricmp strcasecmp
+#endif
 
 struct HttpServer {
     Vector(HttpServerRequests, Entity, 128)
@@ -162,11 +167,11 @@ static void ParseHeader(Entity server, HttpStreamPartialRequest *partial, char *
     } else {
         // This is the initial http line
 
-        char method[8];
+        char method[64];
         char url[1024];
-        char version[16];
+        char version[64];
 
-        auto parsedArgs = sscanf_s(headerLine, "%s %s %s", method, sizeof(method), url, sizeof(url), version, sizeof(version));
+        auto parsedArgs = sscanf(headerLine, "%s %s %s", method, url, version);
         if(3 == parsedArgs) {
             SetHttpRequestMethod(partial->request, method);
             SetHttpRequestVersion(partial->request, version);

@@ -26,12 +26,13 @@
 
 #if FILEWATCHER_PLATFORM == FILEWATCHER_PLATFORM_LINUX
 
+#include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
-#include <unistd.h>
+#include <Foundation/Win32/unistd.h>
 #include <sys/inotify.h>
 
 #define BUFF_SIZE ((sizeof(struct inotify_event)+FILENAME_MAX)*1024)
@@ -78,13 +79,8 @@ namespace FW
 			IN_CLOSE_WRITE | IN_MOVED_TO | IN_CREATE | IN_MOVED_FROM | IN_DELETE);
 		if (wd < 0)
 		{
-			if(errno == ENOENT)
-				throw FileNotFoundException(directory);
-			else
-				throw Exception(strerror(errno));
-
-//			fprintf (stderr, "Error: %s\n", strerror(errno));
-//			return -1;
+			fprintf (stderr, "Error: %s\n", strerror(errno));
+			return -1;
 		}
 		
 		WatchStruct* pWatch = new WatchStruct();

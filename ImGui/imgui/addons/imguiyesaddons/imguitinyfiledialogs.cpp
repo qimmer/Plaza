@@ -106,8 +106,8 @@ misrepresented as being the original software.
  #define SLASH "\\"
 #else
  #include <limits.h>
- #include <unistd.h>
- #include <dirent.h> /* on old systems try <sys/dir.h> instead */
+ #include <Foundation/Win32/unistd.h>
+ #include <Foundation/Win32/dirent.h> /* on old systems try <sys/dir.h> instead */
  #include <termios.h>
  #include <sys/utsname.h>
  #define SLASH "/"

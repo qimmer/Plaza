@@ -15,7 +15,7 @@ endif()
 
 
 if(BUILD_SHARED_LIBS)
-    install (TARGETS Debug RUNTIME DESTINATION bin)
+    install (TARGETS Debug RUNTIME LIBRARY DESTINATION bin)
 endif()
 
 INSTALL(FILES Debug.json DESTINATION bin )

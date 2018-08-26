@@ -10,5 +10,6 @@ target_include_directories(Input PUBLIC "..")
 target_link_libraries(Input PUBLIC Foundation Core)
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS Input RUNTIME DESTINATION bin)
-    endif()
+    install (TARGETS Input RUNTIME LIBRARY DESTINATION bin)
+
+endif()

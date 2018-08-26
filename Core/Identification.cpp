@@ -23,8 +23,8 @@ API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bo
     typedef char Path[PathMax];
     Path paths[2];
 
-    snprintf(paths[0], PathMax, "");
-    snprintf(paths[1], PathMax, "");
+    snprintf(paths[0], PathMax, "%s", "");
+    snprintf(paths[1], PathMax, "%s", "");
 
     int currentPath = 0;
 

@@ -61,13 +61,17 @@
 #define __GETOPT_H__
 
 /* All the headers include this file. */
+
+#ifdef WIN32
 #include <crtdefs.h>
+#include <windows.h>
+#endif
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <windows.h>
 
 #ifdef __cplusplus
 extern "C" {

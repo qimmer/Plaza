@@ -8,6 +8,7 @@
 #define ASIO_NO_EXCEPTIONS 1
 #define _WIN32_WINNT 0x0501
 
+#include <unistd.h>
 #include <asio.hpp>
 
 #include <Foundation/Stream.h>
@@ -93,11 +94,11 @@ static bool Open(Entity entity, int modeFlag) {
 
     if(streamData->socket) return true;
 
-    char protocol[16];
+    char protocol[128];
     char host[256];
-    char port[8];
+    char port[128];
 
-    auto numParsed = sscanf_s(GetStreamPath(entity), "%s://%s:%s", protocol, sizeof(protocol), host, sizeof(host), port, sizeof(port));
+    auto numParsed = sscanf(GetStreamPath(entity), "%s://%s:%s", protocol, host, port);
     if(numParsed != 3) {
         Log(entity, LogSeverity_Error, "Incorrect TCP stream path format. Should be: tcp://address:port");
         return false;
@@ -179,7 +180,7 @@ static void StartAccept(Entity server) {
 
         StreamOpen(stream, StreamMode_Read | StreamMode_Write);
 
-        Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Client %lu connected: %s", GetComponentIndex(ComponentOf_TcpStream(), stream), GetStreamPath(stream));
+        Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Client %u connected: %s", GetComponentIndex(ComponentOf_TcpStream(), stream), GetStreamPath(stream));
 
 		Type types[] = { TypeOf_Entity, TypeOf_Entity };
 		const void* values[] = { &server, &stream };
@@ -224,7 +225,7 @@ LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 new
         for(auto i = 0; i < GetNumTcpServerClients(server); ++i) {
             auto client = clients[i];
             if(!IsOpen(client)) {
-				Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Client %lu disconnected: %s", GetComponentIndex(ComponentOf_TcpStream(), client), GetStreamPath(client));
+				Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Client %u disconnected: %s", GetComponentIndex(ComponentOf_TcpStream(), client), GetStreamPath(client));
                 RemoveTcpServerClients(server, i);
                 i--;
             }

@@ -9,14 +9,17 @@
 #undef Enum
 
 #include <unistd.h>
+#include <dirent.h>
+
 #include <algorithm>
 #include <climits>
-#include <dirent.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sstream>
 #include <iterator>
 #include <Core/Identification.h>
+#include <Core/Debug.h>
 
 struct Folder {
     char FolderPath[PathMax];

@@ -22,7 +22,7 @@
 #elif defined(ASIO_WINDOWS) || defined(__CYGWIN__)
 # include "asio/detail/socket_types.hpp"
 #else
-# include <unistd.h>
+# include <Foundation/Win32/unistd.h>
 # if defined(__hpux)
 #  include <sys/time.h>
 # endif
@@ -43,7 +43,7 @@ void null_event::do_wait()
 #elif defined(ASIO_WINDOWS) || defined(__CYGWIN__)
   ::Sleep(INFINITE);
 #else
-  ::pause();
+  //::pause();
 #endif
 }
 

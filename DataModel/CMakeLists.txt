@@ -10,5 +10,6 @@ target_include_directories(DataModel PUBLIC "..")
 target_link_libraries(DataModel Foundation Core)
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS DataModel RUNTIME DESTINATION bin)
+install (TARGETS DataModel RUNTIME LIBRARY DESTINATION bin)
+
     endif()

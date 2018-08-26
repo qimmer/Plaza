@@ -12,5 +12,6 @@ target_link_libraries(Scene3D Core Rendering Scene)
 INSTALL(DIRECTORY Assets DESTINATION bin)
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS Scene3D RUNTIME DESTINATION bin)
-    endif()
+    install (TARGETS Scene3D RUNTIME LIBRARY DESTINATION bin)
+
+endif()

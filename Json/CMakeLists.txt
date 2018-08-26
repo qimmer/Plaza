@@ -14,5 +14,6 @@ if(MSVC)
 endif()
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS Json RUNTIME DESTINATION bin)
+install (TARGETS Json RUNTIME LIBRARY DESTINATION bin)
+
     endif()

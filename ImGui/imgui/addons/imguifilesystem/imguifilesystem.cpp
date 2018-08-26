@@ -43,7 +43,7 @@
 #       define CSIDL_MYVIDEO 0x000e
 #   endif //CSIDL_MYVIDEO
 #else // _WIN32
-#   include <unistd.h>     // getpwuid
+#   include <Foundation/Win32/unistd.h>     // getpwuid
 #   include <pwd.h>        // getenv ?
 #endif //#ifdef _WIN32
 

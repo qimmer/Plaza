@@ -9,7 +9,7 @@ ExternalProject_Add(ex_bgfx
         GIT_REPOSITORY "https://github.com/JoshuaBrookover/bgfx.cmake.git"
         GIT_TAG "master"
         UPDATE_COMMAND ""
-        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_BUILD_EXAMPLES=OFF;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=Release;-DBGFX_CONFIG_DEBUG=OFF;-DBUILD_SHARED_LIBS=OFF")
+        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_BUILD_EXAMPLES=OFF;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=Release;-DBGFX_CONFIG_DEBUG=OFF;-DBUILD_SHARED_LIBS=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true")
 
 ExternalProject_Get_Property(ex_bgfx BINARY_DIR)
 ExternalProject_Get_Property(ex_bgfx SOURCE_DIR)
@@ -63,9 +63,14 @@ IF(APPLE)
     SET(libs ${libs} "-framework IOKit -framework CoreFoundation -framework CoreVideo" ${COCOA_LIBRARY} ${METAL_LIBRARY} ${QUARTZCORE_LIBRARY})
 ENDIF()
 
+IF(UNIX AND NOT APPLE)
+    find_package(X11 REQUIRED)
+    SET(libs ${libs} ${X11_X11_LIB} ${X11_Xrandr_LIB} ${X11_Xinerama_LIB} ${X11_Xkb_LIB} ${X11_Xcursor_LIB} ${X11_Xinput_LIB})
+ENDIF()
+
 target_link_libraries(BgfxRendering ${libs})
 
-IF(WIN32 OR APPLE)
+IF(WIN32 OR APPLE OR UNIX)
     SET(WITH_SHADER_COMPILER ON)
 ENDIF()
 
@@ -78,5 +83,6 @@ ENDIF(WITH_SHADER_COMPILER)
 INSTALL(FILES ${ex_bgfx_shader_dir}/shaderlib.sh ${ex_bgfx_shader_dir}/common.sh ${ex_bgfx_src_dir}/bgfx_shader.sh ${ex_bgfx_src_dir}/bgfx_compute.sh DESTINATION bin/Assets/Shaders)
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS BgfxRendering RUNTIME DESTINATION bin)
+install (TARGETS BgfxRendering RUNTIME LIBRARY DESTINATION bin)
+
     endif()

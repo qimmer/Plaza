@@ -5,7 +5,7 @@
  */
 @font-face {
   font-family: 'iconmonstr-iconic-font';
-  src: url('../fonts/iconmonstr-iconic-font.woff2?v=1.3.0') format('woff2'), url('../fonts/iconmonstr-iconic-font.woff?v=1.3.0') format('woff'), url('../fonts/iconmonstr-iconic-font.ttf?v=1.3.0') format('truetype');
+  src: url('../Fonts/iconmonstr-iconic-font.woff2?v=1.3.0') format('woff2'), url('../Fonts/iconmonstr-iconic-font.woff?v=1.3.0') format('woff'), url('../Fonts/iconmonstr-iconic-font.ttf?v=1.3.0') format('truetype');
   font-weight: normal;
   font-style: normal;
 }

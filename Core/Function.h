@@ -4,7 +4,7 @@
 #include <Core/NativeUtils.h>
 #include "Variant.h"
 
-typedef bool(*FunctionCaller)(
+typedef bool(*FunctionCallerType)(
     u64 functionImplementation,
     Type returnArgumentTypeIndex,
     void *returnData,
@@ -23,8 +23,8 @@ Unit(Function)
         ArrayProperty(FunctionArgument, FunctionArguments)
 
 Function(FindFunctionByName, Entity, StringRef name)
-FunctionCaller GetFunctionCaller(Entity function);
-void SetFunctionCaller(Entity function, FunctionCaller caller);
+FunctionCallerType GetFunctionCaller(Entity function);
+void SetFunctionCaller(Entity function, FunctionCallerType caller);
 
 void SetFunctionArgsByDecl(Entity f, StringRef argsDecl);
 

@@ -3,7 +3,7 @@ project(File)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(File FileStream.cpp FileStream.h Folder.cpp Folder.h FileModule.cpp FileModule.h FileWatcher/FileWatcher.cpp FileWatcher/FileWatcherWin32.cpp FileWatcher/FileWatcherOSX.cpp)
+add_library(File FileStream.cpp FileStream.h Folder.cpp Folder.h FileModule.cpp FileModule.h FileWatcher/FileWatcher.cpp FileWatcher/FileWatcherWin32.cpp FileWatcher/FileWatcherOSX.cpp FileWatcher/FileWatcherLinux.cpp )
 
 if(WIN32)
     target_link_libraries(File shlwapi)
@@ -17,5 +17,6 @@ if(MSVC)
 endif()
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS File RUNTIME DESTINATION bin)
-    endif()
+    install (TARGETS File RUNTIME LIBRARY DESTINATION bin)
+
+endif()

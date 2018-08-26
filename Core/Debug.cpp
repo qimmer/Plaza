@@ -9,14 +9,16 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <cstring>
-#include <process.h>
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <unistd.h>
 #include <signal.h>
+#include "Identification.h"
+
 #endif
 
 #ifdef WIN32
+#include <process.h>
 #undef Enum
 #include <Windows.h>
 #include "Identification.h"

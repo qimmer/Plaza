@@ -43,6 +43,15 @@ extern "C" {
 };
 #endif
 
+#ifdef __linux__
+#include <X11/Xlib.h>
+#include <Core/Math.h>
+
+Display glfwGetX11Display(GLFWmonitor *monitor);
+Window glfwGetX11Window(GLFWwindow *window);
+
+#endif
+
 #ifdef WIN32
 #undef GetHandle
 #undef Enum
@@ -111,6 +120,8 @@ static void ResetContext(Entity entity) {
     id windowHandle = glfwGetCocoaWindow(data->window);
 #elif WIN32
     HWND windowHandle = glfwGetWin32Window(data->window);
+#elif __linux__
+    auto windowHandle = (void*)glfwGetX11Window(data->window);
 #endif
     glfwSetWindowSize(data->window, size.x, size.y);
     if(entity == PrimaryContext) {
@@ -200,6 +211,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity entity) {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     auto title = GetRenderContextTitle(entity);
     auto window = glfwCreateWindow(Max(size.x, 32), Max(size.y, 32), title ? title : "", NULL, NULL);
+    auto monitor = glfwGetPrimaryMonitor();
     glfwSetWindowSizeCallback(window, OnGlfwWindowResized);
     glfwSetWindowUserPointer(window, (void*)entity);
     glfwSetCharCallback(window, OnCharPressed);
@@ -211,16 +223,21 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity entity) {
     data->window = window;
 
 #ifdef __APPLE__
+    void* displayHandle = NULL;
     id windowHandle = glfwGetCocoaWindow(window);
 #elif WIN32
+    void* displayHandle = NULL;
     HWND windowHandle = glfwGetWin32Window(window);
+#elif __linux__
+    void* displayHandle = NULL;
+    auto windowHandle = (void*)glfwGetX11Window(window);
 #endif
 
     if(NumContexts == 1) {
         data->fb = BGFX_INVALID_HANDLE;
 
         bgfx::PlatformData pd;
-        pd.ndt = NULL;
+        pd.ndt = displayHandle;
         pd.nwh = windowHandle;
         pd.context = NULL;
         pd.backBuffer = NULL;
@@ -234,6 +251,11 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity entity) {
 #ifdef WIN32
         bgfx::init();
 #endif
+
+#ifdef __linux__
+        bgfx::init();
+#endif
+
         bgfx::reset(size.x, size.y);
 
         PrimaryContext = entity;

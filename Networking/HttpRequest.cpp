@@ -5,6 +5,10 @@
 #include <Foundation/Stream.h>
 #include "HttpRequest.h"
 
+#ifndef WIN32
+#define stricmp strcasecmp
+#endif
+
 struct HttpHeaderType {
     char HttpHeaderTypeIdentifier[256];
 };

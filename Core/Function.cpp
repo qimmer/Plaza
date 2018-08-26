@@ -29,7 +29,7 @@ struct FunctionArgument {
 struct Function {
     u64 FunctionImplementation;
     Type FunctionReturnType;
-    FunctionCaller FunctionCaller;
+    FunctionCallerType FunctionCaller;
 
     Vector(FunctionArguments, Entity, 16)
 };

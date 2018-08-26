@@ -11,7 +11,7 @@
 #include <shellapi.h>	// ShellExecuteA(...) - Shell32.lib
 #include <objbase.h>    // CoInitializeEx(...)  - ole32.lib
 #else //_WIN32
-#include <unistd.h>
+#include <Foundation/Win32/unistd.h>
 #include <stdlib.h> // system
 #endif //_WIN32
 

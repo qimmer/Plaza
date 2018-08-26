@@ -27,7 +27,7 @@ ExternalProject_Add(ex_eastl
         GIT_REPOSITORY "https://github.com/electronicarts/EASTL.git"
         UPDATE_COMMAND ""
         INSTALL_COMMAND ""
-        CMAKE_ARGS "${CMAKE_ARGS};-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+        CMAKE_ARGS "${CMAKE_ARGS};-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE};-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true")
 
 ExternalProject_Get_Property(ex_eastl BINARY_DIR)
 ExternalProject_Get_Property(ex_eastl SOURCE_DIR)
@@ -51,9 +51,16 @@ if(MSVC)
 endif()
 
 target_link_libraries(Core PUBLIC dyncall eastl)
+
+if(UNIX)
+    target_link_libraries(Core PUBLIC dl)
+    target_sources(Core PRIVATE Unix/ELFModule.cpp Unix/ELFModule.h)
+endif()
+
 target_include_directories(Core PUBLIC ".." "cglm/include" "${ex_dyncall_inc_dir}" "${ex_eastl_inc_dir}" "${ex_eastl_inc_dir}/../test/packages/EABase/include/Common")
 target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions" "-std=c++14")
+set_property(TARGET Core PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_SHARED_LIBS)
-    install (TARGETS Core RUNTIME DESTINATION bin)
+    install (TARGETS Core RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 endif()

@@ -233,7 +233,7 @@ namespace SoLoud
 #include <Windows.h>
 #else
 #include <pthread.h>
-#include <unistd.h>
+#include <Foundation/Win32/unistd.h>
 #endif
 
 namespace SoLoud

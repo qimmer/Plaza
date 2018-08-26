@@ -1,9 +1,8 @@
 //
 // Created by Kim Johannsen on 13/01/2018.
 //
-#include <direct.h>
-
 #ifdef WIN32
+#include <direct.h>
 #include <shlwapi.h>
 #undef GetHandle
 #undef CreateService
@@ -22,6 +21,8 @@
 #include <EASTL/algorithm.h>
 #include <Core/Identification.h>
 #include <Core/Math.h>
+
+#include <unistd.h>
 
 using namespace eastl;
 
@@ -329,10 +330,6 @@ API_EXPORT void CleanupPath(char* messyPath) {
     }
 
     string combined = "file://";
-
-#ifndef WIN32
-    os << "/";
-#endif
 
     for(auto i = 0; i < pathElements.size(); ++i) {
         combined.append(pathElements[i]);

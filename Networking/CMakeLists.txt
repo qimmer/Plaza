@@ -18,7 +18,8 @@ endif()
 
 
 if(BUILD_SHARED_LIBS)
-    install (TARGETS Networking RUNTIME DESTINATION bin)
+    install (TARGETS Networking RUNTIME LIBRARY DESTINATION bin)
+
 endif()
 
 install (FILES NetworkingModule.json RUNTIME DESTINATION bin)

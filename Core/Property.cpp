@@ -259,7 +259,7 @@ API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity) {
     auto propertyName = GetName(property);
     char name[512];
     auto index = GetEntityIndex(element);
-    snprintf(name, 512, "%s_%lu", propertyName, index);
+    snprintf(name, 512, "%s_%u", propertyName, index);
     SetName(element, name);
     return __InjectArrayPropertyElement(property, entity, element);
 }

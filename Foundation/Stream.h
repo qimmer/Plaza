@@ -44,37 +44,37 @@ Unit(Stream)
 
 Event(StreamContentChanged)
 
-typedef bool(*StreamSeekHandler)(Entity entity, s32 offset);
-typedef s32(*StreamTellHandler)(Entity entity);
-typedef bool(*StreamOpenHandler)(Entity entity, int mode);
-typedef u64(*StreamReadHandler)(Entity entity, u64 size, void* data);
-typedef u64(*StreamWriteHandler)(Entity entity, u64 size, const void* data);
+typedef bool(*StreamSeekHandlerType)(Entity entity, s32 offset);
+typedef s32(*StreamTellHandlerType)(Entity entity);
+typedef bool(*StreamOpenHandlerType)(Entity entity, int mode);
+typedef u64(*StreamReadHandlerType)(Entity entity, u64 size, void* data);
+typedef u64(*StreamWriteHandlerType)(Entity entity, u64 size, const void* data);
 typedef void(*StreamReadAsyncHandler)(Entity entity, u64 numBytes, const void *data);
 typedef void(*StreamWriteAsyncHandler)(Entity entity, u64 numBytes);
-typedef StringRef(*StreamMimeTypeHandler)(Entity entity);
-typedef bool(*StreamBoolHandler)(Entity entity);
+typedef StringRef(*StreamMimeTypeHandlerType)(Entity entity);
+typedef bool(*StreamBoolHandlerType)(Entity entity);
 
-typedef bool(*CompressHandler)(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, const void *uncompressedData);
-typedef bool(*DecompressHandler)(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, void *uncompressedData);
+typedef bool(*CompressHandlerType)(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, const void *uncompressedData);
+typedef bool(*DecompressHandlerType)(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, void *uncompressedData);
 
 struct StreamProtocol {
     char StreamProtocolIdentifier[16];
     Entity StreamProtocolComponent;
-    StreamSeekHandler StreamSeekHandler;
-    StreamTellHandler StreamTellHandler;
-    StreamReadHandler StreamReadHandler;
-    StreamWriteHandler StreamWriteHandler;
-    StreamBoolHandler StreamIsOpenHandler;
-    StreamOpenHandler StreamOpenHandler;
-    StreamBoolHandler StreamCloseHandler;
-    StreamBoolHandler StreamDeleteHandler;
-    StreamMimeTypeHandler StreamGetMimeTypeHandler;
+    StreamSeekHandlerType StreamSeekHandler;
+    StreamTellHandlerType StreamTellHandler;
+    StreamReadHandlerType StreamReadHandler;
+    StreamWriteHandlerType StreamWriteHandler;
+    StreamBoolHandlerType StreamIsOpenHandler;
+    StreamOpenHandlerType StreamOpenHandler;
+    StreamBoolHandlerType StreamCloseHandler;
+    StreamBoolHandlerType StreamDeleteHandler;
+    StreamMimeTypeHandlerType StreamGetMimeTypeHandler;
 };
 
 struct StreamCompressor {
     char StreamCompressorMimeType[64];
-    CompressHandler CompressHandler;
-    DecompressHandler DecompressHandler;
+    CompressHandlerType CompressHandler;
+    DecompressHandlerType DecompressHandler;
 };
 
 #define StreamMode_Closed 0
