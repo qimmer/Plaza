@@ -17,8 +17,132 @@
 #include "Property.h"
 #include "Identification.h"
 
-static DCCallVM *CallVM = 0;
-static DCstruct *Struct_v2i, *Struct_v3i, *Struct_v4i, *Struct_v2f, *Struct_v3f, *Struct_v4f, *Struct_m3x3f, *Struct_m4x4f;
+#include <ffi.h>
+
+static ffi_type
+        type_v2i, type_v3i, type_v4i,
+        type_v2f, type_v3f, type_v4f,
+        type_m3x3f, type_m4x4f;
+
+static ffi_type* type_v2i_elements[] = {
+        &ffi_type_sint32,
+        &ffi_type_sint32,
+        NULL
+};
+
+static ffi_type* type_v3i_elements[] = {
+        &ffi_type_sint32,
+        &ffi_type_sint32,
+        &ffi_type_sint32,
+        NULL
+};
+
+static ffi_type* type_v4i_elements[] = {
+        &ffi_type_sint32,
+        &ffi_type_sint32,
+        &ffi_type_sint32,
+        &ffi_type_sint32,
+        NULL
+};
+
+static ffi_type* type_v2f_elements[] = {
+        &ffi_type_float,
+        &ffi_type_float,
+        NULL
+};
+
+static ffi_type* type_v3f_elements[] = {
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+        NULL
+};
+
+static ffi_type* type_v4f_elements[] = {
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+        NULL
+};
+
+static ffi_type* type_m3x3f_elements[] = {
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+
+        NULL
+};
+
+static ffi_type* type_m4x4f_elements[] = {
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+        &ffi_type_float,
+
+        NULL
+};
+
+static ffi_type* ffi_types[] = {
+        &ffi_type_void, //TypeOf_unknown,
+
+        &ffi_type_void, //TypeOf_void,
+        &ffi_type_uint8, //TypeOf_u8,
+        &ffi_type_uint16, //TypeOf_u16,
+        &ffi_type_uint32, //TypeOf_u32,
+        &ffi_type_uint64, //TypeOf_u64,
+        &ffi_type_sint8, //TypeOf_s8,
+        &ffi_type_sint16, //TypeOf_s16,
+        &ffi_type_sint32, //TypeOf_s32,
+        &ffi_type_sint64, //TypeOf_s64,
+        &ffi_type_float, //TypeOf_float,
+        &ffi_type_double, //TypeOf_double,
+        &ffi_type_uint8, //TypeOf_bool,
+        &ffi_type_pointer, //TypeOf_StringRef,
+
+        &type_v2i, //TypeOf_v2i,
+        &type_v3i, //TypeOf_v3i,
+        &type_v4i, //TypeOf_v4i,
+
+        &type_v2f, //TypeOf_v2f,
+        &type_v3f, //TypeOf_v3f,
+        &type_v4f, //TypeOf_v4f,
+
+        &type_m3x3f, //TypeOf_m3x3f,
+        &type_m4x4f, //TypeOf_m4x4f,
+
+        &ffi_type_uint64, //TypeOf_Entity,
+        &ffi_type_uint8, //TypeOf_Type,
+
+        &ffi_type_uint32, //TypeOf_rgba8,
+        &ffi_type_uint32, //TypeOf_rgb8,
+
+        &type_v4f, //TypeOf_rgba32,
+        &type_v3f, //TypeOf_rgb32,
+};
 
 #define ALIGNMENT_SSE 16
 
@@ -27,25 +151,60 @@ struct FunctionArgument {
 };
 
 struct Function {
-    u64 FunctionImplementation;
     Type FunctionReturnType;
     FunctionCallerType FunctionCaller;
 
     Vector(FunctionArguments, Entity, 16)
 };
 
-BeginUnit(Function)
-    BeginComponent(Function)
-        RegisterProperty(u64, FunctionImplementation)
-        RegisterProperty(Type, FunctionReturnType)
-        RegisterArrayProperty(FunctionArgument, FunctionArguments)
-    EndComponent()
+struct NativeFunction {
+    ffi_cif cif;
+    ffi_type** args;
+    void(*funcPtr)();
+};
 
-    BeginComponent(FunctionArgument)
-        RegisterProperty(Type, FunctionArgumentType)
-    EndComponent()
-EndUnit()
+API_EXPORT void SetNativeFunctionPointer(Entity function, void *ptr) {
+    AddComponent(function, ComponentOf_NativeFunction());
+    auto data = GetNativeFunctionData(function);
 
+    if(data->args) {
+        free(data->args);
+        data->args = NULL;
+    }
+
+    data->funcPtr = (void(*)())ptr;
+
+    SetFunctionCaller(function, NULL);
+
+    if(ptr) {
+
+        auto numArgs = GetNumFunctionArguments(function);
+        auto args = GetFunctionArguments(function);
+        Assert(function, numArgs < 32);
+
+        auto argPtrs = data->args = (ffi_type**)malloc(sizeof(ffi_type*) * numArgs);
+
+        auto i = 0;
+        for(i = 0; i < numArgs; ++i) {
+            argPtrs[i] = ffi_types[GetFunctionArgumentType(args[i])];
+            Assert(function, argPtrs[i]);
+        }
+
+        ffi_prep_cif(
+                &data->cif,
+                FFI_DEFAULT_ABI,
+                numArgs,
+                ffi_types[GetFunctionReturnType(function)],
+                argPtrs
+        );
+
+        SetFunctionCaller(function, CallNativeFunction);
+    }
+}
+
+LocalFunction(OnNativeFunctionRemoved, void, Entity component, Entity entity) {
+    SetNativeFunctionPointer(entity, NULL);
+}
 
 API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
     auto len = strlen(arguments);
@@ -98,169 +257,16 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
     }
 }
 
-#define _CallFunction_HandleType(TYPE, DCTYPE) \
-    case TypeOf_ ## TYPE :\
-        dcArg ## DCTYPE(CallVM, *((TYPE*)argumentDataPtrs[i]));\
-        break;
-
-#define _CallFunction_HandlePointerType(TYPE) \
-    case TypeOf_ ## TYPE :\
-        dcArgPointer(CallVM, const_cast<char*>(*((TYPE*)argumentDataPtrs[i])));\
-        break;
-
-#define _CallFunction_HandleVecType(TYPE) \
-    case TypeOf_ ## TYPE :\
-        dcArgStruct(CallVM, Struct_ ## TYPE, const_cast<void*>((const void*)argumentDataPtrs[i]));\
-        break;
-
-
-#define _CallFunction_HandleCall(TYPE, DCTYPE) \
-    case TypeOf_ ## TYPE :\
-        *((TYPE*)returnData) = dcCall ## DCTYPE(CallVM, funcPtr);\
-        break;
-
-#define _CallFunction_HandlePointerCall(TYPE) \
-    case TypeOf_ ## TYPE :\
-        *((TYPE*)returnData) = (TYPE)dcCallPointer(CallVM, funcPtr);\
-        break;
-
-#define _CallFunction_HandleVecCall(TYPE) \
-    case TypeOf_ ## TYPE :\
-        dcCallStruct(CallVM, funcPtr, Struct_ ## TYPE, returnData);\
-        break;
-
-static void Cleanup() {
-    dcFreeStruct(Struct_v2i);
-    dcFreeStruct(Struct_v3i);
-    dcFreeStruct(Struct_v4i);
-    dcFreeStruct(Struct_v2f);
-    dcFreeStruct(Struct_v3f);
-    dcFreeStruct(Struct_v4f);
-    dcFreeStruct(Struct_m3x3f);
-    dcFreeStruct(Struct_m4x4f);
-    dcFree(CallVM);
-    CallVM = 0;
-}
-
-static void Initialize() {
-    CallVM = dcNewCallVM(4096);
-    dcMode(CallVM, DC_CALL_C_DEFAULT);
-    dcReset(CallVM);
-
-    Struct_v2i = dcNewStruct(1, 16);
-    dcStructField(Struct_v2i, DC_SIGCHAR_INT, DEFAULT_ALIGNMENT, 2);
-    dcCloseStruct(Struct_v2i);
-
-    Struct_v3i = dcNewStruct(1, 16);
-    dcStructField(Struct_v3i, DC_SIGCHAR_INT, DEFAULT_ALIGNMENT, 3);
-    dcCloseStruct(Struct_v3i);
-
-    Struct_v4i = dcNewStruct(1, 16);
-    dcStructField(Struct_v4i, DC_SIGCHAR_INT, 16, 4);
-    dcCloseStruct(Struct_v4i);
-
-    Struct_v2f = dcNewStruct(1, 16);
-    dcStructField(Struct_v2f, DC_SIGCHAR_FLOAT, DEFAULT_ALIGNMENT, 2);
-    dcCloseStruct(Struct_v2f);
-
-    Struct_v3f = dcNewStruct(1, 16);
-    dcStructField(Struct_v3f, DC_SIGCHAR_FLOAT, DEFAULT_ALIGNMENT, 3);
-    dcCloseStruct(Struct_v3f);
-
-    Struct_v4f = dcNewStruct(1, 16);
-    dcStructField(Struct_v4f, DC_SIGCHAR_FLOAT, 16, 4);
-    dcCloseStruct(Struct_v4f);
-
-    Struct_m3x3f = dcNewStruct(1, 16);
-    dcStructField(Struct_m3x3f, DC_SIGCHAR_FLOAT, DEFAULT_ALIGNMENT, 3*3);
-    dcCloseStruct(Struct_m3x3f);
-
-    Struct_m4x4f = dcNewStruct(1, 16);
-    dcStructField(Struct_m4x4f, DC_SIGCHAR_FLOAT, 16, 4*4);
-    dcCloseStruct(Struct_m4x4f);
-}
-
 API_EXPORT bool CallNativeFunction(
-        u64 funcImplementation,
-        u8 returnArgumentTypeIndex,
+        Entity function,
         void *returnData,
         u32 numArguments,
         const u8 *argumentTypes,
         const void **argumentDataPtrs
 ) {
-    static bool initialized = false;
+    auto data = GetNativeFunctionData(function);
 
-    if(!initialized) {
-        atexit(Cleanup);
-        Initialize();
-        initialized = true;
-    }
-
-    dcReset(CallVM);
-
-    auto funcPtr = (void*)funcImplementation;
-
-    for(auto i = 0; i < numArguments; ++i) {
-        switch(argumentTypes[i]) {
-            _CallFunction_HandleType(Type, Char)
-            _CallFunction_HandleType(bool, Bool)
-            _CallFunction_HandleType(u8, Char)
-            _CallFunction_HandleType(u16, Short)
-            _CallFunction_HandleType(u32, Int)
-            _CallFunction_HandleType(u64, LongLong)
-            _CallFunction_HandleType(s8, Char)
-            _CallFunction_HandleType(s16, Short)
-            _CallFunction_HandleType(s32, Int)
-            _CallFunction_HandleType(s64, LongLong)
-            _CallFunction_HandleType(float, Float)
-            _CallFunction_HandleType(double, Double)
-            _CallFunction_HandlePointerType(StringRef)
-            _CallFunction_HandleType(Entity, LongLong)
-
-            _CallFunction_HandleVecType(v2i)
-            _CallFunction_HandleVecType(v3i)
-            _CallFunction_HandleVecType(v4i)
-            _CallFunction_HandleVecType(v2f)
-            _CallFunction_HandleVecType(v3f)
-            _CallFunction_HandleVecType(v4f)
-
-            default:
-                Log(0, LogSeverity_Error, "Error calling native function. Argument type '%s' is unsupported.", GetName(argumentTypes[i]));
-                return false;
-        }
-    }
-
-    switch(returnArgumentTypeIndex) {
-        _CallFunction_HandleCall(Type, Char)
-        _CallFunction_HandleCall(bool, Bool)
-        _CallFunction_HandleCall(u8, Char)
-        _CallFunction_HandleCall(u16, Short)
-        _CallFunction_HandleCall(u32, Int)
-        _CallFunction_HandleCall(u64, LongLong)
-        _CallFunction_HandleCall(s8, Char)
-        _CallFunction_HandleCall(s16, Short)
-        _CallFunction_HandleCall(s32, Int)
-        _CallFunction_HandleCall(s64, LongLong)
-        _CallFunction_HandleCall(float, Float)
-        _CallFunction_HandleCall(double, Double)
-        _CallFunction_HandlePointerCall(StringRef)
-        _CallFunction_HandleCall(Entity, LongLong)
-
-        _CallFunction_HandleVecCall(v2i)
-        _CallFunction_HandleVecCall(v3i)
-        _CallFunction_HandleVecCall(v4i)
-        _CallFunction_HandleVecCall(v2f)
-        _CallFunction_HandleVecCall(v3f)
-        _CallFunction_HandleVecCall(v4f)
-
-        case TypeOf_void:
-            dcCallVoid(CallVM, funcPtr);
-            break;
-
-        default:
-            Log(0, LogSeverity_Error, "Error calling native function. Return type '%s' is unsupported.", GetTypeName(returnArgumentTypeIndex));
-            return false;
-    }
+    ffi_call(&data->cif, data->funcPtr, returnData, const_cast<void**>(argumentDataPtrs));
 
     return true;
 }
@@ -288,9 +294,13 @@ API_EXPORT bool CallFunction(
         }
     }
 
+    if(numArguments < data->FunctionArguments.Count) {
+        Log(f, LogSeverity_Error, "Insufficient function arguments provided when calling %s", GetDebugName(f));
+        return false;
+    }
+
     return data->FunctionCaller(
-            data->FunctionImplementation,
-            data->FunctionReturnType,
+            f,
             returnData,
             numArguments,
             argumentTypes,
@@ -298,12 +308,16 @@ API_EXPORT bool CallFunction(
     );
 }
 
+#define INIT_FFI_STRUCT(T) \
+    type_ ## T .size = type_ ## T .alignment = 0;\
+    type_ ## T .type = FFI_TYPE_STRUCT;\
+    type_ ## T .elements = type_ ## T ## _elements
+
 void __InitializeFunction() {
     auto component = ComponentOf_Function();
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(Function));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_FunctionImplementation(), offsetof(Function, FunctionImplementation), sizeof(Function::FunctionImplementation), TypeOf_u64,  component, 0, PropertyKind_Value);
     __Property(PropertyOf_FunctionReturnType(), offsetof(Function, FunctionReturnType), sizeof(Function::FunctionReturnType), TypeOf_Type,  component, 0, PropertyKind_Value);
     __Property(PropertyOf_FunctionArguments(), offsetof(Function, FunctionArguments), sizeof(Function::FunctionArguments), TypeOf_Entity,  component, ComponentOf_FunctionArgument(), PropertyKind_Array);
 
@@ -312,6 +326,20 @@ void __InitializeFunction() {
     SetComponentSize(component, sizeof(FunctionArgument));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
     __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component, 0, PropertyKind_Value);
+
+    component = ComponentOf_NativeFunction();
+    AddComponent(component, ComponentOf_Component());
+    SetComponentSize(component, sizeof(NativeFunction));
+    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
+
+    INIT_FFI_STRUCT(v2i);
+    INIT_FFI_STRUCT(v3i);
+    INIT_FFI_STRUCT(v4i);
+    INIT_FFI_STRUCT(v2f);
+    INIT_FFI_STRUCT(v3f);
+    INIT_FFI_STRUCT(v4f);
+    INIT_FFI_STRUCT(m3x3f);
+    INIT_FFI_STRUCT(m4x4f);
 }
 
 int __ArgStackOffset(int value) {
@@ -336,13 +364,32 @@ API_EXPORT Type GetFunctionReturnTypeByIndex(u32 functionIndex) {
     return data->FunctionReturnType;
 }
 
-API_EXPORT FunctionCaller GetFunctionCaller(Entity function) {
+API_EXPORT FunctionCallerType GetFunctionCaller(Entity function) {
     auto data = GetFunctionData(function);
     return data->FunctionCaller;
 }
 
-API_EXPORT void SetFunctionCaller(Entity function, FunctionCaller caller) {
+API_EXPORT void SetFunctionCaller(Entity function, FunctionCallerType caller) {
     auto data = GetFunctionData(function);
-    data->FunctionCaller = caller;
+    if(data) {
+        data->FunctionCaller = caller;
+    }
 }
 
+
+BeginUnit(Function)
+    BeginComponent(Function)
+        RegisterProperty(Type, FunctionReturnType)
+        RegisterArrayProperty(FunctionArgument, FunctionArguments)
+    EndComponent()
+
+    BeginComponent(FunctionArgument)
+        RegisterProperty(Type, FunctionArgumentType)
+    EndComponent()
+
+    BeginComponent(NativeFunction)
+        RegisterBase(Function)
+    EndComponent()
+
+    RegisterSubscription(EntityComponentRemoved, OnNativeFunctionRemoved, ComponentOf_NativeFunction())
+EndUnit()

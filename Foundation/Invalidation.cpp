@@ -25,7 +25,7 @@ API_EXPORT void Validate(Entity entity) {
     }
 }
 
-LocalFunction(OnInvalidationAdded, void, Entity entity) {
+LocalFunction(OnInvalidationAdded, void, Entity component, Entity entity) {
     GetInvalidationData(entity)->DirtyFlag = true;
 }
 

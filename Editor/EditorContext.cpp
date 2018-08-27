@@ -26,7 +26,7 @@ EndComponent()
 EndUnit()
 (bool, EditorContextVisible)
 
-LocalFunction(OnEditorContextAdded, void, Entity editor) {
+LocalFunction(OnEditorContextAdded, void, Entity component, Entity editor) {
     auto data = GetEditorContext(editor);
 
     for(auto type = GetNextType(0); type; type = GetNextType(type)) {

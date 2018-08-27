@@ -54,6 +54,11 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
         return;
     }
 
+    if(!IsEntityValid(context)) {
+        Log(0, LogSeverity_Error, "Invalid entity when trying to set property");
+        return;
+    }
+
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     char *emptyPtr = nullData;
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
@@ -79,19 +84,23 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
 
     auto valueData = componentData + offset;
 
-    char *oldValueData = (char*)alloca(propertyData->PropertySize);
+    void *oldValueBuf = malloc(propertyData->PropertySize);
+    void *oldValueData = 0;
 
     bool changed = false;
     if(propertyData->PropertyKind == PropertyKind_String) {
-        strncpy(oldValueData, valueData, propertyData->PropertySize);
-        if(strcmp(oldValueData, *(const char**)newValueData) != 0) {
+        memcpy((char*)oldValueBuf, valueData, propertyData->PropertySize);
+        oldValueData = &oldValueBuf;
+
+        if(strcmp(*(const char**)oldValueData, *(const char**)newValueData) != 0) {
             strcpy(valueData, *(const char**)newValueData);
             changed = true;
         }
     } else {
         newValueData = newValueData ? newValueData : nullData;
 
-        memcpy(oldValueData, valueData, propertyData->PropertySize);
+        memcpy(oldValueBuf, valueData, propertyData->PropertySize);
+        oldValueData = oldValueBuf;
         if(memcmp(oldValueData, newValueData, propertyData->PropertySize) != 0) {
             memcpy(valueData, newValueData, propertyData->PropertySize);
             changed = true;
@@ -113,6 +122,8 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
         FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
         FireEventFast(EventOf_PropertyChanged(), 2, genericArgumentTypes, genericArgumentData);
     }
+
+    free(oldValueBuf);
 }
 
 API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut) {
@@ -120,6 +131,11 @@ API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut)
 
     if(!IsEntityValid(component) || !IsEntityValid(property)) {
         Log(context, LogSeverity_Error, "Invalid property when trying to set property");
+        return false;
+    }
+
+    if(!IsEntityValid(context)) {
+        Log(0, LogSeverity_Error, "Invalid entity when trying to get property");
         return false;
     }
 

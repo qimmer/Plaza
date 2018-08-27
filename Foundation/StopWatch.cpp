@@ -7,6 +7,15 @@
 #include <Core/Debug.h>
 
 
+
+#ifdef WIN32
+#undef GetHandle
+#undef Enum
+#include <Windows.h>
+#endif
+
+#undef CreateEvent
+
 struct StopWatch {
     bool StopWatchRunning;
     double StopWatchElapsedSeconds;
@@ -19,16 +28,7 @@ struct StopWatch {
 #endif
 };
 
-
 #ifdef WIN32
-#ifdef WIN32
-#undef GetHandle
-#undef Enum
-#include <Windows.h>
-#endif
-
-#undef CreateEvent
-
 static LARGE_INTEGER GetFrequency() {
     static LARGE_INTEGER PCFreq = {0, 0};
     if(PCFreq.QuadPart == 0) {
@@ -112,7 +112,7 @@ LocalFunction(OnStopWatchElapsedSecondsChanged, void, Entity stopWatch, double o
 #endif
 }
 
-LocalFunction(OnStopWatchAdded, void, Entity stopWatch) {
+LocalFunction(OnStopWatchAdded, void, Entity component, Entity stopWatch) {
     SetAppLoopDisabled(GetStopWatchUpdateLoop(stopWatch), true);
 }
 

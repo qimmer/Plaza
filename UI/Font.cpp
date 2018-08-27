@@ -214,7 +214,7 @@ static void ChangeFont(Entity entity) {
     }
 }
 
-LocalFunction(OnFontAdded, void, Entity entity) {
+LocalFunction(OnFontAdded, void, Entity component, Entity entity) {
     auto data = GetFontData(entity);
     data->Texture = CreateTexture2D(entity, "Texture");
     data->Material = CreateMaterial(entity, "Material");

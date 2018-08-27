@@ -87,6 +87,8 @@ typedef struct {
         struct {
             u8 x, y, z, w;
         };
+
+        u32 rgba;
     };
 
 } rgba8;
@@ -96,7 +98,10 @@ typedef struct {
 } rgba32;
 
 typedef struct {
-    u8 r, g, b;
+    union {
+        u8 r, g, b, _padding;
+        u32 rgbx;
+    };
 } rgb8;
 
 typedef struct {

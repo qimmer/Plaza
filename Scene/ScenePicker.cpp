@@ -161,7 +161,7 @@ LocalFunction(OnAppUpdate, void, double deltaTime) {
     }
 }
 
-LocalFunction(OnScenePickerAdded, void, Entity entity) {
+LocalFunction(OnScenePickerAdded, void, Entity component, Entity entity) {
     auto data = GetScenePickerData(entity);
 
     data->CommandList = CreateCommandList(entity, "ScenePicker_CommandList");

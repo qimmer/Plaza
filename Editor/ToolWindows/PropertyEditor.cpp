@@ -416,7 +416,7 @@ void ImGui::ComponentContextMenu(Type componentType) {
     }
 }
 
-LocalFunction(OnPropertyEditorAdded, void, Entity entity) {
+LocalFunction(OnPropertyEditorAdded, void, Entity component, Entity entity) {
     SetEditorViewDrawFunction(entity, Draw);
 }
 

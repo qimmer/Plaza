@@ -10,6 +10,6 @@ target_include_directories(Player PUBLIC "..")
 target_link_libraries(Player Core Foundation Rendering File)
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS Player RUNTIME LIBRARY DESTINATION bin)
+install (TARGETS Player RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
     endif()

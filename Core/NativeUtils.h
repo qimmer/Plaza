@@ -78,14 +78,12 @@ void FireEventFast(
 );
 void SetEventSize(Entity event, u32 size);
 
-void SetFunctionCaller(Entity entity, FunctionCaller caller);
-void SetFunctionImplementation(Entity entity, u64 impl);
+void SetNativeFunctionPointer(Entity function, void *func);
 void SetFunctionReturnType(Entity entity, Entity returnType);
 void SetFunctionArgsByDecl(Entity entity, StringRef decl);
 
 bool CallNativeFunction(
-        u64 funcPtr,
-        Type returnArgumentTypeIndex,
+        Entity f,
         void *returnData,
         u32 numArguments,
         const Type *argumentTypes,
@@ -282,9 +280,8 @@ StringRef GetUniqueEntityName(Entity entity);
                 snprintf(unregisteredName, 64, "Func_" #NAME "_%llu", entity);\
                 SetName(entity, unregisteredName);\
                 SetFunctionReturnType(entity, TypeOf_ ## R);\
-                SetFunctionCaller(entity, CallNativeFunction);\
-                SetFunctionImplementation(entity, (u64)(void*) (Entity(*)(StringRef)) & NAME );\
                 SetFunctionArgsByDecl(entity, #__VA_ARGS__);\
+                SetNativeFunctionPointer(entity, (void*)& NAME );\
             }\
         }\
         return entity;

@@ -10,6 +10,6 @@ target_include_directories(Rendering PUBLIC "..")
 target_link_libraries(Rendering Core Foundation Input Json)
 
 if(BUILD_SHARED_LIBS)
-    install (TARGETS Rendering RUNTIME LIBRARY DESTINATION bin)
+    install (TARGETS Rendering RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
 endif()

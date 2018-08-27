@@ -12,7 +12,7 @@ target_include_directories(TestRunner PUBLIC "..")
 target_link_libraries(TestRunner Core Test)
 
 if(BUILD_SHARED_LIBS)
-    install (TARGETS Test RUNTIME LIBRARY DESTINATION bin)
+    install (TARGETS Test RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
 endif()
 

@@ -12,6 +12,6 @@ target_link_libraries(UI Core Foundation Rendering Scene Scene2D)
 INSTALL(DIRECTORY Assets DESTINATION bin)
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS UI RUNTIME LIBRARY DESTINATION bin)
+install (TARGETS UI RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
     endif()

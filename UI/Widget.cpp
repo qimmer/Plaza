@@ -118,7 +118,7 @@ LocalFunction(OnWidgetSizeChanged, void, Entity widget, v2i oldSize, v2i newSize
     UpdateChildrenLayout(widget);
 }
 
-LocalFunction(OnWidgetAdded, void, Entity widget) {
+LocalFunction(OnWidgetAdded, void, Entity component, Entity widget) {
     SetMeshInstanceMaterial(widget, WidgetMaterial);
     SetMeshInstanceMesh(widget, WidgetMesh);
 

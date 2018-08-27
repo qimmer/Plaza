@@ -5,8 +5,7 @@
 #include "Variant.h"
 
 typedef bool(*FunctionCallerType)(
-    u64 functionImplementation,
-    Type returnArgumentTypeIndex,
+    Entity entity,
     void *returnData,
     u32 numArguments,
     const Type *argumentTypes,
@@ -18,13 +17,16 @@ Unit(Function)
         Property(Entity, FunctionArgumentType)
 
     Component(Function)
-        Property(u64, FunctionImplementation)
         Property(Entity, FunctionReturnType)
         ArrayProperty(FunctionArgument, FunctionArguments)
 
+    Component(NativeFunction)
+
 Function(FindFunctionByName, Entity, StringRef name)
 FunctionCallerType GetFunctionCaller(Entity function);
+
 void SetFunctionCaller(Entity function, FunctionCallerType caller);
+void SetNativeFunctionPointer(Entity function, void *ptr);
 
 void SetFunctionArgsByDecl(Entity f, StringRef argsDecl);
 
@@ -35,18 +37,6 @@ bool CallFunction(
     const Type *argumentTypes,
     const void **argumentDataPtrs
 );
-
-bool CallNativeFunction(
-    u64 funcPtr,
-    Type returnArgumentTypeIndex,
-    void *returnData,
-    u32 numArguments,
-    const Type *argumentTypes,
-    const void **argumentDataPtrs
-);
-
-u32 GetFunctionArguments(u32 functionIndex, u32 maxArguments, Type *argumentTypes);
-Type GetFunctionReturnTypeByIndex(u32 functionIndex);
 
 void __InitializeFunction();
 int __ArgStackOffset(int value);

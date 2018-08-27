@@ -85,7 +85,7 @@ LocalFunction(OnAppUpdate, void, double deltaTime) {
     }
 }
 
-LocalFunction(OnSimpleRendererAdded, void, Entity entity) {
+LocalFunction(OnSimpleRendererAdded, void, Entity component, Entity entity) {
     GetSimpleSceneRendererData(entity)->CommandList = CreateCommandList(entity, "SimpleSceneRenderer_CommandList");
 }
 

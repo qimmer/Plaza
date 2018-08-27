@@ -61,7 +61,7 @@ LocalFunction(OnParentChanged, void, Entity entity, Entity before, Entity after)
     }
 }
 
-LocalFunction(OnSceneNodeAdded, void, Entity entity) {
+LocalFunction(OnSceneNodeAdded, void, Entity component, Entity entity) {
     SetScene(entity, FindScene(entity));
 }
 

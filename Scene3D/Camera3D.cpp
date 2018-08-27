@@ -46,7 +46,7 @@ RegisterProperty(float, Camera3DAspectRatio)
         UpdateProjectionMatrix(entity);
     }
 
-    LocalFunction(OnCamera3DAdded, void, Entity entity) {
+    LocalFunction(OnCamera3DAdded, void, Entity component, Entity entity) {
         UpdateProjectionMatrix(entity);
     }
 

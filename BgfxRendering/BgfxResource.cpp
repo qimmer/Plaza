@@ -12,7 +12,7 @@ struct BgfxResource {
     u16 BgfxResourceHandle;
 };
 
-LocalFunction(OnBgfxResourceAdded, void, Entity entity) {
+LocalFunction(OnBgfxResourceAdded, void, Entity component, Entity entity) {
     auto data = GetBgfxResourceData(entity);
 
     data->BgfxResourceHandle = bgfx::kInvalidHandle;

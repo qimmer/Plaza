@@ -71,7 +71,7 @@ static void RebuildLabelsWithFont(Entity font) {
     }
 }
 
-LocalFunction(OnLabelAdded, void, Entity entity) {
+LocalFunction(OnLabelAdded, void, Entity component, Entity entity) {
     auto data = GetLabelData(entity);
     data->Mesh = CreateMesh(entity, "Mesh");
     data->VertexBuffer = CreateVertexBuffer(data->Mesh, "VertexBuffer");

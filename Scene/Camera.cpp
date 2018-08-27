@@ -83,7 +83,7 @@ LocalFunction(OnGlobalTransformChanged, void, Entity entity, m4x4f oldValue, m4x
         UpdateViewMatrix(entity);
     }
 }
-LocalFunction(OnCameraAdded, void, Entity entity) {
+LocalFunction(OnCameraAdded, void, Entity component, Entity entity) {
     UpdateViewMatrix(entity);
 }
 

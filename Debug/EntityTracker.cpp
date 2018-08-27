@@ -27,7 +27,7 @@ API_EXPORT u16 GetChanges(Entity responseStream, StringRef path) {
     auto trackerData = GetEntityTrackerData(entityTracker);
 
     for_entity(entity, data, Replication) {
-        if(*(u64*)data > trackerData->LastFrame) {
+        if(*(u64*)data >= trackerData->LastFrame) {
             SetEntityModificationEntity(AddEntityModifications(entityTracker), entity);
         }
     }

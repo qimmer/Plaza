@@ -360,7 +360,7 @@ LocalFunction(OnVoxelPaletteChanged, void, Entity voxelPalette) {
     }
 }
 
-LocalFunction(OnVoxelMeshAdded, void, Entity voxelMesh) {
+LocalFunction(OnVoxelMeshAdded, void, Entity component, Entity voxelMesh) {
     auto vb = CreateVertexBuffer(voxelMesh, "VertexBuffer");
     SetMeshVertexBuffer(voxelMesh, vb);
     SetVertexBufferDeclaration(vb, VoxelVertexDeclaration);

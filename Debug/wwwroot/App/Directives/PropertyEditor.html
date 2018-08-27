@@ -11,10 +11,52 @@
                             {{property.Name.replace(componentName,'').prettify()}}
                         </div>
                         <div class="cell value">
-                            <input class="form-control" ng-focus="isDraftLocked=true" ng-blur="isDraftLocked=false" ng-if="property.PropertyType == 'StringRef'" ng-model="draft[property.Name]" ng-change="applyDraft()"/>
-                            <input class="form-control" ng-focus="isDraftLocked=true" ng-blur="isDraftLocked=false" type="number" ng-if="property.PropertyType[0] == 'u' || property.PropertyType[0] == 's'" ng-model="draft[property.Name]" ng-change="applyDraft()"/>
-                            <input class="form-control" ng-focus="isDraftLocked=true" ng-blur="isDraftLocked=false" type="number" ng-if="property.PropertyType == 'float' || property.PropertyType == 'double'" ng-model="draft[property.Name]" ng-change="applyDraft()"/>
-                            <button style="width: 100%;" class="btn" ng-class="draft[property.Name] ? 'btn-success' : 'btn-disabled'" ng-if="property.PropertyType == 'bool'" ng-click="draft[property.Name] = !draft[property.Name]; applyDraft()">{{draft[property.Name].toString()}}</button>
+                            <input
+                                class="form-control" 
+                                ng-focus="isDraftLocked=true" 
+                                ng-blur="isDraftLocked=false" 
+                                ng-if="property.PropertyType == 'StringRef'"
+                                ng-model="draft[property.Name]"
+                                ng-change="applyDraft()"
+                            />
+
+                            <input
+                                class="form-control" 
+                                ng-focus="isDraftLocked=true" 
+                                ng-blur="isDraftLocked=false" 
+                                type="number" 
+                                ng-if="property.PropertyType[0] == 'u' || property.PropertyType[0] == 's'" 
+                                ng-model="draft[property.Name]" 
+                                ng-change="applyDraft()"
+                            />
+
+                            <input
+                                class="form-control"
+                                ng-focus="isDraftLocked=true" 
+                                ng-blur="isDraftLocked=false" 
+                                type="number" 
+                                ng-if="property.PropertyType == 'float' || property.PropertyType == 'double'" 
+                                ng-model="draft[property.Name]" 
+                                ng-change="applyDraft()"
+                            />
+
+                            <button 
+                                style="width: 100%;" 
+                                class="btn" 
+                                ng-class="draft[property.Name] ? 'btn-success' : 'btn-disabled'" 
+                                ng-if="property.PropertyType == 'bool'" 
+                                ng-click="draft[property.Name] = !draft[property.Name]; applyDraft()">
+                                {{draft[property.Name] ? 'true' : 'false'}}
+                            </button>
+
+                            <button 
+                                style="width: 100%;" 
+                                class="btn" 
+                                ng-class="draft[property.Name] ? 'btn-success' : 'btn-disabled'" 
+                                ng-if="property.PropertyType == 'Entity'" 
+                                ng-click="pickEntity()">
+                                {{(draft[property.Name] === null) ? 'null' : draft[property.Name]}}
+                            </button>
                         </div>
                     </div>
                 </div>

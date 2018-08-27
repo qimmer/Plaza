@@ -12,6 +12,6 @@ target_link_libraries(Editor Core Foundation Rendering ImGui Scene Scene3D)
 INSTALL(DIRECTORY Assets DESTINATION bin)
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS Editor RUNTIME LIBRARY DESTINATION bin)
+install (TARGETS Editor RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
     endif()

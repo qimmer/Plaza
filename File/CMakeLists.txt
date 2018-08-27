@@ -17,6 +17,6 @@ if(MSVC)
 endif()
 
 if(BUILD_SHARED_LIBS)
-    install (TARGETS File RUNTIME LIBRARY DESTINATION bin)
+    install (TARGETS File RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
 endif()

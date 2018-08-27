@@ -9,6 +9,6 @@ target_include_directories(Procedural PUBLIC "..")
 
 target_link_libraries(Procedural Core Foundation Scene Scene2D Scene3D )
 if(BUILD_SHARED_LIBS)
-install (TARGETS Procedural RUNTIME LIBRARY DESTINATION bin)
+install (TARGETS Procedural RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
     endif()

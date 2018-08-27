@@ -9,6 +9,6 @@ target_link_libraries(JavaScript PRIVATE Core Foundation)
 target_include_directories(JavaScript PUBLIC ".." "duktape-2.2.1/src")
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS JavaScript RUNTIME LIBRARY DESTINATION bin)
+install (TARGETS JavaScript RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
     endif()

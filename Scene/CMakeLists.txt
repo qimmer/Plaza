@@ -9,6 +9,6 @@ target_include_directories(Scene PUBLIC ".." ".")
 
 target_link_libraries(Scene Core Rendering)
 if(BUILD_SHARED_LIBS)
-    install (TARGETS Scene RUNTIME LIBRARY DESTINATION bin)
+    install (TARGETS Scene RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
 endif()

@@ -22,6 +22,6 @@ if(MSVC)
 endif()
 
 if(BUILD_SHARED_LIBS)
-    install (TARGETS Foundation RUNTIME LIBRARY DESTINATION bin)
+    install (TARGETS Foundation RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 
 endif()
