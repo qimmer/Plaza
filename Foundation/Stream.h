@@ -8,7 +8,7 @@
 #include <Core/NativeUtils.h>
 
 struct Serializer {
-    char SerializerMimeType[64];
+    StringRef SerializerMimeType;
     bool(*SerializeHandler)(Entity entity);
     bool(*DeserializeHandler)(Entity entity);
 };
@@ -16,9 +16,9 @@ struct Serializer {
 Unit(Stream)
     Component(Stream)
         Property(StringRef, StreamPath)
-        Property(Entity, StreamProtocol, PropertyFlag_ReadOnly, PropertyFlag_Transient)
-        Property(Entity, StreamCompressor, PropertyFlag_ReadOnly, PropertyFlag_Transient)
-        Property(Entity, StreamFileType, PropertyFlag_ReadOnly, PropertyFlag_Transient)
+        ReferenceProperty(Entity, StreamProtocol, PropertyFlag_ReadOnly, PropertyFlag_Transient)
+        ReferenceProperty(Entity, StreamCompressor, PropertyFlag_ReadOnly, PropertyFlag_Transient)
+        ReferenceProperty(Entity, StreamFileType, PropertyFlag_ReadOnly, PropertyFlag_Transient)
 
     Component(StreamProtocol)
         Property(StringRef, StreamProtocolIdentifier)
@@ -58,7 +58,7 @@ typedef bool(*CompressHandlerType)(Entity entity, u64 uncompressedOffset, u64 un
 typedef bool(*DecompressHandlerType)(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, void *uncompressedData);
 
 struct StreamProtocol {
-    char StreamProtocolIdentifier[16];
+    StringRef StreamProtocolIdentifier;
     Entity StreamProtocolComponent;
     StreamSeekHandlerType StreamSeekHandler;
     StreamTellHandlerType StreamTellHandler;
@@ -72,7 +72,7 @@ struct StreamProtocol {
 };
 
 struct StreamCompressor {
-    char StreamCompressorMimeType[64];
+    StringRef StreamCompressorMimeType;
     CompressHandlerType CompressHandler;
     DecompressHandlerType DecompressHandler;
 };

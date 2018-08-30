@@ -44,6 +44,6 @@ void __InitializeComponent();
     auto __component ## DATAVAR = ComponentOf_ ## COMPONENTTYPE ();\
     Entity ENTITYVAR = 0;\
     struct COMPONENTTYPE * DATAVAR = 0;\
-    for(u32 __index = GetNextComponent(__component ## DATAVAR, InvalidIndex, (void**)&DATAVAR, &ENTITYVAR); __index != InvalidIndex; __index = GetNextComponent(__component ## DATAVAR, __index, (void**)&DATAVAR, &ENTITYVAR))
+    for(u32 __index ## ENTITYVAR = GetNextComponent(__component ## DATAVAR, InvalidIndex, (void**)&DATAVAR, &ENTITYVAR); __index ## ENTITYVAR != InvalidIndex; __index ## ENTITYVAR = GetNextComponent(__component ## DATAVAR, __index ## ENTITYVAR, (void**)&DATAVAR, &ENTITYVAR))
 
 #endif //PLAZA_COMPONENT_H

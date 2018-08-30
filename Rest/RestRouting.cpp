@@ -9,7 +9,7 @@
 #include "RestServer.h"
 
 struct RestRouting {
-    char RestRoutingRoute[128];
+    StringRef RestRoutingRoute;
 };
 
 LocalFunction(OnHttpServerRequest, void, Entity server, Entity request, Entity response) {

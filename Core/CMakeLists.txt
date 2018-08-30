@@ -5,43 +5,25 @@ set(CMAKE_CXX_STANDARD 14)
 
 include(ExternalProject)
 
-ExternalProject_Add(ex_dyncall
-        GIT_REPOSITORY "https://github.com/Snaipe/dyncall.git"
+add_subdirectory(libffi)
+
+ExternalProject_Add(ex_intern
+        GIT_REPOSITORY "https://github.com/chriso/intern"
         UPDATE_COMMAND ""
         INSTALL_COMMAND ""
-        CMAKE_ARGS "${CMAKE_ARGS};-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE};-DBUILD_SHARED_LIBS=OFF")
+        CMAKE_ARGS "${CMAKE_ARGS};-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE};-DBUILD_SHARED_LIBS=OFF;-DBUILD_STATIC=1")
 
-ExternalProject_Get_Property(ex_dyncall BINARY_DIR)
-ExternalProject_Get_Property(ex_dyncall SOURCE_DIR)
-SET(ex_dyncall_lib_dir "${BINARY_DIR}")
-SET(ex_dyncall_inc_dir "${SOURCE_DIR}")
+ExternalProject_Get_Property(ex_intern BINARY_DIR)
+ExternalProject_Get_Property(ex_intern SOURCE_DIR)
+SET(ex_intern_lib_dir "${BINARY_DIR}")
+SET(ex_intern_inc_dir "${SOURCE_DIR}/..")
 
-
-ADD_LIBRARY(dyncall STATIC IMPORTED)
-
-IF(MSVC)
-    SET_PROPERTY(TARGET dyncall PROPERTY IMPORTED_LOCATION "${ex_dyncall_lib_dir}/dyncall/${CMAKE_BUILD_TYPE}/dyncall_s.lib")
-ELSE()
-    SET_PROPERTY(TARGET dyncall PROPERTY IMPORTED_LOCATION "${ex_dyncall_lib_dir}/dyncall/libdyncall_s.a")
-ENDIF()
-
-ExternalProject_Add(ex_libffi
-        GIT_REPOSITORY "https://github.com/LuaDist/libffi.git"
-        UPDATE_COMMAND ""
-        INSTALL_COMMAND ""
-        CMAKE_ARGS "${CMAKE_ARGS};-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE};-DBUILD_SHARED_LIBS=OFF")
-
-ExternalProject_Get_Property(ex_libffi BINARY_DIR)
-ExternalProject_Get_Property(ex_libffi SOURCE_DIR)
-SET(ex_libffi_inc_dir "${SOURCE_DIR}/include")
-SET(ex_libffi_lib_dir "${BINARY_DIR}")
-
-ADD_LIBRARY(libffi STATIC IMPORTED)
+ADD_LIBRARY(intern STATIC IMPORTED)
 
 IF(MSVC)
-SET_PROPERTY(TARGET libffi PROPERTY IMPORTED_LOCATION "${ex_libffi_lib_dir}/libffi.lib")
+    SET_PROPERTY(TARGET intern PROPERTY IMPORTED_LOCATION "${ex_intern_lib_dir}/${CMAKE_BUILD_TYPE}/intern.lib")
 ELSE()
-SET_PROPERTY(TARGET libffi PROPERTY IMPORTED_LOCATION "${ex_libffi_lib_dir}/libffi.a")
+    SET_PROPERTY(TARGET intern PROPERTY IMPORTED_LOCATION "${ex_intern_lib_dir}/libintern.a")
 ENDIF()
 
 ExternalProject_Add(ex_eastl
@@ -65,20 +47,25 @@ ENDIF()
 
 add_library(Core Entity.cpp Entity.h Types.h Pool.h Function.h Event.h Debug.cpp Debug.h Property.h Property.cpp Vector.cpp Vector.h StackContainer.h Variant.h Module.cpp Module.h CoreModule.cpp CoreModule.h Function.cpp Base64.cpp Base64.h Enum.cpp Enum.h AlignedAllocator.h ShortAlloc.h Hashing.h Hashing.cpp Event.cpp Variant.cpp Component.cpp Component.h NativeUtils.h NativeUtils.cpp Types.cpp Math.h Identification.cpp Identification.h Std.cpp Std.h)
 
-add_dependencies(Core ex_dyncall ex_eastl ex_libffi)
+add_dependencies(Core ex_intern ex_eastl)
 
 if(MSVC)
     target_sources(Core PRIVATE Core.def)
 endif()
 
-target_link_libraries(Core PUBLIC dyncall eastl libffi)
+target_link_libraries(Core PUBLIC intern eastl ffi)
 
 if(UNIX)
     target_link_libraries(Core PUBLIC dl)
     target_sources(Core PRIVATE Unix/ELFModule.cpp Unix/ELFModule.h)
 endif()
 
-target_include_directories(Core PUBLIC ".." "cglm/include" "${ex_dyncall_inc_dir}" "${ex_eastl_inc_dir}" "${ex_eastl_inc_dir}/../test/packages/EABase/include/Common" "${ex_libffi_lib_dir}" "${ex_libffi_inc_dir}" "${ex_libffi_inc_dir}/../src/x86")
+if(WIN32)
+    target_link_libraries(Core PUBLIC ole32)
+    target_include_directories(Core PRIVATE libffi/src/x86)
+endif()
+
+target_include_directories(Core PUBLIC ".." "${PROJECT_BINARY_DIR}/libffi" "cglm/include" "${ex_intern_inc_dir}" "${ex_eastl_inc_dir}" "${ex_eastl_inc_dir}/../test/packages/EABase/include/Common" "${ex_libffi_lib_dir}" "${ex_libffi_inc_dir}" "${ex_libffi_inc_dir}/../src/x86")
 target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions" "-std=c++14")
 set_property(TARGET Core PROPERTY POSITION_INDEPENDENT_CODE ON)
 

@@ -21,10 +21,10 @@ struct BinaryProgram {
 
 struct ShaderCache {
     Vector(ShaderCachePrograms, Entity, 256)
-    char ShaderCacheDirectoryPath[255];
-    char ShaderCacheIncludePath[PathMax];
+    StringRef ShaderCacheDirectoryPath;
+    StringRef ShaderCacheIncludePath;
     u8 ShaderCacheProfile;
-    char ShaderCacheDefines[128];
+    StringRef ShaderCacheDefines;
 };
 
 static Entity CreateBinaryProgram(Entity shaderCache, Entity program) {

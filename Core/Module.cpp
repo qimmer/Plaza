@@ -20,9 +20,10 @@ struct Module {
     char ModuleVersion[128];
     char ModuleSourcePath[512];
 
+    Vector(Dependencies, Entity, 16)
     Vector(Components, Entity, 64)
     Vector(Events, Entity, 64)
-    Vector(Enums, Entity, 64)
+    Vector(Enums, Entity, 16)
     Vector(Functions, Entity, 128)
     Vector(Extensions, Entity, 64)
     Vector(Subscriptions, Entity, 128)
@@ -44,7 +45,7 @@ BeginUnit(Module)
         RegisterArrayProperty(Function, Functions)
         RegisterArrayProperty(Extension, Extensions)
         RegisterArrayProperty(Subscription, Subscriptions)
-        RegisterArrayProperty(Identification, Roots)
+        RegisterArrayProperty(Module, Dependencies)
     EndComponent()
 
     RegisterFunction(GetModuleRoot)
@@ -162,6 +163,7 @@ void __InitializeModule() {
     __Property(PropertyOf_Functions(), offsetof(Module, Functions), sizeof(Module::Functions), TypeOf_Entity, component, ComponentOf_Function(), PropertyKind_Array);
     __Property(PropertyOf_Extensions(), offsetof(Module, Extensions), sizeof(Module::Extensions), TypeOf_Entity, component, ComponentOf_Extension(), PropertyKind_Array);
     __Property(PropertyOf_Subscriptions(), offsetof(Module, Subscriptions), sizeof(Module::Subscriptions), TypeOf_Entity, component, ComponentOf_Subscription(), PropertyKind_Array);
+    __Property(PropertyOf_Dependencies(), offsetof(Module, Dependencies), sizeof(Module::Dependencies), TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
 
     component = ComponentOf_ModuleRoot();
     AddComponent(component, ComponentOf_Component());

@@ -1,127 +1,145 @@
 angular.module('plaza').service('entityService', function ($http, $timeout, eventService) {
     var service = {};
 
-    service.mergeObject = function (original, newObject) {
-        // First, remove all properties that are no longer part of newObject
-        if (Array.isArray(newObject)) {
-            original.length = newObject.length;
-        } else {
-            for (var key in original) {
-                if (key[0] !== '$' && newObject[key] === undefined) {
-                    delete original[key];
-                }
-            }
-        }
-
-        for (var key in newObject) {
-            if (typeof newObject[key] == 'object' && newObject[key] != null) {
-                if (original[key] === undefined) {
-                    original[key] = newObject[key];
-                }
-                service.mergeObject(original[key], newObject[key]);
-            } else {
-                original[key] = newObject[key];
-            }
-        }
-    }
-
     service.getParentPath = function (path) {
         var lastSlashIndex = path.lastIndexOf("/");
-        if (lastSlashIndex < 0) return path;
+        if (lastSlashIndex < 0) return undefined;
 
         return path.substring(0, lastSlashIndex);
     }
 
-    function findOrCreateIndex(arr, name) {
-        var index = -1;
-        for (var i = 0; i < arr.length; ++i) {
-            if (arr[i].Name == name) {
-                index = i;
-                break;
-            }
-        }
-
-        if (index == -1) {
-            index = arr.length;
-            arr.push({
-                Name: name
-            });
-        }
-        return index;
-    }
-
-    function organize(entity, parent) {
-        if (entity.$children === undefined) {
-            entity.$isLeaf = true;
-            entity.$children = [];
-        }
-
-        if (parent !== undefined) {
-            entity.$parent = parent;
-        } else {
-            entity.$parent = undefined;
-        }
-
-        entity.$type = "element";
-
-        for (var key in entity) {
-            if (key[0] == '$') continue;
-
+    function mergeEntity(connection, entity) {
+        for(var key in entity) {
             var value = entity[key];
-
-            if (Array.isArray(value)) {
-                entity.$isLeaf = false;
-
-                var children = entity.$children[findOrCreateIndex(entity.$children, key)];
-                children.$children = value;
-                children.$isLeaf = true;
-                children.$parent = entity;
-                children.$type = "folder";
-
-                for (var i = 0; i < value.length; ++i) {
-                    organize(value[i], children);
+            if(Array.isArray(value)) {
+                for(var i = 0; i < value.length; ++i) {
+                    if(typeof value[i] === 'object') {
+                        mergeEntity(connection, value[i]);
+                        value[i] = value[i].$path;
+                    }
                 }
+            } else if (typeof value === 'object' && value !== null) {
+                mergeEntity(connection, value);
+                entity[key] = entity.$path;
             }
+        }
+
+        connection.getEntities()[entity.$path] = entity;
+
+        if(entity.$components.indexOf('Component') != -1) {
+            connection.getComponents()[entity.Name] = entity;
+
+            connection.getEntities(connection.getChildren(entity.$path));
+        }
+
+        if(entity.$components.indexOf('Module') != -1) {
+            connection.getModules()[entity.Name] = entity;
+
+            connection.getEntities(connection.getChildren(entity.$path));
+        }
+
+        if(entity.$components.indexOf('Property') != -1) {
+            connection.getProperties()[entity.Name] = entity;
+
+            connection.getEntities(connection.getChildren(entity.$path));
         }
     }
 
     service.error = function(err) {
         throw err;
     }
+    
+    service.findUniqueName = function(parent, name) {
+        var extensionIndex = 1;
+        var suggestion = name + "_" + extensionIndex;
+        while (true) {
+            var found = false;
+            for (var i = 0; i < parent.$children.length; ++i) {
+                if (parent.$children[i].Name === suggestion) {
+                    found = true;
+                }
+            }
+            if (found) {
+                extensionIndex++;
+                suggestion = name + "_" + extensionIndex;
+            } else {
+                break;
+            }
+        }
+        return suggestion;
+    }
 
     service.createConnection = function (endpoint) {
+        var root = {};
+        var entities = {
+            "": root
+        };
+        var modules = {};
+        var components = {};
+        var properties = {};
+
         var connection = {
-            root: {},
+            getRoot: function() { return root; },
+            getEntities: function(paths) {
+                if(paths === undefined) {
+                    return entities; 
+                }
+                
+                return paths.map(function(path) { return connection.getEntity(path); } );
+            },
+            getModules: function() { return modules; },
+            getComponents: function() { return components; },
+            getProperties: function() { return properties; },
+            getEntity: function(path) { 
+                var entity = entities[path];
+                if(!entity) {
+                    entity = { $loading: true };
+                    entities[path] = entity;
+                    service.getEntity(connection, path);
+                    return entity;
+                }
+                return entity;
+            },
+            getChildren: function(path) { 
+                var entity = connection.getEntity(path);
+                if(!entity) {
+                    console.log("Entity not found: " + path);
+                    return [];
+                }
+                var children = [];
+                for(var key in entity) {
+                    if(key[0] == '$') continue;
+                    if(!Array.isArray(entity[key])) continue;
+                    children = children.concat(entity[key]);
+                }
+                
+                return children; 
+            },
+
             endpoint: endpoint,
+            sessionId: null,
             isConnected: false
         };
 
-        service.getEntity(connection, "").then(function (root) {
-            connection.modules = {};
-            connection.components = {};
-            connection.properties = {};
+        service.getSession(connection).then(function(id) {
+            connection.sessionId = id;
 
-            service.parseComponentModel(
-                connection.root,
-                connection.modules,
-                connection.components,
-                connection.properties
-            );
-
-            service.update(connection);
-
-            var infiniteUpdate = function () {
-                if (connection.updateTask) {
-                    $timeout(function() {
-                        connection.updateTask = service.update(connection).then(infiniteUpdate, infiniteUpdate);
-                    }, 500);
+            service.getEntity(connection, "").then(function (root) {    
+                service.update(connection);
+    
+                var infiniteUpdate = function () {
+                    if (connection.updateTask) {
+                        $timeout(function() {
+                            connection.updateTask = service.update(connection).then(infiniteUpdate, infiniteUpdate);
+                        }, 250);
+                    }
                 }
-            }
-
-            connection.updateTask = true;
-
-            infiniteUpdate();
-        }, service.error);
+    
+                connection.updateTask = true;
+    
+                infiniteUpdate();
+            }, service.error);
+        });
 
         return connection;
     };
@@ -130,58 +148,25 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
         if (connection) {
             connection.isConnected = false;
             connection.updateTask = null;
+            connection.sessionId = null;
         }
     }
 
-    service.findEntity = function (connection, path) {
-        var root = connection.root;
-        var pathElements = path.split("/");
+    service.invalidate = function (connection, path) {
+        var entity = connection.getEntity(path);
 
-        for (var i = 0; i < pathElements.length; ++i) {
-            var element = pathElements[i];
-
-            if (element.length == 0) {
-                continue;
-            }
-
-            if (!Array.isArray(root)) {
-                if (!root[element]) return undefined;
-
-                root = root[element];
-            } else {
-                var index = parseInt(element);
-                if (index.toString() === element) {
-                    root = root[index];
-                } else {
-                    for (var j = 0; j < root.length; ++j) {
-                        if (root[j].Name == element) {
-                            root = root[j];
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        return undefined;
-                    }
-                }
-
-            }
-        }
-
-        return root;
-    }
-
-    service.invalidate = function (entity) {
         entity.$invalidated = true;
 
-        if (entity.$parent && (!entity.$components || !entity.$components.includes("PersistancePoint"))) {
-            service.invalidate(entity.$parent);
+        if (entity.$parentPath && (!entity.$components || !entity.$components.includes("PersistancePoint"))) {
+            service.invalidate(connection, connection.getEntity(entity.$parentPath));
         }
     }
 
-    service.save = function (connection, entity) {
+    service.save = function (connection, path) {
+        var entity = connection.getEntity(path);
+
         if(entity.$components && entity.$components.includes("PersistancePoint")) {
-            service.updateEntity(connection, service.calculatePath(entity), { 'PersistancePointSaving': true }).then(function (response) {
+            service.updateEntity(connection, path, { 'PersistancePointSaving': true }).then(function (response) {
                 entity.$invalidated = false;
             }, service.error);
         }
@@ -191,29 +176,24 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
         }
     }
 
+    service.getSession = function(connection) {
+        return $http.get(connection.endpoint + '/session').then(function (response) {
+            return response.data;
+        });
+    }
+
     service.getChanges = function (connection) {
-        return $http.get(connection.endpoint + '/changes').then(function (response) {
+        return $http.get(connection.endpoint + '/changes/' + connection.sessionId).then(function (response) {
             connection.isConnected = true;
 
             var changedEntities = response.data.EntityModifications;
             for (var i = 0; i < changedEntities.length; ++i) {
                 var changedEntity = changedEntities[i].EntityModificationEntity;
-                var entity = service.findEntity(connection, changedEntity.$path);
 
-                if (entity !== undefined) {
-                    service.mergeObject(entity, changedEntity);
-
-                    service.invalidate(entity);
-
-                    if (changedEntity.$path.length == 0) { // Root entity
-                        organize(entity);
-                    } else {
-                        organize(entity, entity.$parent);
-                    }
+                if(changedEntity) {
+                    mergeEntity(connection, changedEntity);
                 }
             }
-
-            return entity;
         }, service.error);
     }
 
@@ -224,40 +204,21 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
     }
 
     service.getEntity = function (connection, path) {
+        if(path === undefined) {
+            console.log("Path cannot be undefined");
+            return;
+        }
+
+        var entity = connection.getEntity(path);
+        entity.$loading = true;
+
         return $http.get(connection.endpoint + '/entity' + path).then(function (response) {
             connection.isConnected = true;
 
-            var entity = service.findEntity(connection, path);
-
-            if (entity === undefined) {
-                return response.data; /// Entity retrieved, but parents has not been fetched yet
-            }
-
-            service.mergeObject(entity, response.data);
-
-            if (path.length == 0) { // Root entity
-                organize(entity);
-            } else {
-                organize(entity, entity.$parent);
-            }
+            mergeEntity(connection, response.data);
 
             return entity;
         }, service.error);
-    }
-
-    service.calculatePath = function (entity) {
-        if (entity.Name === undefined) return "";
-
-        if (entity.$parent !== undefined && entity.$parent !== entity) {
-            if (entity.$type === "element") {
-                return service.calculatePath(entity.$parent) + "/" + entity.$parent.$children.indexOf(entity);
-            } else {
-                return service.calculatePath(entity.$parent) + "/" + entity.Name;
-            }
-
-        } else {
-            return "";
-        }
     }
 
     service.addComponent = function (connection, path, componentName) {
@@ -288,25 +249,6 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
         return $http.delete(connection.endpoint + '/entity' + path).then(function (response) {
             connection.isConnected = true;
         }, service.error);
-    }
-
-    service.parseComponentModel = function (moduleRoot, moduleTable, componentTable, propertyTable) {
-        var modules = moduleRoot['Modules'];
-        for (var i = 0; i < modules.length; ++i) {
-            moduleTable[modules[i].Name] = modules[i];
-
-            var components = modules[i]['Components'];
-            if (components) {
-                for (var j = 0; j < components.length; ++j) {
-                    componentTable[components[j].Name] = components[j];
-
-                    var properties = components[j]["Properties"];
-                    for (var k = 0; k < properties.length; ++k) {
-                        propertyTable[properties[k].Name] = properties[k];
-                    }
-                }
-            }
-        }
     }
 
     return service;

@@ -98,3 +98,91 @@ body {
 .tab-close i:hover {
     color: #fff;
 }
+
+.im {
+    font-size: 10px;
+}
+
+.btn .im {
+    vertical-align: middle;
+}
+
+.btn {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.btn-link {
+    color: #fff;
+}
+
+.btn-link:hover {
+    color: #aaf;
+}
+
+@keyframes roll-out {
+    0% {
+        max-height: auto;
+    } 
+    
+    1% {
+        max-height: 1000px;
+    }
+
+    100% {
+        max-height: 0px;
+    }
+}
+
+@keyframes roll-in {
+    0% {
+        max-height: 0px;
+    } 
+    
+    99% {
+        max-height: 1000px;
+    }
+
+    100% {
+        max-height: auto;
+    }
+}
+
+@keyframes fade-out {
+    0% {
+        opacity: 0.8;
+    } 
+    
+    100% {
+        opacity: 0.0;
+    }
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0.2;
+    } 
+    
+    100% {
+        opacity: 1.0;
+    }
+}
+
+.roll-out {
+    overflow: hidden;
+    animation: roll-in 0.5s ease-out;
+}
+
+.roll-out.ng-hide {
+    animation: roll-out 0.2s ease;
+}
+
+.fade-in {
+    opacity: 1.0;
+    animation: fade-in 0.3s ease-out;
+}
+
+.fade-in.ng-hide {
+    animation: fade-out 0.2s ease-out;
+}

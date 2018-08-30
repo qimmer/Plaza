@@ -88,10 +88,6 @@ BeginModule(Networking)
     )
 EndModule()
 
-LocalFunction(OnTcpWaitOnNoWorkChanged, void, Entity entity, bool oldValue, bool newValue) {
-    Log(0, LogSeverity_Info, "Changed from %d to %d", oldValue, newValue);
-}
-
 BeginUnit(Networking)
     BeginComponent(Networking)
         RegisterArrayProperty(HttpHeaderType, HttpHeaderTypes)
@@ -99,6 +95,4 @@ BeginUnit(Networking)
         RegisterProperty(bool, TcpWaitOnNoWork)
         RegisterChildProperty(AppLoop, ReplicationAppLoop)
     EndComponent()
-
-    RegisterSubscription(TcpWaitOnNoWorkChanged, OnTcpWaitOnNoWorkChanged, 0)
 EndUnit()

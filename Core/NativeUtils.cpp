@@ -8,9 +8,12 @@
 #include <EASTL/unordered_map.h>
 #include <EASTL/fixed_string.h>
 
-typedef eastl::string LookupString;
+#include <string>
+#include <unordered_map>
 
-static eastl::unordered_map<LookupString, Entity> entityLookup;
+typedef std::string LookupString;
+
+static std::unordered_map<LookupString, Entity> entityLookup;
 
 API_EXPORT Entity GetUniqueEntity(StringRef name, bool *firstTime) {
     LookupString uniqueNameStr = name;

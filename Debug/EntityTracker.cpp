@@ -5,11 +5,12 @@
 #include <Json/NativeUtils.h>
 #include <Foundation/Stream.h>
 #include <Core/Identification.h>
-#include <Networking/Replication.h>
-#include <Networking/NetworkingModule.h>
 #include <Foundation/AppLoop.h>
+#include <Core/Debug.h>
 #include "EntityTracker.h"
 #include "DebugModule.h"
+
+typedef std::vector<bool> ChangeSet;
 
 struct EntityModification {
     Entity EntityModificationEntity;
@@ -17,36 +18,88 @@ struct EntityModification {
 
 struct EntityTracker {
     Vector(EntityModifications, Entity, 128);
-    u64 LastFrame;
+    ChangeSet *changedSet;
 };
 
-API_EXPORT u16 GetChanges(Entity responseStream, StringRef path) {
+static bool debugInitialized = false;
+
+static bool isAdding = false;
+
+API_EXPORT u16 GetEntityTrackerChanges(Entity entityTracker, Entity responseStream) {
     SetStreamPath(responseStream, "memory://response.json");
 
-    auto entityTracker = GetEntityTracker(ModuleOf_Debug());
     auto trackerData = GetEntityTrackerData(entityTracker);
 
-    for_entity(entity, data, Replication) {
-        if(*(u64*)data >= trackerData->LastFrame) {
+    isAdding = true;
+    for(auto i = 0; i < trackerData->changedSet->size(); ++i) {
+        auto changed = (*trackerData->changedSet)[i];
+        if(!changed) continue;
+
+        (*trackerData->changedSet)[i] = false;
+        auto entity = GetEntityByIndex(i);
+        if(IsEntityValid(entity)) {
             SetEntityModificationEntity(AddEntityModifications(entityTracker), entity);
         }
     }
 
-    trackerData->LastFrame = GetAppLoopFrame(GetReplicationAppLoop(ModuleOf_Networking()));
-
+    auto responseCode = 200;
     if(!SerializeJson(
             responseStream,
             entityTracker,
-            4, // Include changed entity's children, but not sub-children
+            3, // Include changed entity's children, but not sub-children
             2)) { // Include entity tracker's modifications' entities
-        return 500;
+        responseCode = 500;
     }
 
     while(GetNumEntityModifications(entityTracker)) {
         RemoveEntityModifications(entityTracker, 0);
     }
 
-    return 200;
+    trackerData->changedSet->clear();
+
+    isAdding = false;
+
+    return responseCode;
+}
+
+static inline void TriggerChange(Entity entity) {
+    if(isAdding || !IsEntityValid(entity)) return;
+
+    if(HasComponent(entity, ComponentOf_EntityModification()) || HasComponent(entity, ComponentOf_EntityTracker())) {
+        return;
+    }
+
+    auto index = GetEntityIndex(entity);
+    for_entity(tracker, trackerData, EntityTracker) {
+
+        if(index >= trackerData->changedSet->size()) {
+            trackerData->changedSet->resize(index + 1, false);
+        }
+
+        (*trackerData->changedSet)[index] = true;
+    }
+}
+
+LocalFunction(OnComponentAdded, void, Entity component, Entity entity) {
+    if(component == ComponentOf_EntityModification()) return;
+
+    if(component == ComponentOf_EntityTracker()) {
+        GetEntityTrackerData(entity)->changedSet = new ChangeSet();
+    } else {
+        TriggerChange(entity);
+    }
+}
+
+LocalFunction(OnComponentRemoved, void, Entity component, Entity entity) {
+    if(component == ComponentOf_EntityTracker()) {
+        delete GetEntityTrackerData(entity)->changedSet;
+    } else {
+        TriggerChange(entity);
+    }
+}
+
+LocalFunction(OnPropertyChanged, void, Entity property, Entity entity) {
+    TriggerChange(entity);
 }
 
 BeginUnit(EntityTracker)
@@ -58,5 +111,9 @@ BeginUnit(EntityTracker)
         RegisterArrayProperty(EntityModification, EntityModifications)
     EndComponent()
 
-    RegisterFunction(GetChanges)
+    RegisterFunction(GetEntityTrackerChanges)
+
+    RegisterSubscription(EntityComponentAdded, OnComponentAdded, 0)
+    RegisterSubscription(EntityComponentRemoved, OnComponentRemoved, 0)
+    RegisterSubscription(PropertyChanged, OnPropertyChanged, 0)
 EndUnit()

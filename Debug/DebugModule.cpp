@@ -5,18 +5,29 @@
 #include <Foundation/NativeUtils.h>
 #include <Foundation/FoundationModule.h>
 #include <Networking/NetworkingModule.h>
+#include <Networking/Server.h>
+#include <Networking/HttpServer.h>
 #include <Json/JsonModule.h>
 #include <Json/NativeUtils.h>
 #include <Rest/RestModule.h>
 #include <File/FileModule.h>
 #include <cstdarg>
 #include <Core/Identification.h>
+#include <Foundation/StopWatch.h>
 #include "DebugModule.h"
 #include "EntityTracker.h"
 #include "FlowNode.h"
 
+struct DebugSession {
+    Entity DebugSessionChangeTracker;
+};
+
 struct Debug {
-    Entity EntityTracker;
+    Entity DebugServer;
+    Vector(DebugServerSessions, Entity, 64)
+};
+
+struct DebugServer {
 };
 
 static u16 DebugComponent(StringRef path, bool(*func)(Entity, Entity)) {
@@ -56,12 +67,57 @@ u16 DebugRemoveComponent(Entity responseStream, StringRef path) {
     return DebugComponent(path, RemoveComponent);
 }
 
-BeginUnit(DebugServer)
+u16 DebugCreateSession(Entity responseStream, StringRef path) {
+    auto guid = CreateGuid();
+    char json[128];
+    snprintf(json, 128, "\"%s\"", guid);
+
+    SetStreamPath(responseStream, "memory://response.json");
+    if(!StreamOpen(responseStream, StreamMode_Write)) {
+        return 500;
+    }
+
+    StreamWrite(responseStream, strlen(json), json);
+    StreamClose(responseStream);
+
+    auto session = AddDebugServerSessions(ModuleOf_Debug());
+    SetName(session, guid);
+    SetStopWatchRunning(session, true);
+
+    return 200;
+}
+
+u16 DebugGetChanges(Entity responseStream, StringRef path) {
+    if(path[0] != '/') return 400;
+
+    char sessionPath[1024];
+    snprintf(sessionPath, 1024, "/Modules/Debug/DebugServerSessions%s", path);
+
+    auto session = FindEntityByPath(sessionPath);
+    if(!IsEntityValid(session)) {
+        return 404;
+    }
+
+    return GetEntityTrackerChanges(GetDebugSessionChangeTracker(session), responseStream);
+}
+
+BeginUnit(DebugModule)
     RegisterFunction(DebugAddComponent)
     RegisterFunction(DebugRemoveComponent)
+    RegisterFunction(DebugGetChanges)
+    RegisterFunction(DebugCreateSession)
+
+    BeginComponent(DebugServer)
+        RegisterBase(HttpServer)
+    EndComponent()
+
+    BeginComponent(DebugSession)
+        RegisterChildProperty(EntityTracker, DebugSessionChangeTracker)
+    EndComponent()
 
     BeginComponent(Debug)
-        RegisterChildProperty(EntityTracker, EntityTracker)
+        RegisterChildProperty(DebugServer, DebugServer)
+        RegisterArrayProperty(DebugSession, DebugServerSessions)
     EndComponent()
 
 	ModuleData(
@@ -72,27 +128,32 @@ BeginUnit(DebugServer)
 				{ "FileTypeExtension": ".map", "FileTypeMimeType" : "text/map" },
 				{ "FileTypeExtension": ".js", "FileTypeMimeType" : "application/javascript" }
 			],
-            "Roots": [
-                {
-                    "Name": "Debug Server",
-                    "ServerPort": 8080,
-                    "AppLoopKeepAlive": true,
-                    "HttpServerKeepAliveTimeout": 5,
-                    "HttpServerKeepAliveMaxConnections": 100,
-                    "RestServerRoutes": [
+            "DebugServer":{
+                "Name": "Debug Server",
+                "ServerPort": 8080,
+                "AppLoopKeepAlive": true,
+                "HttpServerKeepAliveTimeout": 5,
+                "HttpServerKeepAliveMaxConnections": 100,
+                "RestServerRoutes": [
                     {
                         "Name": "WebRoute",
-                        "RestResourceRoutingRoot": "file://wwwroot",
+                        "RestResourceRoutingRoot": "file://Debug/wwwroot",
                         "RestRoutingRoute": "/"
                     },
                     {
                         "Name": "EntityRoute",
                         "RestEntityRoutingRoot": "/",
-                        "RestRoutingRoute": "/api/entity"
+                        "RestRoutingRoute": "/api/entity",
+                        "RestEntityRoutingDepth": 4
+                    },
+                    {
+                        "Name": "SessionRoute",
+                        "RestFunctionRoutingFunction": "/Modules/Debug/Functions/DebugCreateSession",
+                        "RestRoutingRoute": "/api/session"
                     },
                     {
                         "Name": "ChangesRoute",
-                        "RestFunctionRoutingFunction": "/Modules/Debug/Functions/GetChanges",
+                        "RestFunctionRoutingFunction": "/Modules/Debug/Functions/DebugGetChanges",
                         "RestRoutingRoute": "/api/changes"
                     },
                     {
@@ -105,12 +166,8 @@ BeginUnit(DebugServer)
                         "RestFunctionRoutingFunction": "/Modules/Debug/Functions/DebugRemoveComponent",
                         "RestRoutingRoute": "/api/removecomponent"
                     }
-                    ]
-                }
-            ],
-            "EntityTracker": {
-			    "EntityTrackerTrackValues": true
-			}
+                ]
+            }
 		}
 	);
 EndUnit()
@@ -124,6 +181,6 @@ BeginModule(Debug)
     RegisterDependency(Rest)
 
     RegisterUnit(EntityTracker)
-    RegisterUnit(DebugServer)
+    RegisterUnit(DebugModule)
     RegisterUnit(FlowNode)
 EndModule()

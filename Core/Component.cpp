@@ -188,9 +188,6 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
                     while(GetArrayPropertyCount(property, entity)) {
                         RemoveArrayPropertyElement(property, entity, 0);
                     }
-                } else if(kind == PropertyKind_String) {
-                    static StringRef nullStr = "";
-                    SetPropertyValue(property, entity, &nullStr); // Reset value to default before removal
                 } else {
                     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 

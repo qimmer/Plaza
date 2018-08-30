@@ -12,9 +12,10 @@
 
 struct RestEntityRouting {
     Entity RestEntityRoutingRoot;
+    u8 RestEntityRoutingDepth;
 };
 
-static Entity handleGet(StringRef entityPath, Entity request, Entity response) {
+static Entity handleGet(StringRef entityPath, Entity request, Entity response, u8 depth) {
     auto responseStream = GetHttpResponseContentStream(response);
 
     auto requestedEntity = FindEntityByPath(entityPath);
@@ -26,7 +27,7 @@ static Entity handleGet(StringRef entityPath, Entity request, Entity response) {
 
     SetStreamPath(responseStream, "memory://response.json");
 
-    if(!SerializeJson(responseStream, requestedEntity)) {
+    if(!SerializeJson(responseStream, requestedEntity, depth, 0)) {
 		Log(request, LogSeverity_Error, "GET: Error serializing %s", entityPath);
 
         return FindResponseCode(500);
@@ -165,7 +166,7 @@ LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity
         auto method = GetHttpRequestMethod(request);
         auto responseCode = FindResponseCode(500);
 		if (strcmp(method, "GET") == 0) {
-			responseCode = handleGet(completeRoute, request, response);
+			responseCode = handleGet(completeRoute, request, response, GetRestEntityRoutingDepth(routing));
 		} else if (strcmp(method, "PUT") == 0) {
 			responseCode = handlePut(completeRoute, request, response);
 		} else if (strcmp(method, "POST") == 0) {
@@ -183,7 +184,8 @@ LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity
 BeginUnit(RestEntityRouting)
     BeginComponent(RestEntityRouting)
         RegisterBase(RestRouting)
-        RegisterProperty(Entity, RestEntityRoutingRoot)
+        RegisterReferenceProperty(Ownership, RestEntityRoutingRoot)
+        RegisterProperty(u8, RestEntityRoutingDepth)
     EndComponent()
 
     RegisterSubscription(RestRoutingRequest, OnRestRoutingRequest, 0)

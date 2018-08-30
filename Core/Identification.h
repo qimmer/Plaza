@@ -23,6 +23,8 @@ Entity FindEntityByName(Entity component, StringRef typeName);
 
 bool GetParentPath(StringRef childPath, u32 bufLen, char *parentPath);
 
-#define PathMax 2048
+Function(CreateGuid, StringRef)
+
+#define PathMax 512
 
 #endif //PLAZA_IDENTIFICATION_H

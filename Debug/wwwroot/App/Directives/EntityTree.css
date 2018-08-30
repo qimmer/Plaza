@@ -1,93 +1,28 @@
-[treecontrol] {
+.tree-node {
     /* prevent user selection */
     -moz-user-select: -moz-none;
     -khtml-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
-
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     /* default */
     
     text-decoration: none;
     width: 100%;
-}
-
-[treecontrol] ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    border: none;
-    overflow: hidden;
-    width: 100%;
-    white-space: nowrap;
-}
-
-[treecontrol] li {
-    position: relative;
-    padding: 0 0 0 20px;
-    /* line-height: 20px; */
-}
-
-[treecontrol] li.tree-expanded i.tree-leaf-head, [treecontrol] li.tree-collapsed i.tree-leaf-head {display:none;}
-[treecontrol] li.tree-expanded i.tree-branch-head, [treecontrol] li.tree-collapsed i.tree-branch-head {display:inline-block;}
-[treecontrol] li.tree-leaf i.tree-branch-head {display:none;}
-[treecontrol] li.tree-leaf i.tree-leaf-head {display:inline-block;}
-
-[treecontrol] li i {
     cursor: pointer;
+    color: #bbb;
 }
 
-[treecontrol] li .tree-label {
-    cursor: pointer;
-    display: inline;
-    white-space: nowrap;
+.tree-node:hover {
+    background-color: #333;
 }
 
-[treecontrol].tree-boot {
-    color: #aaa;
-    font-family: inherit;
-    font-size: inherit;
-}
-
-[treecontrol].tree-boot > ul > li {
-    padding: 0;
-}
-
-[treecontrol].tree-boot li > .tree-label {
-    display: block;
-    padding: 0px;
-    border-radius: 0px;
-}
-
-[treecontrol].tree-boot i.tree-branch-head,
-[treecontrol].tree-boot i.tree-leaf-head {
-    display: inline-block;
-    float: left;
-    white-space:nowrap;
-    height: 13px;
-    margin: 2px 0px 4px 4px;
-}
-
-[treecontrol].tree-boot li.tree-expanded i.tree-branch-head {
-    display: none;
-}
-
-[treecontrol].tree-boot li.tree-collapsed i.tree-branch-head {
-    display: none;
-}
-
-[treecontrol].tree-boot li.tree-leaf i.tree-leaf-head {
-    display: none;
-}
-
-[treecontrol].tree-boot .tree-label.tree-selected,
-[treecontrol].tree-boot .tree-label.tree-selected:hover {
-    
-    background-color: #354350;
-}
-
-[treecontrol].tree-boot .tree-label:hover {
-    background-color: #323232;
+.tree-node.selected {
+    background-color: #444;
+    color: #fff;
 }
 
 .tree-node-element {
@@ -102,4 +37,31 @@
 
 .saved {
     color: #97c4ff;
+}
+
+.icon-white {
+    color: #fff;
+}
+
+.icon-cyan {
+    color: rgb(131, 182, 240);
+}
+
+.icon-blue {
+    color: #6af;
+}
+
+.icon-red {
+    color: #b44;
+}
+
+.icon-orange {
+    color: #c85;
+}
+.icon-yellow {
+    color: #fd5;
+}
+
+.icon-green {
+    color: #7d7;
 }

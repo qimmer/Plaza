@@ -7,7 +7,7 @@
                             Entities
                     </div>                        
                     <div style="width: 100%; height: calc(100% - 40px);">
-                            <entity-tree connection="connection" on-open="openEntity(entity)"/>
+                            <entity-tree connection="connection" selected-entities="selectedEntities" on-open="openEntity(entity)"/>
                     </div>
                 </div>
             </div>
@@ -28,14 +28,7 @@
                     </div>
                     <div data-split-pane-divider data-width="0px"></div>
                     <div data-split-pane-component data-width="20em" style="overflow-y: auto;">
-                            <div style="width: 100%; height: 100%;">
-                                    <div style="width: 100%; height: 40px;" class="bg-toolbox-header toolbox-header">
-                                        Properties
-                                    </div>                        
-                                    <div style="width: 100%; height: calc(100% - 40px);">
-                                            <property-editor connection="connection"/>
-                                    </div>
-                                </div>
+                        <property-editor connection="connection" selected-entities="selectedEntities"/>
                     </div>
                 </div>
             </div>

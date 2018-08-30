@@ -14,6 +14,6 @@ Unit(EntityTracker)
     Component(EntityTracker)
         ArrayProperty(EntityModification, EntityModifications)
 
-    Function(GetChanges, u16, Entity responseStream, StringRef path)
+    Function(GetEntityTrackerChanges, u16, Entity tracker, Entity responseStream)
 
 #endif //PLAZA_ENTITYTRACKER_H

@@ -9,6 +9,7 @@
 
 Unit(RestEntityRouting)
     Component(RestEntityRouting)
-        Property(Entity, RestEntityRoutingRoot)
+        ReferenceProperty(Ownership, RestEntityRoutingRoot)
+        Property(u8, RestEntityRoutingDepth)
 
 #endif //PLAZA_RESTENTITYROUTING_H

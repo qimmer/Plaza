@@ -42,6 +42,7 @@ BeginModule(Rendering)
     RegisterUnit(Mesh)
     RegisterUnit(Material)
     RegisterUnit(Renderer)
+    RegisterUnit(Rendering)
 
     ModuleData({
         "RenderingUvOffsetScaleUniform": {

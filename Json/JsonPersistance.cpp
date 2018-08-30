@@ -166,59 +166,80 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjso
     return true;
 }
 
-static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer, s16 includeChildLevels, s16 includeReferenceLevels) {
+static bool SerializeNode(Entity parent, Entity root, StringRef parentPath, StringRef parentProperty, rapidjson::Writer<rapidjson::StringBuffer>& writer, s16 includeChildLevels, s16 includeReferenceLevels) {
     bool result = true;
 
-    writer.StartObject();
+    char path[2048];
+    CalculateEntityPath(path, sizeof(path), parent, true);
 
-    for_entity(component, componentData, Component) {
-        if(!HasComponent(parent, component)
-           || (parent == root && (component == ComponentOf_PersistancePoint()))
-           || component == ComponentOf_Ownership()) {
-            continue;
+    if(includeChildLevels > 0) {
+        writer.StartObject();
+        {
+            writer.String("$components");
+            writer.StartArray();
+            for_entity(component, componentData, Component) {
+                if(HasComponent(parent, component)) {
+                    writer.String(GetName(component));
+                }
+            }
+            writer.EndArray();
         }
 
-        auto numProperties = GetNumProperties(component);
-        auto properties = GetProperties(component);
-        for(auto pi = 0; pi < numProperties; ++pi) {
-            auto property = properties[pi];
-            auto name = GetName(property);
+        writer.String("$path");
+        writer.String(path);
 
-            auto flags = GetPropertyFlags(property);
-            if(flags & PropertyFlag_Transient || flags & PropertyFlag_ReadOnly) continue;
+        writer.String("$owner");
+        writer.String(parentPath);
 
-            switch(GetPropertyKind(property)) {
-                case PropertyKind_String:
-                case PropertyKind_Value:
-                    writer.String(name);
+        writer.String("$property");
+        writer.String(parentProperty);
 
-                    if(includeReferenceLevels > 0 && GetPropertyType(property) == TypeOf_Entity) {
+        for_entity(component, componentData, Component) {
+            if(!HasComponent(parent, component)
+               || (parent == root && (component == ComponentOf_PersistancePoint()))
+               || component == ComponentOf_Ownership()) {
+                continue;
+            }
+
+            auto numProperties = GetNumProperties(component);
+            auto properties = GetProperties(component);
+            for(auto pi = 0; pi < numProperties; ++pi) {
+                auto property = properties[pi];
+                auto name = GetName(property);
+
+                auto flags = GetPropertyFlags(property);
+                //if(flags & PropertyFlag_Transient || flags & PropertyFlag_ReadOnly) continue;
+
+                switch(GetPropertyKind(property)) {
+                    case PropertyKind_Value:
+                        writer.String(name);
+
+                        if(includeReferenceLevels > 0 && GetPropertyType(property) == TypeOf_Entity) {
+                            Entity child = 0;
+                            GetPropertyValue(property, parent, &child);
+
+                            if(IsEntityValid(child)) {
+                                result &= SerializeNode(child, root, path, name, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0));
+                            } else {
+                                writer.Null();
+                            }
+                        } else {
+                            result &= SerializeValue(parent, property, root, writer);
+                        }
+
+                        break;
+                    case PropertyKind_Child:
+                    {
                         Entity child = 0;
                         GetPropertyValue(property, parent, &child);
-
                         if(IsEntityValid(child)) {
-                            result &= SerializeNode(child, root, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0));
-                        } else {
-                            writer.Null();
+                            writer.String(GetName(property));
+                            result &= SerializeNode(child, root, path, name, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0));
                         }
-                    } else {
-                        result &= SerializeValue(parent, property, root, writer);
                     }
-
-                    break;
-                case PropertyKind_Child:
-                {
-                    Entity child = 0;
-                    GetPropertyValue(property, parent, &child);
-                    if(IsEntityValid(child) && includeChildLevels > 0) {
-                        writer.String(GetName(property));
-                        result &= SerializeNode(child, root, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0));
-                    }
-                }
-                    break;
-                case PropertyKind_Array:
-                {
-                    if(includeChildLevels > 0) {
+                        break;
+                    case PropertyKind_Array:
+                    {
                         writer.String(GetName(property));
 
                         auto count = GetArrayPropertyCount(property, parent);
@@ -226,7 +247,7 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
                         for(auto i = 0; i < count; ++i) {
                             auto child = GetArrayPropertyElement(property, parent, i);
                             if(IsEntityValid(child)) {
-                                result &= SerializeNode(child, root, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0));
+                                result &= SerializeNode(child, root, path, name, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0));
                             } else {
                                 writer.Null();
                             }
@@ -234,35 +255,18 @@ static bool SerializeNode(Entity parent, Entity root, rapidjson::Writer<rapidjso
                         }
                         writer.EndArray();
                     }
+                        break;
+                    default:
+                        Log(property, LogSeverity_Error, "Unknown property kind: %d", GetPropertyKind(property));
+                        break;
                 }
-                    break;
-                default:
-                    Log(property, LogSeverity_Error, "Unknown property kind: %d", GetPropertyKind(property));
-                    break;
             }
         }
+
+        writer.EndObject();
+    } else {
+        writer.String(path);
     }
-
-    {
-        writer.String("$components");
-        writer.StartArray();
-        for_entity(component, componentData, Component) {
-            if(HasComponent(parent, component)) {
-                writer.String(GetName(component));
-            }
-        }
-        writer.EndArray();
-
-        //if(parent == root) {
-            char path[2048];
-            CalculateEntityPath(path, sizeof(path), parent, true);
-
-            writer.String("$path");
-            writer.String(path);
-        //}
-    }
-
-    writer.EndObject();
 
     return result;
 }
@@ -374,9 +378,17 @@ static StringRef GetJsonTypeName(const rapidjson::Value& value) {
 static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& value, bool onlyHierarchy) {
     bool result = true;
 
+    if(value.IsString()) {
+        return true;
+    }
+
     if(!value.IsObject()) {
         Log(parent, LogSeverity_Error, "Json value for %s is not an object, but a %s. Skipping this node.", GetName(parent), GetJsonTypeName(value));
         return false;
+    }
+
+    if(value.MemberBegin() == value.MemberEnd()) {
+        return true; // Empty objects mean they exist, but data has been left out
     }
 
     auto components = value.FindMember("$components");
@@ -390,9 +402,7 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
             continue;
         }
 
-        for_entity(property, propertyData, Property) {
-            if(strcmp(propertyName, GetName(property)) == 0) break;
-        }
+        auto property = FindEntityByName(ComponentOf_Property(), propertyName);
 
         if(!IsEntityValid(property)) {
             Log(root, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetStreamPath(root), propertyName);
@@ -401,10 +411,12 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
 
         if(property == PropertyOf_Owner()) continue;
 
+        auto flags = GetPropertyFlags(property);
+        if(flags & PropertyFlag_Transient || flags & PropertyFlag_ReadOnly) continue;
+
         auto propertyKind = GetPropertyKind(property);
         auto& reader = propertyIterator->value;
         switch(propertyKind) {
-            case PropertyKind_String:
             case PropertyKind_Value:
                 if(!onlyHierarchy) {
                     result &= DeserializeValue(parent, property, root, reader);
@@ -454,9 +466,7 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
         for(auto arrayIt = components->value.Begin(); arrayIt != components->value.End(); ++arrayIt) {
             if(arrayIt->IsString()) {
                 auto componentName = arrayIt->GetString();
-                for_entity(component, componentData, Component) {
-                    if(strcmp(componentName, GetName(component)) == 0) break;
-                }
+                auto component = FindEntityByName(ComponentOf_Component(), componentName);
 
                 if(!IsEntityValid(component)) {
                     Log(root, LogSeverity_Warning, "Unknown component in JSON: %s", componentName);
@@ -492,7 +502,7 @@ API_EXPORT bool SerializeJson(Entity stream, Entity entity, s16 includeChildLeve
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-    auto result = SerializeNode(entity, entity, writer, includeChildLevels, includeReferenceLevels);
+    auto result = SerializeNode(entity, entity, "", "", writer, includeChildLevels, includeReferenceLevels);
 
     writer.Flush();
 
@@ -501,7 +511,10 @@ API_EXPORT bool SerializeJson(Entity stream, Entity entity, s16 includeChildLeve
         Assert(stream, StreamOpen(stream, StreamMode_Write));
     }
 
-    Assert(stream, StreamWrite(stream, buffer.GetLength(), buffer.GetString()));
+    auto numWritten = StreamWrite(stream, buffer.GetLength(), buffer.GetString());
+    if(numWritten != buffer.GetLength()) {
+        result = false;
+    }
 
     if(!streamWasOpen) {
         StreamClose(stream);
@@ -528,7 +541,7 @@ API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
     char *data = (char*)malloc(size + 1);
     Assert(stream, data);
     Assert(stream, StreamSeek(stream, startOffset));
-    Assert(stream, StreamRead(stream, size, data));
+    Assert(stream, size == StreamRead(stream, size, data));
 
     if(!streamWasOpen) {
         StreamClose(stream);

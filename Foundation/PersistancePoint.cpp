@@ -46,7 +46,7 @@ LocalFunction(Load, void, Entity persistancePoint) {
     // Find serializer
     Entity serializer = 0;
     for_entity(serializerEntity, serializerData, Serializer) {
-        if(strcmp(mimeType, serializerData->SerializerMimeType) == 0) {
+        if(mimeType == serializerData->SerializerMimeType) {
             serializer = serializerEntity;
             break;
         }
@@ -70,6 +70,8 @@ LocalFunction(Load, void, Entity persistancePoint) {
     if(result) {
         SetPersistancePointLoaded(persistancePoint, true);
     }
+
+    StreamClose(persistancePoint);
 }
 
 LocalFunction(OnPersistancePointLoadingChanged, void, Entity persistancePoint, bool oldValue, bool newValue) {
@@ -106,7 +108,7 @@ LocalFunction(OnPersistancePointSavingChanged, void, Entity persistancePoint, bo
 
         Entity serializer = 0;
         for_entity(serializerEntity, serializerData, Serializer) {
-            if(strcmp(mimeType, serializerData->SerializerMimeType) == 0) {
+            if(mimeType == serializerData->SerializerMimeType) {
                 serializer = serializerEntity;
                 break;
             }
@@ -129,6 +131,7 @@ LocalFunction(OnPersistancePointSavingChanged, void, Entity persistancePoint, bo
         }
 
         SetPersistancePointSaving(persistancePoint, false);
+        StreamClose(persistancePoint);
     }
 
 }

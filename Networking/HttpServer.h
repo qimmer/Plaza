@@ -9,12 +9,12 @@
 
 Unit(HttpServer)
     Component(HttpServer)
-        ArrayProperty(HttpRequest, HttpServerRequests)
-        ArrayProperty(HttpResponse, HttpServerResponses)
         Property(u16, HttpServerKeepAliveTimeout)
         Property(u16, HttpServerKeepAliveMaxConnections)
 
     Component(HttpStream)
+        ArrayProperty(HttpRequest, HttpServerRequests)
+        ArrayProperty(HttpResponse, HttpServerResponses)
 
     Event(HttpServerRequest, Entity request, Entity response)
 

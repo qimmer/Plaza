@@ -11,9 +11,8 @@
 #define PropertyFlag_Transient 2
 
 #define PropertyKind_Value 1
-#define PropertyKind_String 2
-#define PropertyKind_Child 3
-#define PropertyKind_Array 4
+#define PropertyKind_Child 2
+#define PropertyKind_Array 3
 
 Unit(Property)
 
@@ -40,6 +39,8 @@ Component(Binding)
 
 Event(PropertyChanged, Entity property, Entity context)
 
+StringRef Intern(StringRef sourceString);
+
 void SetPropertyValue(Entity property, Entity entity, const void *valueData);
 bool GetPropertyValue(Entity property, Entity entity, void *dataOut);
 Entity *GetArrayPropertyElements(Entity property, Entity entity);
@@ -56,6 +57,7 @@ void SetPropertyMeta(Entity property, StringRef metaString);
 
 void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind);
 void __InitializeProperty();
+void __InitializeString();
 
 void AddElementFromDecl(Entity property, Entity module, StringRef decl);
 void SetChildFromDecl(Entity property, Entity module, StringRef decl);

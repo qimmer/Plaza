@@ -24,7 +24,7 @@ Component(Module)
     ArrayProperty(Enum, Enums)
     ArrayProperty(Extension, Extensions)
     ArrayProperty(Subscription, Subscriptions)
-    ArrayProperty(Identification, Roots)
+    ArrayProperty(Module, Dependencies)
 
 Event(ModuleInitialized)
 

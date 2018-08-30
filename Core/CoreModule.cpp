@@ -32,6 +32,7 @@ void __InitializeBase() {
     SetComponentSize(ComponentOf_Enum(), 4);
     SetComponentSize(ComponentOf_EnumFlag(), 4);
 
+    __InitializeString();
     __InitializeComponent();
     __InitializeModule();
     __InitializeProperty();

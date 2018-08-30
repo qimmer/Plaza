@@ -32,9 +32,6 @@
 #endif
 
 struct HttpServer {
-    Vector(HttpServerRequests, Entity, 128)
-    Vector(HttpServerResponses, Entity, 128)
-
     u16 HttpServerKeepAliveTimeout;
     u16 HttpServerKeepAliveMaxConnections;
 };
@@ -48,6 +45,9 @@ struct HttpStreamPartialRequest {
 };
 
 struct HttpStream {
+    Vector(HttpServerRequests, Entity, 128)
+    Vector(HttpServerResponses, Entity, 128)
+
     HttpStreamPartialRequest *partial;
 };
 
@@ -242,7 +242,7 @@ static void OnRequestComplete(Entity server, Entity clientStream, HttpStreamPart
         StreamClose(contentStream);
     }
 
-    auto response = AddHttpServerResponses(server);
+    auto response = AddHttpServerResponses(clientStream);
 
 	Type types[] = { TypeOf_Entity, TypeOf_Entity, TypeOf_Entity };
 	const void* values[] = { &server, &requestData->request, &response };
@@ -251,8 +251,8 @@ static void OnRequestComplete(Entity server, Entity clientStream, HttpStreamPart
 	auto responseData = GetHttpResponseData(response);
     WriteResponse(server, clientStream, requestData->request, response);
 
-    RemoveHttpServerRequests(server, 0);
-    RemoveHttpServerResponses(server, 0);
+    RemoveHttpServerRequests(clientStream, 0);
+    RemoveHttpServerResponses(clientStream, 0);
 
     requestData->contentLength = -1;
     requestData->contentData.clear();
@@ -276,7 +276,7 @@ static u64 OnHeaderData(Entity server, Entity stream, HttpStream *streamData, co
         streamData->partial->headerData.resize(streamData->partial->headerData.size() - numBytesToRevert);
 
         streamData->partial->contentLength = 0;
-        streamData->partial->request = AddHttpServerRequests(server);
+        streamData->partial->request = AddHttpServerRequests(stream);
 
         // Parse headers
         auto processedHeaderBytes = 0;
@@ -386,14 +386,14 @@ LocalFunction(OnTcpClientConnected, void, Entity server, Entity client) {
 BeginUnit(HttpServer)
     BeginComponent(HttpServer)
         RegisterBase(TcpServer)
-        RegisterArrayProperty(HttpRequest, HttpServerRequests)
-        RegisterArrayProperty(HttpResponse, HttpServerResponses)
         RegisterProperty(u16, HttpServerKeepAliveTimeout)
         RegisterProperty(u16, HttpServerKeepAliveMaxConnections)
     EndComponent()
 
     BeginComponent(HttpStream)
         RegisterBase(TcpStream)
+        RegisterArrayProperty(HttpRequest, HttpServerRequests)
+        RegisterArrayProperty(HttpResponse, HttpServerResponses)
     EndComponent()
 
     RegisterEvent(HttpServerRequest)

@@ -14,7 +14,7 @@ Entity GetNextEntity(Entity previousEntity);
 Unit(Entity)
     Function(IsEntityOccupied, bool, u32 index)
     Function(IsEntityValid, bool, Entity handle)
-
+    Function(GetEntityByIndex, Entity, u32 index)
     static const StringRef __EventEntityCreated = "";
     inline Entity EventOf_EntityCreated() {\
         static Entity entity = 0;

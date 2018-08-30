@@ -9,8 +9,8 @@
 #include "RestRouting.h"
 
 struct RestResourceRouting {
-    char RestResourceRoutingRoot[256];
-    char RestResourceRoutingDefaultFile[64];
+    StringRef RestResourceRoutingRoot;
+    StringRef RestResourceRoutingDefaultFile;
 };
 
 static Entity handleGet(StringRef path, Entity request, Entity response) {

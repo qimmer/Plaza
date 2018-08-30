@@ -5,11 +5,12 @@
 #ifndef PLAZA_NATIVEUTILS_H
 #define PLAZA_NATIVEUTILS_H
 
-#include "Types.h"
 #include <stddef.h>
 #include <memory.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "Types.h"
 #include <Core/Vector.h>
 
 inline void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
@@ -28,9 +29,8 @@ typedef u64 Entity;
 typedef bool(*FunctionCaller)(u64 functionImplementation, Type returnArgumentTypeIndex, void *returnData, u32 numArguments, const Type *argumentTypes, const void **argumentDataPtrs);
 
 #define PropertyKind_Value 1
-#define PropertyKind_String 2
-#define PropertyKind_Child 3
-#define PropertyKind_Array 4
+#define PropertyKind_Child 2
+#define PropertyKind_Array 3
 
 Entity ModuleOf_Core();
 
@@ -442,7 +442,7 @@ StringRef GetUniqueEntityName(Entity entity);
     SetPropertyType(property, TypeOf_ ## PROPERTYTYPE);\
     SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
-    SetPropertyKind(property, TypeOf_ ## PROPERTYTYPE == TypeOf_StringRef ? PropertyKind_String : PropertyKind_Value);\
+    SetPropertyKind(property, PropertyKind_Value);\
     event = EventOf_ ## PROPERTYNAME ## Changed ();\
     __InjectChildPropertyValue(PropertyOf_PropertyChangedEvent(), property, event);\
     SetName(event, #PROPERTYNAME "Changed");\

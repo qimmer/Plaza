@@ -23,7 +23,10 @@ static void Replicate(Entity context) {
 
             if(kind == PropertyKind_Array) {
                 for(auto i = 0; i < GetArrayPropertyCount(property, context); ++i) {
-                    AddComponent(GetArrayPropertyElement(property, context, i), ComponentOf_Replication());
+                    auto element = GetArrayPropertyElement(property, context, i);
+                    AddComponent(element, ComponentOf_Replication());
+
+                    Replicate(element);
                 }
             }
 
@@ -32,22 +35,22 @@ static void Replicate(Entity context) {
                 GetPropertyValue(property, context, &child);
                 if(IsEntityValid(child)) {
                     AddComponent(child, ComponentOf_Replication());
+                    Replicate(child);
                 }
             }
         }
     }
 }
 
-LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOwner) {
-    if(HasComponent(newOwner, ComponentOf_Replication())) {
-        AddComponent(entity, ComponentOf_Replication());
-    }
-}
-
 LocalFunction(OnComponentAdded, void, Entity component, Entity context) {
     if(component == ComponentOf_Ownership() || component == ComponentOf_Identification()) return;
 
-    if(component == ComponentOf_Replication()) {
+    auto owner = GetOwner(context);
+    if(HasComponent(owner, ComponentOf_Replication())) {
+        AddComponent(context, ComponentOf_Replication());
+    }
+
+    if(component == ComponentOf_Replication() && !HasComponent(owner, ComponentOf_Replication())) {
         Replicate(context);
     }
 
@@ -81,5 +84,4 @@ BeginUnit(Replication)
     RegisterSubscription(PropertyChanged, OnPropertyChanged, 0)
     RegisterSubscription(EntityComponentAdded, OnComponentAdded, 0)
     RegisterSubscription(EntityComponentRemoved, OnComponentRemoved, 0)
-    RegisterSubscription(OwnerChanged, OnOwnerChanged, 0)
 EndUnit()

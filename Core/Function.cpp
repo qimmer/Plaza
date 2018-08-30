@@ -2,9 +2,6 @@
 // Created by Kim Johannsen on 01-03-2018.
 //
 
-#include <dyncall/dyncall.h>
-#include <dyncall/dyncall_signature.h>
-#include <dyncall/dyncall_struct.h>
 #include <string.h>
 
 #include <Core/Function.h>

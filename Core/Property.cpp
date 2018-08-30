@@ -4,15 +4,21 @@
 
 #include <Core/Property.h>
 #include <Core/Component.h>
-#include <malloc.h>
-#include <memory.h>
-#include <cstring>
 #include "Function.h"
 #include "Debug.h"
 #include "Entity.h"
 #include "Vector.h"
 #include "Enum.h"
 #include "Identification.h"
+
+#include <malloc.h>
+#include <memory.h>
+#include <cstring>
+
+extern "C" {
+    #include <ex_intern/strings.h>
+    #include <ex_intern/optimize.h>
+}
 
 static Entity nullEntity = 0;
 
@@ -46,6 +52,27 @@ struct ArrayProperty {
     Entity ArrayPropertyComponent;
 };
 
+static struct strings* string_library = 0;
+static struct strings_frequency* string_freq = 0;
+
+API_EXPORT StringRef Intern(StringRef sourceString) {
+    if(!sourceString) sourceString = "";
+
+    auto id = strings_intern(string_library, sourceString);
+    strings_frequency_add(string_freq, id);
+    return strings_lookup_id(string_library, id);
+}
+
+static void FreeStrings() {
+    if(string_library) {
+        strings_free(string_library);
+    }
+
+    if(string_freq) {
+        strings_frequency_free(string_freq);
+    }
+}
+
 API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *newValueData) {
     auto component = GetOwner(property);
 
@@ -59,6 +86,7 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
         return;
     }
 
+    static StringRef nullStr = Intern("");
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     char *emptyPtr = nullData;
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
@@ -77,59 +105,45 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
     AddComponent(context, component);
 
     auto offset = propertyData->PropertyOffset;
+    auto size = GetTypeSize(propertyData->PropertyType);
 
     auto componentIndex = GetComponentIndex(component, context);
     auto componentData = GetComponentBytes(component, componentIndex);
     Assert(property, componentData);
 
     auto valueData = componentData + offset;
+    char oldValueBuf[sizeof(m4x4f)];
+    newValueData = newValueData ? newValueData : nullData;
 
-    void *oldValueBuf = malloc(propertyData->PropertySize);
-    void *oldValueData = 0;
-
-    bool changed = false;
-    if(propertyData->PropertyKind == PropertyKind_String) {
-        memcpy((char*)oldValueBuf, valueData, propertyData->PropertySize);
-        oldValueData = &oldValueBuf;
-
-        if(strcmp(*(const char**)oldValueData, *(const char**)newValueData) != 0) {
-            strcpy(valueData, *(const char**)newValueData);
-            changed = true;
+    StringRef internedString = 0;
+    if(propertyData->PropertyType == TypeOf_StringRef) {
+        if(!memcmp(valueData, "\0\0\0\0\0\0\0\0", sizeof(StringRef))) {
+            *(StringRef*)valueData = nullStr;
         }
-    } else {
-        newValueData = newValueData ? newValueData : nullData;
 
-        memcpy(oldValueBuf, valueData, propertyData->PropertySize);
-        oldValueData = oldValueBuf;
-        if(memcmp(oldValueData, newValueData, propertyData->PropertySize) != 0) {
-            memcpy(valueData, newValueData, propertyData->PropertySize);
-            changed = true;
-        }
+        internedString = Intern(*(StringRef *) newValueData);
+        newValueData = &internedString;
     }
 
-    if(changed) {
+    if(memcmp(valueData, newValueData, size) != 0) {
+        memcpy(oldValueBuf, valueData, size);
+        memcpy(valueData, newValueData, size);
+
         const Type argumentTypes[] = {TypeOf_Entity, propertyData->PropertyType, propertyData->PropertyType};
-        const void * argumentData[] = {&context, oldValueData, newValueData};
+        const void * argumentData[] = {&context, oldValueBuf, newValueData};
 
         const Type genericArgumentTypes[] = {TypeOf_Entity, TypeOf_Entity};
         const void * genericArgumentData[] = {&property, &context};
 
-        // If property data is a char array, change valueData to point to a char pointer (StringRef) instead of the actual char data.
-        if(propertyData->PropertyKind == PropertyKind_String) {
-            argumentData[1] = (char *) &newValueData;
-        }
-
         FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
         FireEventFast(EventOf_PropertyChanged(), 2, genericArgumentTypes, genericArgumentData);
     }
-
-    free(oldValueBuf);
 }
 
 API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut) {
     auto component = GetOwner(property);
 
-    if(!IsEntityValid(component) || !IsEntityValid(property)) {
+    if(!IsEntityValid(component)) {
         Log(context, LogSeverity_Error, "Invalid property when trying to set property");
         return false;
     }
@@ -139,6 +153,7 @@ API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut)
         return false;
     }
 
+    static StringRef nullStr = Intern("");
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
     auto propertyData = (Property*) GetComponentBytes(ComponentOf_Property(), propertyIndex);
@@ -149,30 +164,29 @@ API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut)
     }
 
     auto offset = propertyData->PropertyOffset;
+    auto size = GetTypeSize(propertyData->PropertyType);
 
     auto componentIndex = GetComponentIndex(component, context);
     auto componentData = GetComponentBytes(component, componentIndex);
 
     if(componentIndex == InvalidIndex || !componentData) {
-        if(propertyData->PropertyKind == PropertyKind_String) {
-            *(const char**)dataOut = "";
-        } else if(propertyData->PropertyKind == PropertyKind_Array) {
+        if(propertyData->PropertyKind == PropertyKind_Array) {
             *(VectorStruct**)dataOut = 0;
         } else {
-            memset(dataOut, 0, GetTypeSize(propertyData->PropertyType));
+            memset(dataOut, 0, size);
         }
 
         return false;
     }
 
     auto valueData = componentData + offset;
-
-    if(propertyData->PropertyKind == PropertyKind_String) {
-        *(const char**)dataOut = valueData;
-    } else if(propertyData->PropertyKind == PropertyKind_Array) {
+    if(propertyData->PropertyKind == PropertyKind_Array) {
         *(VectorStruct**)dataOut = (VectorStruct*)valueData;
     } else {
-        memcpy(dataOut, valueData, propertyData->PropertySize);
+        if(propertyData->PropertyType == TypeOf_StringRef && !memcmp(valueData, "\0\0\0\0\0\0\0\0", sizeof(StringRef))) {
+            *(StringRef*)valueData = nullStr;
+        }
+        memcpy(dataOut, valueData, size);
     }
 
     return true;
@@ -204,12 +218,8 @@ API_EXPORT u32 __InjectArrayPropertyElement(Entity property, Entity entity, Enti
 
 		*(Entity*)elementData = element;
 	}
-    
-    AddComponent(element, ComponentOf_Ownership());
 
-    auto ownership = GetOwnershipData(element);
-    ownership->Owner = entity;
-    ownership->OwnerProperty = property;
+    SetOwner(element, entity, property);
 
     AddComponent(element, propertyData->PropertyChildComponent);
 
@@ -375,6 +385,13 @@ void __Property(Entity property, u32 offset, u32 size, Type type, Entity compone
     data->PropertyKind = kind;
 }
 
+void __InitializeString() {
+    string_library = strings_new();
+    string_freq = strings_frequency_new();
+
+    atexit(FreeStrings);
+}
+
 void __InitializeProperty() {
     auto component = ComponentOf_Property();
     AddComponent(component, ComponentOf_Component());
@@ -410,8 +427,15 @@ API_EXPORT void SetOwner(Entity entity, Entity owner, Entity ownerProperty) {
 
     AddComponent(entity, ComponentOf_Ownership());
     auto data = GetOwnershipData(entity);
+
+    auto oldOwner = data->Owner;
     data->Owner = owner;
     data->OwnerProperty = ownerProperty;
+
+    const Type argumentTypes[] = {TypeOf_Entity, TypeOf_Entity, TypeOf_Entity};
+    const void * argumentData[] = {&entity, &oldOwner, &owner};
+
+    FireEventFast(EventOf_OwnerChanged(), 3, argumentTypes, argumentData);
 }
 
 API_EXPORT void SetPropertyMeta(Entity property, StringRef metaString) {

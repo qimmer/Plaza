@@ -4,19 +4,28 @@
 
 #include "Identification.h"
 #include <Core/Event.h>
-#include <climits>
 #include <Core/Entity.h>
-#include <map>
-#include <EASTL/unordered_map.h>
-#include <EASTL/fixed_string.h>
+
 #include "Component.h"
 #include "Debug.h"
 #include "Property.h"
 #include "Vector.h"
 #include "Math.h"
 
+#include <climits>
+#include <map>
+#include <EASTL/unordered_map.h>
+#include <EASTL/fixed_string.h>
+
+#ifdef WIN32
+#undef Enum
+#include <combaseapi.h>
+#else
+#include <uuid/uuid.h>
+#endif
+
 struct Identification {
-    char Name[256];
+    StringRef Name;
 };
 
 API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bool preferNamesToIndices) {
@@ -84,9 +93,10 @@ API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bo
 }
 
 API_EXPORT Entity FindEntityByName(Entity component, StringRef typeName) {
+    typeName = Intern(typeName);
     for(auto i = 0; i < GetComponentMax(component); ++i) {
         auto entity = GetComponentEntity(component, i);
-        if(IsEntityValid(entity) && strcmp(GetName(entity), typeName) == 0) {
+        if(IsEntityValid(entity) && typeName == GetName(entity)) {
             return entity;
         }
     }
@@ -113,13 +123,14 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
     char *element = pathSplits;
     while(element < pathSplits + len) {
         auto elementLength = strlen(element);
+        auto internedElement = Intern(element);
 
         if(currentArrayProperty != 0) { // Path element is a name of one child element of the current array property
             auto childCount = GetArrayPropertyCount(currentArrayProperty, currentEntity);
             auto children = GetArrayPropertyElements(currentArrayProperty, currentEntity);
 
             for(auto i = 0; i < childCount; ++i) {
-                if(strcmp(GetName(children[i]), element) == 0) {
+                if(internedElement == GetName(children[i])) {
                     currentArrayProperty = 0;
                     currentEntity = children[i];
                     break;
@@ -136,7 +147,6 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
             }
 
             if(currentArrayProperty) { // If still set, we did not find a matching child
-                Log(0, LogSeverity_Info, "%s '%s' not found on entity '%s'.", GetName(currentArrayProperty), element, GetName(currentEntity));
                 return 0;
             }
         } else { // Path element is a property of the current entity
@@ -191,11 +201,12 @@ API_EXPORT void SetName(Entity entity, StringRef name) {
     AddComponent(entity, ComponentOf_Identification());
 
     auto data = GetIdentificationData(entity);
-    if(strcmp(data->Name, name) != 0) {
-        char oldName[sizeof(Identification::Name)];
+    data->Name = Intern(data->Name);
+    name = Intern(name);
 
-        strncpy(oldName, data->Name, sizeof(data->Name));
-        strncpy(data->Name, name, sizeof(data->Name));
+    if(data->Name != name) {
+        auto oldName = data->Name;
+        data->Name = name;
 
         const Type argumentTypes[] = {TypeOf_Entity, TypeOf_StringRef, TypeOf_StringRef};
         const void * argumentData[] = {&entity, &oldName, &name};
@@ -240,4 +251,21 @@ API_EXPORT bool GetParentPath(StringRef childPath, u32 bufLen, char *parentPath)
     parentPath[len] = '\0';
 
     return true;
+}
+
+API_EXPORT StringRef CreateGuid() {
+    char buf[128];
+    memset(buf, 0, sizeof(buf));
+
+#ifdef WIN32
+    GUID guid;
+    CoCreateGuid(&guid);
+
+    snprintf(buf, 128, "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX",
+           guid.Data1, guid.Data2, guid.Data3,
+           guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+           guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+#endif
+
+    return Intern(buf);
 }

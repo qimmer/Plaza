@@ -1,23 +1,13 @@
-<div style="width: 100%; height: 100%">
-        <div style="width: 100%; height: 50px;">
-                <div class="bg-toolbox-face">
-                    <div class="toolbox">
-                            <input class="form-control" placeholder="Filter" type="text" ng-model="filterText">
-                    </div>
-                </div>
+<div style="width: 100%; height: 100%;">
+    <div style="width: 100%; height: 50px;">
+        <div class="bg-toolbox-face">
+            <div class="toolbox">
+                <input class="form-control" placeholder="Filter" type="text" ng-model="filterText">
             </div>
-            <div style="width: 100%; height: calc(100% - 50px); overflow: auto;">
-                <div treecontrol class="tree-boot"
-                    tree-model="rootNode"
-                    options="treeOptions"
-                    on-selection="select(node)"
-                    on-right-click="rightClick(node)"
-                    selected-nodes="selectedNodes"
-                    expanded-nodes="expandedNodes"
-                    context-menu="contextMenu">
-                <i style="display: inline-block; font-size: 0.6em; line-height:20px; margin-left: 4px; vertical-align: top; padding: 0px 4px 0px 4px; width: 16px;" ng-class="getAngleIcon(node)"/>
-                <i style="display: inline-block; font-size: 1em; line-height:20px; padding: 0px 2px 0px 4px; vertical-align: top;" class="im" ng-class="getIcon(node)" /> 
-                <span ng-dblclick="open(node)" style="display: inline-block; line-height:20px; vertical-align: top;" ng-class="{'invalidated': node.$invalidated === true, 'saved': node.$invalidated === false}">{{node.Name}}</span>
-                </div>
-            </div>
+        </div>
+    </div>
+
+    <div style="height: calc(100% - 50px); overflow-y: scroll">
+                <entity-tree-node node-path="" connection="connection" selected-nodes="selectedEntities" expanded-nodes="expandedNodes" icon="getIcon"/>
+    </div>
 </div>

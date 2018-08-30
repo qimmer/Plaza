@@ -36,7 +36,7 @@ angular.module('plaza')
                             y: Math.ceil(Math.random() * 1000)
                         };
 
-                        entityService.updateEntity($scope.connection, entityService.calculatePath(node), {
+                        entityService.updateEntity($scope.connection, node.$path, {
                             FlowNodeLocation: node.FlowNodeLocation
                         });
                     }
@@ -96,7 +96,7 @@ angular.module('plaza')
                             dragNode.FlowNodeLocation.x += dx / $scope.zoom;
                             dragNode.FlowNodeLocation.y += dy / $scope.zoom;
 
-                            entityService.updateEntity($scope.connection, entityService.calculatePath(dragNode), {
+                            entityService.updateEntity($scope.connection, dragNode.$path, {
                                 FlowNodeLocation: dragNode.FlowNodeLocation
                             });
                         } else {
@@ -116,7 +116,7 @@ angular.module('plaza')
 
                 $scope.mouseDown = function($event, node) {
                     $scope.connection.selectedNode = node;
-                    $scope.connection.selectedEntity = ($scope.connection.selectedNode['$components']) === undefined ? $scope.connection.selectedNode.$parent : $scope.connection.selectedNode;
+                    $scope.selectedEntities = [($scope.connection.selectedNode['$components']) === undefined ? entityService.findEntity($scope.connection, $scope.connection.selectedNode.$parentPath) : $scope.connection.selectedNode];
                     
                     dragNode = node;
                     dragScope = this;

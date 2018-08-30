@@ -3,6 +3,7 @@
     padding: 4px 4px 4px 4px;
     cursor: pointer;
     user-select: none;
+    text-align: center;
 }
 
 .component-header:hover {
@@ -19,6 +20,7 @@
 .property-container .table .row .label {
     padding: 4px 8px 4px 8px;
     text-align: right;
+    direction: rtl;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;

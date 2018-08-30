@@ -34,10 +34,11 @@ struct StreamExtensionModule {
 };
 
 struct Stream {
-    Entity StreamProtocol, StreamCompressor, StreamFileType;
-
     char StreamPath[PathMax];
     char StreamResolvedPath[PathMax];
+
+    Entity StreamProtocol, StreamCompressor, StreamFileType;
+
     int StreamMode;
 
     bool InvalidationPending;
@@ -45,8 +46,8 @@ struct Stream {
 
 struct FileType {
     Entity FileTypeComponent;
-    char FileTypeExtension[16];
-    char FileTypeMimeType[128 - 16 - sizeof(Entity)];
+    StringRef FileTypeExtension;
+    StringRef FileTypeMimeType;
 };
 
 API_EXPORT bool StreamSeek(Entity entity, s32 offset){
@@ -93,13 +94,13 @@ API_EXPORT u64 StreamRead(Entity entity, u64 size, void *data){
 
 API_EXPORT u64 StreamWrite(Entity entity, u64 size, const void *data){
     auto streamData = GetStreamData(entity);
-    if(!streamData) return false;
+    if(!streamData) return 0;
 
     auto protocolData = GetStreamProtocolData(streamData->StreamProtocol);
-    if(!protocolData) return false;
+    if(!protocolData) return 0;
 
     if(!protocolData->StreamWriteHandler || !(streamData->StreamMode & StreamMode_Write)) {
-        return false;
+        return 0;
     }
 
     streamData->InvalidationPending = true;
@@ -254,7 +255,7 @@ API_EXPORT u64 StreamCompress(Entity entity, u64 uncompressedOffset, u64 uncompr
 API_EXPORT StringRef GetFileName(StringRef absolutePath) {
     auto fileName = strrchr(absolutePath, '/');
     if(!fileName) return absolutePath;
-    return fileName + 1;
+    return Intern(fileName + 1);
 }
 
 API_EXPORT StringRef GetFileExtension(StringRef absolutePath) {
@@ -262,7 +263,7 @@ API_EXPORT StringRef GetFileExtension(StringRef absolutePath) {
     if(lastSlash) absolutePath = lastSlash + 1;
     auto extension = strrchr(absolutePath, '.');
     if(!extension) return "";
-    return extension;
+    return Intern(extension);
 }
 
 API_EXPORT void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t bufMax) {
@@ -279,7 +280,7 @@ API_EXPORT void GetParentFolder(StringRef absolutePath, char *parentFolder, size
 API_EXPORT StringRef GetCurrentWorkingDirectory() {
     static char path[PathMax];
     getcwd(path, PathMax);
-    return path;
+    return Intern(path);
 }
 
 API_EXPORT void CleanupPath(char* messyPath) {
@@ -431,16 +432,17 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     u32 len = colonLocation - resolvedPath;
     strncpy(protocolIdentifier, resolvedPath, len);
     protocolIdentifier[len] = 0;
+    auto protocolIdentifierInterned = Intern(protocolIdentifier);
 
 	auto path = GetStreamResolvedPath(entity);
     auto extension = GetFileExtension(path);
 
-    StringRef mimeType = "application/octet-stream";
+    StringRef mimeType = Intern("application/octet-stream");
     auto oldProtocol = data->StreamProtocol;
 
     // Find protocol
     for_entity(protocolEntity, protocolData, StreamProtocol) {
-        if(strcmp(protocolIdentifier, protocolData->StreamProtocolIdentifier) == 0) {
+        if(protocolIdentifierInterned == protocolData->StreamProtocolIdentifier) {
             SetStreamProtocol(entity, protocolEntity);
             break;
         }
@@ -454,7 +456,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     if(strlen(extension) > 0) {
         // Find Filetype (optional)
         for_entity(fileTypeEntity, fileTypeData, FileType) {
-            if(strcmp(extension, fileTypeData->FileTypeExtension) == 0) {
+            if(extension == fileTypeData->FileTypeExtension) {
                 SetStreamFileType(entity, fileTypeEntity);
                 if(fileTypeData->FileTypeMimeType) {
                     mimeType = fileTypeData->FileTypeMimeType;
@@ -470,7 +472,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
 
     // Find compressor (optional)
     for_entity(compressorEntity, compressorData, StreamCompressor) {
-        if(strcmp(mimeType, compressorData->StreamCompressorMimeType) == 0) {
+        if(mimeType == compressorData->StreamCompressorMimeType) {
             SetStreamCompressor(entity, compressorEntity);
         }
     }
@@ -492,7 +494,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
 
     // Find serializer (optional)
     for_entity(serializerEntity, serializerData, Serializer) {
-        if(strcmp(mimeType, serializerData->SerializerMimeType) == 0) {
+        if(mimeType == serializerData->SerializerMimeType) {
             AddComponent(entity, ComponentOf_PersistancePoint());
             break;
         }
@@ -530,9 +532,12 @@ LocalFunction(OnCompressorChanged, void, Entity compressor) {
 BeginUnit(Stream)
     BeginComponent(Stream)
         RegisterProperty(StringRef, StreamPath)
-        RegisterProperty(Entity, StreamProtocol)
-        RegisterProperty(Entity, StreamCompressor)
-        RegisterProperty(Entity, StreamFileType)
+        RegisterReferenceProperty(StreamProtocol, StreamProtocol)
+        SetPropertyFlags(property, PropertyFlag_ReadOnly | PropertyFlag_Transient);
+        RegisterReferenceProperty(StreamCompressor, StreamCompressor)
+        SetPropertyFlags(property, PropertyFlag_ReadOnly | PropertyFlag_Transient);
+        RegisterReferenceProperty(FileType, StreamFileType)
+        SetPropertyFlags(property, PropertyFlag_ReadOnly | PropertyFlag_Transient);
     EndComponent()
 
     BeginComponent(StreamProtocol)

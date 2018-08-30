@@ -1,0 +1,8 @@
+<div class="tree-node" ng-class="selectedNodes.indexOf(nodePath) == -1 ? '' : 'selected'">
+    <i ng-click="toggle(nodePath)" class="im" style="display: inline-block; font-size: 0.6em; line-height:20px; margin-left: 4px; vertical-align: top; padding: 0px 4px 0px 4px; width: 16px;" ng-class="connection.getChildren(nodePath).length ? ((expandedNodes.indexOf(nodePath) != -1) ? 'im-angle-down' : 'im-angle-right') : ''"/>
+    <i ng-dblclick="open(nodePath)" ng-click="select(nodePath)" style="display: inline-block; font-size: 1em; line-height:20px; padding: 0px 2px 0px 4px; vertical-align: top; width: 20px;" ng-class="icon(connection, nodePath)" /> 
+    <div ng-dblclick="open(nodePath)" ng-click="select(nodePath)" style="display: inline-block; line-height:20px; vertical-align: top; width: calc(100% - 44px)">{{connection.getEntity(nodePath).Name || '...'}}</div>
+</div>
+<div style="margin-left: 10px;" ng-if="expandedNodes.indexOf(nodePath) != -1">
+    <entity-tree-node ng-repeat="childPath in connection.getChildren(nodePath)" connection="connection" node-path="{{childPath}}" expanded-nodes="expandedNodes" selected-nodes="selectedNodes" icon="icon"/>
+</div>
