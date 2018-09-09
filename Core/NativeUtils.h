@@ -28,9 +28,9 @@ typedef u64 Entity;
 
 typedef bool(*FunctionCaller)(u64 functionImplementation, Type returnArgumentTypeIndex, void *returnData, u32 numArguments, const Type *argumentTypes, const void **argumentDataPtrs);
 
-#define PropertyKind_Value 1
-#define PropertyKind_Child 2
-#define PropertyKind_Array 3
+#define PropertyKind_Value 0
+#define PropertyKind_Child 1
+#define PropertyKind_Array 2
 
 Entity ModuleOf_Core();
 
@@ -65,11 +65,12 @@ void SetPropertyType(Entity entity, Type type);
 void SetPropertyValue(Entity entity, Entity context, const void *valueData);
 void SetPropertyOffset(Entity entity, u32 offset);
 void SetPropertySize(Entity entity, u32 size);
-void SetPropertyChangedEvent(Entity entity, Entity event);
 void SetPropertyChildComponent(Entity entity, Entity component);
 void SetPropertyKind(Entity property, u8 kind);
 bool GetPropertyValue(Entity entity, Entity context, void *dataOut);
 Entity GetOwner(Entity entity);
+StringRef GetDebugName(Entity entity);
+void Log(Entity context, int severity, StringRef format, ...);
 void FireEventFast(
         Entity event,
         u32 numArguments,
@@ -157,9 +158,8 @@ StringRef GetUniqueEntityName(Entity entity);
     __PropertyCoreSet(TYPE, PROPERTY, COMPONENT)
 
 
-#define Property(PROPERTYTYPE, PROPERTYNAME, ...) \
+#define Property(PROPERTYTYPE, PROPERTYNAME) \
     Declare(Property, PROPERTYNAME) \
-    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     Event(PROPERTYNAME ## Changed, Entity changedEntity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue)\
     inline PROPERTYTYPE Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
@@ -173,10 +173,8 @@ StringRef GetUniqueEntityName(Entity entity);
         SetPropertyValue(prop, entity, &value);\
     }
 
-
-#define ReferenceProperty(REFERENCECOMPONENT, PROPERTYNAME, ...) \
+#define ReferenceProperty(REFERENCECOMPONENT, PROPERTYNAME) \
     Declare(Property, PROPERTYNAME) \
-    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     Event(PROPERTYNAME ## Changed, Entity changedEntity, Entity oldValue, Entity newValue)\
     inline Entity Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
@@ -189,9 +187,8 @@ StringRef GetUniqueEntityName(Entity entity);
         SetPropertyValue(prop, entity, &value);\
     }
 
-#define ChildProperty(CHILDCOMPONENT, PROPERTYNAME, ...) \
+#define ChildProperty(CHILDCOMPONENT, PROPERTYNAME) \
     Declare(Property, PROPERTYNAME) \
-    static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
     inline Entity Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         Entity value = 0;\
@@ -367,7 +364,7 @@ StringRef GetUniqueEntityName(Entity entity);
 //   |
 //   |-- Subscription 1
 
-#define BeginModule(NAME, ...) \
+#define BeginModule(NAME) \
     void __InitModule_ ## NAME(Entity module);\
     API_EXPORT Entity ModuleOf_ ## NAME () {\
         static Entity module = 0;\
@@ -381,10 +378,6 @@ StringRef GetUniqueEntityName(Entity entity);
                 SetModuleVersion(module, __DATE__ " " __TIME__);\
                 __InjectArrayPropertyElement(PropertyOf_Modules(), GetModuleRoot(), module);\
                 __InitModule_ ## NAME(module);\
-                Entity dataComponents[] = {0, ##__VA_ARGS__, 0};\
-                for(auto i = 1; dataComponents[i]; ++i) {\
-                    AddComponent(module, dataComponents[i]);\
-                }\
             }\
         }\
         return module;\
@@ -398,6 +391,11 @@ StringRef GetUniqueEntityName(Entity entity);
         ModuleOf_ ## MODULE (); // Reference and call module initializer
 
 #define EndModule() \
+        for_entity(entity, data, Ownership) {\
+            if(!IsEntityValid(GetOwner(entity))) {\
+                Log(module, 2, "Entity is not registered: %s", GetDebugName(entity));\
+            }  \
+        }\
 		Type types[] = { TypeOf_Entity };\
 		const void* values[] = { &module };\
         FireEventFast(EventOf_ModuleInitialized(), 1, types, values);\
@@ -415,6 +413,7 @@ StringRef GetUniqueEntityName(Entity entity);
 #define BeginComponent(COMPONENT) \
         component = ComponentOf_ ## COMPONENT ();\
         AddComponent(component, ComponentOf_Component());\
+        SetComponentExplicitSize(component, true);\
         SetComponentSize(component, sizeof(COMPONENT));\
         __InjectArrayPropertyElement(PropertyOf_Components(), module, component);\
         SetName(component, #COMPONENT);\
@@ -452,6 +451,11 @@ StringRef GetUniqueEntityName(Entity entity);
     RegisterProperty(PROPERTYTYPE, PROPERTYNAME) \
     SetPropertyEnum(property, EnumOf_ ## ENUM ());
 
+
+#define RegisterPropertyReadOnly(PROPERTYTYPE, PROPERTYNAME) \
+    RegisterProperty(PROPERTYTYPE, PROPERTYNAME) \
+    SetPropertyReadOnly(property, true);
+
 #define RegisterArrayProperty(COMPONENTTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
     __InjectArrayPropertyElement(PropertyOf_Properties(), component, property);\
@@ -459,7 +463,6 @@ StringRef GetUniqueEntityName(Entity entity);
     SetPropertyType(property, TypeOf_Entity);\
     SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
-    SetPropertyMeta(property, __ ## PROPERTYNAME ## __Meta);\
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
     SetPropertyKind(property, PropertyKind_Array);\
     event = EventOf_ ## PROPERTYNAME ## Changed ();\
@@ -474,7 +477,6 @@ StringRef GetUniqueEntityName(Entity entity);
     SetPropertyType(property, TypeOf_Entity);\
     SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
-    SetPropertyMeta(property, __ ## PROPERTYNAME ## __Meta);\
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
     SetPropertyKind(property, PropertyKind_Child);
 
@@ -486,7 +488,6 @@ StringRef GetUniqueEntityName(Entity entity);
     SetPropertyType(property, TypeOf_Entity);\
     SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
-    SetPropertyMeta(property, __ ## PROPERTYNAME ## __Meta);\
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
     SetPropertyKind(property, PropertyKind_Value);\
     event = EventOf_ ## PROPERTYNAME ## Changed ();\
@@ -494,11 +495,16 @@ StringRef GetUniqueEntityName(Entity entity);
     SetName(event, #PROPERTYNAME "Changed");\
     SetEventArgsByDecl(event, __Event ## PROPERTYNAME ## Changed);
 
+#define RegisterReferencePropertyReadOnly(COMPONENTTYPE, PROPERTYNAME)\
+    RegisterReferenceProperty(COMPONENTTYPE, PROPERTYNAME)\
+    SetPropertyReadOnly(property, true);
+
 
 #define RegisterBase(BASECOMPONENT) \
-    base = GetArrayPropertyElement(PropertyOf_Bases(), component, AddArrayPropertyElement(PropertyOf_Bases(), component));\
-    SetName(base, #BASECOMPONENT);\
-    SetBaseComponent(base, ComponentOf_ ## BASECOMPONENT ());
+    {\
+        auto base = AddBases(component);\
+        SetBaseComponent(base, ComponentOf_ ## BASECOMPONENT ());\
+    }
 
 #define RegisterExtension(BASECOMPONENT, EXTENSIONCOMPONENT) \
     extension = GetArrayPropertyElement(PropertyOf_Extensions(), module, AddArrayPropertyElement(PropertyOf_Extensions(), module));\
@@ -558,7 +564,7 @@ StringRef GetUniqueEntityName(Entity entity);
     auto count = GetNum ## PROPERTY (PARENTENTITY);\
     auto entries = Get ## PROPERTY (PARENTENTITY);\
     auto i = 0;\
-    for(VARNAME = entries[i]; i < count; VARNAME = entries [++i])
+    for(VARNAME = entries ? (entries[i]) : 0; i < count; VARNAME = entries [++i])
 
 #include <Core/Module.h>
 #include <Core/Property.h>

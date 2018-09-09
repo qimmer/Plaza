@@ -1,109 +1,107 @@
-angular.module('plaza').service('entityService', function ($http, $timeout, eventService) {
+angular.module('plaza').service('entityService', function ($http, $timeout, $interval, eventService) {
     var service = {};
 
-    service.getParentPath = function (path) {
-        var lastSlashIndex = path.lastIndexOf("/");
-        if (lastSlashIndex < 0) return undefined;
+    function mergeEntity(connection, entity, parent, parentProperty) {
+        var existing = connection.getEntities()[entity.Uuid];
 
-        return path.substring(0, lastSlashIndex);
-    }
-
-    function mergeEntity(connection, entity) {
         for(var key in entity) {
+            if(key[0] == '$') continue;
+
             var value = entity[key];
             if(Array.isArray(value)) {
                 for(var i = 0; i < value.length; ++i) {
                     if(typeof value[i] === 'object') {
-                        mergeEntity(connection, value[i]);
-                        value[i] = value[i].$path;
+                        value[i].$owner = entity.Uuid;
+                        value[i].$property = key;
+                        value[i].$index = i;
+
+                        mergeEntity(connection, value[i], entity, key);
+                        
+                        value[i] = value[i].Uuid;
                     }
                 }
-            } else if (typeof value === 'object' && value !== null) {
+            } else if (typeof value === 'object' && value !== null && value.$components) {
                 mergeEntity(connection, value);
-                entity[key] = entity.$path;
+                value.$owner = entity.Uuid;
+                value.$property = key;
+                entity[key] = entity.Uuid;
             }
         }
 
-        connection.getEntities()[entity.$path] = entity;
-
-        if(entity.$components.indexOf('Component') != -1) {
-            connection.getComponents()[entity.Name] = entity;
-
-            connection.getEntities(connection.getChildren(entity.$path));
+        if(existing && existing.$components) {
+            for(var i = 0; i < existing.$components.length; ++i) {
+                var list = connection.getComponentList(existing.$components[i]);
+                list.splice(list.indexOf(existing), 1);
+            }
         }
 
-        if(entity.$components.indexOf('Module') != -1) {
-            connection.getModules()[entity.Name] = entity;
+        connection.getEntities()[entity.Uuid] = entity;
 
-            connection.getEntities(connection.getChildren(entity.$path));
+        for(var i = 0; i < entity.$components.length; ++i) {
+            var list = connection.getComponentList(entity.$components[i]);
+            list.push(entity);
         }
 
-        if(entity.$components.indexOf('Property') != -1) {
-            connection.getProperties()[entity.Name] = entity;
-
-            connection.getEntities(connection.getChildren(entity.$path));
-        }
+        entity.$time = moment().valueOf();
     }
 
     service.error = function(err) {
         throw err;
     }
     
-    service.findUniqueName = function(parent, name) {
-        var extensionIndex = 1;
-        var suggestion = name + "_" + extensionIndex;
-        while (true) {
-            var found = false;
-            for (var i = 0; i < parent.$children.length; ++i) {
-                if (parent.$children[i].Name === suggestion) {
-                    found = true;
-                }
-            }
-            if (found) {
-                extensionIndex++;
-                suggestion = name + "_" + extensionIndex;
-            } else {
-                break;
-            }
+    service.findUniqueName = function(connection, parent, propertyName, name) {
+        var extensionIndex = 0;
+
+        var suggestion = name;
+        var childUuids = connection.getEntity(parent)[propertyName] || [];
+        var childNames = childUuids.map(function(uuid) { return connection.getEntity(uuid).Name; });
+        while (childNames.indexOf(suggestion) != -1) {
+            extensionIndex++;
+            suggestion = name + "_" + extensionIndex;
         }
-        return suggestion;
+        return parent + '/' + propertyName + '/' + suggestion;
     }
 
     service.createConnection = function (endpoint) {
-        var root = {};
-        var entities = {
-            "": root
-        };
-        var modules = {};
-        var components = {};
-        var properties = {};
+        var entities = {};
+        var componentLists = {};
 
         var connection = {
-            getRoot: function() { return root; },
-            getEntities: function(paths) {
-                if(paths === undefined) {
+            getRoot: function() { return "00000000-0000-0000-0000-000000000000"; },
+            getEntities: function(uuids) {
+                if(!connection.isConnected) return {};
+
+                if(uuids === undefined) {
                     return entities; 
                 }
                 
-                return paths.map(function(path) { return connection.getEntity(path); } );
+                return uuids.map(function(uuid) { return connection.getEntity(uuid); } );
             },
-            getModules: function() { return modules; },
-            getComponents: function() { return components; },
-            getProperties: function() { return properties; },
-            getEntity: function(path) { 
-                var entity = entities[path];
+            getComponentList: function(componentName) {
+                if(!connection.isConnected) return [];
+
+                var list = componentLists[componentName];
+                if(list === undefined) {
+                    componentLists[componentName] = [];
+                    list = componentLists[componentName];
+                }
+                return list; 
+            },
+            getEntity: function(uuid) { 
+                if(!connection.isConnected) return null;
+
+                var entity = entities[uuid];
                 if(!entity) {
                     entity = { $loading: true };
-                    entities[path] = entity;
-                    service.getEntity(connection, path);
+                    entities[uuid] = entity;
+                    service.getEntity(connection, uuid);
                     return entity;
                 }
                 return entity;
             },
-            getChildren: function(path) { 
-                var entity = connection.getEntity(path);
+            getChildren: function(uuid) { 
+                var entity = connection.getEntity(uuid);
                 if(!entity) {
-                    console.log("Entity not found: " + path);
                     return [];
                 }
                 var children = [];
@@ -115,64 +113,62 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
                 
                 return children; 
             },
+            reset: function() {
+                entities = {};
+                componentLists = {};
+            },
 
             endpoint: endpoint,
             sessionId: null,
             isConnected: false
         };
 
-        service.getSession(connection).then(function(id) {
-            connection.sessionId = id;
-
-            service.getEntity(connection, "").then(function (root) {    
-                service.update(connection);
-    
-                var infiniteUpdate = function () {
-                    if (connection.updateTask) {
-                        $timeout(function() {
-                            connection.updateTask = service.update(connection).then(infiniteUpdate, infiniteUpdate);
-                        }, 250);
-                    }
-                }
-    
-                connection.updateTask = true;
-    
-                infiniteUpdate();
-            }, service.error);
-        });
-
         return connection;
     };
+
+    service.update = function(connection) {
+        var promise = null;
+        if (connection.isConnected) {
+            promise = service.getChanges(connection).then(function() {
+                return new Promise(resolve => $timeout(resolve, 250));
+            }, function(err) {throw err;});
+        } else {
+            promise = service.getSession(connection).then(function(id) {
+                connection.isConnected = true;
+                connection.sessionId = id;
+
+                return service.getEntity(connection, connection.getRoot()).then(function (root) {    
+                }, function(err) { throw err; });
+            }, function(err) { throw err; });
+        }
+
+        return promise.catch(function(err) {
+            connection.isConnected = false;
+            connection.sessionId = null;
+            connection.reset();
+
+            return new Promise(resolve => $timeout(resolve, 1000));
+        });
+    }
 
     service.close = function (connection) {
         if (connection) {
             connection.isConnected = false;
-            connection.updateTask = null;
             connection.sessionId = null;
         }
     }
 
-    service.invalidate = function (connection, path) {
-        var entity = connection.getEntity(path);
+    service.save = function (connection, uuid) {
+        var entity = connection.getEntity(uuid);
 
-        entity.$invalidated = true;
-
-        if (entity.$parentPath && (!entity.$components || !entity.$components.includes("PersistancePoint"))) {
-            service.invalidate(connection, connection.getEntity(entity.$parentPath));
+        while(entity && entity.$owner && !entity.$components.includes("PersistancePoint")) {
+            entity = connection.getEntity(entity.$owner);
         }
-    }
 
-    service.save = function (connection, path) {
-        var entity = connection.getEntity(path);
-
-        if(entity.$components && entity.$components.includes("PersistancePoint")) {
-            service.updateEntity(connection, path, { 'PersistancePointSaving': true }).then(function (response) {
-                entity.$invalidated = false;
+        if(entity && entity.$components && entity.$components.includes("PersistancePoint")) {
+            return $http.put(connection.endpoint + '/entity/' + entity.Uuid, { 'PersistancePointSaving': true }).then(function (response) {
+                connection.isConnected = true;
             }, service.error);
-        }
-
-        if (entity.$children) {
-            entity.$children.forEach(service.save);
         }
     }
 
@@ -197,22 +193,16 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
         }, service.error);
     }
 
-    service.update = function (connection) {
-        if (connection) {
-            return service.getChanges(connection);
-        }
-    }
-
-    service.getEntity = function (connection, path) {
-        if(path === undefined) {
-            console.log("Path cannot be undefined");
+    service.getEntity = function (connection, uuid) {
+        if(uuid === undefined) {
+            console.log("Uuid cannot be undefined");
             return;
         }
 
-        var entity = connection.getEntity(path);
+        var entity = connection.getEntity(uuid);
         entity.$loading = true;
 
-        return $http.get(connection.endpoint + '/entity' + path).then(function (response) {
+        return $http.get(connection.endpoint + '/entity/' + uuid).then(function (response) {
             connection.isConnected = true;
 
             mergeEntity(connection, response.data);
@@ -221,33 +211,49 @@ angular.module('plaza').service('entityService', function ($http, $timeout, even
         }, service.error);
     }
 
-    service.addComponent = function (connection, path, componentName) {
-        return $http.get(connection.endpoint + '/addcomponent/' + componentName + path).then(function (response) {
+    service.addComponent = function (connection, uuid, componentName) {
+        return $http.get(connection.endpoint + '/addcomponent/' + componentName + '/' +  uuid).then(function (response) {
             connection.isConnected = true;
+
+            service.save(connection, uuid);
         }, service.error);
     }
 
-    service.removeComponent = function (connection, path, componentName) {
-        return $http.get(connection.endpoint + '/removecomponent/' + componentName + path).then(function (response) {
+    service.removeComponent = function (connection, uuid, componentName) {
+        return $http.get(connection.endpoint + '/removecomponent/' + componentName + '/' + uuid).then(function (response) {
             connection.isConnected = true;
+
+            service.save(connection, uuid);
         }, service.error);
     }
 
-    service.updateEntity = function (connection, path, newEntity) {
-        return $http.put(connection.endpoint + '/entity' + path, newEntity).then(function (response) {
+    service.updateEntity = function (connection, uuid, newEntity) {
+        var entity = connection.getEntity(uuid);
+        var oldName = entity.Name;
+        var newName = newEntity.Name || oldName;
+
+        return $http.put(connection.endpoint + '/entity/' + uuid, newEntity).then(function (response) {
             connection.isConnected = true;
+
+            service.save(connection, uuid);
         }, service.error);
     }
 
-    service.createEntity = function (connection, path) {
-        return $http.post(connection.endpoint + '/entity' + path).then(function (response) {
+    service.createChild = function (connection, uuid, property) {
+        return $http.post(connection.endpoint + '/entity/' + uuid + '/' + property).then(function (response) {
             connection.isConnected = true;
+
+            service.save(connection, uuid);
         }, service.error);
     }
 
-    service.deleteEntity = function (connection, path) {
-        return $http.delete(connection.endpoint + '/entity' + path).then(function (response) {
+    service.deleteEntity = function (connection, uuid) {
+        var parent = connection.getEntity(uuid).$owner;
+
+        return $http.delete(connection.endpoint + '/entity/' + uuid).then(function (response) {
             connection.isConnected = true;
+
+            service.save(connection, parent);
         }, service.error);
     }
 

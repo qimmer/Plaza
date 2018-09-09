@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html ng-app="plaza" style="overflow: visible;">
+<html ng-app="plaza" style="width: 100%; height: 100%; overflow: hidden;">
 
 <head>
     <title>Plaza Debugger</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" type="text/css" href="node_modules/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" type="text/css" href="node_modules/@shagstrom/split-pane/split-pane.css"/>
@@ -16,7 +18,7 @@
     <link rel="stylesheet" type="text/css" href="App/Directives/FlowGraph.css"/>
 </head>
 
-<body>      
+<body style="width: 100%; height: 100%; overflow: hidden;" >      
         <div style="width: 100%; height: 100%;" ng-include="'App/Controllers/MainView.html'"/>
     
         <script src="node_modules/jquery/dist/jquery.js"></script>
@@ -27,6 +29,7 @@
         <script src="node_modules/@shagstrom/split-pane/split-pane.js"></script>
         <script src="node_modules/@shagstrom/angular-split-pane/angular-split-pane.js"></script>
         <script src="node_modules/angularjs-tooltips/dist/angular-tooltips.js"></script>
+        <script src="node_modules/moment/min/moment-with-locales.min.js"></script>
 
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-animate.js"></script>
         
@@ -37,6 +40,8 @@
         <script src="App/Controllers/MainView.js"></script>
         <script src="App/Directives/EntityTreeNode.js"></script>
         <script src="App/Directives/EntityTree.js"></script>
+        <script src="App/Directives/EntityPicker.js"></script>
+        <script src="App/Directives/LogViewer.js"></script>
         <script src="App/Directives/PropertyEditor.js"></script>
         <script src="App/Directives/TopBar.js"></script>
         <script src="App/Directives/FlowGraph.js"></script>

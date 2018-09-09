@@ -139,6 +139,8 @@ static ffi_type* ffi_types[] = {
 
         &type_v4f, //TypeOf_rgba32,
         &type_v3f, //TypeOf_rgb32,
+
+        &ffi_type_uint64, //TypeOf_Date,
 };
 
 #define ALIGNMENT_SSE 16
@@ -385,7 +387,7 @@ BeginUnit(Function)
     EndComponent()
 
     BeginComponent(NativeFunction)
-        RegisterBase(Function)
+        // RegisterBase(Function)
     EndComponent()
 
     RegisterSubscription(EntityComponentRemoved, OnNativeFunctionRemoved, ComponentOf_NativeFunction())

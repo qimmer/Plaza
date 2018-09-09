@@ -15,20 +15,20 @@ struct RestEntityRouting {
     u8 RestEntityRoutingDepth;
 };
 
-static Entity handleGet(StringRef entityPath, Entity request, Entity response, u8 depth) {
+static Entity handleGet(StringRef uuid, Entity request, Entity response, u8 depth) {
     auto responseStream = GetHttpResponseContentStream(response);
 
-    auto requestedEntity = FindEntityByPath(entityPath);
+    auto requestedEntity = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(requestedEntity)) {
-		Log(request, LogSeverity_Error, "GET: Entity not found: %s", entityPath);
+		Log(request, LogSeverity_Error, "GET: Entity not found: %s", uuid);
 		return FindResponseCode(404);
 	}
 
     SetStreamPath(responseStream, "memory://response.json");
 
     if(!SerializeJson(responseStream, requestedEntity, depth, 0)) {
-		Log(request, LogSeverity_Error, "GET: Error serializing %s", entityPath);
+		Log(request, LogSeverity_Error, "GET: Error serializing %s", uuid);
 
         return FindResponseCode(500);
     }
@@ -36,45 +36,31 @@ static Entity handleGet(StringRef entityPath, Entity request, Entity response, u
     return FindResponseCode(200);
 }
 
-static Entity handlePut(StringRef entityPath, Entity request, Entity response) {
+static Entity handlePut(StringRef uuid, Entity request, Entity response) {
     auto requestStream = GetHttpRequestContentStream(request);
 
-    auto requestedEntity = FindEntityByPath(entityPath);
+    auto requestedEntity = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(requestedEntity)) {
-		Log(request, LogSeverity_Error, "PUT: Entity not found: %s", entityPath);
+		Log(request, LogSeverity_Error, "PUT: Entity not found: %s", uuid);
 		return FindResponseCode(404);
 	}
 
     if(!DeserializeJson(requestStream, requestedEntity)) {
-		Log(request, LogSeverity_Error, "PUT: Error serializing %s", entityPath);
+		Log(request, LogSeverity_Error, "PUT: Error serializing %s", uuid);
         return FindResponseCode(500);
     }
 
     return FindResponseCode(200);
 }
 
-static Entity handlePost(StringRef entityPath, Entity request, Entity response) {
-    auto existing = FindEntityByPath(entityPath);
+static Entity handlePost(StringRef uuid, StringRef propertyName, Entity request, Entity response) {
+    auto parent = FindEntityByUuid(uuid);
 
-    if(IsEntityValid(existing)) {
-		Log(request, LogSeverity_Error, "POST: Entity already exists: %s", entityPath);
-        return FindResponseCode(409); // Conflict
+    if(!IsEntityValid(parent)) {
+		Log(request, LogSeverity_Error, "POST: Entity not found: %s", uuid);
+        return FindResponseCode(404);
     }
-
-    char parentPath[PathMax];
-    char propertyName[PathMax];
-    char childName[PathMax];
-
-    if(!GetParentPath(entityPath, PathMax, propertyName)) return FindResponseCode(404);
-    if(!GetParentPath(propertyName, PathMax, parentPath)) return FindResponseCode(404);
-    strcpy(childName, entityPath + strlen(propertyName) + 1);
-
-    // Remove parent path from property path so the property name remains
-    memmove(propertyName, propertyName + strlen(parentPath) + 1, strlen(entityPath) - strlen(parentPath) + 1);
-
-    auto parent = FindEntityByPath(parentPath);
-    if(!IsEntityValid(parent)) return FindResponseCode(404);
 
     auto property = FindEntityByName(ComponentOf_Property(), propertyName);
     if(!IsEntityValid(property)) return FindResponseCode(404);
@@ -85,7 +71,6 @@ static Entity handlePost(StringRef entityPath, Entity request, Entity response) 
 
     u32 newIndex = AddArrayPropertyElement(property, parent);
     auto newEntity = GetArrayPropertyElement(property, parent, newIndex);
-    SetName(newEntity, childName);
 
     auto requestStream = GetHttpRequestContentStream(request);
     auto responseStream = GetHttpResponseContentStream(response);
@@ -106,32 +91,19 @@ static Entity handlePost(StringRef entityPath, Entity request, Entity response) 
     return FindResponseCode(201);
 }
 
-static Entity handleDelete(StringRef entityPath, Entity request, Entity response) {
-    auto existing = FindEntityByPath(entityPath);
+static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
+    auto existing = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(existing)) {
-		Log(request, LogSeverity_Error, "DELETE: Entity not found: %s", entityPath);
+		Log(request, LogSeverity_Error, "DELETE: Entity not found: %s", uuid);
 		return FindResponseCode(404);
 	}
 
-    char parentPath[PathMax];
-    char propertyName[PathMax];
-    char childName[PathMax];
+	auto parent = GetOwner(existing);
+	auto property = GetOwnerProperty(existing);
 
-    if(!GetParentPath(entityPath, PathMax, propertyName)) return FindResponseCode(404);
-    if(!GetParentPath(propertyName, PathMax, parentPath)) return FindResponseCode(404);
-
-    // Remove parent path from property path so the property name remains
-    memmove(propertyName, propertyName + strlen(parentPath) + 1, strlen(entityPath) - strlen(parentPath) + 1);
-
-    auto parent = FindEntityByPath(parentPath);
-    if(!IsEntityValid(parent)) return FindResponseCode(500);
-
-    auto property = FindEntityByName(ComponentOf_Property(), propertyName);
-    if(!IsEntityValid(property)) return FindResponseCode(500);
-
-    if(GetPropertyKind(property) != PropertyKind_Array) {
-		Log(request, LogSeverity_Error, "DELETE: Entity is not a removable array element: %s", entityPath);
+    if(!IsEntityValid(parent) || !IsEntityValid(property) || GetPropertyKind(property) != PropertyKind_Array) {
+		Log(request, LogSeverity_Error, "DELETE: Entity is not a removable array element: %s", uuid);
         return FindResponseCode(403);
     }
 
@@ -156,23 +128,28 @@ LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity
     if(data && IsEntityValid(data->RestEntityRoutingRoot)) {
         char completeRoute[1024];
         auto requestUrl = GetHttpRequestUrl(request);
-        auto relativeUrl = requestUrl + strlen(GetRestRoutingRoute(routing));
+        char relativeUrl[1024];
+        strcpy(relativeUrl, requestUrl + strlen(GetRestRoutingRoute(routing)) + 1);
 
-        char entityPath[PathMax];
-        CalculateEntityPath(entityPath, PathMax, data->RestEntityRoutingRoot, false);
+        auto uuid = relativeUrl;
+        auto propertyName = "";
 
-        snprintf(completeRoute, 1024, "%s%s", entityPath, relativeUrl);
+        auto slashLoc = strchr(relativeUrl, '/');
+        if(slashLoc) {
+            *slashLoc = '\0';
+            propertyName = slashLoc + 1;
+        }
 
         auto method = GetHttpRequestMethod(request);
         auto responseCode = FindResponseCode(500);
 		if (strcmp(method, "GET") == 0) {
-			responseCode = handleGet(completeRoute, request, response, GetRestEntityRoutingDepth(routing));
+			responseCode = handleGet(uuid, request, response, GetRestEntityRoutingDepth(routing));
 		} else if (strcmp(method, "PUT") == 0) {
-			responseCode = handlePut(completeRoute, request, response);
+			responseCode = handlePut(uuid, request, response);
 		} else if (strcmp(method, "POST") == 0) {
-			responseCode = handlePost(completeRoute, request, response);
+			responseCode = handlePost(uuid, propertyName, request, response);
 		} else if (strcmp(method, "DELETE") == 0) {
-			responseCode = handleDelete(completeRoute, request, response);
+			responseCode = handleDelete(uuid, request, response);
 		} else {
 			responseCode = FindResponseCode(405);
 		}

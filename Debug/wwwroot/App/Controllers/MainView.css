@@ -186,3 +186,10 @@ body {
 .fade-in.ng-hide {
     animation: fade-out 0.2s ease-out;
 }
+
+.table-no-padding th,
+ .table-no-padding td,
+ .table-no-padding thead th,
+ .table-no-padding tbody + tbody {
+    padding: 0px;
+ }

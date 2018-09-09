@@ -532,12 +532,9 @@ LocalFunction(OnCompressorChanged, void, Entity compressor) {
 BeginUnit(Stream)
     BeginComponent(Stream)
         RegisterProperty(StringRef, StreamPath)
-        RegisterReferenceProperty(StreamProtocol, StreamProtocol)
-        SetPropertyFlags(property, PropertyFlag_ReadOnly | PropertyFlag_Transient);
-        RegisterReferenceProperty(StreamCompressor, StreamCompressor)
-        SetPropertyFlags(property, PropertyFlag_ReadOnly | PropertyFlag_Transient);
-        RegisterReferenceProperty(FileType, StreamFileType)
-        SetPropertyFlags(property, PropertyFlag_ReadOnly | PropertyFlag_Transient);
+        RegisterReferencePropertyReadOnly(StreamProtocol, StreamProtocol)
+        RegisterReferencePropertyReadOnly(StreamCompressor, StreamCompressor)
+        RegisterReferencePropertyReadOnly(FileType, StreamFileType)
     EndComponent()
 
     BeginComponent(StreamProtocol)

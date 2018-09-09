@@ -53,6 +53,11 @@ angular.module('plaza')
                     { value: "Variant", name: "Variant" }
                 ];
 
+                $scope.hiddenProperties = [
+                    "Uuid"
+                ];
+
+                $scope.pickerOpen = {};
                 $scope.selectedEntityHistory = [];
                 $scope.selectedEntityHistoryCurrentIndex = -1;
 
@@ -65,11 +70,26 @@ angular.module('plaza')
 
                 }
 
-                $scope.addChild = function(propertyName) {
+                $scope.getEnumFlags = function(connection, property) {
+                    var e = connection.getEntity(property.PropertyEnum);
+                    var flags = connection.getEntities(e.EnumFlags);
+                    return flags;
+                }
 
-                    entityService.createEntity($scope.connection, $scope.draft.$path + '/' + propertyName + '/' + $scope.selectedEntities[0][propertyName].length).then(function() {
-                        $scope.updateDraft();
-                    });
+                $scope.addChild = function(propertyName) {
+                    entityService.createChild($scope.connection, $scope.selectedEntities[0], propertyName);
+                }
+
+                $scope.addComponent = function(componentName) {
+                    entityService.addComponent($scope.connection, $scope.selectedEntities[0], componentName);
+                }
+
+                $scope.removeComponent = function(componentName) {
+                    entityService.removeComponent($scope.connection, $scope.selectedEntities[0], componentName);
+                }
+
+                $scope.destroyEntity = function(uuid) {
+                    entityService.deleteEntity($scope.connection, uuid);
                 }
 
                 $scope.lockDraft = function() {
@@ -78,7 +98,8 @@ angular.module('plaza')
                 
                 $scope.updateDraft = function() {
                     if($scope.connection && !$scope.isDraftLocked && $scope.selectedEntities.length > 0) {
-                        $scope.draft = angular.copy($scope.connection.getEntity($scope.selectedEntities[0]));
+                        var original = $scope.connection.getEntity($scope.selectedEntities[0]);
+                        $scope.draft = angular.copy(original);
                     }
                 }
     
@@ -86,7 +107,7 @@ angular.module('plaza')
                     return hiddenComponents.indexOf(name) == -1;
                 }
                 $scope.applyDraft = function() {
-                    var entities = $scope.selectedEntities.map(function(path) { return $scope.connection.getEntity(path); });
+                    var entities = $scope.selectedEntities.map(function(uuid) { return $scope.connection.getEntity(uuid); });
                     
                     var draft = angular.copy($scope.draft);
                     for(var key in draft) {
@@ -96,7 +117,7 @@ angular.module('plaza')
                     $scope.isDraftLocked = false;
 
                     for(var i = 0; i < entities.length; ++i) {
-                        entityService.updateEntity($scope.connection, entities[i].$path, $scope.draft);
+                        entityService.updateEntity($scope.connection, entities[i].Uuid, $scope.draft);
                     }
                 }
 
@@ -109,10 +130,12 @@ angular.module('plaza')
                 }
 
                 $scope.getProperties = function(componentName) {
-                    var component = $scope.connection.getComponents()[componentName];
-                    if(!component || !component.Properties) return [];
-                    
-                    return $scope.connection.getEntities(component.Properties);
+                    var properties = $scope.connection.getComponentList('Property');
+                    properties = properties.filter(function(p) { 
+                        var component = $scope.connection.getEntity(p.$owner);
+                        return component.Name == componentName; 
+                    });
+                    return properties;
                 }
 
                 $scope.componentComparator = function (c1, c2) {
@@ -131,16 +154,19 @@ angular.module('plaza')
                     $scope.selectedEntities[0] = entity.$owner;
                 }
 
-                $scope.$watch('selectedEntities[0]', function() {
-                    if($scope.selectedEntityHistory[$scope.selectedEntityHistory.length - 1] != $scope.selectedEntities[0]) {
-                        $scope.selectedEntityHistory.push($scope.selectedEntities[0]);
+                $scope.$watchCollection(function() { return $scope.selectedEntities; }, function() {
+                    if($scope.selectedEntities.length > 0) {
+                        if($scope.selectedEntityHistory[$scope.selectedEntityHistory.length - 1] != $scope.selectedEntities[0]) {
+                            $scope.selectedEntityHistory.push($scope.selectedEntities[0]);
+                        }
                     }
-                        
+
                     $scope.updateDraft();
                 });
     
                 $scope.$watch(function() {
-                    return $scope.connection.getEntity($scope.draft.$path);
+                        if(!$scope.draft) return "";
+                    return $scope.connection.getEntity($scope.draft.Uuid);
                 }, $scope.updateDraft);
             },
             scope: {

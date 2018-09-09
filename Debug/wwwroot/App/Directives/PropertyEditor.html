@@ -5,111 +5,161 @@
     <button style="width: calc(50% - 2px)" ng-disabled="selectedEntityHistory.length <= 1" class="btn btn-secondary" ng-click="navigateBack()"><span class="im im-angle-left"></span> Back</button>
     <button style="width: calc(50% - 2px)" ng-disabled="!selectedEntities[0] || !selectedEntities[0].length" class="btn btn-secondary" ng-click="navigateUp()"><span class="im im-angle-up"></span> Up</button>
 </div>
-<div style="width: 100%; height: calc(100% - 80px); overflow-y: scroll;">        
+<div style="width: 100%; height: calc(100% - 79px); margin-top: 1px; overflow-y: scroll;">        
     <div ng-show="draft">
-        <div ng-repeat="componentName in draft.$components.filter(isComponentVisible).sort(componentComparator)" style="border-bottom: 1px solid #222;">
-            <div class="component-header" ng-click="collapsedComponents[componentName] = !collapsedComponents[componentName]">
-                {{componentName.prettify()}}
-            </div>
-            <div class="property-container fade-in" ng-hide="collapsedComponents[componentName]" >
-                <div class="table">
-                    <div class="row" ng-repeat="property in getProperties(componentName)">
-                        <div class="cell label">
-                            {{property.Name.replace(componentName,'').prettify()}}
-                        </div>
-                        <div class="cell value" ng-if="property.PropertyKind == 1">
-                            <input
-                                class="form-control" 
-                                ng-change="lockDraft()" 
-                                ng-blur="applyDraft();" 
-                                ng-focus="lockDraft()"
-                                ng-if="property.PropertyType == 'StringRef'"
-                                ng-model="draft[property.Name]"
-                                ng-keypress="keyPress($event.keyCode)"
-                            />
+        <div>
+            <div class="property-container fade-in">
+                <table class="table-borderless table-no-padding" style="max-width: 100%; table-layout: fixed;">
+                    <tbody>
+                        <tr>
+                            <td width="1px"/>
+                            <td width="99%"/>
+                        </tr>
+                        <tr ng-repeat-start="componentName in draft.$components.filter(isComponentVisible).sort(componentComparator)" style="border-bottom: 1px solid #222;">
+                            <td lass="cell" colspan="2">
+                                    <div class="component-header" style="width: calc(100% - 43px); display: inline-block"ng-click="collapsedComponents[componentName] = !collapsedComponents[componentName]">
+                                        {{componentName.prettify()}}
+                                    </div>
+                                    <button class="btn btn-danger" style="float: right; width: 40px" ng-click="removeComponent(componentName)"><span class="im im-trash-can"></span></button>
+                            </td>                                
+                        </tr>
+                        <tr ng-repeat-end ng-repeat="property in getProperties(componentName)" ng-hide="collapsedComponents[componentName]" ng-if="hiddenProperties.indexOf(property.Name) == -1">
+                            <td class="label">
+                                {{property.Name.replace(componentName,'').prettify()}}
+                            </td>
+                            <td class="value" ng-if="property.PropertyKind == 0" style="overflow: hidden; max-width: 1px">
+                                <input
+                                    class="form-control" 
+                                    ng-readonly="property.PropertyReadOnly"
+                                    ng-change="lockDraft()" 
+                                    ng-blur="applyDraft();" 
+                                    ng-focus="lockDraft()"
+                                    ng-if="property.PropertyType == 'StringRef'"
+                                    ng-model="draft[property.Name]"
+                                    ng-keypress="keyPress($event.keyCode)"
+                                />
+    
+                                <input
+                                    class="form-control" 
+                                    ng-readonly="property.PropertyReadOnly"
+                                    ng-change="lockDraft()" 
+                                    ng-blur="applyDraft();" 
+                                    ng-focus="lockDraft()"
+                                    type="number" 
+                                    ng-if="(property.PropertyType[0] == 'u' || property.PropertyType[0] == 's') && property.PropertyEnum === null" 
+                                    ng-model="draft[property.Name]" 
+                                    ng-keypress="keyPress($event.keyCode)"
+                                />
+    
+                                <select 
+                                    class="form-control"
+                                    style="width: 100%;" 
+                                    ng-if="property.PropertyEnum !== null" 
+                                    ng-disabled="property.PropertyReadOnly"
+                                    ng-model="draft[property.Name]"
+                                    ng-options="flag.EnumFlagValue as flag.Name for flag in getEnumFlags(connection, property)"
+                                    ng-change="applyDraft();"
+                                />
 
-                            <input
-                                class="form-control" 
-                                ng-change="lockDraft()" 
-                                ng-blur="applyDraft();" 
-                                ng-focus="lockDraft()"
-                                type="number" 
-                                ng-if="(property.PropertyType[0] == 'u' || property.PropertyType[0] == 's') && property.PropertyEnum === null" 
-                                ng-model="draft[property.Name]" 
-                                ng-keypress="keyPress($event.keyCode)"
-                            />
-
-                            <input
-                                class="form-control"
-                                ng-change="lockDraft()" 
-                                ng-blur="applyDraft();" 
-                                ng-focus="lockDraft()"
-                                type="number" 
-                                ng-if="property.PropertyType == 'float' || property.PropertyType == 'double'" 
-                                ng-model="draft[property.Name]" 
-                                ng-keypress="keyPress($event.keyCode)"
-                            />
-
-                            <button 
-                                style="width: 100%;" 
-                                class="btn" 
-                                ng-class="draft[property.Name] ? 'btn-success' : 'btn-disabled'" 
-                                ng-if="property.PropertyType == 'bool'" 
-                                ng-click="draft[property.Name] = !draft[property.Name]; applyDraft()">
-                                {{draft[property.Name] ? 'true' : 'false'}}
-                            </button>
-
-                            <button 
-                                style="width: calc(100% - 35px); direction: rtl; text-align: left;" 
-                                class="btn" 
-                                ng-class="draft[property.Name] ? 'btn-primary' : 'btn-disabled'" 
-                                ng-if="property.PropertyType == 'Entity'" 
-                                ng-click="selectedEntities[0] = draft[property.Name]"
-                                ng-disabled="(draft[property.Name] === null)">
-                                {{draft[property.Name] ? draft[property.Name].split('/').slice(-1)[0] : 'null'}}
-                            </button>
-                            <button 
-                                style="width: 32px;" 
-                                class="btn btn-default" 
-                                ng-if="property.PropertyType == 'Entity'" 
-                                ng-click="pickEntity()">
-                                ...
-                            </button>
-
-                            <select 
-                                class="form-control"
-                                style="width: 100%;" 
-                                ng-if="property.PropertyType == 'Type'" 
-                                ng-model="draft[property.Name]"
-                                ng-options="type.value as type.name for type in types"
-                            />
-                        </div>
-                        <div class="cell value" ng-if="property.PropertyKind == 2">
-                            <button 
-                                style="width: 100%; direction: rtl; text-align: left;" 
-                                class="btn btn-primary"
-                                ng-click="selectedEntities[0] = draft[property.Name]">
-                                {{draft[property.Name] ? draft[property.Name].split('/').slice(-1)[0] : 'null'}}
-                            </button>
-                        </div>
-                        <div class="cell value" ng-if="property.PropertyKind == 3">
-                            <button class="btn btn-secondary" style="width: calc(100% - 43px);" ng-disabled="draft[property.Name].length == 0" ng-click="expandedArrays[property.Name] = !expandedArrays[property.Name]">{{draft[property.Name].length.toString() + ' items '}}<span class="im" ng-if="draft[property.Name].length > 0" ng-class="expandedArrays[property.Name] ? 'im-angle-down' : 'im-angle-right'"></span></button>
-                            <button class="btn btn-success" style="width: 40px;" ng-click="expandedArrays[property.Name] = true; addChild(property.Name)"><span class="im im-plus"></span></button>
-                            <div ng-show="expandedArrays[property.Name]" style="width: 100%; display: block;" class="fade-in">
-                                <div ng-repeat="childPath in draft[property.Name]">
-                                        <button
-                                        style="width: calc(100% - 43px); margin-top: 1px;" 
-                                        class="btn btn-primary btn-sm" 
-                                        ng-click="selectedEntities[0] = childPath">
-                                        {{childPath.split('/').slice(-1)[0]}}
-                                    </button>
-                                    <button class="btn btn-danger btn-sm" style="width: 40px;" ng-click="destroyEntity(childPath)"><span class="im im-trash-can"></span></button>
+                                <input
+                                    class="form-control"
+                                    ng-readonly="property.PropertyReadOnly"
+                                    ng-change="lockDraft()" 
+                                    ng-blur="applyDraft();" 
+                                    ng-focus="lockDraft()"
+                                    type="number" 
+                                    ng-if="property.PropertyType == 'float' || property.PropertyType == 'double'" 
+                                    ng-model="draft[property.Name]" 
+                                    ng-keypress="keyPress($event.keyCode)"
+                                />
+    
+                                <button 
+                                    style="width: 100%;" 
+                                    class="btn" 
+                                    ng-disable="property.PropertyReadOnly"
+                                    ng-class="draft[property.Name] ? 'btn-success' : 'btn-disabled'" 
+                                    ng-if="property.PropertyType == 'bool'" 
+                                    ng-click="draft[property.Name] = !draft[property.Name]; applyDraft()">
+                                    {{draft[property.Name] ? 'true' : 'false'}}
+                                </button>
+    
+                                <button 
+                                    style="width: calc(100% - 43px); direction: rtl; text-align: left;" 
+                                    class="btn"
+                                    ng-class="draft[property.Name] ? 'btn-primary' : 'btn-disabled'" 
+                                    ng-if="property.PropertyType == 'Entity'" 
+                                    ng-click="selectedEntities[0] = draft[property.Name]"
+                                    ng-disabled="(draft[property.Name] === null)">
+                                    {{draft[property.Name] ? connection.getEntity(draft[property.Name]).Name : 'null'}}
+                                </button>
+                                <button 
+                                    style="width: 40px;" 
+                                    class="btn btn-default" 
+                                    ng-disabled="property.PropertyReadOnly"
+                                    ng-if="property.PropertyType == 'Entity'" 
+                                    ng-click="pickerOpen[property.Name] = !pickerOpen[property.Name]">
+                                    ...
+                                </button>
+                                <div 
+                                    style="width: 100%; height: 300px;" 
+                                    class="fade-in"
+                                    ng-if="property.PropertyType == 'Entity'"
+                                    ng-show="pickerOpen[property.Name]">
+                                    <entity-picker connection="connection" component="property.PropertyChildComponent" on-pick="draft[property.Name] = entity; pickerOpen[property.Name] = false; applyDraft();"/>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                
+                                <select 
+                                    class="form-control"
+                                    style="width: 100%;" 
+                                    ng-disabled="property.PropertyReadOnly"
+                                    ng-if="property.PropertyType == 'Type'" 
+                                    ng-model="draft[property.Name]"
+                                    ng-options="type.value as type.name for type in types"
+                                    ng-change="applyDraft();"
+                                />
+
+                                <input
+                                    class="form-control"
+                                    ng-readonly="property.PropertyReadOnly"
+                                    ng-change="lockDraft()" 
+                                    ng-blur="applyDraft();" 
+                                    ng-focus="lockDraft()"
+                                    ng-if="property.PropertyType == 'Date'" 
+                                    ng-model="draft[property.Name]" 
+                                    ng-keypress="keyPress($event.keyCode)"
+                                />
+                            </td>
+                            <td class="value" ng-if="property.PropertyKind == 1" style="overflow: hidden; max-width: 1px">
+                                <button 
+                                    style="width: 100%; direction: rtl; text-align: left;" 
+                                    class="btn btn-primary"
+                                    ng-click="selectedEntities[0] = draft[property.Name]">
+                                    {{connection.getEntity(draft[property.Name]).Name || property.Name}}
+                                </button>
+                            </td>
+                            <td class="value" ng-if="property.PropertyKind == 2" style="overflow: hidden; max-width: 1px">
+                                <button class="btn btn-secondary" style="width: calc(100% - 43px);" ng-disabled="draft[property.Name].length == 0" ng-click="expandedArrays[property.Name] = !expandedArrays[property.Name]">{{draft[property.Name].length.toString() + ' items '}}<span class="im" ng-if="draft[property.Name].length > 0" ng-class="expandedArrays[property.Name] ? 'im-angle-down' : 'im-angle-right'"></span></button>
+                                <button class="btn btn-success" style="width: 40px;" ng-click="expandedArrays[property.Name] = true; addChild(property.Name)"><span class="im im-plus"></span></button>
+                                <div ng-show="expandedArrays[property.Name]" style="width: 100%;" class="fade-in">
+                                    <div style="width: 100%;" ng-repeat="childUuid in draft[property.Name]" style="overflow: hidden;">
+                                        <button
+                                            style="width: calc(100% - 43px); direction: rtl; text-align: left; margin-top: 1px;" 
+                                            class="btn btn-primary btn-sm" 
+                                            ng-click="selectedEntities[0] = childUuid">
+                                            {{connection.getEntity(childUuid).Name}}
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" style="width: 40px;" ng-click="destroyEntity(childUuid)"><span class="im im-trash-can"></span></button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
+        <button class="btn btn-success" style="width: 100%" ng-show="selectedEntities.length > 0" ng-click="addComponentExpanded = !addComponentExpanded" >Add Component <span class="im" ng-class="addComponentExpanded ? 'im-angle-down' : 'im-angle-right'"></span></button>
+        <div ng-show="addComponentExpanded && selectedEntities.length > 0">
+            <button class="btn btn-primary" style="direction: rtl; text-align: left; width: 100%;" ng-click="addComponent(component.Name); addComponentExpanded = false;" ng-show="connection.getEntity(selectedEntities[0]).$components.indexOf(component.Name) == -1" ng-repeat="component in connection.getComponentList('Component')">{{component.Name}}</button>
         </div>
     </div>
     <div align="center" ng-if="!draft" style="display: table; width: 100%; height: 100%; color: #353535;">

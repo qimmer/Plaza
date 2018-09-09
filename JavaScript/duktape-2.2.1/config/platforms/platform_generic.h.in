@@ -13,6 +13,6 @@
 #undef DUK_USE_DATE_FMT_STRFTIME
 
 /* Rely on C89 headers only; time.h must be here. */
-#include <time.h>
+#include <Date.h>
 
 #define DUK_USE_OS_STRING "unknown"

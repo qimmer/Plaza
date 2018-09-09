@@ -19,17 +19,19 @@ Function(GetComponentIndex, u32, Entity entity, Entity component);
 
 Unit(Component)
     Component(Extension)
-        Property(Entity, ExtensionComponent)
-        Property(Entity, ExtensionExtenderComponent)
+        ReferenceProperty(Entity, ExtensionComponent)
+        ReferenceProperty(Entity, ExtensionExtenderComponent)
         Property(bool, ExtensionDisabled)
 
     Component(Base)
-        Property(Entity, BaseComponent)
+        ReferenceProperty(Component, BaseComponent)
 
     Component(Component)
         __PropertyCore(Component, u16, ComponentSize)
-        __ArrayPropertyCore(Base, Bases)
+        __PropertyCore(Component, Entity, ComponentTemplate)
+        __PropertyCore(Component, bool, ComponentExplicitSize)
         __ArrayPropertyCore(Property, Properties)
+        __ArrayPropertyCore(Base, Bases)
 
     Event(EntityComponentAdded, Entity entity)
     Event(EntityComponentRemoved, Entity entity)

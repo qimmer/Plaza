@@ -22,49 +22,52 @@
 #undef Enum
 #include <Windows.h>
 #include "Identification.h"
+#include "CoreModule.h"
+#include <Core/Date.h>
 
 #endif
 
-BeginUnit(Debug)
-    RegisterEvent(LogMessageReceived)
-EndUnit()
+#include <EASTL/map.h>
+
+struct LogMessage {
+    StringRef LogMessageEntity;
+    StringRef LogMessageText;
+    u8 LogMessageSeverity;
+    u32 LogMessageCount;
+    Date LogMessageTime;
+};
 
 API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
     char buffer[4096];
     va_list arg;
 
-    switch (severity) {
-        case LogSeverity_Info:
-            snprintf(buffer, 4096, "Info:    ");
-            break;
-        case LogSeverity_Warning:
-            snprintf(buffer, 4096, "Warning: ");
-            break;
-        case LogSeverity_Error:
-            snprintf(buffer, 4096, "Error:   ");
-            break;
-        case LogSeverity_Fatal:
-            snprintf(buffer, 4096, "Fatal:   ");
-            break;
-    }
-
+    auto numWritten = 0;
     va_start(arg, format);
-    auto numWritten = vsnprintf(buffer + 9, 4084, format, arg);
+    numWritten += vsnprintf(buffer + numWritten, 4095, format, arg);
     va_end(arg);
 
-    buffer[numWritten + 9] = '\0';
+    buffer[numWritten] = '\0';
 
+#ifdef DEBUG
     setbuf(stdout, 0);
     printf("%s", buffer);
+#endif
 
-    if(HasComponent(context, ComponentOf_Identification()) && IsEntityValid(GetOwner(context))) {
-        CalculateEntityPath(buffer, sizeof(buffer), context, true);
-        printf(" (%s)\n", buffer);
-    } else {
-        printf("\n");
+    auto messageText = Intern(buffer);
+    auto uuid = GetUuid(context);
+    for_entity(message, data, LogMessage) {
+        if(messageText == data->LogMessageText && data->LogMessageEntity == uuid) {
+            SetLogMessageCount(message, data->LogMessageCount + 1);
+            SetLogMessageTime(message, GetDateNow());
+            return;
+        }
     }
 
-    //FireEvent(EventOf_LogMessageReceived(), context, buffer, severity);
+    message = AddLogMessages(ModuleOf_Core());
+    SetLogMessageEntity(message, uuid);
+    SetLogMessageText(message, messageText);
+    SetLogMessageTime(message, GetDateNow());
+    SetLogMessageSeverity(message, severity);
 
     if(severity >= LogSeverity_Error) {
         DebuggerBreak();
@@ -160,3 +163,13 @@ static void PrintNode(int level, Entity entity) {
 API_EXPORT void DumpNode() {
     PrintNode(0, GetModuleRoot());
 }
+
+BeginUnit(Debug)
+    BeginComponent(LogMessage)
+        RegisterProperty(StringRef, LogMessageEntity)
+        RegisterProperty(StringRef, LogMessageText)
+        RegisterProperty(u8, LogMessageSeverity)
+        RegisterProperty(u32, LogMessageCount)
+        RegisterProperty(Date, LogMessageTime)
+    EndComponent()
+EndUnit()

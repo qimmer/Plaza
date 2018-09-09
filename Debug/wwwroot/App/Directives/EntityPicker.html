@@ -1,0 +1,9 @@
+<div style="width: 100%; height: 100%; overflow: auto;">
+    <button 
+        class="btn btn-sm btn-primary" 
+        style="width: 100%;"
+        ng-repeat="entity in connection.getComponentList(connection.getEntity(component).Name)"
+        ng-click="onPick({entity: entity.Uuid});">
+        {{entity.Name}}
+    </button>
+</div>

@@ -10,7 +10,7 @@
 #define MaxPages 4096
 #define PoolPageElements 256
 
-#define MemoryGuard 1
+#define MemoryGuard 0
 
 #define AvailableBlock 0
 #define OccupiedBlock 32
@@ -29,6 +29,7 @@ public:
         blockSize = 0;
         elementSize = 0;
         endIndex = 0;
+        SetElementSize(0);
     }
 
     inline char* operator[] (u32 index);
@@ -65,8 +66,6 @@ inline char* Pool::operator[](u32 index)
 }
 
 inline void Pool::SetElementSize(u32 size) {
-    Assert(0, size > 0);
-
     auto oldBlockSize = blockSize;
     auto oldElementSize = elementSize;
     elementSize = size;
@@ -74,7 +73,7 @@ inline void Pool::SetElementSize(u32 size) {
 #if MemoryGuard
     blockSize = UpperPowerOf2(size + 1 + MemoryGuardSize * 2);
 #else
-    blockSize = upper_power_of_two(size + 1);
+    blockSize = UpperPowerOf2(size + 1);
 #endif
     // Make sure to expand every single existing element with the new size by allocating new pages
     for(auto i = 0; i < entryPages.size(); ++i) {
@@ -142,7 +141,6 @@ inline bool Pool::Insert(u32 index)
 {
     auto absoluteIndex = index;
 
-    Assert(0, this->elementSize > 0);
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
 
@@ -214,8 +212,6 @@ inline bool Pool::Remove(u32 index)
 }
 
 inline u32 Pool::Add() {
-    Assert(0, this->elementSize > 0);
-
     u32 index = this->End();
     if(this->freeIndices.size() > 0) {
         index = this->freeIndices[this->freeIndices.size() - 1];

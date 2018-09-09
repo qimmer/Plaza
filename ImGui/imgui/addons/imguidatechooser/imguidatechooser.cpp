@@ -7,7 +7,7 @@
 
 
 #include "imguidatechooser.h"
-#include <time.h>               // very simple and common plain C header file (it's NOT the c++ <sys/time.h>). If not available it's probably better to implement it yourself rather than modifying this file.
+#include <Date.h>               // very simple and common plain C header file (it's NOT the c++ <sys/time.h>). If not available it's probably better to implement it yourself rather than modifying this file.
 #include <ctype.h>  // toupper()
 
 namespace ImGui {

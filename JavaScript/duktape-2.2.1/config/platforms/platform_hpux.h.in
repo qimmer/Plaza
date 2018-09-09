@@ -8,6 +8,6 @@
 #define DUK_USE_DATE_FMT_STRFTIME
 #include <sys/param.h>
 #include <sys/time.h>
-#include <time.h>
+#include <Date.h>
 
 #define DUK_USE_OS_STRING "hpux"

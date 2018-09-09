@@ -1,13 +1,18 @@
 <div style="width: 100%; height: 100%;">
-    <div style="width: 100%; height: 50px;">
-        <div class="bg-toolbox-face">
-            <div class="toolbox">
-                <input class="form-control" placeholder="Filter" type="text" ng-model="filterText">
-            </div>
-        </div>
-    </div>
-
-    <div style="height: calc(100% - 50px); overflow-y: scroll">
-                <entity-tree-node node-path="" connection="connection" selected-nodes="selectedEntities" expanded-nodes="expandedNodes" icon="getIcon"/>
-    </div>
+    
+                <div style="width: 100%; height: 40px;" class="bg-toolbox-header toolbox-header">
+                    Entities
+                </div>
+                       
+                <div style="width: 100%; height: 40px;">
+                        <select class="form-control" ng-init="currentComponent='ModuleRoot'" ng-model="currentComponent" ng-options="component.Name as component.Name for component in connection.getComponentList('Component')">
+                        </select>
+                </div>
+            
+           <div style="overflow-y: scroll; height: calc(100% - 80px)">
+                <div ng-repeat="entity in connection.getComponentList(currentComponent)">
+                        <entity-tree-node uuid="{{entity.Uuid}}" connection="connection" selected-nodes="selectedEntities"
+                        expanded-nodes="expandedNodes" icon="getIcon" />
+                </div>
+           </div>
 </div>

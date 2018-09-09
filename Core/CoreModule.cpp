@@ -11,6 +11,7 @@
 #include <Core/Property.h>
 #include <Core/Event.h>
 #include <Core/Module.h>
+#include <Core/Date.h>
 #include <Core/Debug.h>
 
 #include <malloc.h>
@@ -57,11 +58,13 @@ void __InitModule_Core (Entity module) {
     AddComponent(module, ComponentOf_Module());
     RegisterUnit(Module)
     RegisterUnit(Component)
+    RegisterUnit(Enum)
     RegisterUnit(Property)
     RegisterUnit(Event)
     RegisterUnit(Function)
-    RegisterUnit(Enum)
     RegisterUnit(Entity)
+    RegisterUnit(Date)
+    RegisterUnit(Core)
     RegisterUnit(Debug)
     RegisterUnit(Identification)
 
@@ -74,3 +77,13 @@ void __InitModule_Core (Entity module) {
     SetModuleSourcePath(module, __FILE__);
     SetModuleVersion(module, __DATE__ " " __TIME__);
 EndModule()
+
+struct CoreModule {
+    Vector(LogMessages, Entity, 1024)
+};
+
+BeginUnit(Core)
+    BeginComponent(CoreModule)
+        RegisterArrayProperty(LogMessage, LogMessages)
+    EndComponent()
+EndUnit()

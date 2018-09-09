@@ -33,18 +33,20 @@ struct DebugServer {
 static u16 DebugComponent(StringRef path, bool(*func)(Entity, Entity)) {
     path += 1; // Discard initial slash
 
-    auto entityPath = strchr(path, '/');
-    if(!entityPath) {
+    auto slashLoc = strchr(path, '/');
+    if(!slashLoc) {
         return 405;
     }
 
-    auto componentNameLength = (size_t)entityPath - (size_t)path;
+    auto uuid = slashLoc + 1;
+
+    auto componentNameLength = (size_t)slashLoc - (size_t)path;
     char componentName[128];
     Assert(0, componentNameLength < 128);
     memcpy(componentName, path, componentNameLength);
     componentName[componentNameLength] = '\0';
 
-    auto entity = FindEntityByPath(entityPath);
+    auto entity = FindEntityByUuid(uuid);
     if(!IsEntityValid(entity)) {
         return 404;
     }
@@ -125,6 +127,9 @@ BeginUnit(DebugModule)
 			"FileTypes": [
 				{ "FileTypeExtension": ".html", "FileTypeMimeType" : "text/html" },
 				{ "FileTypeExtension": ".css", "FileTypeMimeType" : "text/css" },
+                { "FileTypeExtension": ".woff", "FileTypeMimeType" : "font/woff" },
+                { "FileTypeExtension": ".woff2", "FileTypeMimeType" : "font/woff2" },
+                { "FileTypeExtension": ".ttf", "FileTypeMimeType" : "font/ttf" },
 				{ "FileTypeExtension": ".map", "FileTypeMimeType" : "text/map" },
 				{ "FileTypeExtension": ".js", "FileTypeMimeType" : "application/javascript" }
 			],

@@ -33,6 +33,7 @@ typedef signed long long s64;
 
 typedef u64 Entity;
 typedef u8 Type;
+typedef u64 Date;
 
 typedef struct {
     float x, y;
@@ -155,12 +156,15 @@ enum {
     TypeOf_rgba32,
     TypeOf_rgb32,
 
+    TypeOf_Date,
+
     TypeOf_Variant,
 
     TypeOf_MAX,
 };
 
 u32 GetTypeSize(Type type);
+u32 GetTypeAlignment(Type type);
 StringRef GetTypeName(Type type);
 Type FindType(StringRef typeName);
 

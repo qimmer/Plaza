@@ -1,9 +1,16 @@
 .component-header {
     background-color: #455570;
-    padding: 4px 4px 4px 4px;
     cursor: pointer;
     user-select: none;
     text-align: center;
+    border: 1px solid transparent;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.component-header .btn {
+   
 }
 
 .component-header:hover {
@@ -13,22 +20,22 @@
     background-color: #354560;
 }
 
-.property-container .table {
+.property-container {
     table-layout: fixed;
+    background-color: #354560;
 }
 
-.property-container .table .row .label {
+.property-container .label {
     padding: 4px 8px 4px 8px;
     text-align: right;
     direction: rtl;
-    overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    width: 30%; /* Shrink label cell to allow more editor space */
+    vertical-align: middle;
 }
 
-.property-container .table .value {
-    padding: 1px 0px 0px 0px;
+.property-container .value {
+    padding-bottom: 1px;
 }
 
 .property-container .table .row .value .editor {

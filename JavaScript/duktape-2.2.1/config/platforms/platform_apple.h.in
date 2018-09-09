@@ -6,7 +6,7 @@
 #include <architecture/byte_order.h>
 #include <sys/param.h>
 #include <sys/time.h>
-#include <time.h>
+#include <Date.h>
 
 /* http://stackoverflow.com/questions/5919996/how-to-detect-reliably-mac-os-x-ios-linux-windows-in-c-preprocessor */
 #if TARGET_IPHONE_SIMULATOR

@@ -1,0 +1,27 @@
+<div style="width: 100%; height: 40px;" class="bg-toolbox-header toolbox-header">
+        Console
+</div>
+<div style="width: 100%; height: 100%;">
+    <table class="table table-borderless table-condensed table-striped table-hover" style="height: 100%; overflow: auto;">
+        <tr ng-repeat="message in connection.getComponentList('LogMessage')" ng-class="severityClass[message.LogMessageSeverity]">
+            <td>
+                {{severityName[message.LogMessageSeverity]}} 
+            </td>
+            <td style="white-space: nowrap;">
+                {{connection.getEntities()[message.LogMessageEntity] ? connection.getEntities()[message.LogMessageEntity].Name : message.LogMessageEntity}} 
+            </td>
+            <td style="white-space: nowrap;">
+                {{moment.unix(message.LogMessageTime).format('L LT')}} 
+            </td>
+            <td width="100%">
+                {{message.LogMessageText}} 
+            </td>
+            <td>
+                {{message.LogMessageCount}} 
+            </td>
+        </tr>
+        <tr height="100%;">
+
+        </tr>
+    </table>
+</div>

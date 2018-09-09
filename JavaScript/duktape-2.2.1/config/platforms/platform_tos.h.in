@@ -2,7 +2,7 @@
 #define DUK_USE_DATE_TZO_GMTIME
 /* no parsing (not an error) */
 #define DUK_USE_DATE_FMT_STRFTIME
-#include <time.h>
+#include <Date.h>
 
 #define DUK_USE_OS_STRING  "tos"
 

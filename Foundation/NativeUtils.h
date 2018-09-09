@@ -11,8 +11,9 @@
 
 #define RegisterStreamProtocol(COMPONENT, IDENTIFIER) \
     {\
+        auto protocol = GetUniqueEntity("Protocol " #COMPONENT, NULL );\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
-        auto protocol = AddModuleStreamProtocols(module); \
+        __InjectArrayPropertyElement(PropertyOf_ModuleStreamProtocols(), module, protocol); \
         SetName(protocol, #COMPONENT "Protocol");\
         SetStreamProtocolIdentifier(protocol, IDENTIFIER); \
         SetStreamProtocolComponent(protocol, ComponentOf_ ## COMPONENT ()); \
@@ -30,8 +31,9 @@
 
 #define RegisterStreamCompressor(COMPONENT, MIMETYPE) \
     {\
+        auto compressor = GetUniqueEntity("Compressor " #COMPONENT, NULL );\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
-        auto compressor = AddModuleCompressors(module); \
+        __InjectArrayPropertyElement(PropertyOf_ModuleStreamCompressors(), module, compressor); \
         SetName(compressor, #COMPONENT "Compressor");\
         SetStreamCompressor(compressor, MIMETYPE); \
         auto compressorData = GetStreamCompressorData(compressor); \
@@ -40,13 +42,16 @@
     }
 
 #define RegisterSerializer(NAME, MIMETYPE) \
-    AddComponent(module, ComponentOf_StreamExtensionModule());\
-    auto NAME ## serializer = AddModuleSerializers(module); \
-    SetName(NAME ## serializer, #NAME "Serializer");\
-    SetSerializerMimeType(NAME ## serializer, MIMETYPE); \
-    auto NAME ## serializerData = GetSerializerData(NAME ## serializer); \
-    NAME ## serializerData->SerializeHandler = Serialize; \
-    NAME ## serializerData->DeserializeHandler = Deserialize;
+    {\
+        auto serializer = GetUniqueEntity("Serializer " #NAME, NULL);\
+        AddComponent(module, ComponentOf_StreamExtensionModule());\
+        __InjectArrayPropertyElement(PropertyOf_ModuleSerializers(), module, serializer); \
+        SetName(serializer, #NAME "Serializer");\
+        SetSerializerMimeType(serializer, MIMETYPE); \
+        auto serializerData = GetSerializerData(serializer); \
+        serializerData->SerializeHandler = Serialize; \
+        serializerData->DeserializeHandler = Deserialize;\
+    }
 
 #define RegisterData(FILEPATH) \
     {\

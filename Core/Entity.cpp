@@ -52,7 +52,7 @@ API_EXPORT Entity GetNextEntity (Entity entity) {
     return GetEntity(index, gen); 
 } 
 
-Entity __CreateEntity () {
+API_EXPORT Entity __CreateEntity () {
     u32 index;
     if (FreeSlots.size()) {
         index = FreeSlots[FreeSlots.size() - 1];

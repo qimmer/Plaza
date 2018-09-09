@@ -9,9 +9,10 @@
 
 Module(Foundation)
     Unit(Foundation)
-        Component(FoundationData)
+        Component(FoundationModule)
             ChildProperty(TaskQueue, TaskQueue)
-		Component(FoundationModule)
+
+		Component(FoundationExtension)
 			ArrayProperty(FileType, FileTypes)
 
 #endif //PLAZA_FOUNDATIONMODULE_H

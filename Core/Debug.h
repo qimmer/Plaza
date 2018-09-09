@@ -6,7 +6,7 @@
 #define PLAZA_DEBUG_H
 
 #include <stdio.h>
-#include <Core/Types.h>
+#include <Core/NativeUtils.h>
 
 #define VerboseLevel_Invocations 0
 #define VerboseLevel_PropertyChanges 1
@@ -42,6 +42,11 @@ void DumpNode();
 #include <Core/NativeUtils.h>
 
 Unit(Debug)
-    Event(LogMessageReceived, StringRef message, u8 severity)
+    Component(LogMessage)
+        Property(StringRef, LogMessageEntity)
+        Property(StringRef, LogMessageText)
+        Property(u8, LogMessageSeverity)
+        Property(u32, LogMessageCount)
+        Property(Date, LogMessageTime)
 
 #endif //PLAZA_DEBUG_H

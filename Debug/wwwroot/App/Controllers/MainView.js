@@ -37,6 +37,13 @@ angular.module('plaza').controller('mainController', function($scope, entityServ
         Module: 'App/Editors/Module.html'
     };
 
+    Promise.resolve().then(function resolver() {
+        return entityService.update($scope.connection)
+        .then(resolver);
+    }).catch((error) => {
+        console.log("Error: " + error);
+    });
+
     document.addEventListener("keydown", function(e) {
     if ($scope.editor.currentTab && e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
       e.preventDefault();

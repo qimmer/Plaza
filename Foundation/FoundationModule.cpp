@@ -17,26 +17,27 @@
 #include <Foundation/VirtualPath.h>
 #include <Foundation/Visibility.h>
 #include <Foundation/Invalidation.h>
+#include <Foundation/DllPersistance.h>
 #include "FoundationModule.h"
 
-struct FoundationData {
+struct FoundationModule {
     Entity TaskQueue, FilesystemUpdateTimer;
 };
 
-struct FoundationModule {
+struct FoundationExtension {
 	Vector(FileTypes, Entity, 32)
 };
 
 BeginUnit(Foundation)
-    BeginComponent(FoundationData)
+    BeginComponent(FoundationModule)
         RegisterChildProperty(TaskQueue, TaskQueue)
     EndComponent()
-	BeginComponent(FoundationModule)
+	BeginComponent(FoundationExtension)
 		RegisterArrayProperty(FileType, FileTypes)
 	EndComponent()
 EndUnit()
 
-BeginModule(Foundation, ComponentOf_FoundationData())
+BeginModule(Foundation)
     RegisterUnit(Foundation)
     RegisterUnit(AppLoop)
     RegisterUnit(CommandLineArgument)
@@ -51,4 +52,5 @@ BeginModule(Foundation, ComponentOf_FoundationData())
     RegisterUnit(VirtualPath)
     RegisterUnit(Visibility)
     RegisterUnit(Invalidation)
+    RegisterUnit(DllPersistance)
 EndModule()

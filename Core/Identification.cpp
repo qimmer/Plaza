@@ -11,6 +11,7 @@
 #include "Property.h"
 #include "Vector.h"
 #include "Math.h"
+#include "Hashing.h"
 
 #include <climits>
 #include <map>
@@ -25,7 +26,7 @@
 #endif
 
 struct Identification {
-    StringRef Name;
+    StringRef Name, Uuid;
 };
 
 API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bool preferNamesToIndices) {
@@ -182,6 +183,23 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
     return currentEntity;
 }
 
+
+API_EXPORT Entity FindEntityByUuid(StringRef uuid) {
+    if(strlen(uuid) == 0) {
+        return GetModuleRoot();
+    }
+
+    uuid = Intern(uuid);
+
+    for_entity(entity, data, Identification) {
+        if(data->Uuid == uuid) {
+            return entity;
+        }
+    }
+
+    return 0;
+}
+
 API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo, bool preferNameToIndex) {
     char parentPath[2048];
     CalculateEntityPath(parentPath, 2048, relativeTo, preferNameToIndex);
@@ -197,8 +215,32 @@ API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relative
     return relativePath;
 }
 
+BeginUnit(Identification)
+    BeginComponent(Identification)
+        RegisterProperty(StringRef, Name)
+        RegisterProperty(StringRef, Uuid)
+    EndComponent()
+EndUnit()
+
+void __InitializeNode() {
+    auto component = ComponentOf_Identification();
+    __Property(PropertyOf_Name(), offsetof(Identification, Name), sizeof(Identification::Name), TypeOf_StringRef,  component, 0, 0);
+    __Property(PropertyOf_Uuid(), offsetof(Identification, Uuid), sizeof(Identification::Uuid), TypeOf_StringRef,  component, 0, 0);
+}
+
+API_EXPORT StringRef GetName(Entity entity)  {
+    auto data = GetIdentificationData(entity);
+	if (!data) {
+		return "";
+	}
+
+    return data->Name;
+}
+
 API_EXPORT void SetName(Entity entity, StringRef name) {
     AddComponent(entity, ComponentOf_Identification());
+
+    GetUuid(entity); // Provoke eventual new Guid
 
     auto data = GetIdentificationData(entity);
     data->Name = Intern(data->Name);
@@ -216,24 +258,50 @@ API_EXPORT void SetName(Entity entity, StringRef name) {
     }
 }
 
-BeginUnit(Identification)
-    BeginComponent(Identification)
-        RegisterProperty(StringRef, Name)
-    EndComponent()
-EndUnit()
+API_EXPORT StringRef GetUuid(Entity entity)  {
+    if(!IsEntityValid(entity)) {
+        return "";
+    }
 
-void __InitializeNode() {
-    auto component = ComponentOf_Identification();
-    __Property(PropertyOf_Name(), offsetof(Identification, Name), sizeof(Identification::Name), TypeOf_StringRef,  component, 0, 0);
+    auto data = GetIdentificationData(entity);
+    if (!data || !data->Uuid || !data->Uuid[0]) {
+
+        auto uniqueName = GetUniqueEntityName(entity);
+        if(uniqueName) {
+            auto hash1 = HashCreate(uniqueName, strlen(uniqueName), 0xdeadbeef);
+            auto hash2 = HashCreate(uniqueName, strlen(uniqueName), 0xdeafabcd);
+
+            char guid[128];
+            snprintf(guid, 128, "%08x-0000-0000-0000-0000%08x", hash1, hash2);
+
+            SetUuid(entity, guid);
+        } else {
+            SetUuid(entity, CreateGuid());
+        }
+
+        data = GetIdentificationData(entity);
+    }
+
+    return data->Uuid;
 }
 
-API_EXPORT StringRef GetName(Entity entity)  {
-    auto data = GetIdentificationData(entity);
-	if (!data) {
-		return 0;
-	}
+API_EXPORT void SetUuid(Entity entity, StringRef value) {
+    AddComponent(entity, ComponentOf_Identification());
 
-    return data->Name;
+    value = Intern(value);
+
+    auto data = GetIdentificationData(entity);
+
+    if(data->Uuid != value) {
+        auto oldValue = data->Uuid;
+        data->Uuid = value;
+
+        const Type argumentTypes[] = {TypeOf_Entity, TypeOf_StringRef, TypeOf_StringRef};
+        const void * argumentData[] = {&entity, &oldValue, &value};
+
+        auto changedEvent = GetPropertyChangedEvent(PropertyOf_Uuid());
+        FireEventFast(changedEvent, 3, argumentTypes, argumentData);
+    }
 }
 
 API_EXPORT bool GetParentPath(StringRef childPath, u32 bufLen, char *parentPath) {
@@ -268,4 +336,9 @@ API_EXPORT StringRef CreateGuid() {
 #endif
 
     return Intern(buf);
+}
+
+API_EXPORT StringRef CreateGuidFromPath(StringRef path) {
+
+    return nullptr;
 }

@@ -26,4 +26,19 @@ inline unsigned long UpperPowerOf2(unsigned long v)
     return v;
 }
 
+inline int Align(int number, int multiple)
+{
+    if (multiple == 0)
+        return number;
+
+    int remainder = Abs(number) % multiple;
+    if (remainder == 0)
+        return number;
+
+    if (number < 0)
+        return -(Abs(number) - remainder);
+    else
+        return number + multiple - remainder;
+}
+
 #endif //PLAZA_MATH_H

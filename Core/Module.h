@@ -14,6 +14,9 @@ Unit(Module)
 Component(ModuleRoot)
     ArrayProperty(Module, Modules)
 
+Component(Dependency)
+    ReferenceProperty(Module, DependencyModule)
+
 Component(Module)
     Property(StringRef, ModuleSourcePath)
     Property(StringRef, ModuleBinaryPath)
@@ -24,7 +27,7 @@ Component(Module)
     ArrayProperty(Enum, Enums)
     ArrayProperty(Extension, Extensions)
     ArrayProperty(Subscription, Subscriptions)
-    ArrayProperty(Module, Dependencies)
+    ArrayProperty(Dependency, Dependencies)
 
 Event(ModuleInitialized)
 

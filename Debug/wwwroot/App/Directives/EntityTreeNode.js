@@ -3,7 +3,7 @@ angular.module('plaza')
         return {
             restrict: 'AE',
             scope: {
-                nodePath: "@",
+                uuid: "@",
                 connection: "=",
                 expandedNodes: "=",
                 selectedNodes: "=",
@@ -13,13 +13,13 @@ angular.module('plaza')
             controller: function ($scope, $element, $attrs) {
                 $scope.select = function () {
                     $scope.selectedNodes.length = 1;
-                    $scope.selectedNodes[0] = $scope.nodePath;
+                    $scope.selectedNodes[0] = $scope.uuid;
                 }
 
                 $scope.toggle = function() {
-                    var index = $scope.expandedNodes.indexOf($scope.nodePath);
+                    var index = $scope.expandedNodes.indexOf($scope.uuid);
                     if(index == -1) {
-                        $scope.expandedNodes.push($scope.nodePath);
+                        $scope.expandedNodes.push($scope.uuid);
                     } else {
                         $scope.expandedNodes.splice(index, 1);
                     }

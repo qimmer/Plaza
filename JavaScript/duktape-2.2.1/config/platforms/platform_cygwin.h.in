@@ -6,7 +6,7 @@
 #include <endian.h>
 #include <sys/param.h>
 #include <sys/time.h>
-#include <time.h>
+#include <Date.h>
 
 #define DUK_JMPBUF_TYPE       jmp_buf
 #define DUK_SETJMP(jb)        _setjmp((jb))

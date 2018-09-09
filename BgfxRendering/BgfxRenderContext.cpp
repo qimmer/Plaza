@@ -77,11 +77,14 @@ static Entity PrimaryContext = 0;
 
 LocalFunction(OnAppUpdate, void, Entity appLoop) {
     auto owner = GetOwner(appLoop);
-    auto contextData = GetBgfxRenderContextData(owner);
     auto moduleData = GetBgfxRenderingData(owner);
 
     if(moduleData) {
+        auto numContexts = 0;
+
         for_entity(context, contextData, BgfxRenderContext) {
+            numContexts++;
+
             SetInputStateValueByKey(context, MOUSE_SCROLL_DOWN, 0.0f);
             SetInputStateValueByKey(context, MOUSE_SCROLL_UP, 0.0f);
             SetInputStateValueByKey(context, MOUSE_SCROLL_LEFT, 0.0f);
@@ -97,38 +100,42 @@ LocalFunction(OnAppUpdate, void, Entity appLoop) {
             }
         }
 
-        glfwPollEvents();
+        if(numContexts) {
+            glfwPollEvents();
 
-        auto viewId = 0;
+            auto viewId = 0;
 
-        for_entity(commandList, commandListData, BgfxCommandList) {
-            RenderCommandList(commandList, viewId);
-            viewId++;
+            for_entity(commandList, commandListData, BgfxCommandList) {
+                RenderCommandList(commandList, viewId);
+                viewId++;
+            }
+
+            auto frame = bgfx::frame();
         }
-
-        auto frame = bgfx::frame();
     }
 }
 
 static void ResetContext(Entity entity) {
     auto data = GetBgfxRenderContextData(entity);
-    auto size = GetRenderTargetSize(entity);
-    auto vsync = GetRenderContextVsync(entity);
-    auto fullscreen = GetRenderContextFullscreen(entity);
+    if(data) {
+        auto size = GetRenderTargetSize(entity);
+        auto vsync = GetRenderContextVsync(entity);
+        auto fullscreen = GetRenderContextFullscreen(entity);
 
 #ifdef __APPLE__
-    id windowHandle = glfwGetCocoaWindow(data->window);
+        id windowHandle = glfwGetCocoaWindow(data->window);
 #elif WIN32
-    HWND windowHandle = glfwGetWin32Window(data->window);
+        HWND windowHandle = glfwGetWin32Window(data->window);
 #elif __linux__
-    auto windowHandle = (void*)glfwGetX11Window(data->window);
+        auto windowHandle = (void*)glfwGetX11Window(data->window);
 #endif
-    glfwSetWindowSize(data->window, size.x, size.y);
-    if(entity == PrimaryContext) {
-        bgfx::reset(size.x, size.y, (vsync ? BGFX_RESET_VSYNC : 0) + (fullscreen ? BGFX_RESET_FULLSCREEN : 0));
-    } else {
-        bgfx::destroy(data->fb);
-        data->fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
+        glfwSetWindowSize(data->window, size.x, size.y);
+        if(entity == PrimaryContext) {
+            bgfx::reset(size.x, size.y, (vsync ? BGFX_RESET_VSYNC : 0) + (fullscreen ? BGFX_RESET_FULLSCREEN : 0));
+        } else {
+            bgfx::destroy(data->fb);
+            data->fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
+        }
     }
 }
 
@@ -143,7 +150,9 @@ LocalFunction(OnContextFlagChanged, void, Entity entity, bool oldValue, bool new
 LocalFunction(OnContextTitleChanged, void, Entity entity, StringRef before, StringRef after) {
     auto data = GetBgfxRenderContextData(entity);
 
-    glfwSetWindowTitle(data->window, after);
+    if(data) {
+        glfwSetWindowTitle(data->window, after);
+    }
 }
 
 LocalFunction(OnGlfwWindowResized, void, GLFWwindow *window, int w, int h) {
@@ -269,7 +278,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
     }
 }
 
-LocalFunction(OnBgfxRenderContextRemoved, void, Entity entity) {
+LocalFunction(OnBgfxRenderContextRemoved, void, Entity component, Entity entity) {
     auto data = GetBgfxRenderContextData(entity);
 
     if(NumContexts > 1) {

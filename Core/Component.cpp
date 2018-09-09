@@ -29,10 +29,12 @@ struct Base {
 };
 
 struct Component {
+    Entity ComponentTemplate;
     Vector(Properties, Entity, 32)
     Vector(Bases, Entity, 8)
     u16 ComponentDataIndex;
     u16 ComponentSize;
+    bool ComponentExplicitSize;
 };
 
 static ComponentTypeData *GetComponentType(Entity component) {
@@ -119,27 +121,31 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
         componentData->EntityComponentIndices[entityIndex] = componentIndex;
         *(Entity*)componentData->DataBuffer[componentIndex] = entity;
 
-        memset(componentData->DataBuffer[componentIndex] + sizeof(Entity), 0, componentData->DataBuffer.GetElementSize() - sizeof(Entity));
+        auto dataSize = GetComponentSize(component);
+        if(dataSize > 0) {
+            memset(componentData->DataBuffer[componentIndex] + sizeof(Entity), 0, dataSize);
+        }
 
         if(__isComponentInitialized) {
-            auto bases = GetBases(component);
-            for(auto i = 0; i < GetNumBases(component); ++i) {
-                auto base = bases[i];
-                auto dependency = GetBaseComponent(base);
-                if(IsEntityValid(dependency)) {
-                    AddComponent(entity, dependency);
+
+            for_children(property, Properties, component) {
+                if(GetPropertyKind(property) != PropertyKind_Child) continue;
+
+                auto child = __CreateEntity();
+                __InjectChildPropertyValue(property, entity, child);
+                auto childComponent = GetPropertyChildComponent(property);
+                AddComponent(child, childComponent);
+            }
+            {
+                for_children(base, Bases, component) {
+                    AddComponent(entity, GetBaseComponent(base));
                 }
             }
 
-            auto properties = GetProperties(component);
-            for(auto i = 0; i < GetNumProperties(component); ++i) {
-                auto property = properties[i];
-                if(GetPropertyKind(property) == PropertyKind_Child) {
-                    auto child = __CreateEntity();
-                    SetOwner(child, entity, property);
-                    __InjectChildPropertyValue(property, entity, child);
-                    AddComponent(child, GetPropertyChildComponent(property));
-                }
+            auto t = GetComponentTemplate(component);
+            if(IsEntityValid(t)) {
+                auto name = GetDebugName(t);
+                CopyEntity(t, entity);
             }
 
 			Type types[] = { TypeOf_Entity, TypeOf_Entity };
@@ -232,16 +238,40 @@ API_EXPORT u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Ent
 }
 
 API_EXPORT void SetComponentSize(Entity entity, u16 value) {
-    if(HasComponent(entity, ComponentOf_Component())) {
-        GetComponentData(entity)->ComponentSize = value;
+    auto data = GetComponentData(entity);
+    auto oldValue = 0;
+    if(data) {
+        oldValue = data->ComponentSize;
+        data->ComponentSize = value;
     }
 
     auto componentData = GetComponentType(entity);
     componentData->DataBuffer.SetElementSize(value + sizeof(Entity));
+
+    if(__isComponentInitialized) {
+        Type types[] = {TypeOf_Entity, TypeOf_u16, TypeOf_u16};
+        const void *args[] = {&entity, &oldValue, &value};
+        FireEventFast(EventOf_ComponentSizeChanged(), 3, types, args);
+
+        auto property = PropertyOf_ComponentSize();
+        Type typesGeneric[] = {TypeOf_Entity, TypeOf_Entity};
+        const void *argsGeneric[] = {&property, &entity};
+        FireEventFast(EventOf_PropertyChanged(), 2, typesGeneric, argsGeneric);
+    }
 }
 
-__ArrayPropertyCoreImpl(Base, Bases, Component)
+API_EXPORT u16 GetComponentSize(Entity entity) {
+    if(HasComponent(entity, ComponentOf_Component())) {
+        return GetComponentData(entity)->ComponentSize;
+    }
+
+    return 0;
+}
+
+__PropertyCoreImpl(bool, ComponentExplicitSize, Component)
+__PropertyCoreImpl(Entity, ComponentTemplate, Component)
 __ArrayPropertyCoreImpl(Property, Properties, Component)
+__ArrayPropertyCoreImpl(Base, Bases, Component)
 
 LocalFunction(OnEntityDestroyed, void, Entity entity) {
     for_entity(component, data, Component) {
@@ -306,20 +336,22 @@ LocalFunction(OnExtensionExtenderComponentChanged,
 }
 
 BeginUnit(Component)
+    BeginComponent(Base)
+        RegisterReferenceProperty(Component, BaseComponent)
+    EndComponent()
+
     BeginComponent(Component)
         RegisterArrayProperty(Property, Properties)
         RegisterArrayProperty(Base, Bases)
-        RegisterProperty(u16, ComponentSize)
+        RegisterPropertyReadOnly(u16, ComponentSize)
+        RegisterPropertyReadOnly(bool, ComponentExplicitSize)
+        RegisterChildProperty(Ownership, ComponentTemplate)
     EndComponent()
 
     BeginComponent(Extension)
-        RegisterProperty(Entity, ExtensionComponent)
-        RegisterProperty(Entity, ExtensionExtenderComponent)
+        RegisterReferenceProperty(Component, ExtensionComponent)
+        RegisterReferenceProperty(Component, ExtensionExtenderComponent)
         RegisterProperty(bool, ExtensionDisabled)
-    EndComponent()
-
-    BeginComponent(Base)
-        RegisterProperty(Entity, BaseComponent)
     EndComponent()
 
     RegisterEvent(EntityComponentAdded)
@@ -339,7 +371,6 @@ void __InitializeComponent() {
     auto component = ComponentOf_Component();
     AddComponent(component, ComponentOf_Component());
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_Bases(), offsetof(Component, Bases), sizeof(Component::Bases), TypeOf_Entity, component, ComponentOf_Base(), PropertyKind_Array);
     __Property(PropertyOf_Properties(), offsetof(Component, Properties), sizeof(Component::Properties), TypeOf_Entity, component, ComponentOf_Property(), PropertyKind_Array);
     __Property(PropertyOf_ComponentSize(), offsetof(Component, ComponentSize), sizeof(Component::ComponentSize), TypeOf_u16, component, 0, PropertyKind_Value);
 }

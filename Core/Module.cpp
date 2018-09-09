@@ -16,9 +16,14 @@ struct ModuleRoot {
     Vector(Modules, Entity, 64)
 };
 
+struct Dependency {
+    Entity DependencyModule;
+};
+
 struct Module {
     char ModuleVersion[128];
     char ModuleSourcePath[512];
+    char ModuleBinaryPath[512];
 
     Vector(Dependencies, Entity, 16)
     Vector(Components, Entity, 64)
@@ -30,14 +35,20 @@ struct Module {
     Vector(Roots, Entity, 128)
 };
 
+
 BeginUnit(Module)
     BeginComponent(ModuleRoot)
         RegisterArrayProperty(Module, Modules)
     EndComponent()
 
+    BeginComponent(Dependency)
+        RegisterReferenceProperty(Module, DependencyModule)
+    EndComponent()
+
     BeginComponent(Module)
         RegisterProperty(StringRef, ModuleVersion)
         RegisterProperty(StringRef, ModuleSourcePath)
+        RegisterProperty(StringRef, ModuleBinaryPath)
 
         RegisterArrayProperty(Component, Components)
         RegisterArrayProperty(Event, Events)
@@ -45,7 +56,7 @@ BeginUnit(Module)
         RegisterArrayProperty(Function, Functions)
         RegisterArrayProperty(Extension, Extensions)
         RegisterArrayProperty(Subscription, Subscriptions)
-        RegisterArrayProperty(Module, Dependencies)
+        RegisterArrayProperty(Dependency, Dependencies)
     EndComponent()
 
     RegisterFunction(GetModuleRoot)
@@ -60,6 +71,7 @@ API_EXPORT Entity GetModuleRoot() {
         root = __CreateEntity();
         AddComponent(root, ComponentOf_ModuleRoot());
         SetName(root, "ModuleRoot");
+        SetUuid(root, "00000000-0000-0000-0000-000000000000");
     }
     return root;
 }
@@ -123,8 +135,9 @@ static Entity LoadModuleWin32(StringRef dllPath) {
         auto name = (char*)hModule+Name[i];
         if(memcmp(name + 4, "ModuleOf_", 9) == 0) {
             auto procAddress = (PVOID)((LPBYTE)hModule+Address[Ordinal[i]]);
-            ((ModuleOfSignature)procAddress)();
+            auto module = ((ModuleOfSignature)procAddress)();
 
+            SetModuleBinaryPath(module, dllPath);
             found = true;
         }
     }
@@ -171,3 +184,4 @@ void __InitializeModule() {
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
     __Property(PropertyOf_Modules(), offsetof(ModuleRoot, Modules), sizeof(ModuleRoot::Modules), TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
 }
+

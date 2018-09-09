@@ -42,6 +42,8 @@ static StringRef typeNames[] = {
         "rgba32",
         "rgb32",
 
+        "Date",
+
         "Variant"
 };
 
@@ -83,12 +85,62 @@ API_EXPORT u32 GetTypeSize(Type type) {
         sizeof(rgba32),
         sizeof(rgb32),
 
+        sizeof(Date),
+
         sizeof(Variant)
     };
 
     Assert(0, type < TypeOf_MAX);
 
     return typeSizes[type];
+}
+
+API_EXPORT u32 GetTypeAlignment(Type type) {
+    static u32 typeAlignments[] = {
+            0,
+
+            0,
+            alignof(u8),
+            alignof(u16),
+            alignof(u32),
+            alignof(u64),
+            alignof(s8),
+            alignof(s16),
+            alignof(s32),
+            alignof(s64),
+            alignof(float),
+            alignof(double),
+            alignof(bool),
+            alignof(StringRef),
+
+            alignof(v2i),
+            alignof(v3i),
+            alignof(v4i),
+
+            alignof(v2f),
+            alignof(v3f),
+            alignof(v4f),
+
+            alignof(m3x3f),
+            alignof(m4x4f),
+
+            alignof(Entity),
+            alignof(Type),
+
+            alignof(rgba8),
+            alignof(rgb8),
+
+            alignof(rgba32),
+            alignof(rgb32),
+
+            alignof(Date),
+
+            alignof(Variant)
+    };
+
+    Assert(0, type < TypeOf_MAX);
+
+    return typeAlignments[type];
 }
 
 API_EXPORT StringRef GetTypeName(Type type) {

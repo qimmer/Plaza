@@ -5,6 +5,8 @@
 #include "NativeUtils.h"
 #include "Entity.h"
 #include "Debug.h"
+#include "Hashing.h"
+#include "Identification.h"
 #include <EASTL/unordered_map.h>
 #include <EASTL/fixed_string.h>
 
@@ -23,6 +25,7 @@ API_EXPORT Entity GetUniqueEntity(StringRef name, bool *firstTime) {
         auto entity = entityLookup[uniqueNameStr] = __CreateEntity();
         if(firstTime) *firstTime = true;
         Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Unique Entity %s Created: %s", name, GetDebugName(entity));
+
         return entity;
     }
 

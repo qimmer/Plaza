@@ -16,9 +16,9 @@ struct Serializer {
 Unit(Stream)
     Component(Stream)
         Property(StringRef, StreamPath)
-        ReferenceProperty(Entity, StreamProtocol, PropertyFlag_ReadOnly, PropertyFlag_Transient)
-        ReferenceProperty(Entity, StreamCompressor, PropertyFlag_ReadOnly, PropertyFlag_Transient)
-        ReferenceProperty(Entity, StreamFileType, PropertyFlag_ReadOnly, PropertyFlag_Transient)
+        ReferenceProperty(Entity, StreamProtocol)
+        ReferenceProperty(Entity, StreamCompressor)
+        ReferenceProperty(Entity, StreamFileType)
 
     Component(StreamProtocol)
         Property(StringRef, StreamProtocolIdentifier)

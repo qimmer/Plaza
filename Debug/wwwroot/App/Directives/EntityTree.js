@@ -28,88 +28,28 @@ angular.module('plaza')
             controller: function ($scope, $element, $attrs) {
                 $scope.expandedNodes = [''];
                 $scope.filterText = "";
-/*
-                $scope.contextMenu = [
-                    { // Add (folder)
-                        text: function () { return 'Add ' + $scope.connection.selectedNode.Name; },
-                        click: function () {
-                            entityService.createEntity($scope.connection, $scope.connection.selectedNode.$path + "/" + findUniqueName($scope.connection.selectedNode, $scope.connection.selectedNode.Name));
-                            return true;
-                        },
-                        displayed: isFolder
-                    },
-                    { // Destroy (element)
-                        text: 'Destroy',
-                        click: function () {
-                            entityService.deleteEntity($scope.connection, $scope.connection.selectedNode.$path);
-                        },
-                        displayed: isElement
-                    },
-                    null,
-                    { // Add Component
-                        text: "Add",
-                        displayed: isElement,
-                        children: function () {
-                            var moduleList = [];
-                            for (var moduleName in $scope.connection.modules) {
-                                var componentList = [];
-                                var components = $scope.connection.modules[moduleName].Components;
-                                if (components) {
-                                    components.forEach(function (component) {
-                                        if (!$scope.connection.selectedEntity.$components.includes(component.Name)) {
-                                            componentList.push({
-                                                text: component.Name,
-                                                click: function () { entityService.addComponent($scope.connection, $scope.connection.selectedNode.$path, component.Name); }
-                                            });
-                                        }
-                                    });
-                                }
 
-                                if (componentList.length > 0) {
-                                    moduleList.push({
-                                        text: moduleName,
-                                        children: componentList
-                                    });
-                                }
-                            }
-                            return moduleList.sort(function (a, b) { if (a.text < b.text) { return -1; } if (a.text > b.text) { return 1; } return 0; });
-                        }
-                    },
-                    { // Remove Component
-                        text: "Remove",
-                        displayed: isElement,
-                        children: function () {
-                            var componentList = [];
-                            for (var componentName in $scope.connection.components) {
-                                if ($scope.connection.selectedEntity.$components.includes(componentName)) {
-                                    componentList.push({
-                                        text: componentName,
-                                        click: function () { entityService.removeComponent($scope.connection, $scope.connection.selectedNode.$path, componentName); }
-                                    });
-                                }
-                            }
-                            return componentList;
-                        }
-                    }
-                ];
-*/
                 $scope.$watchCollection('selectedEntities', function () {
                     if($scope.selectedEntities.length > 0) {
 
-                        var parent = entityService.getParentPath($scope.selectedEntities[0]);
+                        var parent = $scope.connection.getEntity($scope.selectedEntities[0]).$owner;
                         while(parent !== undefined) {
                             if($scope.expandedNodes.indexOf(parent) == -1) {
                                 $scope.expandedNodes.push(parent);
                             }
 
-                            parent = entityService.getParentPath(parent);
+                            var owner = $scope.connection.getEntity($scope.selectedEntities[0]).$owner;
+                            if(parent === owner) {
+                                break;
+                            }
+                            parent = $scope.connection.getEntity($scope.selectedEntities[0]).$owner;
                         }
                     }
                 });
 
-                $scope.getIcon = function (connection, nodePath) {
+                $scope.getIcon = function (connection, uuid) {
                     if(connection) {
-                        var entity = connection.getEntity(nodePath);
+                        var entity = connection.getEntity(uuid);
                         if(entity && entity.$components) {
                             for (var i = 0; i < entity.$components.length; ++i) {
                                 var icon = propertyIconMap[entity.$components[i]];
