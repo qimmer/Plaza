@@ -17,7 +17,6 @@
 #include <Foundation/VirtualPath.h>
 #include <Foundation/Visibility.h>
 #include <Foundation/Invalidation.h>
-#include <Foundation/DllPersistance.h>
 #include "FoundationModule.h"
 
 struct FoundationModule {
@@ -52,5 +51,4 @@ BeginModule(Foundation)
     RegisterUnit(VirtualPath)
     RegisterUnit(Visibility)
     RegisterUnit(Invalidation)
-    RegisterUnit(DllPersistance)
 EndModule()

@@ -7,8 +7,8 @@
 #include <cstdio>
 
 struct VirtualPath {
-    char VirtualPathTrigger[32];
-    char VirtualPathDestination[512 - 32];
+    StringRef VirtualPathTrigger;
+    StringRef VirtualPathDestination;
 };
 
 API_EXPORT void ResolveVirtualPath(StringRef virtualPath, u32 bufferLength, char *resolvedPath) {

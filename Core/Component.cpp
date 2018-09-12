@@ -133,8 +133,6 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
 
                 auto child = __CreateEntity();
                 __InjectChildPropertyValue(property, entity, child);
-                auto childComponent = GetPropertyChildComponent(property);
-                AddComponent(child, childComponent);
             }
             {
                 for_children(base, Bases, component) {

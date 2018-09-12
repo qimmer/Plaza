@@ -72,27 +72,33 @@ void ApplyResponseContentHeaders(Entity server, Entity request, Entity response)
     u64 contentLength = 0;
 
     auto contentStream = GetHttpResponseContentStream(response);
-    auto fileType = GetStreamFileType(contentStream);
-    if(StreamOpen(contentStream, StreamMode_Read)) {
-        StreamSeek(contentStream, StreamSeek_End);
 
-        contentLength = StreamTell(contentStream);
+    Entity header = 0;
 
-        StreamClose(contentStream);
+    if(HasComponent(contentStream, ComponentOf_Stream())) {
+        auto fileType = GetStreamFileType(contentStream);
+        if(StreamOpen(contentStream, StreamMode_Read)) {
+            StreamSeek(contentStream, StreamSeek_End);
+
+            contentLength = StreamTell(contentStream);
+
+            StreamClose(contentStream);
+        }
+
+        if(IsEntityValid(fileType)) {
+            header = AddHttpResponseHeaders(response);
+            SetHttpHeaderType(header, contentTypeHeader);
+            SetHttpHeaderValue(header, GetFileTypeMimeType(fileType));
+        }
+
     }
 
     char headerValue[16];
     snprintf(headerValue, sizeof(headerValue), "%llu", contentLength);
 
-    auto header = AddHttpResponseHeaders(response);
+    header = AddHttpResponseHeaders(response);
     SetHttpHeaderType(header, contentLengthHeader);
     SetHttpHeaderValue(header, headerValue);
-
-    if(IsEntityValid(fileType)) {
-        header = AddHttpResponseHeaders(response);
-        SetHttpHeaderType(header, contentTypeHeader);
-        SetHttpHeaderValue(header, GetFileTypeMimeType(fileType));
-    }
 
     for_children(requestHeader, HttpRequestHeaders, request) {
 

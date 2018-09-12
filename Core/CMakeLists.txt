@@ -61,7 +61,7 @@ if(UNIX)
 endif()
 
 if(WIN32)
-    target_link_libraries(Core PUBLIC ole32)
+    target_link_libraries(Core PUBLIC ole32 dbghelp)
     target_include_directories(Core PRIVATE libffi/src/x86)
 endif()
 

@@ -11,8 +11,12 @@
 
 Unit(Module)
 
+Component(ModuleLoader)
+    Property(StringRef, ModuleLoaderLibraryPath)
+
 Component(ModuleRoot)
     ArrayProperty(Module, Modules)
+    ArrayProperty(ModuleLoader, ModuleLoaders)
 
 Component(Dependency)
     ReferenceProperty(Module, DependencyModule)

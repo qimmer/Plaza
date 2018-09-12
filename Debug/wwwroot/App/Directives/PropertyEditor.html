@@ -15,17 +15,17 @@
                             <td width="1px"/>
                             <td width="99%"/>
                         </tr>
-                        <tr ng-repeat-start="componentName in draft.$components.filter(isComponentVisible).sort(componentComparator)" style="border-bottom: 1px solid #222;">
+                        <tr ng-repeat-start="component in connection.getEntities(draft.$components).filter(isComponentVisible).sort(componentComparator)" style="border-bottom: 1px solid #222;">
                             <td lass="cell" colspan="2">
-                                    <div class="component-header" style="width: calc(100% - 43px); display: inline-block"ng-click="collapsedComponents[componentName] = !collapsedComponents[componentName]">
-                                        {{componentName.prettify()}}
+                                    <div class="component-header" style="width: calc(100% - 43px); display: inline-block"ng-click="collapsedComponents[component.Uuid] = !collapsedComponents[component.Uuid]">
+                                        {{component.Name.prettify()}}
                                     </div>
-                                    <button class="btn btn-danger" style="float: right; width: 40px" ng-click="removeComponent(componentName)"><span class="im im-trash-can"></span></button>
+                                    <button class="btn btn-danger" style="float: right; width: 40px" ng-click="removeComponent(component.Uuid)"><span class="im im-trash-can"></span></button>
                             </td>                                
                         </tr>
-                        <tr ng-repeat-end ng-repeat="property in getProperties(componentName)" ng-hide="collapsedComponents[componentName]" ng-if="hiddenProperties.indexOf(property.Name) == -1">
+                        <tr ng-repeat-end ng-repeat="property in connection.getEntities(component.Properties)" ng-hide="collapsedComponents[component.Uuid]" ng-if="hiddenProperties.indexOf(property.Name) == -1">
                             <td class="label">
-                                {{property.Name.replace(componentName,'').prettify()}}
+                                {{property.Name.replace(component.Name,'').prettify()}}
                             </td>
                             <td class="value" ng-if="property.PropertyKind == 0" style="overflow: hidden; max-width: 1px">
                                 <input
@@ -159,7 +159,7 @@
         </div>
         <button class="btn btn-success" style="width: 100%" ng-show="selectedEntities.length > 0" ng-click="addComponentExpanded = !addComponentExpanded" >Add Component <span class="im" ng-class="addComponentExpanded ? 'im-angle-down' : 'im-angle-right'"></span></button>
         <div ng-show="addComponentExpanded && selectedEntities.length > 0">
-            <button class="btn btn-primary" style="direction: rtl; text-align: left; width: 100%;" ng-click="addComponent(component.Name); addComponentExpanded = false;" ng-show="connection.getEntity(selectedEntities[0]).$components.indexOf(component.Name) == -1" ng-repeat="component in connection.getComponentList('Component')">{{component.Name}}</button>
+            <button class="btn btn-primary" style="direction: rtl; text-align: left; width: 100%;" ng-click="addComponent(component.Name); addComponentExpanded = false;" ng-show="connection.getEntity(selectedEntities[0]).$components.indexOf(component.Name) == -1" ng-repeat="component in connection.getComponentList(connection.getComponentUuid('Component'))">{{component.Name}}</button>
         </div>
     </div>
     <div align="center" ng-if="!draft" style="display: table; width: 100%; height: 100%; color: #353535;">

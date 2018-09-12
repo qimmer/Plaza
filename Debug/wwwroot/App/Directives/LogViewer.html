@@ -1,20 +1,25 @@
 <div style="width: 100%; height: 40px;" class="bg-toolbox-header toolbox-header">
         Console
 </div>
-<div style="width: 100%; height: 100%;">
-    <table class="table table-borderless table-condensed table-striped table-hover" style="height: 100%; overflow: auto;">
-        <tr ng-repeat="message in connection.getComponentList('LogMessage')" ng-class="severityClass[message.LogMessageSeverity]">
+<div style="width: 100%; height: calc(100% - 40px);  overflow: auto;">
+    <table class="table table-borderless table-condensed table-striped table-hover">
+        <tr ng-repeat="message in connection.getComponentList(connection.getComponentUuid('LogMessage'))" ng-class="severityClass[message.LogMessageSeverity]" ng-click="expanded = !expanded" style="cursor: pointer;">
             <td>
                 {{severityName[message.LogMessageSeverity]}} 
             </td>
             <td style="white-space: nowrap;">
-                {{connection.getEntities()[message.LogMessageEntity] ? connection.getEntities()[message.LogMessageEntity].Name : message.LogMessageEntity}} 
+                {{connection.getEntities()[message.LogMessageEntity] ? connection.getEntities()[message.LogMessageEntity].Name : '[Deleted]'}} 
             </td>
             <td style="white-space: nowrap;">
                 {{moment.unix(message.LogMessageTime).format('L LT')}} 
             </td>
             <td width="100%">
                 {{message.LogMessageText}} 
+                <span ng-show="expanded">
+                    <br/>
+                    <br/>
+                    <p style="white-space: pre;">{{message.LogMessageStackTrace}} </p>
+                </span>
             </td>
             <td>
                 {{message.LogMessageCount}} 

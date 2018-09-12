@@ -52,7 +52,7 @@ angular.module('plaza')
                         var entity = connection.getEntity(uuid);
                         if(entity && entity.$components) {
                             for (var i = 0; i < entity.$components.length; ++i) {
-                                var icon = propertyIconMap[entity.$components[i]];
+                                var icon = propertyIconMap[connection.getEntity(entity.$components[i]).Name];
                                 if (icon !== undefined) {
                                     return icon;
                                 }

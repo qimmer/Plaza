@@ -34,8 +34,8 @@ struct StreamExtensionModule {
 };
 
 struct Stream {
-    char StreamPath[PathMax];
-    char StreamResolvedPath[PathMax];
+    StringRef StreamPath;
+    StringRef StreamResolvedPath;
 
     Entity StreamProtocol, StreamCompressor, StreamFileType;
 
@@ -419,7 +419,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     char resolvedPath[PathMax];
     ResolveVirtualPath(newValue, PathMax, resolvedPath);
 
-    strncpy(data->StreamResolvedPath, resolvedPath, sizeof(data->StreamResolvedPath));
+    data->StreamResolvedPath = Intern(resolvedPath);
 
     char protocolIdentifier[32];
     auto colonLocation = strstr(resolvedPath, "://");

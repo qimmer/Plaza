@@ -145,8 +145,13 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
 API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut) {
     auto component = GetOwner(property);
 
-    if(!IsEntityValid(component)) {
+    if(!IsEntityValid(property)) {
         Log(context, LogSeverity_Error, "Invalid property when trying to get property");
+        return false;
+    }
+
+    if(!IsEntityValid(component)) {
+        Log(context, LogSeverity_Error, "Invalid component when trying to get property %s", GetDebugName(property));
         return false;
     }
 
@@ -177,6 +182,8 @@ API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut)
         } else {
             memset(dataOut, 0, size);
         }
+
+        Log(context, LogSeverity_Info, "'%s' is not present on entity. Returning default value.", GetDebugName(property), GetDebugName(component));
 
         return false;
     }
@@ -274,7 +281,6 @@ API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Enti
 
     Assert(property, IsEntityValid(component));
     Assert(property, propertyData->PropertyKind == PropertyKind_Child);
-    AddComponent(context, component);
 
     auto offset = propertyData->PropertyOffset;
 
@@ -287,7 +293,9 @@ API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Enti
 
     SetOwner(value, context, property);
 
-    AddComponent(value, propertyData->PropertyChildComponent);
+    if(IsEntityValid(propertyData->PropertyChildComponent)) {
+        AddComponent(value, propertyData->PropertyChildComponent);
+    }
 
     {
         const Type argumentTypes[] = { TypeOf_Entity, TypeOf_Entity, TypeOf_Entity };
@@ -470,6 +478,7 @@ __PropertyCoreImpl(u32, PropertySize, Property)
 __PropertyCoreImpl(Type, PropertyType, Property)
 __PropertyCoreImpl(Entity, PropertyEnum, Property)
 __PropertyCoreImpl(Entity, PropertyChildComponent, Property)
+__PropertyCoreImpl(Entity, PropertyChangedEvent, Property)
 __PropertyCoreImpl(u8, PropertyKind, Property)
 __PropertyCoreImpl(bool, PropertyReadOnly, Property)
 

@@ -39,12 +39,15 @@ void Exit(s32 returnCode);
 StringRef GetDebugName(Entity entity);
 void DumpNode();
 
+StringRef GetStackTrace();
+
 #include <Core/NativeUtils.h>
 
 Unit(Debug)
     Component(LogMessage)
         Property(StringRef, LogMessageEntity)
         Property(StringRef, LogMessageText)
+        Property(StringRef, LogMessageStackTrace)
         Property(u8, LogMessageSeverity)
         Property(u32, LogMessageCount)
         Property(Date, LogMessageTime)

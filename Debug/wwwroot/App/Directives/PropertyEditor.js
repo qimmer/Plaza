@@ -76,20 +76,20 @@ angular.module('plaza')
                     return flags;
                 }
 
-                $scope.addChild = function(propertyName) {
-                    entityService.createChild($scope.connection, $scope.selectedEntities[0], propertyName);
+                $scope.addChild = function(propertyUuid) {
+                    entityService.createChild($scope.connection, $scope.selectedEntities[0], propertyUuid);
                 }
 
-                $scope.addComponent = function(componentName) {
-                    entityService.addComponent($scope.connection, $scope.selectedEntities[0], componentName);
+                $scope.addComponent = function(componentUuid) {
+                    entityService.addComponent($scope.connection, $scope.selectedEntities[0], componentUuid);
                 }
 
-                $scope.removeComponent = function(componentName) {
-                    entityService.removeComponent($scope.connection, $scope.selectedEntities[0], componentName);
+                $scope.removeComponent = function(componentUuid) {
+                    entityService.removeComponent($scope.connection, $scope.selectedEntities[0], componentUuid);
                 }
 
-                $scope.destroyEntity = function(uuid) {
-                    entityService.deleteEntity($scope.connection, uuid);
+                $scope.destroyEntity = function(entityUuid) {
+                    entityService.deleteEntity($scope.connection, entityUuid);
                 }
 
                 $scope.lockDraft = function() {
@@ -103,8 +103,8 @@ angular.module('plaza')
                     }
                 }
     
-                $scope.isComponentVisible = function(name) {
-                    return hiddenComponents.indexOf(name) == -1;
+                $scope.isComponentVisible = function(component) {
+                    return hiddenComponents.indexOf(component.Name) == -1;
                 }
                 $scope.applyDraft = function() {
                     var entities = $scope.selectedEntities.map(function(uuid) { return $scope.connection.getEntity(uuid); });
@@ -129,13 +129,8 @@ angular.module('plaza')
                     }
                 }
 
-                $scope.getProperties = function(componentName) {
-                    var properties = $scope.connection.getComponentList('Property');
-                    properties = properties.filter(function(p) { 
-                        var component = $scope.connection.getEntity(p.$owner);
-                        return component.Name == componentName; 
-                    });
-                    return properties;
+                $scope.getProperties = function(componentUuid) {
+                    return $scope.connection.getEntities($scope.connection.getEntity(componentUuid).Properties);
                 }
 
                 $scope.componentComparator = function (c1, c2) {

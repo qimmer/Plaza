@@ -2,7 +2,7 @@
     <button 
         class="btn btn-sm btn-primary" 
         style="width: 100%;"
-        ng-repeat="entity in connection.getComponentList(connection.getEntity(component).Name)"
+        ng-repeat="entity in connection.getComponentList(component)"
         ng-click="onPick({entity: entity.Uuid});">
         {{entity.Name}}
     </button>

@@ -14,6 +14,7 @@ typedef Entity(*ModuleOfSignature)();
 
 struct ModuleRoot {
     Vector(Modules, Entity, 64)
+    Vector(ModuleLoaders, Entity, 64)
 };
 
 struct Dependency {
@@ -21,9 +22,9 @@ struct Dependency {
 };
 
 struct Module {
-    char ModuleVersion[128];
-    char ModuleSourcePath[512];
-    char ModuleBinaryPath[512];
+    StringRef ModuleVersion;
+    StringRef ModuleSourcePath;
+    StringRef ModuleBinaryPath;
 
     Vector(Dependencies, Entity, 16)
     Vector(Components, Entity, 64)
@@ -35,35 +36,13 @@ struct Module {
     Vector(Roots, Entity, 128)
 };
 
+struct ModuleLoader {
+    StringRef ModuleLoaderLibraryPath;
+};
 
-BeginUnit(Module)
-    BeginComponent(ModuleRoot)
-        RegisterArrayProperty(Module, Modules)
-    EndComponent()
-
-    BeginComponent(Dependency)
-        RegisterReferenceProperty(Module, DependencyModule)
-    EndComponent()
-
-    BeginComponent(Module)
-        RegisterProperty(StringRef, ModuleVersion)
-        RegisterProperty(StringRef, ModuleSourcePath)
-        RegisterProperty(StringRef, ModuleBinaryPath)
-
-        RegisterArrayProperty(Component, Components)
-        RegisterArrayProperty(Event, Events)
-        RegisterArrayProperty(Enum, Enums)
-        RegisterArrayProperty(Function, Functions)
-        RegisterArrayProperty(Extension, Extensions)
-        RegisterArrayProperty(Subscription, Subscriptions)
-        RegisterArrayProperty(Dependency, Dependencies)
-    EndComponent()
-
-    RegisterFunction(GetModuleRoot)
-    RegisterFunction(LoadPlazaModule)
-
-    RegisterEvent(ModuleInitialized)
-EndUnit()
+LocalFunction(OnModuleLoaderLibraryPathChanged, void, Entity loader, StringRef oldPath, StringRef newPath) {
+    LoadPlazaModule(newPath);
+}
 
 API_EXPORT Entity GetModuleRoot() {
     static Entity root = 0;
@@ -185,3 +164,39 @@ void __InitializeModule() {
     __Property(PropertyOf_Modules(), offsetof(ModuleRoot, Modules), sizeof(ModuleRoot::Modules), TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
 }
 
+
+BeginUnit(Module)
+    BeginComponent(ModuleLoader)
+        RegisterProperty(StringRef, ModuleLoaderLibraryPath)
+    EndComponent()
+
+    BeginComponent(ModuleRoot)
+        RegisterArrayProperty(Module, Modules)
+        RegisterArrayProperty(ModuleLoader, ModuleLoaders)
+    EndComponent()
+
+    BeginComponent(Dependency)
+        RegisterReferenceProperty(Module, DependencyModule)
+    EndComponent()
+
+    BeginComponent(Module)
+        RegisterProperty(StringRef, ModuleVersion)
+        RegisterProperty(StringRef, ModuleSourcePath)
+        RegisterProperty(StringRef, ModuleBinaryPath)
+
+        RegisterArrayProperty(Component, Components)
+        RegisterArrayProperty(Event, Events)
+        RegisterArrayProperty(Enum, Enums)
+        RegisterArrayProperty(Function, Functions)
+        RegisterArrayProperty(Extension, Extensions)
+        RegisterArrayProperty(Subscription, Subscriptions)
+        RegisterArrayProperty(Dependency, Dependencies)
+    EndComponent()
+
+    RegisterFunction(GetModuleRoot)
+    RegisterFunction(LoadPlazaModule)
+
+    RegisterEvent(ModuleInitialized)
+
+    RegisterSubscription(ModuleLoaderLibraryPathChanged, OnModuleLoaderLibraryPathChanged, 0)
+EndUnit()

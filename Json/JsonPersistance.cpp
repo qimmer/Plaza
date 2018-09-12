@@ -176,7 +176,7 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
             writer.StartArray();
             for_entity(component, componentData, Component) {
                 if(HasComponent(parent, component)) {
-                    writer.String(GetName(component));
+                    writer.String(GetUuid(component));
                 }
             }
             writer.EndArray();
@@ -429,6 +429,20 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
     }
 
     auto components = value.FindMember("$components");
+    if(components != value.MemberEnd() && components->value.IsArray()) {
+        for(auto arrayIt = components->value.Begin(); arrayIt != components->value.End(); ++arrayIt) {
+            if(arrayIt->IsString()) {
+                auto componentUuid = arrayIt->GetString();
+                auto component = FindEntityByUuid(componentUuid);
+
+                if(!IsEntityValid(component)) {
+                    Log(root, LogSeverity_Warning, "Unknown component in JSON: %s", componentUuid);
+                } else {
+                    AddComponent(parent, component);
+                }
+            }
+        }
+    }
 
     for (auto propertyIterator = value.MemberBegin();
          propertyIterator != value.MemberEnd(); ++propertyIterator)
@@ -450,20 +464,25 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
 
         if(GetPropertyReadOnly(property)) continue;
 
+        auto component = GetOwner(property);
         auto propertyKind = GetPropertyKind(property);
         auto& reader = propertyIterator->value;
         switch(propertyKind) {
             case PropertyKind_Value:
-                if(!onlyHierarchy) {
+                if(!onlyHierarchy || property == PropertyOf_Name() || property == PropertyOf_Uuid()) {
                     result &= DeserializeValue(parent, property, root, reader);
                 }
                 break;
             case PropertyKind_Child:
             {
-                AddComponent(parent, GetOwner(property));
+                AddComponent(parent, component);
                 Entity child = 0;
                 GetPropertyValue(property, parent, &child);
-                result &= DeserializeNode(child, root, reader, onlyHierarchy);
+                if(!child) {
+                    Log(parent, LogSeverity_Error, "%s child has not been set by %s.", GetDebugName(property), GetDebugName(component));
+                } else {
+                    result &= DeserializeNode(child, root, reader, onlyHierarchy);
+                }
             }
             break;
             case PropertyKind_Array:
@@ -496,21 +515,6 @@ static bool DeserializeNode(Entity parent, Entity root, const rapidjson::Value& 
                 break;
         }
 
-    }
-
-    if(components != value.MemberEnd() && components->value.IsArray()) {
-        for(auto arrayIt = components->value.Begin(); arrayIt != components->value.End(); ++arrayIt) {
-            if(arrayIt->IsString()) {
-                auto componentName = arrayIt->GetString();
-                auto component = FindEntityByName(ComponentOf_Component(), componentName);
-
-                if(!IsEntityValid(component)) {
-                    Log(root, LogSeverity_Warning, "Unknown component in JSON: %s", componentName);
-                } else {
-                    AddComponent(parent, component);
-                }
-            }
-        }
     }
 
     return result;

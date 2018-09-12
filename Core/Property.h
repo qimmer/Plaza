@@ -23,7 +23,7 @@ Component(Property)
     __PropertyCore(Property, bool, PropertyReadOnly)
     __PropertyCore(Property, Entity, PropertyChildComponent)
     __PropertyCore(Property, Entity, PropertyEnum)
-    ChildProperty(Event, PropertyChangedEvent)
+    __PropertyCore(Property, Entity, PropertyChangedEvent)
 
 Component(Ownership)
     __PropertyCoreGetOnly(Ownership, Entity, Owner, PropertyFlag_ReadOnly, PropertyFlag_Transient)

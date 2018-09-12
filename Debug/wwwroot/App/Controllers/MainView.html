@@ -34,35 +34,22 @@
                 </div>
                 <div data-split-pane-divider data-height="0px"></div>
                 <div data-split-pane-component data-height="20em">
-                    <table class="table table-borderless table-no-padding">
-                        <tbody>
-                                <tr style="height: 100%">
-                                    <td>
-                                        <div>
-                                                <log-viewer connection="connection" selected-entities="selectedEntities"/>
-                                        </div>
-                                    </td>
-                                </tr>    
-                                <tr>
-                                    <td style="width: 100%;">
-                                            <div class="nav bg-dark" style="width: 100%;">
-                                                <span class="col-2">{{connection.isConnected ? ('Connected to: ' + connection.endpoint) : 'Connecting to ' + connection.endpoint + '...'}}</span>
-                                                <span class="col-2">
-                                                    <select ng-model="statsComponent" ng-options="component as component.Name for component in connection.getComponentList('Component')"></select>
-                                                </span>
-                                                <span class="col-2">
-                                                    Count: {{connection.getComponentList(statsComponent.Name).length}}
-                                                </span>
+                    <div style="height: calc(100% - 22px);">
+                            <log-viewer connection="connection" selected-entities="selectedEntities"/>
+                    </div>
+                    <div class="nav bg-dark" style="width: 100%; height: 22px;">
+                        <div class="col-4">{{connection.isConnected ? ('Connected to: ' + connection.endpoint) : 'Connecting to ' + connection.endpoint + '...'}}</div>
+                        <div class="col-2">
+                            <select ng-model="statsComponent" ng-options="component as component.Name for component in connection.getComponentList(connection.getComponentUuid('Component'))"></select>
+                        </div>
+                        <div class="col-2">
+                            Count: {{connection.getComponentList(statsComponent.Uuid).length}}
+                        </div>
 
-                                                <span class="col-2">
-                                                    
-                                                    </span>
-                                            </div>
-                                    </td>
-                                </tr>
-                        </tbody>
+                        <div class="col-2">
                         
-                    </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -6,8 +6,8 @@
 #include <Core/NativeUtils.h>
 
 struct CommandLineArgument {
-    char CommandLineArgumentName[32];
-    char CommandLineArgumentValue[1024-32];
+    StringRef CommandLineArgumentName;
+    StringRef CommandLineArgumentValue;
 };
 
 BeginUnit(CommandLineArgument)
