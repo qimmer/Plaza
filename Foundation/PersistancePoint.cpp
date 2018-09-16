@@ -18,7 +18,7 @@ struct PersistancePoint {
 
 LocalFunction(OnStreamContentChanged, void, Entity persistancePoint) {
     // If serialized content has changed, re-deserialize (load) it!
-    if(HasComponent(persistancePoint, ComponentOf_PersistancePoint()) && !GetPersistancePointLoading(persistancePoint) && GetPersistancePointLoaded(persistancePoint)) {
+    if(HasComponent(persistancePoint, ComponentOf_PersistancePoint()) && !GetPersistancePointLoading(persistancePoint) && !GetPersistancePointSaving(persistancePoint) && GetPersistancePointLoaded(persistancePoint)) {
         SetPersistancePointLoading(persistancePoint, false);
         SetPersistancePointLoading(persistancePoint, true);
     }
@@ -130,8 +130,9 @@ LocalFunction(OnPersistancePointSavingChanged, void, Entity persistancePoint, bo
             Log(persistancePoint, LogSeverity_Error, "Serialization failed on trying to save '%s'.", GetStreamResolvedPath(persistancePoint));
         }
 
-        SetPersistancePointSaving(persistancePoint, false);
         StreamClose(persistancePoint);
+
+        SetPersistancePointSaving(persistancePoint, false);
     }
 
 }

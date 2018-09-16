@@ -23,8 +23,26 @@ int main(int argc, char** argv) { \
 
     ModuleOf_Debug();
 
-    SetStreamPath(GetModuleRoot(), "file://Modules.json");
-    SetPersistancePointLoading(GetModuleRoot(), true);
+    for(auto i = 1; i < argc; ++i) {
+        auto path = argv[i];
+
+        if(strstr(path, ".dll") || strstr(path, ".so") || strstr(path, ".dylib")) {
+            auto module = LoadPlazaModule(path);
+            if(IsEntityValid(module)) {
+                printf("Module '%s' Loaded from '%s'.\n", GetName(module), argv[i]);
+            }
+        } else {
+            char vpath[512];
+            snprintf(vpath, sizeof(vpath), "file://%s", path);
+
+            auto module = AddModules(GetModuleRoot());
+            SetStreamPath(module, vpath);
+            SetPersistancePointLoading(module, true);
+
+            printf("Module '%s' Loaded from '%s'.\n", GetName(module), path);
+        }
+
+    }
 
     RunAppLoops();
 

@@ -1,13 +1,79 @@
 angular.module('plaza').service('entityService', function ($http, $timeout, $interval, eventService) {
     var service = {};
 
+    function releaseEntity(connection, uuid) {
+        var entity = connection.getEntities()[uuid];
+
+        if(!entity) return;
+
+        /*for(var key in entity) {
+            if(key[0] == '$') continue;
+
+            var value = entity[key];
+            if(Array.isArray(value)) {
+                for(var i = 0; i < value.length; ++i) {
+                    releaseEntity(connection, value[i]);
+                }
+            } else if (typeof value === 'object' && value !== null && value.$components) {
+                releaseEntity(connection, value.Uuid);
+            }
+        }*/
+
+        var entities = connection.getEntities();
+        for(var childUuid in entities) {
+            var e = entities[childUuid];
+            if(e.$owner === uuid) {
+                releaseEntity(connection, childUuid);
+            }
+        }
+        
+        for(var i = 0; i < entity.$components.length; ++i) {
+            var list = connection.getComponentList(entity.$components[i]);
+            var index = list.indexOf(entity);
+            if(index != -1) {
+                list.splice(index, 1);
+            }
+        }
+
+        delete connection.getEntities()[uuid];
+    }
+
     function mergeEntity(connection, entity, parent, parentProperty) {
+
+        if(!connection.getEntities()[entity.$owner] && entity.$owner) {
+            return;
+        }
+
         var existing = connection.getEntities()[entity.Uuid];
+
+        if(existing) {
+            for(var i = 0; i < existing.$components.length; ++i) {
+                var list = connection.getComponentList(existing.$components[i]);
+                var index = list.indexOf(existing);
+                if(index != -1) {
+                    list.splice(index, 1);
+                }
+            }
+        }
+
+        connection.getEntities()[entity.Uuid] = entity;
 
         for(var key in entity) {
             if(key[0] == '$') continue;
 
             var value = entity[key];
+
+            if(existing && Array.isArray(existing[key])) {
+                var newUuids = value.map(function(e) { return (typeof e === "string") ? e : e.Uuid });
+                var existingUuids = existing[key];
+                
+                for(var i = 0; i < existingUuids.length; ++i) {
+                    if(newUuids.indexOf(existingUuids[i]) == -1) {
+                        releaseEntity(connection, existingUuids[i]);
+                    }
+                }
+            }
+
             if(Array.isArray(value)) {
                 for(var i = 0; i < value.length; ++i) {
                     if(typeof value[i] === 'object') {
@@ -27,15 +93,6 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
                 entity[key] = entity.Uuid;
             }
         }
-
-        if(existing && existing.$components) {
-            for(var i = 0; i < existing.$components.length; ++i) {
-                var list = connection.getComponentList(existing.$components[i]);
-                list.splice(list.indexOf(existing), 1);
-            }
-        }
-
-        connection.getEntities()[entity.Uuid] = entity;
 
         for(var i = 0; i < entity.$components.length; ++i) {
             var list = connection.getComponentList(entity.$components[i]);
@@ -90,19 +147,24 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
                 return list; 
             },
             getComponentUuid: function(componentName) {
-                var components = Object.values(entities).filter(function(e) { return e.Name === componentName && e.Properties; });
-                if(!components.length) return null;
-
-                return components[0].Uuid;
+                for(var uuid in entities) {
+                    if(entities[uuid].Name === componentName) {
+                        return uuid;
+                    }
+                }
+                
+                return undefined;
             },
             getEntity: function(uuid) { 
-                if(!connection.isConnected) return null;
+                if(!connection.isConnected || !uuid) return undefined;
 
                 var entity = entities[uuid];
-                if(!entity) {
-                    entity = { $loading: true };
+                if(entity === undefined) {
+                    entity = { Uuid: uuid, $loading: true };
                     entities[uuid] = entity;
-                    service.getEntity(connection, uuid);
+                    service.getEntity(connection, uuid).then(null, function() {
+                        delete entities[uuid];
+                    });
                     return entity;
                 }
                 return entity;
@@ -115,8 +177,11 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
                 var children = [];
                 for(var key in entity) {
                     if(key[0] == '$') continue;
-                    if(!Array.isArray(entity[key])) continue;
-                    children = children.concat(entity[key]);
+                    if(Array.isArray(entity[key])) {
+                        children = children.concat(entity[key]);
+                    } else if(typeof entity[key] === "object" && entity[key] != null) {
+                        children.push(entity[key]);
+                    }
                 }
                 
                 return children; 
@@ -138,7 +203,7 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
         var promise = null;
         if (connection.isConnected) {
             promise = service.getChanges(connection).then(function() {
-                return new Promise(resolve => $timeout(resolve, 250));
+                return new Promise(resolve => $timeout(resolve, 100));
             }, function(err) {throw err;});
         } else {
             promise = service.getSession(connection).then(function(id) {
@@ -155,7 +220,9 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
             connection.sessionId = null;
             connection.reset();
 
-            return new Promise(resolve => $timeout(resolve, 1000));
+            new Promise(resolve => $timeout(resolve, 1000));
+
+            throw err;
         });
     }
 
@@ -208,15 +275,12 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
             return;
         }
 
-        var entity = connection.getEntity(entityUuid);
-        entity.$loading = true;
-
         return $http.get(connection.endpoint + '/entity/' + entityUuid).then(function (response) {
             connection.isConnected = true;
 
             mergeEntity(connection, response.data);
 
-            return entity;
+            return connection.getEntities()[entityUuid];
         }, service.error);
     }
 
@@ -237,10 +301,6 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
     }
 
     service.updateEntity = function (connection, entityUuid, newEntity) {
-        var entity = connection.getEntity(entityUuid);
-        var oldName = entity.Name;
-        var newName = newEntity.Name || oldName;
-
         return $http.put(connection.endpoint + '/entity/' + entityUuid, newEntity).then(function (response) {
             connection.isConnected = true;
 

@@ -33,6 +33,14 @@ angular.module('plaza').controller('mainController', function($scope, entityServ
         }
     }
 
+    $scope.getNumEntities = function() {
+        var i = 0;
+        for(var key in $scope.connection.getEntities()) {
+            i++;
+        }
+        return i;
+    }
+
     $scope.editorTemplates = {
         Module: 'App/Editors/Module.html'
     };
@@ -40,8 +48,6 @@ angular.module('plaza').controller('mainController', function($scope, entityServ
     Promise.resolve().then(function resolver() {
         return entityService.update($scope.connection)
         .then(resolver);
-    }).catch((error) => {
-        console.log("Error: " + error);
     });
 
     document.addEventListener("keydown", function(e) {

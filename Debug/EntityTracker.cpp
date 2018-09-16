@@ -37,6 +37,9 @@ API_EXPORT u16 GetEntityTrackerChanges(Entity entityTracker, Entity responseStre
 
         (*trackerData->changedSet)[i] = false;
         auto entity = GetEntityByIndex(i);
+
+        if(HasComponent(entity, ComponentOf_EntityModification())) continue;
+
         if(IsEntityValid(entity)) {
             SetEntityModificationEntity(AddEntityModifications(entityTracker), entity);
         }

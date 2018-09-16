@@ -23,7 +23,7 @@
                                     <button class="btn btn-danger" style="float: right; width: 40px" ng-click="removeComponent(component.Uuid)"><span class="im im-trash-can"></span></button>
                             </td>                                
                         </tr>
-                        <tr ng-repeat-end ng-repeat="property in connection.getEntities(component.Properties)" ng-hide="collapsedComponents[component.Uuid]" ng-if="hiddenProperties.indexOf(property.Name) == -1">
+                        <tr ng-repeat-end ng-repeat="property in connection.getEntities(component.Properties)" ng-hide="collapsedComponents[component.Uuid]" ng-iif="hiddenProperties.indexOf(property.Name) == -1">
                             <td class="label">
                                 {{property.Name.replace(component.Name,'').prettify()}}
                             </td>
@@ -32,7 +32,7 @@
                                     class="form-control" 
                                     ng-readonly="property.PropertyReadOnly"
                                     ng-change="lockDraft()" 
-                                    ng-blur="applyDraft();" 
+                                    ng-blur="applyDraft(property);" 
                                     ng-focus="lockDraft()"
                                     ng-if="property.PropertyType == 'StringRef'"
                                     ng-model="draft[property.Name]"
@@ -43,7 +43,7 @@
                                     class="form-control" 
                                     ng-readonly="property.PropertyReadOnly"
                                     ng-change="lockDraft()" 
-                                    ng-blur="applyDraft();" 
+                                    ng-blur="applyDraft(property);" 
                                     ng-focus="lockDraft()"
                                     type="number" 
                                     ng-if="(property.PropertyType[0] == 'u' || property.PropertyType[0] == 's') && property.PropertyEnum === null" 
@@ -58,14 +58,14 @@
                                     ng-disabled="property.PropertyReadOnly"
                                     ng-model="draft[property.Name]"
                                     ng-options="flag.EnumFlagValue as flag.Name for flag in getEnumFlags(connection, property)"
-                                    ng-change="applyDraft();"
+                                    ng-change="applyDraft(property);"
                                 />
 
                                 <input
                                     class="form-control"
                                     ng-readonly="property.PropertyReadOnly"
                                     ng-change="lockDraft()" 
-                                    ng-blur="applyDraft();" 
+                                    ng-blur="applyDraft(property);" 
                                     ng-focus="lockDraft()"
                                     type="number" 
                                     ng-if="property.PropertyType == 'float' || property.PropertyType == 'double'" 
@@ -79,7 +79,7 @@
                                     ng-disable="property.PropertyReadOnly"
                                     ng-class="draft[property.Name] ? 'btn-success' : 'btn-disabled'" 
                                     ng-if="property.PropertyType == 'bool'" 
-                                    ng-click="draft[property.Name] = !draft[property.Name]; applyDraft()">
+                                    ng-click="draft[property.Name] = !draft[property.Name]; applyDraft(property)">
                                     {{draft[property.Name] ? 'true' : 'false'}}
                                 </button>
     
@@ -105,7 +105,7 @@
                                     class="fade-in"
                                     ng-if="property.PropertyType == 'Entity'"
                                     ng-show="pickerOpen[property.Name]">
-                                    <entity-picker connection="connection" component="property.PropertyChildComponent" on-pick="draft[property.Name] = entity; pickerOpen[property.Name] = false; applyDraft();"/>
+                                    <entity-picker connection="connection" component="property.PropertyChildComponent" on-pick="draft[property.Name] = entity; pickerOpen[property.Name] = false; applyDraft(property);"/>
                                 </div>
                                 
                                 <select 
@@ -115,14 +115,14 @@
                                     ng-if="property.PropertyType == 'Type'" 
                                     ng-model="draft[property.Name]"
                                     ng-options="type.value as type.name for type in types"
-                                    ng-change="applyDraft();"
+                                    ng-change="applyDraft(property);"
                                 />
 
                                 <input
                                     class="form-control"
                                     ng-readonly="property.PropertyReadOnly"
                                     ng-change="lockDraft()" 
-                                    ng-blur="applyDraft();" 
+                                    ng-blur="applyDraft(property);" 
                                     ng-focus="lockDraft()"
                                     ng-if="property.PropertyType == 'Date'" 
                                     ng-model="draft[property.Name]" 
@@ -159,7 +159,7 @@
         </div>
         <button class="btn btn-success" style="width: 100%" ng-show="selectedEntities.length > 0" ng-click="addComponentExpanded = !addComponentExpanded" >Add Component <span class="im" ng-class="addComponentExpanded ? 'im-angle-down' : 'im-angle-right'"></span></button>
         <div ng-show="addComponentExpanded && selectedEntities.length > 0">
-            <button class="btn btn-primary" style="direction: rtl; text-align: left; width: 100%;" ng-click="addComponent(component.Name); addComponentExpanded = false;" ng-show="connection.getEntity(selectedEntities[0]).$components.indexOf(component.Name) == -1" ng-repeat="component in connection.getComponentList(connection.getComponentUuid('Component'))">{{component.Name}}</button>
+            <button class="btn btn-primary" style="direction: rtl; text-align: left; width: 100%;" ng-click="addComponent(component.Uuid); addComponentExpanded = false;" ng-show="connection.getEntity(selectedEntities[0]).$components.indexOf(component.Name) == -1" ng-repeat="component in connection.getComponentList(connection.getComponentUuid('Component'))">{{component.Name}}</button>
         </div>
     </div>
     <div align="center" ng-if="!draft" style="display: table; width: 100%; height: 100%; color: #353535;">

@@ -172,6 +172,7 @@ BeginUnit(Module)
 
     BeginComponent(ModuleRoot)
         RegisterArrayProperty(Module, Modules)
+        Assert(component, GetOwner(PropertyOf_Modules()));
         RegisterArrayProperty(ModuleLoader, ModuleLoaders)
     EndComponent()
 

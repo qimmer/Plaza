@@ -17,6 +17,10 @@ Vector<u32> FreeSlots;
 
 extern bool __IsCoreInitialized;
 
+API_EXPORT u32 GetNumEntities() {
+    return Generations.size() - FreeSlots.size();
+}
+
 API_EXPORT bool IsEntityOccupied(u32 index) {
     return Generations.size() > index && Generations[index] % 2 != 0;
 }

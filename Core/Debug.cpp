@@ -185,7 +185,7 @@ BeginUnit(Debug)
     EndComponent()
 EndUnit()
 
-StringRef GetStackTrace() {
+API_EXPORT StringRef GetStackTrace() {
     eastl::fixed_string<char, 2048> stackTrace;
 
 #ifdef WIN32

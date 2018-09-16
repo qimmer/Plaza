@@ -106,18 +106,16 @@ angular.module('plaza')
                 $scope.isComponentVisible = function(component) {
                     return hiddenComponents.indexOf(component.Name) == -1;
                 }
-                $scope.applyDraft = function() {
+                $scope.applyDraft = function(property) {
                     var entities = $scope.selectedEntities.map(function(uuid) { return $scope.connection.getEntity(uuid); });
                     
-                    var draft = angular.copy($scope.draft);
-                    for(var key in draft) {
-                            if(key[0]=='$') delete draft[key];
-                    }
-                    
+                    var update = {};
+                    update[property.Name] = $scope.draft[property.Name];
+
                     $scope.isDraftLocked = false;
 
                     for(var i = 0; i < entities.length; ++i) {
-                        entityService.updateEntity($scope.connection, entities[i].Uuid, $scope.draft);
+                        entityService.updateEntity($scope.connection, entities[i].Uuid, update);
                     }
                 }
 

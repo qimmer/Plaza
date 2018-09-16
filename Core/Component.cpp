@@ -127,8 +127,10 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
         }
 
         if(__isComponentInitialized) {
+            auto componentData = GetComponentData(component);
 
             for_children(property, Properties, component) {
+                auto propertyData = GetPropertyData(property);
                 if(GetPropertyKind(property) != PropertyKind_Child) continue;
 
                 auto child = __CreateEntity();

@@ -21,7 +21,7 @@ static Entity handleGet(StringRef uuid, Entity request, Entity response, u8 dept
     auto requestedEntity = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(requestedEntity)) {
-		Log(request, LogSeverity_Error, "GET: Entity not found: %s", uuid);
+        Verbose(VerboseLevel_Common, "GET: Entity not found: %s", uuid);
 		return FindResponseCode(404);
 	}
 
@@ -42,7 +42,7 @@ static Entity handlePut(StringRef uuid, Entity request, Entity response) {
     auto requestedEntity = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(requestedEntity)) {
-		Log(request, LogSeverity_Error, "PUT: Entity not found: %s", uuid);
+		Verbose(VerboseLevel_Common, "PUT: Entity not found: %s", uuid);
 		return FindResponseCode(404);
 	}
 
@@ -58,7 +58,7 @@ static Entity handlePost(StringRef uuid, StringRef propertyName, Entity request,
     auto parent = FindEntityByUuid(uuid);
 
     if(!IsEntityValid(parent)) {
-		Log(request, LogSeverity_Error, "POST: Entity not found: %s", uuid);
+        Verbose(VerboseLevel_Common, "POST: Entity not found: %s", uuid);
         return FindResponseCode(404);
     }
 
@@ -95,7 +95,7 @@ static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
     auto existing = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(existing)) {
-		Log(request, LogSeverity_Error, "DELETE: Entity not found: %s", uuid);
+        Verbose(VerboseLevel_Common, "DELETE: Entity not found: %s", uuid);
 		return FindResponseCode(404);
 	}
 

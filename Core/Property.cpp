@@ -11,6 +11,7 @@
 #include "Vector.h"
 #include "Enum.h"
 #include "Identification.h"
+#include "Strings.h"
 
 #include <malloc.h>
 #include <memory.h>
@@ -54,32 +55,16 @@ struct ArrayProperty {
     Entity ArrayPropertyComponent;
 };
 
-static struct strings* string_library = 0;
-static struct strings_frequency* string_freq = 0;
-
-API_EXPORT StringRef Intern(StringRef sourceString) {
-    if(!sourceString) sourceString = "";
-
-    auto id = strings_intern(string_library, sourceString);
-    strings_frequency_add(string_freq, id);
-    return strings_lookup_id(string_library, id);
-}
-
-static void FreeStrings() {
-    if(string_library) {
-        strings_free(string_library);
-    }
-
-    if(string_freq) {
-        strings_frequency_free(string_freq);
-    }
-}
-
 API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *newValueData) {
     auto component = GetOwner(property);
 
-    if(!IsEntityValid(component) || !IsEntityValid(property)) {
+    if(!IsEntityValid(property)) {
         Log(context, LogSeverity_Error, "Invalid property when trying to set property");
+        return;
+    }
+
+    if(!IsEntityValid(component)) {
+        Log(context, LogSeverity_Error, "Invalid component when trying to set property");
         return;
     }
 
@@ -123,7 +108,9 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
             *(StringRef*)valueData = nullStr;
         }
 
-        internedString = Intern(*(StringRef *) newValueData);
+        ReleaseStringRef(*(StringRef*)valueData);
+
+        internedString = AddStringRef(*(StringRef *) newValueData);
         newValueData = &internedString;
     }
 
@@ -445,13 +432,6 @@ void __Property(Entity property, u32 offset, u32 size, Type type, Entity compone
     data->PropertyKind = kind;
 }
 
-void __InitializeString() {
-    string_library = strings_new();
-    string_freq = strings_frequency_new();
-
-    atexit(FreeStrings);
-}
-
 void __InitializeProperty() {
     auto component = ComponentOf_Property();
     AddComponent(component, ComponentOf_Component());
@@ -537,6 +517,55 @@ LocalFunction(OnPropertyChanged, void, Entity property) {
     }
 }
 
+LocalFunction(OnPropertyKindChanged, void, Entity property, u32 oldKind, u32 newKind) {
+    auto propertyData = GetPropertyData(property);
+    auto component = GetOwner(property);
+
+    Entity entity = 0;
+    char * data = 0;
+    for(auto i = GetNextComponent(component, InvalidIndex, (void**)&data, &entity);
+        i != InvalidIndex;
+        i = GetNextComponent(component, i, (void**)&data, &entity)) {
+
+        if(oldKind == PropertyKind_Array) {
+            EntityVectorStruct *vec = (EntityVectorStruct*)(data + propertyData->PropertyOffset);
+            for(auto i = 0; i < vec->Count; ++i) {
+                __DestroyEntity(vec->StaBuf[i]);
+                vec->StaBuf[i] = 0;
+            }
+            SetVectorAmount(*vec, 0);
+        } else if(oldKind == PropertyKind_Child) {
+            Entity *child = (Entity*)(data + propertyData->PropertyOffset);
+
+            if(IsEntityValid(*child)) {
+                __DestroyEntity(*child);
+            }
+            *child = 0;
+        }
+    }
+
+    if(!GetComponentExplicitSize(component)) {
+        LayoutProperties(component);
+    }
+
+    for(auto i = GetNextComponent(component, InvalidIndex, (void**)&data, &entity);
+        i != InvalidIndex;
+        i = GetNextComponent(component, i, (void**)&data, &entity)) {
+
+        if(newKind == PropertyKind_Array) {
+            EntityVectorStruct *vec = (EntityVectorStruct*)(data + propertyData->PropertyOffset);
+            memset(vec, 0, sizeof(EntityVectorStruct));
+        } else if(newKind == PropertyKind_Child) {
+            Entity *child = (Entity*)(data + propertyData->PropertyOffset);
+
+            *child = __CreateEntity();
+            SetOwner(*child, entity, property);
+        } else {
+            memset(data + propertyData->PropertyOffset, 0, GetTypeSize(propertyData->PropertyType));
+        }
+    }
+}
+
 LocalFunction(OnPropertyAdded, void, Entity unused, Entity property) {
     auto component = GetOwner(property);
     if(!GetComponentExplicitSize(component)) {
@@ -596,6 +625,7 @@ BeginUnit(Property)
     EndComponent()
 
     RegisterSubscription(EntityComponentAdded, OnPropertyAdded, ComponentOf_Property())
+    RegisterSubscription(PropertyKindChanged, OnPropertyKindChanged, 0)
     RegisterSubscription(PropertyTypeChanged, OnPropertyChanged, 0)
     RegisterSubscription(PropertySizeChanged, OnPropertyChanged, 0)
     RegisterSubscription(PropertyOffsetChanged, OnPropertyOffsetChanged, 0)

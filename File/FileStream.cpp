@@ -140,7 +140,7 @@ static bool Delete(Entity entity) {
 }
 
 LocalFunction(OnStreamPathChanged, void, Entity stream, StringRef oldPath, StringRef newPath) {
-    if(HasComponent(stream, ComponentOf_FileStream())) {
+    if(HasComponent(stream, ComponentOf_FileStream()) && newPath) {
         auto data = GetFileStreamData(stream);
         fileWatcher.removeWatch(data->watchID);
 

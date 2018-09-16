@@ -4,6 +4,7 @@
 
 #include <Foundation/AppLoop.h>
 #include <Core/Debug.h>
+#include <Core/Strings.h>
 #include "FoundationModule.h"
 
 struct AppLoop {
@@ -31,6 +32,8 @@ API_EXPORT void RunAppLoops() {
                 }
             }
         }
+
+        CleanupStrings();
 
         if(!any) {
             break;

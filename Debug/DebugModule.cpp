@@ -40,18 +40,18 @@ static u16 DebugComponent(StringRef path, bool(*func)(Entity, Entity)) {
 
     auto uuid = slashLoc + 1;
 
-    auto componentNameLength = (size_t)slashLoc - (size_t)path;
-    char componentName[128];
-    Assert(0, componentNameLength < 128);
-    memcpy(componentName, path, componentNameLength);
-    componentName[componentNameLength] = '\0';
+    auto componentUuidLength = (size_t)slashLoc - (size_t)path;
+    char componentUuid[128];
+    Assert(0, componentUuidLength < 128);
+    memcpy(componentUuid, path, componentUuidLength);
+    componentUuid[componentUuidLength] = '\0';
 
     auto entity = FindEntityByUuid(uuid);
     if(!IsEntityValid(entity)) {
         return 404;
     }
 
-    auto component = FindEntityByName(ComponentOf_Component(), componentName);
+    auto component = FindEntityByUuid(componentUuid);
     if(!IsEntityValid(component)) {
         return 404;
     }

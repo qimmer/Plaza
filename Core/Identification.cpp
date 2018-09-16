@@ -12,6 +12,8 @@
 #include "Vector.h"
 #include "Math.h"
 #include "Hashing.h"
+#include "Std.h"
+#include "Strings.h"
 
 #include <climits>
 #include <map>
@@ -186,10 +188,10 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
 
 API_EXPORT Entity FindEntityByUuid(StringRef uuid) {
     if(strlen(uuid) == 0) {
-        return GetModuleRoot();
+        return 0;
     }
 
-    uuid = Intern(uuid);
+    uuid = Intern(ToLower(uuid));
 
     for_entity(entity, data, Identification) {
         if(data->Uuid == uuid) {
@@ -215,13 +217,6 @@ API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relative
     return relativePath;
 }
 
-BeginUnit(Identification)
-    BeginComponent(Identification)
-        RegisterProperty(StringRef, Name)
-        RegisterProperty(StringRef, Uuid)
-    EndComponent()
-EndUnit()
-
 void __InitializeNode() {
     auto component = ComponentOf_Identification();
     __Property(PropertyOf_Name(), offsetof(Identification, Name), sizeof(Identification::Name), TypeOf_StringRef,  component, 0, 0);
@@ -243,12 +238,11 @@ API_EXPORT void SetName(Entity entity, StringRef name) {
     GetUuid(entity); // Provoke eventual new Guid
 
     auto data = GetIdentificationData(entity);
-    data->Name = Intern(data->Name);
-    name = Intern(name);
 
-    if(data->Name != name) {
+    if(!data->Name || !name || strcmp(data->Name, name)) {
         auto oldName = data->Name;
-        data->Name = name;
+        ReleaseStringRef(oldName);
+        data->Name = AddStringRef(name);
 
         const Type argumentTypes[] = {TypeOf_Entity, TypeOf_StringRef, TypeOf_StringRef};
         const void * argumentData[] = {&entity, &oldName, &name};
@@ -292,9 +286,21 @@ API_EXPORT void SetUuid(Entity entity, StringRef value) {
 
     auto data = GetIdentificationData(entity);
 
+    if(!value || !strlen(value)) {
+        Log(entity, LogSeverity_Error, "Uuid '%s' is invalid. Uuid has not changed.", value);
+        return;
+    }
+
     if(data->Uuid != value) {
+        auto existing = FindEntityByUuid(value);
+        if(IsEntityValid(existing)) {
+            Log(entity, LogSeverity_Error, "Uuid '%s' is already occupied by '%s'. Uuid has not changed.", value, GetDebugName(existing));
+            return;
+        }
+
         auto oldValue = data->Uuid;
-        data->Uuid = value;
+        ReleaseStringRef(oldValue);
+        data->Uuid = AddStringRef(value);
 
         const Type argumentTypes[] = {TypeOf_Entity, TypeOf_StringRef, TypeOf_StringRef};
         const void * argumentData[] = {&entity, &oldValue, &value};
@@ -342,3 +348,20 @@ API_EXPORT StringRef CreateGuidFromPath(StringRef path) {
 
     return nullptr;
 }
+
+LocalFunction(OnUuidChanged, void, Entity entity, StringRef oldUuid, StringRef newUuid) {
+    auto lowerCase = ToLower(newUuid);
+
+    if(lowerCase != newUuid) {
+        SetUuid(entity, lowerCase);
+    }
+}
+
+BeginUnit(Identification)
+    BeginComponent(Identification)
+        RegisterProperty(StringRef, Name)
+        RegisterProperty(StringRef, Uuid)
+    EndComponent()
+
+    RegisterSubscription(UuidChanged, OnUuidChanged, 0)
+EndUnit()
