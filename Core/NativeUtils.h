@@ -420,6 +420,12 @@ StringRef GetUniqueEntityName(Entity entity);
         {\
             typedef COMPONENT ComponentType;
 
+#define BeginExtensionComponent(COMPONENT, BASECOMPONENT) \
+    BeginComponent(COMPONENT)\
+        auto extension = AddExtensions(module);\
+        SetExtensionComponent(extension, ComponentOf_ ## BASECOMPONENT());\
+        SetExtensionExtenderComponent(extension, ComponentOf_ ## COMPONENT());\
+
 #define EndComponent() \
         }
 

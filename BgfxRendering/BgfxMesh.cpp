@@ -221,11 +221,14 @@ LocalFunction(OnValidation, void, Entity entity) {
 }
 
 BeginUnit(BgfxMesh)
-    BeginComponent(BgfxVertexDeclaration)
+    BeginExtensionComponent(BgfxVertexDeclaration, VertexDeclaration)
+        RegisterBase(BgfxResource)
     EndComponent()
-    BeginComponent(BgfxVertexBuffer)
+    BeginExtensionComponent(BgfxVertexBuffer, VertexBuffer)
+        RegisterBase(BgfxResource)
     EndComponent()
-    BeginComponent(BgfxIndexBuffer)
+    BeginExtensionComponent(BgfxIndexBuffer, IndexBuffer)
+        RegisterBase(BgfxResource)
     EndComponent()
 
     RegisterSubscription(EntityComponentRemoved, OnBgfxIndexBufferRemoved, ComponentOf_BgfxIndexBuffer())

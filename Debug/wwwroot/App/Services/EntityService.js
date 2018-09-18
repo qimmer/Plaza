@@ -90,7 +90,7 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
                 mergeEntity(connection, value);
                 value.$owner = entity.Uuid;
                 value.$property = key;
-                entity[key] = entity.Uuid;
+                entity[key] = value.Uuid;
             }
         }
 
@@ -177,10 +177,14 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
                 var children = [];
                 for(var key in entity) {
                     if(key[0] == '$') continue;
+                    
                     if(Array.isArray(entity[key])) {
                         children = children.concat(entity[key]);
-                    } else if(typeof entity[key] === "object" && entity[key] != null) {
-                        children.push(entity[key]);
+                    } else {
+                        var child = connection.getEntities()[entity[key]];
+                        if(child && child.$owner === uuid) {
+                            children.push(entity[key]);
+                        }
                     }
                 }
                 

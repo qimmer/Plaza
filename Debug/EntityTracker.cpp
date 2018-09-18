@@ -49,8 +49,7 @@ API_EXPORT u16 GetEntityTrackerChanges(Entity entityTracker, Entity responseStre
     if(!SerializeJson(
             responseStream,
             entityTracker,
-            3, // Include changed entity's children, but not sub-children
-            2)) { // Include entity tracker's modifications' entities
+            GetDebugChangeSerializationSettings(ModuleOf_Debug()))) { // Include entity tracker's modifications' entities
         responseCode = 500;
     }
 

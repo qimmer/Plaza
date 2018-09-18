@@ -270,7 +270,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
         PrimaryContext = entity;
 
         for_children(extension, Extensions, ModuleOf_BgfxRendering()) {
-            SetExtensionDisabled(extension, false);
+            SetExtensionEnabled(extension, true);
         }
 
     } else {
@@ -288,7 +288,7 @@ LocalFunction(OnBgfxRenderContextRemoved, void, Entity component, Entity entity)
 
     if(NumContexts == 1) {
         for_children(extension, Extensions, ModuleOf_BgfxRendering()) {
-            SetExtensionDisabled(extension, true);
+            SetExtensionEnabled(extension, false);
         }
 
         bgfx::shutdown();
@@ -319,7 +319,7 @@ LocalFunction(OnContextGrabMouseChanged, void, Entity entity, bool oldValue, boo
 }
 
 BeginUnit(BgfxRenderContext)
-    BeginComponent(BgfxRenderContext)
+    BeginExtensionComponent(BgfxRenderContext, RenderContext)
         RegisterBase(RenderContext)
         RegisterBase(InputContext)
     EndComponent()

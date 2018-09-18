@@ -236,6 +236,6 @@ void RenderCommandList(Entity entity, unsigned char viewId) {
 }
 
 BeginUnit(BgfxCommandList)
-    BeginComponent(BgfxCommandList)
+    BeginExtensionComponent(BgfxCommandList, CommandList)
     EndComponent()
 EndUnit()

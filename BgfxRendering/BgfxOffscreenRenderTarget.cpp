@@ -49,7 +49,7 @@ LocalFunction(OnValidation, void, Entity entity) {
 }
 
 BeginUnit(BgfxOffscreenRenderTarget)
-    BeginComponent(BgfxOffscreenRenderTarget)
+    BeginExtensionComponent(BgfxOffscreenRenderTarget, OffscreenRenderTarget)
         RegisterBase(BgfxResource)
     EndComponent()
 

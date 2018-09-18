@@ -12,7 +12,7 @@
            <div style="overflow-y: scroll; height: calc(100% - 80px)">
                 <div ng-repeat="entity in connection.getComponentList(connection.getComponentUuid(currentComponent))">
                         <entity-tree-node uuid="{{entity.Uuid}}" connection="connection" selected-nodes="selectedEntities"
-                        expanded-nodes="expandedNodes" icon="getIcon" />
+                        expanded-nodes="expandedNodes" icon="getIcon" on-open="onOpen" />
                 </div>
            </div>
 </div>

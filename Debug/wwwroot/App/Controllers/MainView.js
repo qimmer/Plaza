@@ -10,21 +10,23 @@ angular.module('plaza').controller('mainController', function($scope, entityServ
 
     $scope.selectedEntities = [];
     
-    $scope.closeEntity = function(entity) {
-        $scope.editor.tabs.splice($scope.editor.tabs.indexOf(entity), 1);
+    $scope.closeTab = function(uuid) {
+        $scope.editor.tabs.splice($scope.editor.tabs.indexOf(uuid), 1);
 
         $scope.editor.currentTab = $scope.editor.tabs.length ? $scope.editor.tabs[0] : null;
     }
 
-    $scope.openEntity = function(entity) {
-        if(!$scope.editor.tabs.includes(entity)) {
-            $scope.editor.tabs.push(entity);
+    $scope.openTab = function(uuid) {
+        if(!$scope.editor.tabs.includes(uuid)) {
+            $scope.editor.tabs.push(uuid);
         }
 
-        $scope.editor.currentTab = entity;
+        $scope.editor.currentTab = uuid;
     }
 
-    $scope.getEditorTemplate = function(entity) {
+    $scope.getEditorTemplate = function(uuid) {
+        var entity = $scope.connection.getEntity(uuid);
+        
         for(var i = 0; i < entity.$components.length; ++i) {
             var template = $scope.editorTemplates[entity.$components[i]];
             if(template) {

@@ -30,6 +30,8 @@
 #include <unordered_map>
 #include <string>
 #include <Core/Std.h>
+#include <Foundation/SerializationSettings.h>
+#include <Foundation/FoundationModule.h>
 
 using namespace eastl;
 
@@ -589,6 +591,7 @@ static StringRef ReadNode(rapidjson::Value& value, rapidjson::Value& entityTable
             {
                 auto& element = propertyIterator->value;
 
+                // Avoid treating a vector as an object
                 if(!element.HasMember("x")) {
                     auto childUuid = ReadNode(element, entityTable, document, uuid, propertyName, 0, NULL);
 
@@ -714,11 +717,19 @@ API_EXPORT bool DeserializeJsonFromString(Entity stream, Entity entity, StringRe
     return true;
 }
 
-API_EXPORT bool SerializeJson(Entity stream, Entity entity, s16 includeChildLevels, s16 includeReferenceLevels, bool includePersistedChildren, bool includeNativeEntities) {
+API_EXPORT bool SerializeJson(Entity stream, Entity entity, Entity settings) {
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 
-    auto result = SerializeNode(entity, entity, "", writer, includeChildLevels, includeReferenceLevels, includePersistedChildren, includeNativeEntities);
+    auto result = SerializeNode(
+            entity,
+            entity,
+            "",
+            writer,
+            GetSerializationSettingsMaxChildLevel(settings),
+            GetSerializationSettingsMaxReferenceLevel(settings),
+            !GetSerializationSettingsExcludePersistedChildren(settings),
+            !GetSerializationSettingsExcludeNativeEntities(settings));
 
     writer.Flush();
 
@@ -739,7 +750,7 @@ API_EXPORT bool SerializeJson(Entity stream, Entity entity, s16 includeChildLeve
     return result;
 }
 
-API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
+API_EXPORT bool DeserializeJson(Entity stream, Entity entity, Entity settings) {
     bool streamWasOpen = IsStreamOpen(stream);
     auto startOffset = 0;
     if(!streamWasOpen) {
@@ -797,11 +808,11 @@ API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
 }
 
 static bool Serialize(Entity persistancePoint) {
-    return SerializeJson(persistancePoint, persistancePoint, INT16_MAX, 0, false, false);
+    return SerializeJson(persistancePoint, persistancePoint, GetPersistancePointSerializationSettings(ModuleOf_Foundation()));
 }
 
 static bool Deserialize(Entity persistancePoint) {
-    return DeserializeJson(persistancePoint, persistancePoint);
+    return DeserializeJson(persistancePoint, persistancePoint, GetPersistancePointSerializationSettings(ModuleOf_Foundation()));
 }
 
 BeginUnit(JsonPersistance)

@@ -7,6 +7,7 @@ angular.module('plaza')
                 connection: "=",
                 expandedNodes: "=",
                 selectedNodes: "=",
+                onOpen: "&?",
                 icon: "="
             },
             templateUrl: 'App/Directives/EntityTreeNode.html',
@@ -27,6 +28,12 @@ angular.module('plaza')
 
                 $scope.isArrayElement = function(e) {
                     return e.$index !== undefined;
+                }
+
+                $scope.open = function(uuid) {
+                    if($scope.onOpen) {
+                        $scope.onOpen({uuid: uuid});
+                    }
                 }
             },
             link: function ($scope, $element, $attrs) {

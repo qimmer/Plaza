@@ -21,7 +21,7 @@ API_EXPORT Vector<u16> ComponentDataIndices;
 
 struct Extension {
     Entity ExtensionComponent, ExtensionExtenderComponent;
-    bool ExtensionDisabled;
+    bool ExtensionEnabled;
 };
 
 struct Base {
@@ -280,26 +280,32 @@ LocalFunction(OnEntityDestroyed, void, Entity entity) {
 }
 
 static void RemoveExtensions(Entity component, Entity extensionComponent) {
-    Entity entity = 0;
-    void *data = 0;
-    for(u32 i = GetNextComponent(component, InvalidIndex, &data, &entity);
-        i != InvalidIndex;
-        i = GetNextComponent(component, i, &data, &entity)) {
-        RemoveComponent(entity, extensionComponent);
+    if(HasComponent(component, ComponentOf_Component()) && HasComponent(extensionComponent, ComponentOf_Component())) {
+
+        Entity entity = 0;
+        void *data = 0;
+        for(u32 i = GetNextComponent(component, InvalidIndex, &data, &entity);
+            i != InvalidIndex;
+            i = GetNextComponent(component, i, &data, &entity)) {
+            RemoveComponent(entity, extensionComponent);
+        }
     }
 }
 
 static void AddExtensions(Entity component, Entity extensionComponent) {
-    Entity entity = 0;
-    void *data = 0;
-    for(u32 i = GetNextComponent(component, InvalidIndex, &data, &entity);
-        i != InvalidIndex;
-        i = GetNextComponent(component, i, &data, &entity)) {
-        AddComponent(entity, extensionComponent);
+    if(HasComponent(component, ComponentOf_Component()) && HasComponent(extensionComponent, ComponentOf_Component())) {
+
+        Entity entity = 0;
+        void *data = 0;
+        for(u32 i = GetNextComponent(component, InvalidIndex, &data, &entity);
+            i != InvalidIndex;
+            i = GetNextComponent(component, i, &data, &entity)) {
+            AddComponent(entity, extensionComponent);
+        }
     }
 }
 
-LocalFunction(OnExtensionDisabledChanged,
+LocalFunction(OnExtensionEnabledChanged,
         void,
         Entity extension,
         bool oldValue,
@@ -318,7 +324,7 @@ LocalFunction(OnExtensionComponentChanged,
         Entity extension,
         Entity oldValue,
         Entity newValue) {
-    if(!GetExtensionDisabled(extension)) {
+    if(GetExtensionEnabled(extension)) {
         RemoveExtensions(oldValue, GetExtensionExtenderComponent(extension));
         AddExtensions(newValue, GetExtensionExtenderComponent(extension));
     }
@@ -329,7 +335,7 @@ LocalFunction(OnExtensionExtenderComponentChanged,
         Entity extension,
         Entity oldValue,
         Entity newValue) {
-    if(!GetExtensionDisabled(extension)) {
+    if(GetExtensionEnabled(extension)) {
         RemoveExtensions(GetExtensionComponent(extension), oldValue);
         AddExtensions(GetExtensionComponent(extension), newValue);
     }
@@ -351,7 +357,7 @@ BeginUnit(Component)
     BeginComponent(Extension)
         RegisterReferenceProperty(Component, ExtensionComponent)
         RegisterReferenceProperty(Component, ExtensionExtenderComponent)
-        RegisterProperty(bool, ExtensionDisabled)
+        RegisterProperty(bool, ExtensionEnabled)
     EndComponent()
 
     RegisterEvent(EntityComponentAdded)
@@ -361,7 +367,7 @@ BeginUnit(Component)
 
     RegisterSubscription(EntityDestroyed, OnEntityDestroyed, 0)
 
-    RegisterSubscription(ExtensionDisabledChanged, OnExtensionDisabledChanged, 0)
+    RegisterSubscription(ExtensionEnabledChanged, OnExtensionEnabledChanged, 0)
     RegisterSubscription(ExtensionComponentChanged, OnExtensionComponentChanged, 0)
     RegisterSubscription(ExtensionExtenderComponentChanged, OnExtensionExtenderComponentChanged, 0)
 EndUnit()

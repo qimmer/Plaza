@@ -17,10 +17,11 @@
 #include <Foundation/VirtualPath.h>
 #include <Foundation/Visibility.h>
 #include <Foundation/Invalidation.h>
+#include <Foundation/SerializationSettings.h>
 #include "FoundationModule.h"
 
 struct FoundationModule {
-    Entity TaskQueue, FilesystemUpdateTimer;
+    Entity TaskQueue, FilesystemUpdateTimer, PersistancePointSerializationSettings;
 };
 
 struct FoundationExtension {
@@ -30,13 +31,22 @@ struct FoundationExtension {
 BeginUnit(Foundation)
     BeginComponent(FoundationModule)
         RegisterChildProperty(TaskQueue, TaskQueue)
+        RegisterChildProperty(SerializationSettings, PersistancePointSerializationSettings)
     EndComponent()
 	BeginComponent(FoundationExtension)
 		RegisterArrayProperty(FileType, FileTypes)
 	EndComponent()
+
+	AddComponent(module, ComponentOf_FoundationModule());
+
+	auto settings = GetPersistancePointSerializationSettings(ModuleOf_Foundation());
+	SetSerializationSettingsExcludeNativeEntities(settings, true);
+    SetSerializationSettingsExcludePersistedChildren(settings, true);
+    SetSerializationSettingsMaxChildLevel(settings, UINT32_MAX);
 EndUnit()
 
 BeginModule(Foundation)
+    RegisterUnit(SerializationSettings)
     RegisterUnit(Foundation)
     RegisterUnit(AppLoop)
     RegisterUnit(CommandLineArgument)

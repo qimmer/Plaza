@@ -7,15 +7,16 @@
 #include <Json/JsonPersistance.h>
 #include <Core/Identification.h>
 #include <Core/Debug.h>
+#include <Foundation/SerializationSettings.h>
 #include "RestEntityRouting.h"
 #include "RestRouting.h"
 
 struct RestEntityRouting {
     Entity RestEntityRoutingRoot;
-    u8 RestEntityRoutingDepth;
+    Entity RestEntityRoutingSerializationSettings;
 };
 
-static Entity handleGet(StringRef uuid, Entity request, Entity response, u8 depth) {
+static Entity handleGet(StringRef uuid, Entity request, Entity response, Entity settings) {
     auto responseStream = GetHttpResponseContentStream(response);
 
     auto requestedEntity = FindEntityByUuid(uuid);
@@ -27,7 +28,7 @@ static Entity handleGet(StringRef uuid, Entity request, Entity response, u8 dept
 
     SetStreamPath(responseStream, "memory://response.json");
 
-    if(!SerializeJson(responseStream, requestedEntity, depth, 0)) {
+    if(!SerializeJson(responseStream, requestedEntity, settings)) {
 		Log(request, LogSeverity_Error, "GET: Error serializing %s", uuid);
 
         return FindResponseCode(500);
@@ -36,7 +37,7 @@ static Entity handleGet(StringRef uuid, Entity request, Entity response, u8 dept
     return FindResponseCode(200);
 }
 
-static Entity handlePut(StringRef uuid, Entity request, Entity response) {
+static Entity handlePut(StringRef uuid, Entity request, Entity response, Entity settings) {
     auto requestStream = GetHttpRequestContentStream(request);
 
     auto requestedEntity = FindEntityByUuid(uuid);
@@ -46,7 +47,7 @@ static Entity handlePut(StringRef uuid, Entity request, Entity response) {
 		return FindResponseCode(404);
 	}
 
-    if(!DeserializeJson(requestStream, requestedEntity)) {
+    if(!DeserializeJson(requestStream, requestedEntity, settings)) {
 		Log(request, LogSeverity_Error, "PUT: Error serializing %s", uuid);
         return FindResponseCode(500);
     }
@@ -54,7 +55,7 @@ static Entity handlePut(StringRef uuid, Entity request, Entity response) {
     return FindResponseCode(200);
 }
 
-static Entity handlePost(StringRef uuid, StringRef propertyName, Entity request, Entity response) {
+static Entity handlePost(StringRef uuid, StringRef propertyName, Entity request, Entity response, Entity settings) {
     auto parent = FindEntityByUuid(uuid);
 
     if(!IsEntityValid(parent)) {
@@ -78,13 +79,13 @@ static Entity handlePost(StringRef uuid, StringRef propertyName, Entity request,
     if(HasComponent(requestStream, ComponentOf_Stream())) {
         auto fileType = GetStreamFileType(requestStream);
         if(IsEntityValid(fileType) && strcmp(GetFileTypeMimeType(fileType), "application/json") == 0) {
-            DeserializeJson(requestStream, newEntity);
+            DeserializeJson(requestStream, newEntity, settings);
         }
     }
 
     SetStreamPath(responseStream, "memory://response.json");
 
-    if(!SerializeJson(responseStream, newEntity, 100, 0)) {
+    if(!SerializeJson(responseStream, newEntity, settings)) {
         return FindResponseCode(500);
     }
 
@@ -141,13 +142,14 @@ LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity
         }
 
         auto method = GetHttpRequestMethod(request);
+        auto settings = GetRestEntityRoutingSerializationSettings(routing);
         auto responseCode = FindResponseCode(500);
 		if (strcmp(method, "GET") == 0) {
-			responseCode = handleGet(uuid, request, response, GetRestEntityRoutingDepth(routing));
+			responseCode = handleGet(uuid, request, response, settings);
 		} else if (strcmp(method, "PUT") == 0) {
-			responseCode = handlePut(uuid, request, response);
+			responseCode = handlePut(uuid, request, response, settings);
 		} else if (strcmp(method, "POST") == 0) {
-			responseCode = handlePost(uuid, propertyName, request, response);
+			responseCode = handlePost(uuid, propertyName, request, response, settings);
 		} else if (strcmp(method, "DELETE") == 0) {
 			responseCode = handleDelete(uuid, request, response);
 		} else {
@@ -162,7 +164,7 @@ BeginUnit(RestEntityRouting)
     BeginComponent(RestEntityRouting)
         RegisterBase(RestRouting)
         RegisterReferenceProperty(Ownership, RestEntityRoutingRoot)
-        RegisterProperty(u8, RestEntityRoutingDepth)
+        RegisterChildProperty(SerializationSettings, RestEntityRoutingSerializationSettings)
     EndComponent()
 
     RegisterSubscription(RestRoutingRequest, OnRestRoutingRequest, 0)

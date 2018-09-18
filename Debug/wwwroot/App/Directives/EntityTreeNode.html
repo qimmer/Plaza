@@ -1,8 +1,8 @@
 <div class="tree-node" ng-class="selectedNodes.indexOf(uuid) == -1 ? '' : 'selected'">
     <i ng-click="toggle(uuid)" class="im" style="display: inline-block; font-size: 0.6em; line-height:20px; margin-left: 4px; vertical-align: top; padding: 0px 4px 0px 4px; width: 16px;" ng-class="connection.getChildren(uuid).length ? ((expandedNodes.indexOf(uuid) != -1) ? 'im-angle-down' : 'im-angle-right') : ''"/>
     <i ng-dblclick="open(uuid)" ng-click="select(uuid)" style="display: inline-block; font-size: 1em; line-height:20px; padding: 0px 2px 0px 4px; vertical-align: top; width: 20px;" ng-class="icon(connection, uuid)" /> 
-    <div ng-dblclick="open(uuid)" ng-click="select(uuid)" style="display: inline-block; line-height:20px; vertical-align: top; width: calc(100% - 44px)">{{connection.getEntity(uuid).Name || '...'}}</div>
+    <div ng-dblclick="open(uuid)" ng-click="select(uuid)" style="display: inline-block; line-height:20px; vertical-align: top; width: calc(100% - 44px)">{{connection.getEntity(uuid).Name || connection.getEntity(uuid).$property || '...'}}</div>
 </div>
 <div style="margin-left: 10px;" ng-if="expandedNodes.indexOf(uuid) != -1">
-    <entity-tree-node ng-repeat="childUuid in connection.getChildren(uuid)" connection="connection" uuid="{{childUuid}}" expanded-nodes="expandedNodes" selected-nodes="selectedNodes" icon="icon"/>
+    <entity-tree-node ng-repeat="childUuid in connection.getChildren(uuid)" connection="connection" uuid="{{childUuid}}" expanded-nodes="expandedNodes" selected-nodes="selectedNodes" icon="icon" on-open="onOpen"/>
 </div>

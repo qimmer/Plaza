@@ -4,6 +4,7 @@
 
 #include <Foundation/NativeUtils.h>
 #include <Foundation/FoundationModule.h>
+#include <Foundation/SerializationSettings.h>
 #include <Networking/NetworkingModule.h>
 #include <Networking/Server.h>
 #include <Networking/HttpServer.h>
@@ -23,7 +24,7 @@ struct DebugSession {
 };
 
 struct Debug {
-    Entity DebugServer;
+    Entity DebugServer, DebugChangeSerializationSettings;
     Vector(DebugServerSessions, Entity, 64)
 };
 
@@ -119,11 +120,16 @@ BeginUnit(DebugModule)
 
     BeginComponent(Debug)
         RegisterChildProperty(DebugServer, DebugServer)
+        RegisterChildProperty(SerializationSettings, DebugChangeSerializationSettings)
         RegisterArrayProperty(DebugSession, DebugServerSessions)
     EndComponent()
 
 	ModuleData(
 		{
+		    "DebugChangeSerializationSettings": {
+                "SerializationSettingsMaxChildLevel": 3,
+                "SerializationSettingsMaxReferenceLevel": 2
+		    },
 			"FileTypes": [
 				{ "FileTypeExtension": ".html", "FileTypeMimeType" : "text/html" },
 				{ "FileTypeExtension": ".css", "FileTypeMimeType" : "text/css" },
@@ -149,7 +155,10 @@ BeginUnit(DebugModule)
                         "Name": "EntityRoute",
                         "RestEntityRoutingRoot": "/",
                         "RestRoutingRoute": "/api/entity",
-                        "RestEntityRoutingDepth": 4
+                        "RestEntityRoutingSerializationSettings": {
+                            "SerializationSettingsMaxChildLevel": 4,
+                            "SerializationSettingsIncludeDrivers": true
+                        }
                     },
                     {
                         "Name": "SessionRoute",

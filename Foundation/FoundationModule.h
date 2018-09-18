@@ -11,6 +11,7 @@ Module(Foundation)
     Unit(Foundation)
         Component(FoundationModule)
             ChildProperty(TaskQueue, TaskQueue)
+            ChildProperty(SerializationSettings, PersistancePointSerializationSettings)
 
 		Component(FoundationExtension)
 			ArrayProperty(FileType, FileTypes)

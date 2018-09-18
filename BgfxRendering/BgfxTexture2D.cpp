@@ -63,7 +63,7 @@ LocalFunction(OnValidation, void, Entity entity) {
 }
 
 BeginUnit(BgfxTexture2D)
-    BeginComponent(BgfxTexture2D)
+    BeginExtensionComponent(BgfxTexture2D, Texture2D)
         RegisterBase(BgfxResource)
     EndComponent()
 

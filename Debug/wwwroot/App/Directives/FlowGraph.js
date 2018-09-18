@@ -4,7 +4,7 @@ angular.module('plaza')
             restrict: 'AE',
             scope: {
                 connection: "=",
-                entity: "="
+                rootUuid: "="
             },
             templateUrl: 'App/Directives/FlowGraph.html',
             controller: function ($scope, $element, $attrs) {
@@ -14,75 +14,69 @@ angular.module('plaza')
                     y: 0
                 };
 
-                $scope.getBgStyle = function() {
+                $scope.getBgStyle = function () {
                     return {
                         "background-position": "left " + ($scope.scroll.x) + "px top " + ($scope.scroll.y) + "px",
-                        "transform": "translate(" + (-(1/$scope.zoom) * 50 + 50).toString() + "%, " +(-(1/$scope.zoom) * 50 + 50).toString() + "%)"
+                        "transform": "translate(" + (-(1 / $scope.zoom) * 50 + 50).toString() + "%, " + (-(1 / $scope.zoom) * 50 + 50).toString() + "%)"
                     };
                 }
 
-                $scope.getContainerStyle = function() {
+                $scope.getContainerStyle = function () {
                     return {
                         "transform": "scale(" + $scope.zoom + ")",
-                        "width": ((1/$scope.zoom) * 100).toString() + "%",
-                        "height": ((1/$scope.zoom) * 100).toString() + "%",
+                        "width": ((1 / $scope.zoom) * 100).toString() + "%",
+                        "height": ((1 / $scope.zoom) * 100).toString() + "%",
                     };
                 }
 
-                $scope.getNodeStyle = function(node) {
-                    if(!node.FlowNodeLocation) {
-                        node.FlowNodeLocation = {
+                $scope.getNodeStyle = function (uuid) {
+                    var entity = $scope.connection.getEntity(uuid);
+
+                    if (!entity.FlowNodeLocation) {
+                        entity.FlowNodeLocation = {
                             x: Math.ceil(Math.random() * 1000),
                             y: Math.ceil(Math.random() * 1000)
                         };
 
-                        entityService.updateEntity($scope.connection, node.$path, {
-                            FlowNodeLocation: node.FlowNodeLocation
+                        entityService.updateEntity($scope.connection, entity.Uuid, {
+                            FlowNodeLocation: entity.FlowNodeLocation
                         });
                     }
 
                     return {
-                        left: (node.FlowNodeLocation.x + $scope.scroll.x) + "px",
-                        top: (node.FlowNodeLocation.y + $scope.scroll.y) + "px",
+                        left: (entity.FlowNodeLocation.x + $scope.scroll.x) + "px",
+                        top: (entity.FlowNodeLocation.y + $scope.scroll.y) + "px",
                     };
                 }
 
-                $scope.isFolder = function (value, index, array) {
-                    return value.$type == "folder";
-                }
+                $element.bind("DOMMouseScroll mousewheel onmousewheel", function (event) {
 
-                $scope.isValue = function (value, index, array) {
-                    return typeof value !== "object";
-                }
-
-                $element.bind("DOMMouseScroll mousewheel onmousewheel", function(event) {
-                   
                     // cross-browser wheel delta
                     var event = window.event || event; // old IE support
                     var delta = event.wheelDelta || -event.detail;
-            
-                    if(Math.abs(delta) > 0) {
-                        $scope.$apply(function(){
-                            if(delta < 0) {
+
+                    if (Math.abs(delta) > 0) {
+                        $scope.$apply(function () {
+                            if (delta < 0) {
                                 $scope.zoom *= 0.9;
                             }
 
-                            if(delta > 0) {
+                            if (delta > 0) {
                                 $scope.zoom *= 1.1;
                             }
                         });
-                    
+
                         // for IE
                         event.returnValue = false;
                         // for Chrome and Firefox
-                        if(event.preventDefault) {
-                            event.preventDefault();                        
+                        if (event.preventDefault) {
+                            event.preventDefault();
                         }
 
                     }
                 });
 
-                var initialMouseX, initialMouseY, dragNode, dragScope;
+                var initialMouseX, initialMouseY, dragUuid, dragScope;
 
                 function mousemove($event) {
                     var dx = $event.clientX - initialMouseX;
@@ -91,34 +85,34 @@ angular.module('plaza')
                     initialMouseX = $event.clientX;
                     initialMouseY = $event.clientY;
 
-                    dragScope.$apply(function() {
-                        if(dragNode) {
-                            dragNode.FlowNodeLocation.x += dx / $scope.zoom;
-                            dragNode.FlowNodeLocation.y += dy / $scope.zoom;
+                    dragScope.$apply(function () {
+                        if (dragUuid) {
+                            var entity = $scope.connection.getEntity(dragUuid);
+                            entity.FlowNodeLocation.x += dx / $scope.zoom;
+                            entity.FlowNodeLocation.y += dy / $scope.zoom;
 
-                            entityService.updateEntity($scope.connection, dragNode.$path, {
-                                FlowNodeLocation: dragNode.FlowNodeLocation
+                            entityService.updateEntity($scope.connection, dragUuid, {
+                                FlowNodeLocation: entity.FlowNodeLocation
                             });
                         } else {
                             $scope.scroll.x += dx / $scope.zoom;
                             $scope.scroll.y += dy / $scope.zoom;
                         }
-                    });                    
+                    });
 
                     return false;
                 }
 
                 function mouseup() {
-                    dragNode = null;
+                    dragUuid = null;
                     $document.unbind('mousemove', mousemove);
                     $document.unbind('mouseup', mouseup);
                 }
 
-                $scope.mouseDown = function($event, node) {
-                    $scope.connection.selectedNode = node;
-                    $scope.selectedEntities = [($scope.connection.selectedNode['$components']) === undefined ? entityService.findEntity($scope.connection, $scope.connection.selectedNode.$parentPath) : $scope.connection.selectedNode];
-                    
-                    dragNode = node;
+                $scope.mouseDown = function ($event, entityUuid) {
+                    $scope.connection.selectedEntities = [entityUuid];
+
+                    dragUuid = entityUuid;
                     dragScope = this;
                     initialMouseX = $event.clientX;
                     initialMouseY = $event.clientY;
@@ -128,29 +122,29 @@ angular.module('plaza')
                     return false;
                 }
 
-                $scope.dragStart = function($event) {
-                            if(!dragNode) {
-                                dragNode = null;
-                                dragScope = this;
-                                initialMouseX = $event.clientX;
-                                initialMouseY = $event.clientY;
-                                $document.bind('mousemove', mousemove);
-                                $document.bind('mouseup', mouseup);
-                                return false;        
-                            }
-                    
+                $scope.dragStart = function ($event) {
+                    if (!dragUuid) {
+                        dragUuid = null;
+                        dragScope = this;
+                        initialMouseX = $event.clientX;
+                        initialMouseY = $event.clientY;
+                        $document.bind('mousemove', mousemove);
+                        $document.bind('mouseup', mouseup);
+                        return false;
+                    }
+
                 }
 
-                $scope.isValue = function(value, index, array) {
+                $scope.isValue = function (value, index, array) {
                     return typeof value !== "Object";
                 }
 
-                $scope.getKeys = function(table) { 
+                $scope.getKeys = function (table) {
                     var keys = [];
-                    for(var key in table) {
-                        if(key[0] === "$") continue;
+                    for (var key in table) {
+                        if (key[0] === "$") continue;
 
-                        if(typeof table[key] === "object") continue;
+                        if (typeof table[key] === "object") continue;
 
                         keys.push(key);
                     }

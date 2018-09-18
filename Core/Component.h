@@ -21,7 +21,7 @@ Unit(Component)
     Component(Extension)
         ReferenceProperty(Entity, ExtensionComponent)
         ReferenceProperty(Entity, ExtensionExtenderComponent)
-        Property(bool, ExtensionDisabled)
+        Property(bool, ExtensionEnabled)
 
     Component(Base)
         ReferenceProperty(Component, BaseComponent)

@@ -48,7 +48,7 @@ LocalFunction(OnValidation, void, Entity entity) {
 }
 
 BeginUnit(BgfxUniform)
-    BeginComponent(BgfxUniform)
+    BeginExtensionComponent(BgfxUniform, Uniform)
         RegisterBase(BgfxResource)
     EndComponent()
 

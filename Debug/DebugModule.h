@@ -12,6 +12,7 @@ Module(Debug)
 Unit(DebugModule)
     Component(Debug)
         ChildProperty(DebugServer, DebugServer)
+        ChildProperty(SerializationSettings, DebugChangeSerializationSettings)
         ArrayProperty(DebugSession, DebugServerSessions)
 
     Component(DebugServer)

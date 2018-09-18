@@ -45,49 +45,7 @@ BeginModule(BgfxRendering)
     ModuleData({
         "BgfxRenderingLoop": {
             "AppLoopDisabled": true
-        },
-        "Extensions": [
-           {
-                "ExtensionDisabled": true,
-                "ExtensionComponent": "/Modules/Rendering/Components/CommandList",
-                "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxCommandList"
-           },
-           {
-               "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/VertexDeclaration",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxVertexDeclaration"
-           },
-           {
-               "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/VertexBuffer",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxVertexBuffer"
-           },
-           {
-               "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/IndexBuffer",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxIndexBuffer"
-           },
-           {
-               "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/OffscreenRenderTarget",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxOffscreenRenderTarget"
-           },
-           {
-               "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/BinaryProgram",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxBinaryProgram"
-           },
-           {
-               "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/Texture2D",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxTexture2D"
-           },
-           {
-               "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/Uniform",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxUniform"
-           }
-        ]
+        }
     })
 EndModule()
 

@@ -450,18 +450,6 @@ void __InitializeProperty() {
     __Property(PropertyOf_Owner(), offsetof(Ownership, Owner), sizeof(Ownership::Owner), TypeOf_Entity, component, 0, PropertyKind_Value);
 }
 
-__PropertyCoreGet(Entity, Owner, Ownership)
-__PropertyCoreGet(Entity, OwnerProperty, Ownership)
-
-__PropertyCoreImpl(u32, PropertyOffset, Property)
-__PropertyCoreImpl(u32, PropertySize, Property)
-__PropertyCoreImpl(Type, PropertyType, Property)
-__PropertyCoreImpl(Entity, PropertyEnum, Property)
-__PropertyCoreImpl(Entity, PropertyChildComponent, Property)
-__PropertyCoreImpl(Entity, PropertyChangedEvent, Property)
-__PropertyCoreImpl(u8, PropertyKind, Property)
-__PropertyCoreImpl(bool, PropertyReadOnly, Property)
-
 API_EXPORT void SetOwner(Entity entity, Entity owner, Entity ownerProperty) {
     Assert(entity, IsEntityValid(owner));
     Assert(entity, IsEntityValid(ownerProperty));
@@ -595,6 +583,17 @@ LocalFunction(OnPropertyOffsetChanged, void, Entity property, u32 oldValue, u32 
         memmove(data + newValue, data + oldValue, propertySize);
     }
 }
+
+__PropertyCoreGet(Entity, Owner, Ownership)
+__PropertyCoreGet(Entity, OwnerProperty, Ownership)
+__PropertyCoreImpl(u32, PropertyOffset, Property)
+__PropertyCoreImpl(u32, PropertySize, Property)
+__PropertyCoreImpl(Type, PropertyType, Property)
+__PropertyCoreImpl(Entity, PropertyEnum, Property)
+__PropertyCoreImpl(Entity, PropertyChildComponent, Property)
+__PropertyCoreImpl(Entity, PropertyChangedEvent, Property)
+__PropertyCoreImpl(u8, PropertyKind, Property)
+__PropertyCoreImpl(bool, PropertyReadOnly, Property)
 
 BeginUnit(Property)
     RegisterEvent(PropertyChanged)

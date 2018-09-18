@@ -7,6 +7,7 @@
 #include <Core/Debug.h>
 #include "BgfxShaderCache.h"
 #include "BgfxResource.h"
+#include <Rendering/ShaderCache.h>
 
 #include <bgfx/bgfx.h>
 
@@ -44,7 +45,7 @@ LocalFunction(OnValidation, void, Entity entity) {
 }
 
 BeginUnit(BgfxShaderCache)
-    BeginComponent(BgfxBinaryProgram)
+    BeginExtensionComponent(BgfxBinaryProgram, BinaryProgram)
         RegisterBase(BgfxResource)
     EndComponent()
 

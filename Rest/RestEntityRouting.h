@@ -10,6 +10,6 @@
 Unit(RestEntityRouting)
     Component(RestEntityRouting)
         ReferenceProperty(Ownership, RestEntityRoutingRoot)
-        Property(u8, RestEntityRoutingDepth)
+        ChildProperty(SerializationSettings, RestEntityRoutingSerializationSettings)
 
 #endif //PLAZA_RESTENTITYROUTING_H
