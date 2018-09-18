@@ -8,7 +8,7 @@
 #include <Core/NativeUtils.h>
 
 
-    Unit(Scene)
+Unit(Scene)
     Component(Scene)
 
 #endif //PLAZA_SCENE_H

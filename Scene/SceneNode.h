@@ -7,10 +7,9 @@
 
 #include <Core/NativeUtils.h>
 
-
-    Unit(SceneNode)
+Unit(SceneNode)
     Component(SceneNode)
-    DeclareService(SceneNode)
+        ReferenceProperty(Scene, SceneNodeScene)
 
     Entity GetSceneNodeScene(Entity sceneNode);
     Entity FindScene(Entity entity);
