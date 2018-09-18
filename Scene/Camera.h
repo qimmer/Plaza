@@ -7,21 +7,12 @@
 
 #include <Core/NativeUtils.h>
 
-
 Unit(Camera)
     Component(Camera)
-
-            Property(m4x4f, CameraViewMatrix)
-            Property(m4x4f, CameraProjectionMatrix)
-            Property(m4x4f, CameraInvViewProjectionMatrix)
-            Property(rgba8, CameraClearColor)
-            Property(v4f, CameraViewport)
-            Property(bool, CameraClear)
-            Property(u8, CameraLayer)
-            Property(Entity, CameraRenderTarget)
-            Property(float, CameraNearClip)
-            Property(float, CameraFarClip)
-
-v3f GetCameraPickRayPoint(Entity camera, v2f viewportOffset, float d);
+        Property(rgba8, CameraClearColor)
+        Property(v2f, CameraViewportOffset)
+        Property(v2f, CameraViewportSize)
+        Property(bool, CameraClear)
+        Property(Entity, CameraRenderTarget)
 
 #endif //PLAZA_CAMERA_H

@@ -9,8 +9,8 @@
 
 Unit(Transform)
     Component(Transform)
-
-        Property(m4x4f, GlobalTransform)
-        Property(m4x4f, LocalTransform)
+        Property(m4x4f, TransformGlobalMatrix)
+        Property(m4x4f, TransformLocalMatrix)
+        ReferenceProperty(Transform, TransformParent)
 
 #endif //PLAZA_TRANSFORM_H
