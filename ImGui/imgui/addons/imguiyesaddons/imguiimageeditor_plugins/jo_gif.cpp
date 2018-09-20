@@ -79,7 +79,7 @@ extern void jo_gif_end(jo_gif_t *gif);
 
 #include <stdlib.h>
 #include <memory.h>
-#include <math.h>
+#include <Algorithms.h>
 
 #ifndef IMGUI_API
 #include <vector>

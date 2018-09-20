@@ -4,7 +4,7 @@
 #include <Core/Types.h>
 #include <Core/Vector.h>
 #include <Core/Debug.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 #include <memory>
 
 #define MaxPages 4096

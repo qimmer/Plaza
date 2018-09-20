@@ -9,14 +9,13 @@
 #include "Texture.h"
 #include "Texture2D.h"
 #include "RenderTarget.h"
+#include "RenderState.h"
 #include "Mesh.h"
 #include "Material.h"
 #include "RenderContext.h"
 #include "SubTexture2D.h"
 #include "Batch.h"
 #include "CommandList.h"
-#include "Renderable.h"
-#include "Renderer.h"
 #include "OffscreenRenderTarget.h"
 #include <Foundation/FoundationModule.h>
 #include <Input/InputModule.h>
@@ -29,20 +28,19 @@ BeginModule(Rendering)
 
     RegisterUnit(Batch)
     RegisterUnit(CommandList)
+    RegisterUnit(Material)
+    RegisterUnit(Mesh)
     RegisterUnit(OffscreenRenderTarget)
-    RegisterUnit(Renderable)
+    RegisterUnit(Program)
     RegisterUnit(RenderContext)
-    RegisterUnit(Uniform)
-    RegisterUnit(Texture)
-    RegisterUnit(Texture2D)
-    RegisterUnit(SubTexture2D)
+    RegisterUnit(Rendering)
+    RegisterUnit(RenderState)
     RegisterUnit(RenderTarget)
     RegisterUnit(ShaderCache)
-    RegisterUnit(Program)
-    RegisterUnit(Mesh)
-    RegisterUnit(Material)
-    RegisterUnit(Renderer)
-    RegisterUnit(Rendering)
+    RegisterUnit(SubTexture2D)
+    RegisterUnit(Texture)
+    RegisterUnit(Texture2D)
+    RegisterUnit(Uniform)
 
     ModuleData({
         "RenderingUvOffsetScaleUniform": {

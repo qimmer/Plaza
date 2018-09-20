@@ -7,9 +7,7 @@
 
 #include <Core/NativeUtils.h>
 
-
-    Unit(SimpleSceneRenderer)
+Unit(SimpleSceneRenderer)
     Component(SimpleSceneRenderer)
-    DeclareService(SimpleSceneRenderer)
 
 #endif //PLAZA_SIMPLESCENERENDERER_H

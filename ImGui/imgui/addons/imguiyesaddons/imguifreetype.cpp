@@ -14,7 +14,7 @@
 // MIT licensed
 
 #include <stdint.h>
-#include <math.h>
+#include <Algorithms.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H

@@ -3,7 +3,7 @@ project(Scene3D)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Scene3D Transform3D.cpp Transform3D.h Camera3D.cpp Camera3D.h Scene3DModule.cpp Scene3DModule.h Voxel/VoxelPalette.cpp Voxel/VoxelPalette.h Voxel/VoxelColor.cpp Voxel/VoxelColor.h Voxel/VoxelMesh.cpp Voxel/VoxelMesh.h Voxel/VoxelChunk.cpp Voxel/VoxelChunk.h Voxel/VoxPersistance.cpp Voxel/VoxPersistance.h Voxel/VoxelChunkSpawner.cpp Voxel/VoxelChunkSpawner.h)
+add_library(Scene3D Scene3DModule.cpp Scene3DModule.h Voxel/VoxelPalette.cpp Voxel/VoxelPalette.h Voxel/VoxelColor.cpp Voxel/VoxelColor.h Voxel/VoxelMesh.cpp Voxel/VoxelMesh.h Voxel/VoxelChunk.cpp Voxel/VoxelChunk.h Voxel/VoxPersistance.cpp Voxel/VoxPersistance.h Voxel/VoxelChunkSpawner.cpp Voxel/VoxelChunkSpawner.h)
 
 target_include_directories(Scene3D PUBLIC ".." ".")
 

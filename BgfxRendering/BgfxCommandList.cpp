@@ -16,7 +16,7 @@
 #include <Rendering/RenderContext.h>
 #include <Rendering/Program.h>
 #include <Rendering/RenderingModule.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 #include "BgfxCommandList.h"
 #include "BgfxMesh.h"
 #include "BgfxShaderCache.h"

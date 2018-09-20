@@ -5,22 +5,16 @@
 #include "Model.h"
 #include "SceneNode.h"
 #include "Transform.h"
+#include <Rendering/Renderable.h>
 
 struct Model {
-    Entity ModelSubMesh;
-    Entity ModelMaterial;
 };
 
 BeginUnit(Model)
     BeginComponent(Model)
+        RegisterBase(Renderable)
         RegisterBase(Transform)
         RegisterBase(SceneNode)
-    RegisterProperty(Entity, MeshInstanceMesh)
-    RegisterProperty(Entity, MeshInstanceMaterial)
-        RegisterPropertyEnum(u8, MeshInstanceLayer, Layer)
-EndComponent()
+    EndComponent()
 EndUnit()
-(Entity, MeshInstanceMesh)
-RegisterProperty(Entity, MeshInstanceMaterial)
-RegisterProperty(u8, MeshInstanceLayer)
 

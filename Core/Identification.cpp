@@ -10,7 +10,7 @@
 #include "Debug.h"
 #include "Property.h"
 #include "Vector.h"
-#include "Math.h"
+#include "Algorithms.h"
 #include "Hashing.h"
 #include "Std.h"
 #include "Strings.h"

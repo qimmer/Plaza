@@ -6,7 +6,7 @@
 #include <Input/InputState.h>
 #include <Rendering/RenderContext.h>
 #include <Editor/Editors/SceneEditor.h>
-#include <Scene3D/Transform3D.h>
+#include <Scene/Transform3D.h>
 #include "FirstPersonCameraTool.h"
 #include <cglm/cglm.h>
 #include <Foundation/AppLoop.h>

@@ -4,7 +4,7 @@
 
 #include "Vector.h"
 #include "Types.h"
-#include "Math.h"
+#include "Algorithms.h"
 #include "Debug.h"
 
 #include <EASTL/map.h>

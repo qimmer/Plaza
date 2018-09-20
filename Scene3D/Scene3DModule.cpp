@@ -8,7 +8,7 @@
 #include "Scene3DModule.h"
 #include "Camera3D.h"
 #include "Transform3D.h"
-#include "SimpleSceneRenderer.h"
+#include "SceneRenderingSimple/SimpleSceneRenderer.h"
 #include "Scene3D/Voxel/VoxelPalette.h"
 #include "Scene3D/Voxel/VoxelColor.h"
 #include "Scene3D/Voxel/VoxPersistance.h"

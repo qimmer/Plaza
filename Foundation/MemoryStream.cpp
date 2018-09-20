@@ -1,5 +1,5 @@
 #include <Core/Entity.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 #include <Core/Vector.h>
 #include "MemoryStream.h"
 #include "Stream.h"

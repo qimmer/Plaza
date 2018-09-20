@@ -11,7 +11,7 @@
 #include "TestCore.h"
 
 #include <cstring>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 #include <Core/Vector.h>
 #include <Test/TestModule.h>
 

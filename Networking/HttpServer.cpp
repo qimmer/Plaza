@@ -18,7 +18,7 @@
 #include <Foundation/AppLoop.h>
 #include <Core/Debug.h>
 #include <Core/Identification.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 #include <deque>
 #include <Core/Std.h>
 

@@ -25,7 +25,7 @@
 #include <EASTL/fixed_hash_map.h>
 #include <Foundation/NativeUtils.h>
 #include <Core/Identification.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 
 #include <unordered_map>
 #include <string>

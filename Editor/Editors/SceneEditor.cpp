@@ -15,9 +15,9 @@
 #include <Rendering/UniformState.h>
 #include <Rendering/Uniform.h>
 #include <Scene3D/Camera3D.h>
-#include <Scene/SimpleSceneRenderer.h>
+#include <SceneRenderingSimple/SimpleSceneRenderer.h>
 #include <Scene/Scene.h>
-#include <Scene3D/Transform3D.h>
+#include <Scene/Transform3D.h>
 #include <Scene/SceneNode.h>
 #include <Core/String.h>
 

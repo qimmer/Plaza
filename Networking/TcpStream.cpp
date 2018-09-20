@@ -13,7 +13,7 @@
 
 #include <Foundation/Stream.h>
 #include <Foundation/NativeUtils.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 #include <Foundation/AppLoop.h>
 #include "TcpStream.h"
 #include "Server.h"

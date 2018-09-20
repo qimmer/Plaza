@@ -11,10 +11,4 @@ Unit(SceneNode)
     Component(SceneNode)
         ReferenceProperty(Scene, SceneNodeScene)
 
-    Entity GetSceneNodeScene(Entity sceneNode);
-    Entity FindScene(Entity entity);
-void SetScene(Entity entity, Entity scene);
-
-    Event(SceneNodeSceneChanged, Entity oldScene, Entity newScene)
-
 #endif //PLAZA_SCENENODE_H

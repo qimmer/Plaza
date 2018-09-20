@@ -11,10 +11,7 @@ Unit(Batch)
     Component(Batch)
         Property(bool, BatchDisabled)
         Property(v4i, BatchScissor)
-        ReferenceProperty(Material, BatchMaterial)
-        ReferenceProperty(SubMesh, BatchSubMesh)
+        ReferenceProperty(Renderable, BatchRenderable)
         ReferenceProperty(BinaryProgram, BatchBinaryProgram)
-        Property(m4x4f, BatchWorldMatrix)
-        ArrayProperty(UniformState, BatchUniformStates)
 
 #endif //PLAZA_COMMANDLISTBATCH_H
