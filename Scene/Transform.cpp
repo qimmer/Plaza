@@ -2,54 +2,38 @@
 // Created by Kim Johannsen on 27/01/2018.
 //
 
-#include <Foundation/AppLoop.h>
-#include "Transform.h"
 #include <cglm/cglm.h>
-#include <Core/Node.h>
+
+#include "Transform.h"
 
 struct Transform {
-    Transform() {
-        GlobalTransform = LocalTransform = m4x4f_Identity;
-    }
-
-    m4x4f GlobalTransform, LocalTransform;
+    m4x4f TransformGlobalMatrix, TransformLocalMatrix;
+    Entity TransformParent;
 };
 
-BeginUnit(Transform)
-    BeginComponent(Transform)
-    RegisterBase(Node)
-    RegisterProperty(m4x4f, LocalTransform)
-    RegisterProperty(m4x4f, GlobalTransform)
-EndComponent()
-EndUnit()
-(m4x4f, GlobalTransform)
-RegisterProperty(m4x4f, LocalTransform)
-
 static void UpdateGlobal(Entity entity) {
-    auto data = GetTransformData(entity);
-    auto oldTransform = data->GlobalTransform;
-    auto parent = GetParent(entity);
+    auto local = GetTransformLocalMatrix(entity);
+    auto parent = GetTransformParent(entity);
+
+    m4x4f global = local;
 
     if(HasComponent(parent, ComponentOf_Transform()) > 0) {
-        auto parentGlobalMatrix = GetGlobalTransform(parent);
-        glm_mat4_mul((vec4*)&parentGlobalMatrix, (vec4*)&data->LocalTransform, (vec4*)&data->GlobalTransform);
-    } else {
-        data->GlobalTransform = data->LocalTransform;
+        auto parentGlobalMatrix = GetTransformGlobalMatrix(parent);
+        glm_mat4_mul((vec4*)&parentGlobalMatrix, (vec4*)&local, (vec4*)&global);
+
     }
 
-    FireEvent(EventOf_GlobalTransformChanged(), entity, oldTransform, data->GlobalTransform);
+    SetTransformGlobalMatrix(entity, global);
 
-    for_children(child, entity) {
-        if(HasComponent(child, ComponentOf_Transform())) {
+    for_entity(child, data, Transform) {
+        if(data->TransformParent == entity) {
             UpdateGlobal(child);
         }
     }
 }
 
-LocalFunction(OnLocalInvalidated, void, Entity entity, m4x4f oldMatrix, m4x4f newMatrix) {
-    if(memcmp(&oldMatrix, &newMatrix, sizeof(m4x4f)) != 0) {
-        UpdateGlobal(entity);
-    }
+LocalFunction(OnLocalChanged, void, Entity entity, m4x4f oldMatrix, m4x4f newMatrix) {
+    UpdateGlobal(entity);
 }
 
 LocalFunction(OnParentChanged, void, Entity child, Entity oldParent, Entity newParent) {
@@ -58,7 +42,12 @@ LocalFunction(OnParentChanged, void, Entity child, Entity oldParent, Entity newP
     }
 }
 
-DefineService(TransformUpdateService)
-    RegisterSubscription(LocalTransformChanged, OnLocalInvalidated, 0)
-    RegisterSubscription(ParentChanged, OnParentChanged, 0)
-EndService()
+BeginUnit(Transform)
+    BeginComponent(Transform)
+        RegisterProperty(m4x4f, TransformLocalMatrix)
+        RegisterPropertyReadOnly(m4x4f, TransformGlobalMatrix)
+    EndComponent()
+
+    RegisterSubscription(TransformLocalMatrixChanged, OnLocalChanged, 0)
+    RegisterSubscription(TransformParentChanged, OnParentChanged, 0)
+EndUnit()

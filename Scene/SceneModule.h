@@ -7,7 +7,6 @@
 
 #include <Core/Module.h>
 
-
-    Module(Scene)
+Module(Scene)
 
 #endif //PLAZA_SCENEMODULE_H

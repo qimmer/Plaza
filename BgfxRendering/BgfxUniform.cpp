@@ -9,7 +9,7 @@
 #include <Core/Debug.h>
 #include <Core/Identification.h>
 #include <Foundation/Invalidation.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 
 struct BgfxUniform {
 };

@@ -9,17 +9,17 @@
 
 Unit(Light)
     Component(Light)
-        Property(rgba16, LightColor)
+        Property(rgba8, LightColor)
         Property(float, LightIntensity)
-        Property(bool, LightRenderShadows)
-        ChildProperty(OffscreenRenderTarget, LightShadowMapTarget)
-
-    Component(SpotLight)
-        Property(u8, DirectionalLightShadowSplits)
+        Property(bool, LightCastShadows)
 
     Component(DirectionalLight)
-        Property(u8, DirectionalLightShadowSplits)
+
+    Component(SpotLight)
+        Property(float, SpotLightDistance)
+        Property(float, SpotLightFieldOfView)
 
     Component(PointLight)
+        Property(float, PointLightRadius)
 
 #endif //PLAZA_CAMERA_H

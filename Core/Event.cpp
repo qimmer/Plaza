@@ -9,7 +9,7 @@
 #include <Core/Function.h>
 #include <Core/Debug.h>
 #include <Core/Property.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 
 #include <stdarg.h>
 #include "Identification.h"

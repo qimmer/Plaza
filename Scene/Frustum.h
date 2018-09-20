@@ -15,12 +15,4 @@ Unit(Frustum)
         Property(float, FrustumNearClip)
         Property(float, FrustumFarClip)
 
-    Component(PerspectiveFrustum)
-        Property(float, PerspectiveFrustumFieldOfView)
-        Property(float, PerspectiveFrustumAspectRatio)
-
-    Component(OrthographicFrustum)
-        Property(v2f, OrthographicTopLeft)
-        Property(v2f, OrthographicBottomRight)
-
 #endif //PLAZA_CAMERA_H

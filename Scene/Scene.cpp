@@ -4,10 +4,10 @@
 
 #include "Scene.h"
 
+struct Scene {
+};
 
-    struct Scene {
-    };
-
-    BeginUnit(Scene)
+BeginUnit(Scene)
     BeginComponent(Scene)
     EndComponent()
+EndUnit()

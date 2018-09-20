@@ -12,6 +12,7 @@
 #include "Enum.h"
 #include "Identification.h"
 #include "Strings.h"
+#include "Algorithms.h"
 
 #include <malloc.h>
 #include <memory.h>

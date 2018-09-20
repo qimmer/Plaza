@@ -3,7 +3,7 @@
 //
 
 #include <Networking/HttpRequest.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 #include <Networking/HttpServer.h>
 #include "RestRouting.h"
 #include "RestServer.h"

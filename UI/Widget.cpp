@@ -3,7 +3,7 @@
 //
 
 #include <Scene/MeshInstance.h>
-#include <Scene2D/Transform2D.h>
+#include <Scene/Transform2D.h>
 #include <Rendering/VertexDeclaration.h>
 #include <Rendering/VertexAttribute.h>
 #include <Rendering/Mesh.h>

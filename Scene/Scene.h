@@ -7,7 +7,6 @@
 
 #include <Core/NativeUtils.h>
 
-
 Unit(Scene)
     Component(Scene)
 

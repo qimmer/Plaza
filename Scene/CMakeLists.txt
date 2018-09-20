@@ -3,7 +3,7 @@ project(Scene)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Scene Transform.cpp Transform.h Camera.cpp Camera.h MeshInstance.cpp MeshInstance.h Scene.cpp Scene.h SceneNode.cpp SceneNode.h SimpleSceneRenderer.h SimpleSceneRenderer.cpp SceneModule.cpp SceneModule.h ScenePicker.cpp ScenePicker.h MousePicker.cpp MousePicker.h)
+add_library(Scene Transform.cpp Transform.h Camera.cpp Camera.h Model.cpp Model.h Scene.cpp Scene.h SceneNode.cpp SceneNode.h SceneModule.cpp SceneModule.h Frustum.h Frustum.cpp Light.h Light.cpp PerspectiveFrustum.cpp PerspectiveFrustum.h OrthographicFrustum.cpp OrthographicFrustum.h SceneRenderer.h SceneRenderer.cpp)
 
 target_include_directories(Scene PUBLIC ".." ".")
 

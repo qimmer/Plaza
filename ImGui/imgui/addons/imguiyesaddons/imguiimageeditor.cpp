@@ -54,7 +54,7 @@ SOFTWARE.
 #include <ctype.h>  // tolower
 #include <string.h> // memset,...
 
-#include <math.h>   // just a few filter needs it (maybe we could add a def to cut them out)
+#include <Algorithms.h>   // just a few filter needs it (maybe we could add a def to cut them out)
 #ifndef M_PI        // MSVC stuff for sure here...
     #define M_PI 3.14159265358979323846
 #endif

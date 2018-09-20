@@ -9,7 +9,5 @@
 
 Unit(Model)
     Component(Model)
-        ReferenceProperty(SubMesh, ModelSubMesh)
-        ReferenceProperty(Material, ModelMaterial)
 
 #endif //PLAZA_MESHINSTANCE_H

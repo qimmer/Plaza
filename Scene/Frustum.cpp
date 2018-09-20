@@ -1,35 +1,51 @@
+#include "Frustum.h"
+#include <Scene/Transform.h>
 
-static void UpdateViewMatrix(Entity camera) {
-    auto data = GetCamera(camera);
+#include <cglm/cglm.h>
 
+struct Frustum {
+    m4x4f FrustumViewMatrix, FrustumInvViewProjectionMatrix, FrustumProjectionMatrix;
+    float FrustumNearClip, FrustumFarClip;
+};
+
+static void UpdateViewMatrix(Entity frustum) {
     m4x4f viewMat;
-    m4x4f globalMat = GetGlobalTransform(camera);
+    m4x4f globalMat = GetTransformGlobalMatrix(frustum);
     glm_mat4_inv((vec4*)&globalMat.x.x, (vec4*)&viewMat.x.x);
-    SetCameraViewMatrix(camera, viewMat);
+    SetFrustumViewMatrix(frustum, viewMat);
 }
 
-static void UpdateInvProjectionMatrix(Entity camera, m4x4f oldValue, m4x4f newValue) {
-    auto data = GetCamera(camera);
+LocalFunction(UpdateInvProjectionMatrix, void, Entity frustum, m4x4f oldValue, m4x4f newValue) {
+    auto data = GetFrustumData(frustum);
     m4x4f viewProjMat, invViewProjMat;
 
-    glm_mat4_mul((vec4*)&data->CameraProjectionMatrix, (vec4*)&data->CameraViewMatrix, (vec4*)&viewProjMat);
+    glm_mat4_mul((vec4*)&data->FrustumProjectionMatrix, (vec4*)&data->FrustumViewMatrix, (vec4*)&viewProjMat);
     glm_mat4_inv((vec4*)&viewProjMat, (vec4*)&invViewProjMat);
 
-    SetCameraInvViewProjectionMatrix(camera, invViewProjMat);
+    SetFrustumInvViewProjectionMatrix(frustum, invViewProjMat);
 }
 
 LocalFunction(OnGlobalTransformChanged, void, Entity entity, m4x4f oldValue, m4x4f newValue) {
-    if(HasComponent(entity, ComponentOf_Camera())) {
+    if(HasComponent(entity, ComponentOf_Frustum())) {
         UpdateViewMatrix(entity);
     }
 }
-LocalFunction(OnCameraAdded, void, Entity component, Entity entity) {
+LocalFunction(OnFrustumAdded, void, Entity component, Entity entity) {
     UpdateViewMatrix(entity);
 }
 
-DefineService(Camera)
-    RegisterSubscription(GlobalTransformChanged, OnGlobalTransformChanged, 0)
-    RegisterSubscription(CameraAdded, OnCameraAdded, 0)
-    RegisterSubscription(CameraProjectionMatrixChanged, UpdateInvProjectionMatrix, 0)
-    RegisterSubscription(CameraViewMatrixChanged, UpdateInvProjectionMatrix, 0)
-EndService()
+BeginUnit(Frustum)
+    BeginComponent(Frustum)
+        RegisterPropertyReadOnly(m4x4f, FrustumViewMatrix)
+        RegisterPropertyReadOnly(m4x4f, FrustumInvViewProjectionMatrix)
+
+        RegisterProperty(m4x4f, FrustumProjectionMatrix)
+        RegisterProperty(float, FrustumNearClip)
+        RegisterProperty(float, FrustumFarClip)
+    EndComponent()
+
+    RegisterSubscription(TransformGlobalMatrixChanged, OnGlobalTransformChanged, 0)
+    RegisterSubscription(EntityComponentAdded, OnFrustumAdded, ComponentOf_Frustum())
+    RegisterSubscription(FrustumProjectionMatrixChanged, UpdateInvProjectionMatrix, 0)
+    RegisterSubscription(FrustumViewMatrixChanged, UpdateInvProjectionMatrix, 0)
+EndUnit()

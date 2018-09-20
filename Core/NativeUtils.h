@@ -499,6 +499,10 @@ StringRef GetUniqueEntityName(Entity entity);
     RegisterReferenceProperty(COMPONENTTYPE, PROPERTYNAME)\
     SetPropertyReadOnly(property, true);
 
+#define RegisterArrayPropertyReadOnly(COMPONENTTYPE, PROPERTYNAME)\
+    RegisterArrayProperty(COMPONENTTYPE, PROPERTYNAME)\
+    SetPropertyReadOnly(property, true);
+
 
 #define RegisterBase(BASECOMPONENT) \
     {\

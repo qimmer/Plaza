@@ -10,7 +10,7 @@
 #include "RenderTarget.h"
 
 #include <cfloat>
-#include <math.h>
+#include <Algorithms.h>
 
 
 struct RenderContext {

@@ -20,7 +20,7 @@
 #include <EASTL/string.h>
 #include <EASTL/algorithm.h>
 #include <Core/Identification.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 
 #include <unistd.h>
 

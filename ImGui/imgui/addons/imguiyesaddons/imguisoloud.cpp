@@ -1269,7 +1269,7 @@ float Soloud_fft_trig_8[124] = {
 //----soloud.cpp--------------------------------------------------------------------------------
 #include <string.h>
 #include <stdlib.h>
-#include <math.h> // sin
+#include <Algorithms.h> // sin
 
 #ifdef SOLOUD_SSE_INTRINSICS
 #include <xmmintrin.h>

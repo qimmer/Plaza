@@ -20,7 +20,7 @@
 #include <Rendering/OffscreenRenderTarget.h>
 #include <Rendering/Texture.h>
 #include <Rendering/RenderContext.h>
-#include <Rendering/Renderer.h>
+#include <SceneRenderingSimple/Renderer.h>
 
 #include <Core/Debug.h>
 #include <Foundation/AppLoop.h>
@@ -56,7 +56,7 @@ Window glfwGetX11Window(GLFWwindow *window);
 #undef GetHandle
 #undef Enum
 #include <windows.h>
-#include <Core/Math.h>
+#include <Core/Algorithms.h>
 
 #undef CreateService
 #undef CreateEvent

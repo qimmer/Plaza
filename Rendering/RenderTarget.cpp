@@ -4,7 +4,7 @@
 
 #include "RenderTarget.h"
 #include "RenderContext.h"
-#include "Renderer.h"
+#include "SceneRenderingSimple/Renderer.h"
 
 struct RenderTarget {
     v2i RenderTargetSize;
