@@ -9,20 +9,6 @@
 #include "Batch.h"
 #include "RenderState.h"
 
-struct CommandList {
-    Vector(CommandListUniformStates, Entity, 16)
-    Vector(CommandListBatches, Entity, 64)
-    Entity CommandListRenderTarget;
-    Entity CommandListShaderCache;
-    Entity CommandListRenderState;
-    m4x4f CommandListViewMatrix, CommandListProjectionMatrix;
-    rgba8 CommandListClearColor;
-    v4i CommandListViewport;
-    float CommandListClearDepth;
-    u8 CommandListClearStencil, CommandListClearTargets, CommandListLayer;
-    bool CommandListForceOrder;
-};
-
 BeginUnit(CommandList)
     BeginComponent(CommandList)
         RegisterReferenceProperty(RenderTarget, CommandListRenderTarget)

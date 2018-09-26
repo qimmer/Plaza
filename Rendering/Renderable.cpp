@@ -9,13 +9,12 @@
 
 struct Renderable {
     Vector(RenderableUniformStates, Entity, 16)
-    m4x4f RenderableWorldMatrix;
     Entity RenderableMaterial, RenderableSubMesh;
 };
 
 BeginUnit(Renderable)
     BeginComponent(Renderable)
-        RegisterProperty(m4x4f, RenderableWorldMatrix)
+        RegisterBase(Transform)
         RegisterArrayProperty(UniformState, RenderableUniformStates)
         RegisterReferenceProperty(Material, RenderableMaterial)
         RegisterReferenceProperty(SubMesh, RenderableSubMesh)
