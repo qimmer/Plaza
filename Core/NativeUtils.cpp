@@ -17,14 +17,16 @@ typedef std::string LookupString;
 
 static std::unordered_map<LookupString, Entity> entityLookup;
 
+#define Verbose_Entity "entity"
+
 API_EXPORT Entity GetUniqueEntity(StringRef name, bool *firstTime) {
     LookupString uniqueNameStr = name;
 
     auto it = entityLookup.find(uniqueNameStr);
     if(it == entityLookup.end()) {
-        auto entity = entityLookup[uniqueNameStr] = __CreateEntity();
+        auto entity = entityLookup[uniqueNameStr] = CreateEntity();
         if(firstTime) *firstTime = true;
-        Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Unique Entity %s Created: %s", name, GetDebugName(entity));
+        Verbose(Verbose_Entity, "Unique Entity %s Created: %s", name, GetDebugName(entity));
 
         return entity;
     }
@@ -42,4 +44,14 @@ API_EXPORT StringRef GetUniqueEntityName(Entity entity) {
     }
 
     return NULL;
+}
+
+API_EXPORT void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
+{
+    return new char[size];
+}
+
+API_EXPORT void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
+{
+    return new char[size];
 }

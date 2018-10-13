@@ -1,0 +1,229 @@
+{
+    "AppNodeChildren": [
+        {
+            "Uuid": "Rendering.Primitives.VertexDeclaration",
+            "VertexDeclarationAttributes": [
+                {
+                    "Uuid": "Rendering.Primitives.VertexDeclaration.Position",
+                    "VertexAttributeType": "v3f",
+                    "VertexAttributeUsage": "VertexAttributeUsage_Position"
+                },
+                {
+                    "Uuid": "Rendering.Primitives.VertexDeclaration.Normal",
+                    "VertexAttributeType": "v3f",
+                    "VertexAttributeUsage": "VertexAttributeUsage_Normal"
+                },
+                {
+                    "Uuid": "Rendering.Primitives.VertexDeclaration.TexCoord0",
+                    "VertexAttributeType": "v2f",
+                    "VertexAttributeUsage": "VertexAttributeUsage_TexCoord0"
+                }
+            ]
+        },
+        {
+            "Uuid": "Rendering.Primitives.Material",
+            "MaterialProgram": "Rendering.Primitives.Program"
+        },
+        {
+            "Uuid": "Rendering.Primitives.Program",
+            "ProgramVertexShaderSource": "Rendering.Primitives.Program.VertexShader",
+            "ProgramPixelShaderSource": "Rendering.Primitives.Program.PixelShader",
+            "ProgramDeclShaderSource": "Rendering.Primitives.Program.DeclShader",
+            "AppNodeChildren": [
+                {
+                    "Uuid": "Rendering.Primitives.Program.VertexShader",
+                    "StreamPath": "file://Rendering/PrimitiveProgram.vs"
+                },
+                {
+                    "Uuid": "Rendering.Primitives.Program.PixelShader",
+                    "StreamPath": "file://Rendering/PrimitiveProgram.ps"
+                },
+                {
+                    "Uuid": "Rendering.Primitives.Program.DeclShader",
+                    "StreamPath": "file://Rendering/PrimitiveProgram.var"
+                }
+            ]
+        },
+        {
+            "Uuid": "Rendering.Primitives.Meshes.Cube",
+            "MeshSubMeshes": [
+                {
+                    "Uuid": "Rendering.Primitives.Meshes.Cube.SubMesh0",
+                    "SubMeshNumVertices": 24,
+                    "SubMeshNumIndices": 36,
+                    "SubMeshPrimitiveType": "PrimitiveType_TRIANGLELIST"
+                }
+            ],
+            "MeshVertexBuffer": {
+                "VertexBufferDeclaration": "Rendering.Primitives.VertexDeclaration"
+            },
+            "MeshBuilderVertices": [
+                {
+                    "MeshBuilderVertexPosition": [-0.5, -0.5, 0.5],
+                    "MeshBuilderVertexNormal": [0, 0, 1],
+                    "MeshBuilderVertexTexCoord0": [0, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, -0.5, 0.5],
+                    "MeshBuilderVertexNormal": [0, 0, 1],
+                    "MeshBuilderVertexTexCoord0": [1, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, 0.5, 0.5],
+                    "MeshBuilderVertexNormal": [0, 0, 1],
+                    "MeshBuilderVertexTexCoord0": [0, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, 0.5, 0.5],
+                    "MeshBuilderVertexNormal": [0, 0, 1],
+                    "MeshBuilderVertexTexCoord0": [1, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, 0.5, 0.5],
+                    "MeshBuilderVertexNormal": [0, 1, 0],
+                    "MeshBuilderVertexTexCoord0": [0, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, 0.5, 0.5],
+                    "MeshBuilderVertexNormal": [0, 1, 0],
+                    "MeshBuilderVertexTexCoord0": [1, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, 0.5, -0.5],
+                    "MeshBuilderVertexNormal": [0, 1, 0],
+                    "MeshBuilderVertexTexCoord0": [0, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, 0.5, -0.5],
+                    "MeshBuilderVertexNormal": [0, 1, 0],
+                    "MeshBuilderVertexTexCoord0": [1, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, 0.5, -0.5],
+                    "MeshBuilderVertexNormal": [0, 0, -1],
+                    "MeshBuilderVertexTexCoord0": [0, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, 0.5, -0.5],
+                    "MeshBuilderVertexNormal": [0, 0, -1],
+                    "MeshBuilderVertexTexCoord0": [1, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, -0.5, -0.5],
+                    "MeshBuilderVertexNormal": [0, 0, -1],
+                    "MeshBuilderVertexTexCoord0": [0, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, -0.5, -0.5],
+                    "MeshBuilderVertexNormal": [0, 0, -1],
+                    "MeshBuilderVertexTexCoord0": [1, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, -0.5, -0.5],
+                    "MeshBuilderVertexNormal": [0, -1, 0],
+                    "MeshBuilderVertexTexCoord0": [0, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, -0.5, -0.5],
+                    "MeshBuilderVertexNormal": [0, -1, 0],
+                    "MeshBuilderVertexTexCoord0": [1, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, -0.5, 0.5],
+                    "MeshBuilderVertexNormal": [0, -1, 0],
+                    "MeshBuilderVertexTexCoord0": [0, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, -0.5, 0.5],
+                    "MeshBuilderVertexNormal": [0, -1, 0],
+                    "MeshBuilderVertexTexCoord0": [1, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, -0.5, 0.5],
+                    "MeshBuilderVertexNormal": [1, 0, 0],
+                    "MeshBuilderVertexTexCoord0": [0, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, -0.5, -0.5],
+                    "MeshBuilderVertexNormal": [1, 0, 0],
+                    "MeshBuilderVertexTexCoord0": [1, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, 0.5, 0.5],
+                    "MeshBuilderVertexNormal": [1, 0, 0],
+                    "MeshBuilderVertexTexCoord0": [0, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [0.5, 0.5, -0.5],
+                    "MeshBuilderVertexNormal": [1, 0, 0],
+                    "MeshBuilderVertexTexCoord0": [1, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, -0.5, -0.5],
+                    "MeshBuilderVertexNormal": [-1, 0, 0],
+                    "MeshBuilderVertexTexCoord0": [0, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, -0.5, 0.5],
+                    "MeshBuilderVertexNormal": [-1, 0, 0],
+                    "MeshBuilderVertexTexCoord0": [1, 0]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, 0.5, -0.5],
+                    "MeshBuilderVertexNormal": [-1, 0, 0],
+                    "MeshBuilderVertexTexCoord0": [0, 1]
+                },
+                {
+                    "MeshBuilderVertexPosition": [-0.5, 0.5, 0.5],
+                    "MeshBuilderVertexNormal": [-1, 0, 0],
+                    "MeshBuilderVertexTexCoord0": [1, 1]
+                }        
+            ],
+            "MeshBuilderIndices": [
+                { "MeshBuilderIndexVertexIndex": 0 },
+                { "MeshBuilderIndexVertexIndex": 1 },
+                { "MeshBuilderIndexVertexIndex": 2 },
+                { "MeshBuilderIndexVertexIndex": 2 },
+                { "MeshBuilderIndexVertexIndex": 1 },
+                { "MeshBuilderIndexVertexIndex": 3 },
+        
+        
+                { "MeshBuilderIndexVertexIndex": 4 },
+                { "MeshBuilderIndexVertexIndex": 5 },
+                { "MeshBuilderIndexVertexIndex": 6 },
+                { "MeshBuilderIndexVertexIndex": 6 },
+                { "MeshBuilderIndexVertexIndex": 5 },
+                { "MeshBuilderIndexVertexIndex": 7 },
+        
+        
+                { "MeshBuilderIndexVertexIndex": 8 },
+                { "MeshBuilderIndexVertexIndex": 9 },
+                { "MeshBuilderIndexVertexIndex": 10 },
+                { "MeshBuilderIndexVertexIndex": 10 },
+                { "MeshBuilderIndexVertexIndex": 9 },
+                { "MeshBuilderIndexVertexIndex": 11 },
+        
+                { "MeshBuilderIndexVertexIndex": 12 },
+                { "MeshBuilderIndexVertexIndex": 13 },
+                { "MeshBuilderIndexVertexIndex": 14 },
+                { "MeshBuilderIndexVertexIndex": 14 },
+                { "MeshBuilderIndexVertexIndex": 13 },
+                { "MeshBuilderIndexVertexIndex": 15 },
+        
+                { "MeshBuilderIndexVertexIndex": 16 },
+                { "MeshBuilderIndexVertexIndex": 17 },
+                { "MeshBuilderIndexVertexIndex": 18 },
+                { "MeshBuilderIndexVertexIndex": 18 },
+                { "MeshBuilderIndexVertexIndex": 17 },
+                { "MeshBuilderIndexVertexIndex": 19 },
+        
+                { "MeshBuilderIndexVertexIndex": 20 },
+                { "MeshBuilderIndexVertexIndex": 21 },
+                { "MeshBuilderIndexVertexIndex": 22 },
+                { "MeshBuilderIndexVertexIndex": 22 },
+                { "MeshBuilderIndexVertexIndex": 21 },
+                { "MeshBuilderIndexVertexIndex": 23 }
+            ]
+        }
+    ]
+}

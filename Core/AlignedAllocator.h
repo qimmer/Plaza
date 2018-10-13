@@ -5,80 +5,151 @@
 #ifndef PLAZA_ALIGNEDALLOCATOR_H
 #define PLAZA_ALIGNEDALLOCATOR_H
 
-#include <stdlib.h>
-#include <memory.h>
+#ifdef _WIN32
+#include <malloc.h>
+#endif
+#include <cstdint>
+#include <vector>
+#include <iostream>
 
-template <typename T, std::size_t N = 16>
-class AlignedAllocator {
+/**
+ * Allocator for aligned data.
+ *
+ * Modified from the Mallocator from Stephan T. Lavavej.
+ * <http://blogs.msdn.com/b/vcblog/archive/2008/08/28/the-mallocator.aspx>
+ */
+template <typename T, std::size_t Alignment>
+class aligned_allocator
+{
 public:
-    typedef T value_type;
-    typedef std::size_t size_type;
-    typedef std::ptrdiff_t difference_type;
 
+    // The following will be the same for virtually all allocators.
     typedef T * pointer;
     typedef const T * const_pointer;
+    typedef T& reference;
+    typedef const T& const_reference;
+    typedef T value_type;
+    typedef std::size_t size_type;
+    typedef ptrdiff_t difference_type;
 
-    typedef T & reference;
-    typedef const T & const_reference;
-
-public:
-    inline AlignedAllocator () throw () { }
-
-    template <typename T2>
-    inline AlignedAllocator (const AlignedAllocator<T2, N> &) throw () { }
-
-    inline ~AlignedAllocator () throw () { }
-
-    inline pointer address (reference r) {
+    T * address(T& r) const
+    {
         return &r;
     }
 
-    inline const_pointer address (const_reference r) const {
-        return &r;
+    const T * address(const T& s) const
+    {
+        return &s;
     }
 
-    inline pointer allocate (size_type n) {
-        void *mem = malloc( n + (N-1) + sizeof(void*) );
-        assert(mem && "Error allocating memory");
-
-        char *amem = ((char*)mem) + sizeof(void*);
-        amem += N - ((size_t)amem & (N - 1));
-
-        ((void**)amem)[-1] = mem;
-        return (pointer)amem;
+    std::size_t max_size() const
+    {
+        // The following has been carefully written to be independent of
+        // the definition of size_t and to avoid signed/unsigned warnings.
+        return (static_cast<std::size_t>(0) - static_cast<std::size_t>(1)) / sizeof(T);
     }
 
-    inline void deallocate (pointer p, size_type) {
-        free( ((void**)p)[-1] );
-    }
 
-    inline void construct (pointer p, const value_type & wert) {
-        new (p) value_type (wert);
-    }
+    // The following must be the same for all allocators.
+    template <typename U>
+    struct rebind
+    {
+        typedef aligned_allocator<U, Alignment> other;
+    } ;
 
-    inline void destroy (pointer p) {
-        p->~value_type ();
-    }
-
-    inline size_type max_size () const throw () {
-        return size_type (-1) / sizeof (value_type);
-    }
-
-    template <typename T2>
-    struct rebind {
-        typedef AlignedAllocator<T2, N> other;
-    };
-
-    bool operator!=(const AlignedAllocator<T,N>& other) const  {
+    bool operator!=(const aligned_allocator& other) const
+    {
         return !(*this == other);
+    }
+
+    void construct(T * const p, const T& t) const
+    {
+        void * const pv = static_cast<void *>(p);
+
+        new (pv) T(t);
+    }
+
+    void destroy(T * const p) const
+    {
+        p->~T();
     }
 
     // Returns true if and only if storage allocated from *this
     // can be deallocated from other, and vice versa.
     // Always returns true for stateless allocators.
-    bool operator==(const AlignedAllocator<T,N>& other) const {
+    bool operator==(const aligned_allocator& other) const
+    {
         return true;
     }
+
+
+    // Default constructor, copy constructor, rebinding constructor, and destructor.
+    // Empty for stateless allocators.
+    aligned_allocator() { }
+
+    aligned_allocator(const aligned_allocator&) { }
+
+    template <typename U> aligned_allocator(const aligned_allocator<U, Alignment>&) { }
+
+    ~aligned_allocator() { }
+
+
+    // The following will be different for each allocator.
+    T * allocate(const std::size_t n) const
+    {
+        // The return value of allocate(0) is unspecified.
+        // Mallocator returns NULL in order to avoid depending
+        // on malloc(0)'s implementation-defined behavior
+        // (the implementation can define malloc(0) to return NULL,
+        // in which case the bad_alloc check below would fire).
+        // All allocators can return NULL in this case.
+        if (n == 0) {
+            return NULL;
+        }
+
+        // All allocators should contain an integer overflow check.
+        // The Standardization Committee recommends that std::length_error
+        // be thrown in the case of integer overflow.
+        if (n > max_size())
+        {
+            return NULL;
+        }
+
+        // Mallocator wraps malloc().
+        void * const pv = _mm_malloc(n * sizeof(T), Alignment);
+
+        // Allocators should throw std::bad_alloc in the case of memory allocation failure.
+        if (pv == NULL)
+        {
+            return NULL;
+        }
+
+        return static_cast<T *>(pv);
+    }
+
+    void deallocate(T * const p, const std::size_t n) const
+    {
+        _mm_free(p);
+    }
+
+
+    // The following will be the same for all allocators that ignore hints.
+    template <typename U>
+    T * allocate(const std::size_t n, const U * /* const hint */) const
+    {
+        return allocate(n);
+    }
+
+
+    // Allocators are not required to be assignable, so
+    // all allocators should have a private unimplemented
+    // assignment operator. Note that this will trigger the
+    // off-by-default (enabled under /Wall) warning C4626
+    // "assignment operator could not be generated because a
+    // base class assignment operator is inaccessible" within
+    // the STL headers, but that warning is useless.
+private:
+    aligned_allocator& operator=(const aligned_allocator&);
 };
 
 #endif //PLAZA_ALIGNEDALLOCATOR_H

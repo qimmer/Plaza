@@ -1,0 +1,3 @@
+LIBRARY GameApp
+EXPORTS
+	ModuleOf_GameApp

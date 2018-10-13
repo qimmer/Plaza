@@ -13,6 +13,8 @@ Unit(RenderContext)
         Property(StringRef, RenderContextTitle)
         Property(bool, RenderContextFullscreen)
         Property(bool, RenderContextVsync)
+        Property(bool, RenderContextShowDebug)
+        Property(bool, RenderContextShowStats)
         ChildProperty(AppLoop, RenderContextLoop)
 
 #endif //PLAZA_RENDERCONTEXT_H

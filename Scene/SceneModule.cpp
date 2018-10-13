@@ -10,9 +10,10 @@
 #include "Model.h"
 #include "OrthographicFrustum.h"
 #include "PerspectiveFrustum.h"
-#include "Scene.h"
-#include "SceneNode.h"
 #include "Transform.h"
+#include "Transform2D.h"
+#include "Transform3D.h"
+#include "Scene.h"
 
 BeginModule(Scene)
     RegisterUnit(Camera)
@@ -21,7 +22,8 @@ BeginModule(Scene)
     RegisterUnit(Model)
     RegisterUnit(OrthographicFrustum)
     RegisterUnit(PerspectiveFrustum)
-    RegisterUnit(Scene)
-    RegisterUnit(SceneNode)
     RegisterUnit(Transform)
+    RegisterUnit(Transform2D)
+    RegisterUnit(Transform3D)
+    RegisterUnit(Scene)
 EndModule()

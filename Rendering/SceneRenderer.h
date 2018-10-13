@@ -23,6 +23,10 @@ Unit(SceneRenderer)
         Property(u8, RenderPassClearStencil)
         Property(u8, RenderPassClearTargets)
         Property(bool, RenderPassForceOrder)
+        ArrayProperty(Uniform, RenderPassSceneUniforms)
+        ArrayProperty(Uniform, RenderPassCameraUniforms)
+        ArrayProperty(Uniform, RenderPassMaterialUniforms)
+        ArrayProperty(Uniform, RenderPassRenderableUniforms)
 
     Component(RenderPath)
         ArrayProperty(RenderPathPass, RenderPathPasses)
@@ -41,9 +45,7 @@ Unit(SceneRenderer)
         ReferenceProperty(RenderTarget, SceneRendererTarget)
         ReferenceProperty(Camera, SceneRendererCamera)
         ReferenceProperty(RenderPath, SceneRendererPath)
-        Property(v4i, SceneRendererViewport)
-
-        ArrayProperty(UniformState, SceneRendererUniformStates)
+        Property(v4f, SceneRendererViewport)
         ArrayProperty(CommandList, SceneRendererCommandLists)
 
 #endif //PLAZA_SCENERENDERER_H

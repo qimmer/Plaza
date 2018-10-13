@@ -11,29 +11,31 @@
 #include "RenderTarget.h"
 #include "RenderState.h"
 #include "Mesh.h"
+#include "MeshBuilder.h"
 #include "Material.h"
+#include "Renderable.h"
 #include "RenderContext.h"
 #include "SubTexture2D.h"
-#include "Batch.h"
-#include "CommandList.h"
+#include "SceneRenderer.h"
 #include "OffscreenRenderTarget.h"
 #include <Foundation/FoundationModule.h>
 #include <Input/InputModule.h>
 #include <Core/NativeUtils.h>
 #include <Json/NativeUtils.h>
+#include <Scene/SceneModule.h>
 
 BeginModule(Rendering)
     RegisterDependency(Foundation)
     RegisterDependency(Input)
+    RegisterDependency(Scene)
 
-    RegisterUnit(Batch)
-    RegisterUnit(CommandList)
     RegisterUnit(Material)
     RegisterUnit(Mesh)
     RegisterUnit(OffscreenRenderTarget)
     RegisterUnit(Program)
     RegisterUnit(RenderContext)
     RegisterUnit(Rendering)
+    RegisterUnit(Renderable)
     RegisterUnit(RenderState)
     RegisterUnit(RenderTarget)
     RegisterUnit(ShaderCache)
@@ -41,6 +43,8 @@ BeginModule(Rendering)
     RegisterUnit(Texture)
     RegisterUnit(Texture2D)
     RegisterUnit(Uniform)
+    RegisterUnit(SceneRenderer)
+    RegisterUnit(MeshBuilder)
 
     ModuleData({
         "RenderingUvOffsetScaleUniform": {
@@ -57,4 +61,16 @@ BeginUnit(Rendering)
     BeginComponent(Rendering)
         RegisterChildProperty(Uniform, RenderingUvOffsetScaleUniform)
     EndComponent()
+
+    ModuleData(
+            {
+                "FileTypes": [
+                    { "FileTypeExtension": ".vs", "FileTypeMimeType" : "application/vertex-shader" },
+                    { "FileTypeExtension": ".ps", "FileTypeMimeType" : "application/pixel-shader" },
+                    { "FileTypeExtension": ".var", "FileTypeMimeType" : "application/decl-shader" },
+                    { "FileTypeExtension": ".vsb", "FileTypeMimeType" : "application/binary-vertex-shader" },
+                    { "FileTypeExtension": ".psb", "FileTypeMimeType" : "application/binary-pixel-shader" }
+                ]
+            }
+    );
 EndUnit()

@@ -13,13 +13,26 @@
 #include "Component.h"
 #include "Property.h"
 #include "Identification.h"
+#include "Date.h"
 
 #include <ffi.h>
+
+#include <time.h>
+
+#define Verbose_Function "function"
 
 static ffi_type
         type_v2i, type_v3i, type_v4i,
         type_v2f, type_v3f, type_v4f,
-        type_m3x3f, type_m4x4f;
+        type_m3x3f, type_m4x4f, type_variant;
+
+
+static ffi_type* type_variant_elements[] = {
+        &type_m4x4f,
+        &ffi_type_sint8,
+        NULL
+};
+
 
 static ffi_type* type_v2i_elements[] = {
         &ffi_type_sint32,
@@ -141,6 +154,8 @@ static ffi_type* ffi_types[] = {
         &type_v3f, //TypeOf_rgb32,
 
         &ffi_type_uint64, //TypeOf_Date,
+
+        &type_variant, //TypeOf_Variant,
 };
 
 #define ALIGNMENT_SSE 16
@@ -152,6 +167,7 @@ struct FunctionArgument {
 struct Function {
     Type FunctionReturnType;
     FunctionCallerType FunctionCaller;
+    u32 FunctionMaxDuration;
 
     Vector(FunctionArguments, Entity, 16)
 };
@@ -278,8 +294,9 @@ API_EXPORT bool CallFunction(
         const void **argumentDataPtrs
 ) {
     auto data = GetFunctionData(f);
+    if(!data) return false;
 
-    Verbose(VerboseLevel_Invocations, "Calling function %s ...", GetName(f));
+    Verbose(Verbose_Function, "Calling function %s ...", GetName(f));
 
     const void **finalArgumentPtrs = (const void **)alloca(numArguments * sizeof(void*));
 
@@ -298,13 +315,54 @@ API_EXPORT bool CallFunction(
         return false;
     }
 
-    return data->FunctionCaller(
+#ifdef PROFILE
+    ProfileStart(GetName(f), 100.0);
+#endif
+    auto result = data->FunctionCaller(
             f,
             returnData,
             numArguments,
             argumentTypes,
             argumentDataPtrs
     );
+
+#ifdef PROFILE
+    ProfileEnd(); // Warning if function call exceeds 100.0ms
+#endif
+
+    return result;
+}
+
+struct ProfileEntry {
+    StringRef tag;
+    double threshold;
+    struct timespec start;
+};
+
+std::vector<ProfileEntry> profileEntries;
+
+API_EXPORT void ProfileStart(StringRef tag, double thresholdMsecs) {
+    ProfileEntry ent;
+    //clock_gettime(CLOCK_MONOTONIC, &ent.start);
+    ent.tag = tag;
+    ent.threshold = thresholdMsecs;
+
+    profileEntries.push_back(ent);
+}
+
+API_EXPORT void ProfileEnd() {
+    struct timespec ts_end;
+    //clock_gettime(CLOCK_MONOTONIC, &ts_end);
+
+    auto entry = profileEntries[profileEntries.size()-1];
+    profileEntries.pop_back();
+
+    double diff = (double)(ts_end.tv_sec - entry.start.tv_sec) * 1000; // ms
+    diff += ((double)ts_end.tv_nsec - (double)entry.start.tv_nsec) / 1000000.0;
+
+    if(diff > entry.threshold) {
+        Log(0, LogSeverity_Warning, "Function took too long and might cause frame spikes! %s took %.2f milliseconds!", entry.tag, diff);
+    }
 }
 
 #define INIT_FFI_STRUCT(T) \
@@ -339,6 +397,7 @@ void __InitializeFunction() {
     INIT_FFI_STRUCT(v4f);
     INIT_FFI_STRUCT(m3x3f);
     INIT_FFI_STRUCT(m4x4f);
+    INIT_FFI_STRUCT(variant);
 }
 
 int __ArgStackOffset(int value) {

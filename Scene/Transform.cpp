@@ -42,12 +42,18 @@ LocalFunction(OnParentChanged, void, Entity child, Entity oldParent, Entity newP
     }
 }
 
+LocalFunction(OnAdded, void, Entity component, Entity entity) {
+    SetTransformLocalMatrix(entity, m4x4f_Identity);
+}
+
 BeginUnit(Transform)
     BeginComponent(Transform)
         RegisterProperty(m4x4f, TransformLocalMatrix)
         RegisterPropertyReadOnly(m4x4f, TransformGlobalMatrix)
+        RegisterReferenceProperty(Transform, TransformParent)
     EndComponent()
 
     RegisterSubscription(TransformLocalMatrixChanged, OnLocalChanged, 0)
     RegisterSubscription(TransformParentChanged, OnParentChanged, 0)
+    RegisterSubscription(EntityComponentAdded, OnAdded, ComponentOf_Transform())
 EndUnit()

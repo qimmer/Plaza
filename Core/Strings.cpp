@@ -6,8 +6,11 @@
 #include <Core/Hashing.h>
 
 #include <unordered_map>
+#include <EASTL/fixed_hash_map.h>
+#include <EASTL/fixed_string.h>
 
-typedef std::unordered_map<std::string, u32> StringMap;
+typedef eastl::string SmallString;
+typedef eastl::fixed_hash_map<SmallString, u32, 1024> StringMap;
 
 StringMap lookup;
 
@@ -18,7 +21,7 @@ API_EXPORT StringRef AddStringRef(StringRef sourceString) {
 
     auto it = lookup.find(sourceString);
     if(it == lookup.end()) {
-        std::pair<StringMap::iterator, bool> result = lookup.insert(std::pair<std::string, u32>(sourceString, 1));
+        auto result = lookup.insert(eastl::pair<SmallString, u32>(sourceString, 1));
         return result.first->first.c_str();
     }
 
@@ -41,7 +44,7 @@ API_EXPORT StringRef Intern(StringRef sourceString) {
 
     auto it = lookup.find(sourceString);
     if(it == lookup.end()) {
-        std::pair<StringMap::iterator, bool> result = lookup.insert(std::pair<std::string, u32>(sourceString, 0));
+        auto result = lookup.insert(eastl::pair<SmallString, u32>(sourceString, 0));
         return result.first->first.c_str();
     }
 

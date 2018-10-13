@@ -8,25 +8,9 @@
 #include <cglm/cglm.h>
 
 struct Transform2D {
-    Transform2D() : Scale2D({1.0f, 1.0f}) {
-    }
     v2f Position2D, Scale2D;
     float Rotation2D, Distance2D;
 };
-
-BeginUnit(Transform2D)
-    BeginComponent(Transform2D)
-    RegisterBase(Transform)
-    RegisterProperty(v2f, Position2D)
-    RegisterProperty(v2f, Scale2D)
-    RegisterProperty(float, Rotation2D)
-    RegisterProperty(float, Distance2D)
-EndComponent()
-EndUnit()
-(v2f, Position2D)
-RegisterProperty(float, Rotation2D)
-RegisterProperty(v2f, Scale2D)
-RegisterProperty(float, Distance2D)
 
 static void UpdateLocalTransform(Entity entity) {
     auto t = GetPosition2D(entity);
@@ -43,7 +27,7 @@ static void UpdateLocalTransform(Entity entity) {
     glm_scale((vec4*)&m.x.x, scale3D);
     glm_rotate((vec4*)&m.x.x, glm_rad(r), rotAxis);
 
-    SetLocalTransform(entity, m);
+    SetTransformLocalMatrix(entity, m);
 }
 
 LocalFunction(Onv2fChanged, void, Entity entity, v2f oldValue, v2f newValue) {
@@ -58,9 +42,22 @@ LocalFunction(OnFloatChanged, void, Entity entity, float oldValue, float newValu
     }
 }
 
-DefineService(Transform2D)
-        RegisterSubscription(Position2DChanged, Onv2fChanged, 0)
-        RegisterSubscription(Scale2DChanged, Onv2fChanged, 0)
-        RegisterSubscription(Rotation2DChanged, OnFloatChanged, 0)
-        RegisterSubscription(Distance2DChanged, OnFloatChanged, 0)
-EndService()
+LocalFunction(OnAdded, void, Entity component, Entity entity) {
+    SetScale2D(entity, {1.0f, 1.0f});
+}
+
+BeginUnit(Transform2D)
+    BeginComponent(Transform2D)
+        RegisterBase(Transform)
+        RegisterProperty(v2f, Position2D)
+        RegisterProperty(v2f, Scale2D)
+        RegisterProperty(float, Rotation2D)
+        RegisterProperty(float, Distance2D)
+    EndComponent()
+
+    RegisterSubscription(Position2DChanged, Onv2fChanged, 0)
+    RegisterSubscription(Scale2DChanged, Onv2fChanged, 0)
+    RegisterSubscription(Rotation2DChanged, OnFloatChanged, 0)
+    RegisterSubscription(Distance2DChanged, OnFloatChanged, 0)
+    RegisterSubscription(EntityComponentAdded, OnAdded, ComponentOf_Transform2D())
+EndUnit()

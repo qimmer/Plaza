@@ -14,8 +14,8 @@
 
 
 struct RenderContext {
-    char RenderContextTitle[128];
-    bool RenderContextFullscreen, RenderContextVsync;
+    StringRef RenderContextTitle;
+    bool RenderContextFullscreen, RenderContextVsync, RenderContextShowDebug, RenderContextShowStats;
     Entity RenderContextLoop;
 };
 
@@ -25,6 +25,8 @@ BeginUnit(RenderContext)
         RegisterProperty(StringRef, RenderContextTitle)
         RegisterProperty(bool, RenderContextFullscreen)
         RegisterProperty(bool, RenderContextVsync)
+        RegisterProperty(bool, RenderContextShowDebug)
+        RegisterProperty(bool, RenderContextShowStats)
         RegisterChildProperty(AppLoop, RenderContextLoop)
     EndComponent()
 EndUnit()

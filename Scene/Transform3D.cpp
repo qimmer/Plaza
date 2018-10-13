@@ -11,29 +11,9 @@
 #include <Core/Types.h>
 
 struct Transform3D {
-    Transform3D() : Scale3D({1.0f, 1.0f, 1.0f}), Position3D({0.0f, 0.0f, 0.0f}), RotationEuler3D({0.0f, 0.0f, 0.0f}),
-                    RotationQuat3D({0.0f, 0.0f, 0.0f, 1.0f}) {
-    }
-
     v3f Position3D, Scale3D, RotationEuler3D;
     v4f RotationQuat3D;
 };
-
-BeginUnit(Transform3D)
-    BeginComponent(Transform3D)
-    RegisterBase(Transform)
-    RegisterProperty(v3f, Position3D)
-    RegisterProperty(v3f, Scale3D)
-    RegisterProperty(v3f, RotationEuler3D)
-EndComponent()
-EndUnit()
-(v3f, Position3D)
-
-RegisterProperty(v3f, RotationEuler3D)
-
-RegisterProperty(v4f, RotationQuat3D)
-
-RegisterProperty(v3f, Scale3D)
 
 static void UpdateLocalTransform(Entity entity) {
     auto position = GetPosition3D(entity);
@@ -48,13 +28,11 @@ static void UpdateLocalTransform(Entity entity) {
 
     glm_vec4_add(srMat[3], pos4, srMat[3]);
 
-    SetLocalTransform(entity, *(m4x4f *) srMat);
+    SetTransformLocalMatrix(entity, *(m4x4f *) srMat);
 }
 
 LocalFunction(OnPosition3DChanged, void, Entity entity, v3f before, v3f after) {
-    if(memcmp(&before, &after, sizeof(v3f)) != 0) {
-        UpdateLocalTransform(entity);
-    }
+    UpdateLocalTransform(entity);
 }
 
 LocalFunction(OnRotationEuler3DChanged, void, Entity entity, v3f before, v3f after) {
@@ -78,14 +56,11 @@ LocalFunction(OnRotationQuat3DChanged, void, Entity entity, v4f before, v4f q) {
     UpdateLocalTransform(entity);
 }
 
-DefineService(Transform3D)
-    RegisterSubscription(Scale3DChanged, OnPosition3DChanged, 0)
-    RegisterSubscription(Position3DChanged, OnPosition3DChanged, 0)
-    RegisterSubscription(RotationQuat3DChanged, OnRotationQuat3DChanged, 0)
-    RegisterSubscription(RotationEuler3DChanged, OnRotationEuler3DChanged, 0)
-EndService()
+LocalFunction(OnAdded, void, Entity component, Entity entity) {
+    SetScale3D(entity, {1.0f, 1.0f, 1.0f});
+}
 
-void Move3D(Entity transform, v3f direction, bool relativeToRotation) {
+API_EXPORT void Move3D(Entity transform, v3f direction, bool relativeToRotation) {
     auto position = GetPosition3D(transform);
 
     if(relativeToRotation) {
@@ -106,3 +81,19 @@ void Move3D(Entity transform, v3f direction, bool relativeToRotation) {
 
     SetPosition3D(transform, position);
 }
+
+BeginUnit(Transform3D)
+    BeginComponent(Transform3D)
+        RegisterBase(Transform)
+        RegisterProperty(v3f, Position3D)
+        RegisterProperty(v3f, Scale3D)
+        RegisterProperty(v3f, RotationEuler3D)
+        RegisterPropertyReadOnly(v4f, RotationQuat3D)
+    EndComponent()
+
+    RegisterSubscription(Scale3DChanged, OnPosition3DChanged, 0)
+    RegisterSubscription(Position3DChanged, OnPosition3DChanged, 0)
+    RegisterSubscription(RotationQuat3DChanged, OnRotationQuat3DChanged, 0)
+    RegisterSubscription(RotationEuler3DChanged, OnRotationEuler3DChanged, 0)
+    RegisterSubscription(EntityComponentAdded, OnAdded, ComponentOf_Transform3D())
+EndUnit()

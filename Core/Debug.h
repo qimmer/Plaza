@@ -8,12 +8,7 @@
 #include <stdio.h>
 #include <Core/NativeUtils.h>
 
-#define VerboseLevel_Invocations 0
-#define VerboseLevel_PropertyChanges 1
-#define VerboseLevel_ComponentEntityCreationDeletion 2
-#define VerboseLevel_Common 3
-
-#define VerboseLevel 4
+extern const char* VerboseTag;
 
 #define Assert(CONTEXT, x) \
     if(!(x)) {\
@@ -21,8 +16,8 @@
         Exit(-1);\
      } do{} while(false)
 
-#if VerboseLevel
-#define Verbose(verboseLevel, fmt, ...) if(verboseLevel >= VerboseLevel) { printf(fmt "\n", ##__VA_ARGS__); } do {} while(false)
+#ifndef NDEBUG
+#define Verbose(verboseTag, fmt, ...) if(VerboseTag && strstr(verboseTag, VerboseTag)) { printf(fmt "\n", ##__VA_ARGS__); } do {} while(false)
 #else
 #define Verbose(verboseLevel, fmt, ...)
 #endif

@@ -17,6 +17,8 @@ Vector<u32> FreeSlots;
 
 extern bool __IsCoreInitialized;
 
+#define Verbose_Entity "entity"
+
 API_EXPORT u32 GetNumEntities() {
     return Generations.size() - FreeSlots.size();
 }
@@ -56,7 +58,7 @@ API_EXPORT Entity GetNextEntity (Entity entity) {
     return GetEntity(index, gen); 
 } 
 
-API_EXPORT Entity __CreateEntity () {
+API_EXPORT Entity CreateEntity() {
     u32 index;
     if (FreeSlots.size()) {
         index = FreeSlots[FreeSlots.size() - 1];
@@ -72,7 +74,7 @@ API_EXPORT Entity __CreateEntity () {
     
     auto entity = GetEntity(index, Generations[index]);
 
-    Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Entity Created: %s", GetDebugName(entity));
+    Verbose(Verbose_Entity, "Entity Created: %s", GetDebugName(entity));
 
     if(__IsCoreInitialized) {
 		Type types[] = { TypeOf_Entity };
@@ -83,7 +85,7 @@ API_EXPORT Entity __CreateEntity () {
     return entity;
 }
 
-void __DestroyEntity(Entity entity) {
+API_EXPORT void DestroyEntity(Entity entity) {
     if (!IsEntityValid(entity)) {
         return;
     }
@@ -101,5 +103,5 @@ void __DestroyEntity(Entity entity) {
     ++ Generations[index];
     
     Assert(0, Generations[index] % 2 == 0);
-    Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Entity Destroyed: %s", GetDebugName(entity));
+    Verbose(Verbose_Entity, "Entity Destroyed: %s", GetDebugName(entity));
 }

@@ -86,6 +86,11 @@ BeginModule(BgfxRendering)
                "ExtensionDisabled": true,
                "ExtensionComponent": "/Modules/Rendering/Components/Uniform",
                "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxUniform"
+           },
+           {
+               "ExtensionDisabled": false,
+               "ExtensionComponent": "/Modules/Rendering/Components/RenderContext",
+               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxRenderContext"
            }
         ]
     })

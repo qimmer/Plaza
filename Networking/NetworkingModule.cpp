@@ -39,7 +39,7 @@ BeginModule(Networking)
             "ReplicationAppLoop": {
 
             },
-            "TcpWaitOnNoWork": true,
+            "TcpWaitOnNoWork": false,
             "HttpResponseCodes": [
                 { "HttpResponseCodeNumber": 200, "HttpResponseCodeMessage": "OK" },
                 { "HttpResponseCodeNumber": 201, "HttpResponseCodeMessage": "Created" },

@@ -9,7 +9,6 @@
 
 Unit(Transform2D)
     Component(Transform2D)
-
         Property(v2f, Position2D)
         Property(float, Rotation2D)
         Property(v2f, Scale2D)

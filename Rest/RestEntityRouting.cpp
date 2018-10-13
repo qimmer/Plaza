@@ -10,6 +10,8 @@
 #include "RestEntityRouting.h"
 #include "RestRouting.h"
 
+#define Verbose_Rest "rest"
+
 struct RestEntityRouting {
     Entity RestEntityRoutingRoot;
     u8 RestEntityRoutingDepth;
@@ -21,7 +23,7 @@ static Entity handleGet(StringRef uuid, Entity request, Entity response, u8 dept
     auto requestedEntity = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(requestedEntity)) {
-        Verbose(VerboseLevel_Common, "GET: Entity not found: %s", uuid);
+        Verbose(Verbose_Rest, "GET: Entity not found: %s", uuid);
 		return FindResponseCode(404);
 	}
 
@@ -42,7 +44,7 @@ static Entity handlePut(StringRef uuid, Entity request, Entity response) {
     auto requestedEntity = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(requestedEntity)) {
-		Verbose(VerboseLevel_Common, "PUT: Entity not found: %s", uuid);
+		Verbose(Verbose_Rest, "PUT: Entity not found: %s", uuid);
 		return FindResponseCode(404);
 	}
 
@@ -58,7 +60,7 @@ static Entity handlePost(StringRef uuid, StringRef propertyName, Entity request,
     auto parent = FindEntityByUuid(uuid);
 
     if(!IsEntityValid(parent)) {
-        Verbose(VerboseLevel_Common, "POST: Entity not found: %s", uuid);
+        Verbose(Verbose_Rest, "POST: Entity not found: %s", uuid);
         return FindResponseCode(404);
     }
 
@@ -95,7 +97,7 @@ static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
     auto existing = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(existing)) {
-        Verbose(VerboseLevel_Common, "DELETE: Entity not found: %s", uuid);
+        Verbose(Verbose_Rest, "DELETE: Entity not found: %s", uuid);
 		return FindResponseCode(404);
 	}
 

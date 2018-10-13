@@ -33,6 +33,9 @@
 #include <EASTL/map.h>
 #include <EASTL/fixed_string.h>
 
+
+API_EXPORT const char* VerboseTag = NULL;
+
 struct LogMessage {
     StringRef LogMessageEntity;
     StringRef LogMessageText;
@@ -55,7 +58,7 @@ API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
 
 #ifndef NDEBUG
     setbuf(stdout, 0);
-    printf("%s: %s\n", GetDebugName(context), buffer);
+    printf("%s\n", buffer);
 #endif
 
     auto component = GetOwner(PropertyOf_LogMessages());

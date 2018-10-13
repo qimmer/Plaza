@@ -14,6 +14,8 @@
 #include <stdarg.h>
 #include "Identification.h"
 
+#define Verbose_Event "event"
+
 struct Subscription {
     Entity SubscriptionHandler, SubscriptionEvent, SubscriptionSender;
 };
@@ -125,16 +127,11 @@ void __InitializeEvent() {
 
 API_EXPORT void FireEventFast(Entity event, u32 numArguments, const u8* argumentTypeIndices, const void **argumentDataPtrs) {
 
-    Verbose(VerboseLevel_Invocations, "Firing event %llu ...", event);
+    Verbose(Verbose_Event, "Firing event %llu ...", event);
 
     auto data = GetEventData(event);
 
     if(data) {
-        /*if(numArguments != (data->NumEventArgumentCache + 1)) {
-            Log(event, LogSeverity_Error, "FireEventFast failed. Incorrect number of arguments provided.");
-            return;
-        }*/
-
         auto sender = *(const Entity*)argumentDataPtrs[0];
         for(auto i = 0; i < data->SubscriptionCache.Count; ++i) {
             auto subscription = &GetVector(data->SubscriptionCache)[i];

@@ -64,7 +64,10 @@ LocalFunction(OnBgfxIndexBufferRemoved, void, Entity entity) {
 
 static void ValidateVertexBuffer(Entity entity) {
     auto data = GetBgfxVertexBufferData(entity);
-    auto& declData = GetBgfxVertexDeclarationData(GetVertexBufferDeclaration(entity))->decl;
+    auto decl = GetVertexBufferDeclaration(entity);
+    Validate(decl);
+
+    auto& declData = GetBgfxVertexDeclarationData(decl)->decl;
 
     if(declData.m_hash == 0) return;
 
@@ -222,10 +225,13 @@ LocalFunction(OnValidation, void, Entity entity) {
 
 BeginUnit(BgfxMesh)
     BeginComponent(BgfxVertexDeclaration)
+        RegisterBase(BgfxResource)
     EndComponent()
     BeginComponent(BgfxVertexBuffer)
+        RegisterBase(BgfxResource)
     EndComponent()
     BeginComponent(BgfxIndexBuffer)
+        RegisterBase(BgfxResource)
     EndComponent()
 
     RegisterSubscription(EntityComponentRemoved, OnBgfxIndexBufferRemoved, ComponentOf_BgfxIndexBuffer())

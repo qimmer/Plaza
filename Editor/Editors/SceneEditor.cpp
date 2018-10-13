@@ -16,7 +16,7 @@
 #include <Rendering/Uniform.h>
 #include <Scene3D/Camera3D.h>
 #include <SceneRenderingSimple/SimpleSceneRenderer.h>
-#include <Scene/Scene.h>
+#include <Scene/AppNode.h>
 #include <Scene/Transform3D.h>
 #include <Scene/SceneNode.h>
 #include <Core/String.h>

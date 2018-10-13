@@ -9,12 +9,10 @@
 
 struct Material {
     Entity MaterialProgram;
-    Vector(MaterialUniformStates, Entity, 32)
 };
 
 BeginUnit(Material)
     BeginComponent(Material)
         RegisterProperty(Entity, MaterialProgram)
-        RegisterArrayProperty(UniformState, MaterialUniformStates)
     EndComponent()
 EndUnit()

@@ -166,7 +166,7 @@ LocalFunction(OnFileStreamRemoved, void, Entity component, Entity stream) {
     fileWatcher.removeWatch(data->watchID);
 }
 
-LocalFunction(OnFileWatcherUpdate, void, Entity timer) {
+LocalFunction(OnFileWatcherUpdate, void, Entity appLoop) {
     fileWatcher.update();
 }
 
@@ -188,6 +188,8 @@ BeginUnit(FileStream)
     RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
     RegisterSubscription(EntityComponentAdded, OnFileStreamAdded, ComponentOf_FileStream())
     RegisterSubscription(EntityComponentRemoved, OnFileStreamRemoved, ComponentOf_FileStream())
+    RegisterSubscription(AppLoopFrameChanged, OnFileWatcherUpdate, 0)
 
     RegisterStreamProtocol(FileStream, "file")
+
 EndComponent()

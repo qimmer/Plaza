@@ -28,7 +28,6 @@ Unit(Component)
 
     Component(Component)
         __PropertyCore(Component, u16, ComponentSize)
-        __PropertyCore(Component, Entity, ComponentTemplate)
         __PropertyCore(Component, bool, ComponentExplicitSize)
         __ArrayPropertyCore(Property, Properties)
         __ArrayPropertyCore(Base, Bases)
@@ -36,7 +35,11 @@ Unit(Component)
     Event(EntityComponentAdded, Entity entity)
     Event(EntityComponentRemoved, Entity entity)
 
+u32 GetComponentTypeIndexByIndex(u32 entityIndex);
+
 char * GetComponentBytes(Entity component, u32 index);
+
+char * GetComponentData(u32 componentTypeIndex, Entity entity);
 
 u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Entity *entity);
 

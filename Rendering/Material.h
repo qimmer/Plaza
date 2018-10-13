@@ -13,6 +13,5 @@ Enum(RenderState)
 Unit(Material)
     Component(Material)
         ReferenceProperty(Program, MaterialProgram)
-        ArrayProperty(UniformState, MaterialUniformStates)
 
 #endif //PLAZA_MATERIAL_H

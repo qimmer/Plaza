@@ -9,6 +9,11 @@ struct RenderState {
     u64 RenderStateDepthTest, RenderStateWriteMask, RenderStateMultisampleMode, RenderStateBlendMode;
 };
 
+LocalFunction(OnAdded, void, Entity component, Entity entity) {
+    SetRenderStateDepthTest(entity, RenderState_STATE_DEPTH_TEST_LEQUAL);
+    SetRenderStateWriteMask(entity, RenderState_STATE_RGB_WRITE | RenderState_STATE_ALPHA_WRITE | RenderState_STATE_DEPTH_WRITE);
+}
+
 BeginUnit(RenderState)
     BeginEnum(DepthTest, false)
         RegisterFlag(RenderState_STATE_DEPTH_TEST_NONE)
@@ -23,12 +28,15 @@ BeginUnit(RenderState)
     EndEnum()
 
     BeginEnum(WriteMask, true)
-        RegisterFlag(RenderState_STATE_RGB_WRITE)
+        RegisterFlag(RenderState_STATE_R_WRITE)
+        RegisterFlag(RenderState_STATE_G_WRITE)
+        RegisterFlag(RenderState_STATE_B_WRITE)
         RegisterFlag(RenderState_STATE_ALPHA_WRITE)
         RegisterFlag(RenderState_STATE_DEPTH_WRITE)
     EndEnum()
 
     BeginEnum(MultisampleMode, false)
+        RegisterFlag(RenderState_STATE_NONE)
         RegisterFlag(RenderState_STATE_MSAA)
         RegisterFlag(RenderState_STATE_LINEAA)
         RegisterFlag(RenderState_STATE_CONSERVATIVE_RASTER)
@@ -52,4 +60,6 @@ BeginUnit(RenderState)
         RegisterPropertyEnum(u64, RenderStateMultisampleMode, MultisampleMode)
         RegisterPropertyEnum(u64, RenderStateBlendMode, BlendMode)
     EndComponent()
+
+    RegisterSubscription(EntityComponentAdded, OnAdded, ComponentOf_RenderState())
 EndUnit()

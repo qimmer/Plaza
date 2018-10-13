@@ -50,7 +50,7 @@ API_EXPORT void TaskSchedule(Entity task) {
     auto data = GetTaskData(task);
     if(!data->TaskFinished) return;
 
-    SetInvocationResult(task, CreateVariant(TypeOf_unknown, 0, 0));
+    SetInvocationResult(task, Variant_Empty);
 
     scheduler_add(&Scheduler, &data->TaskData, TaskFunc, (void*)GetComponentIndex(ComponentOf_Task(), task), 1, 1);
     data->TaskFinished = false;

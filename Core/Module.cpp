@@ -47,7 +47,7 @@ LocalFunction(OnModuleLoaderLibraryPathChanged, void, Entity loader, StringRef o
 API_EXPORT Entity GetModuleRoot() {
     static Entity root = 0;
     if(root == 0) {
-        root = __CreateEntity();
+        root = CreateEntity();
         AddComponent(root, ComponentOf_ModuleRoot());
         SetName(root, "ModuleRoot");
         SetUuid(root, "00000000-0000-0000-0000-000000000000");

@@ -4,7 +4,6 @@
 
 #include "Camera.h"
 #include "Transform.h"
-#include "SceneNode.h"
 #include "Frustum.h"
 
 struct Camera {
@@ -13,7 +12,6 @@ struct Camera {
 BeginUnit(Camera)
     BeginComponent(Camera)
         RegisterBase(Transform)
-        RegisterBase(SceneNode)
         RegisterBase(Frustum)
     EndComponent()
 EndUnit()

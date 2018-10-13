@@ -8,8 +8,12 @@
 #include <Core/Event.h>
 #include <Core/Pool.h>
 #include "Identification.h"
+#include "Component.h"
+
 
 static bool __isComponentInitialized = false;
+
+#define Verbose_Component "component"
 
 struct ComponentTypeData {
     Pool DataBuffer;
@@ -29,7 +33,6 @@ struct Base {
 };
 
 struct Component {
-    Entity ComponentTemplate;
     Vector(Properties, Entity, 32)
     Vector(Bases, Entity, 8)
     u16 ComponentDataIndex;
@@ -37,8 +40,7 @@ struct Component {
     bool ComponentExplicitSize;
 };
 
-static ComponentTypeData *GetComponentType(Entity component) {
-    auto entityIndex = GetEntityIndex(component);
+API_EXPORT u32 GetComponentTypeIndexByIndex(u32 entityIndex) {
     if(entityIndex >= ComponentDataIndices.size()) {
         ComponentDataIndices.resize(UpperPowerOf2(Max(entityIndex + 1, 8)), UINT16_MAX);
     }
@@ -49,7 +51,12 @@ static ComponentTypeData *GetComponentType(Entity component) {
         ComponentDataIndices[entityIndex] = componentIndex = ComponentDataList.size() - 1;
     }
 
-    return &ComponentDataList[componentIndex];
+    return componentIndex;
+}
+
+API_EXPORT ComponentTypeData *GetComponentType(Entity component) {
+    auto entityIndex = GetEntityIndex(component);
+    return &ComponentDataList[GetComponentTypeIndexByIndex(entityIndex)];
 }
 
 API_EXPORT u32 GetComponentMax (Entity component) {
@@ -67,16 +74,15 @@ API_EXPORT Entity GetComponentEntity(Entity component, u32 index) {
 }
 
 API_EXPORT u32 GetComponentIndex(Entity component, Entity entity) {
-    if(!IsEntityValid(component)) {
-        Log(0, LogSeverity_Error, "Cannot get index of invalid component");
-        return InvalidIndex;
-    }
-
     if(!IsEntityValid(entity)) {
         return InvalidIndex;
     }
 
     auto componentData = GetComponentType(component);
+    if(!componentData) {
+        Log(0, LogSeverity_Error, "Cannot get index of invalid component");
+        return InvalidIndex;
+    }
     auto entityIndex = GetEntityIndex(entity);
 
     if(componentData->EntityComponentIndices.size() <= entityIndex) {
@@ -94,8 +100,29 @@ API_EXPORT char * GetComponentBytes(Entity component, u32 index) {
     if(index == InvalidIndex || !IsEntityValid(component)) return NULL;
 
     auto componentData = GetComponentType(component);
-    return componentData->DataBuffer[index] + sizeof(Entity);
+    return componentData->DataBuffer[index] + sizeof(Entity)*2;
 }
+
+
+API_EXPORT char *GetComponentData(u32 componentTypeIndex, Entity entity) {
+    if(!IsEntityValid(entity)) {
+        return NULL;
+    }
+
+    auto entityIndex = GetEntityIndex(entity);
+    auto componentData = &ComponentDataList[componentTypeIndex];
+
+    if(componentData->EntityComponentIndices.size() <= entityIndex) {
+        componentData->EntityComponentIndices.resize(entityIndex + 1, InvalidIndex);
+    }
+
+    auto index = componentData->EntityComponentIndices[entityIndex];
+
+    if(index == InvalidIndex) return NULL;
+
+    return componentData->DataBuffer[index] + sizeof(Entity)*2;
+}
+
 
 API_EXPORT bool AddComponent (Entity entity, Entity component) {
     if(!IsEntityValid(entity)) {
@@ -123,7 +150,7 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
 
         auto dataSize = GetComponentSize(component);
         if(dataSize > 0) {
-            memset(componentData->DataBuffer[componentIndex] + sizeof(Entity), 0, dataSize);
+            memset(componentData->DataBuffer[componentIndex] + sizeof(Entity)*2, 0, dataSize);
         }
 
         if(__isComponentInitialized) {
@@ -133,7 +160,7 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
                 auto propertyData = GetPropertyData(property);
                 if(GetPropertyKind(property) != PropertyKind_Child) continue;
 
-                auto child = __CreateEntity();
+                auto child = CreateEntity();
                 __InjectChildPropertyValue(property, entity, child);
             }
             {
@@ -142,18 +169,20 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
                 }
             }
 
-            auto t = GetComponentTemplate(component);
-            if(IsEntityValid(t)) {
-                auto name = GetDebugName(t);
-                CopyEntity(t, entity);
-            }
-
 			Type types[] = { TypeOf_Entity, TypeOf_Entity };
 			const void* values[] = { &component, &entity };
 			FireEventFast(EventOf_EntityComponentAdded(), 2, types, values);
+
+			for_entity(extension, extensionData, Extension) {
+			    if(extensionData->ExtensionComponent == component) {
+                    if(!extensionData->ExtensionDisabled) {
+                        AddComponent(entity, extensionData->ExtensionExtenderComponent);
+                    }
+			    }
+			}
         }
 
-        Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Component %s has been added to Entity %s.", GetDebugName(component), GetDebugName(entity));
+        Verbose(Verbose_Component, "Component %s has been added to Entity %s.", GetDebugName(component), GetDebugName(entity));
 
         return true;
     }
@@ -172,6 +201,14 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     }
 
     if(HasComponent(entity, component)) {
+        for_entity(extension, extensionData, Extension) {
+            if(extensionData->ExtensionComponent == component) {
+                if(!extensionData->ExtensionDisabled) {
+                    RemoveComponent(entity, extensionData->ExtensionExtenderComponent);
+                }
+            }
+        }
+
 		Type types[] = { TypeOf_Entity, TypeOf_Entity };
 		const void* values[] = { &component, &entity };
 		FireEventFast(EventOf_EntityComponentRemoved(), 2, types, values);
@@ -189,7 +226,7 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
                 if(kind == PropertyKind_Child) {
                     Entity childEntity = 0;
                     GetPropertyValue(property, entity, &childEntity);
-                    __DestroyEntity(childEntity);
+                    DestroyEntity(childEntity);
                 } else if(kind == PropertyKind_Array) {
                     while(GetArrayPropertyCount(property, entity)) {
                         RemoveArrayPropertyElement(property, entity, 0);
@@ -208,7 +245,7 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
             componentData->DataBuffer.Remove(deletionComponentIndex);
         }
 
-        Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Component %s has been removed from Entity %s.", GetDebugName(component), GetDebugName(entity));
+        Verbose(Verbose_Component, "Component %s has been removed from Entity %s.", GetDebugName(component), GetDebugName(entity));
 
         return true;
     }
@@ -231,7 +268,7 @@ API_EXPORT u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Ent
     }
 
     auto entryData = componentData->DataBuffer[index];
-    *dataPtr = entryData + sizeof(Entity);
+    *dataPtr = entryData + sizeof(Entity)*2;
     *entity = *(Entity*)entryData;
 
     return index;
@@ -239,14 +276,16 @@ API_EXPORT u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Ent
 
 API_EXPORT void SetComponentSize(Entity entity, u16 value) {
     auto data = GetComponentData(entity);
-    auto oldValue = 0;
+    Variant oldValue, newValue;
     if(data) {
-        oldValue = data->ComponentSize;
+        oldValue = Variant(u16, data->ComponentSize);
         data->ComponentSize = value;
     }
 
+    newValue = Variant(u16, value);
+
     auto componentData = GetComponentType(entity);
-    componentData->DataBuffer.SetElementSize(value + sizeof(Entity));
+    componentData->DataBuffer.SetElementSize(value + sizeof(Entity)*2);
 
     if(__isComponentInitialized) {
         Type types[] = {TypeOf_Entity, TypeOf_u16, TypeOf_u16};
@@ -254,9 +293,9 @@ API_EXPORT void SetComponentSize(Entity entity, u16 value) {
         FireEventFast(EventOf_ComponentSizeChanged(), 3, types, args);
 
         auto property = PropertyOf_ComponentSize();
-        Type typesGeneric[] = {TypeOf_Entity, TypeOf_Entity};
-        const void *argsGeneric[] = {&property, &entity};
-        FireEventFast(EventOf_PropertyChanged(), 2, typesGeneric, argsGeneric);
+        Type typesGeneric[] = {TypeOf_Entity, TypeOf_Entity, TypeOf_Variant, TypeOf_Variant};
+        const void *argsGeneric[] = {&property, &entity, &oldValue, &newValue};
+        FireEventFast(EventOf_PropertyChanged(), 4, typesGeneric, argsGeneric);
     }
 }
 
@@ -269,7 +308,6 @@ API_EXPORT u16 GetComponentSize(Entity entity) {
 }
 
 __PropertyCoreImpl(bool, ComponentExplicitSize, Component)
-__PropertyCoreImpl(Entity, ComponentTemplate, Component)
 __ArrayPropertyCoreImpl(Property, Properties, Component)
 __ArrayPropertyCoreImpl(Base, Bases, Component)
 
@@ -345,7 +383,6 @@ BeginUnit(Component)
         RegisterArrayProperty(Base, Bases)
         RegisterPropertyReadOnly(u16, ComponentSize)
         RegisterPropertyReadOnly(bool, ComponentExplicitSize)
-        RegisterChildProperty(Ownership, ComponentTemplate)
     EndComponent()
 
     BeginComponent(Extension)

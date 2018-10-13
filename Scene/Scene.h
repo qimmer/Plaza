@@ -1,5 +1,5 @@
 //
-// Created by Kim Johannsen on 28/01/2018.
+// Created by Kim on 29-09-2018.
 //
 
 #ifndef PLAZA_SCENE_H
@@ -9,5 +9,7 @@
 
 Unit(Scene)
     Component(Scene)
+    Component(SceneNode)
+        ReferenceProperty(Scene, SceneNodeScene)
 
 #endif //PLAZA_SCENE_H

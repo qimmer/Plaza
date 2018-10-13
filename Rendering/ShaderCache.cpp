@@ -10,6 +10,7 @@
 #include <EASTL/map.h>
 #include <Core/Identification.h>
 #include <Core/Enum.h>
+#include <Foundation/Invalidation.h>
 
 using namespace eastl;
 
@@ -22,7 +23,6 @@ struct BinaryProgram {
 struct ShaderCache {
     Vector(ShaderCachePrograms, Entity, 256)
     StringRef ShaderCacheDirectoryPath;
-    StringRef ShaderCacheIncludePath;
     u8 ShaderCacheProfile;
     StringRef ShaderCacheDefines;
 };
@@ -55,15 +55,20 @@ static void InvalidateBinaryProgram(Entity binaryProgram) {
     auto program = GetBinaryProgramProgram(binaryProgram);
     auto shaderCache = GetOwner(binaryProgram);
 
-    snprintf(binaryPath, sizeof(binaryPath), "%s/%s_%s.bin",
-            GetShaderCacheDirectoryPath(shaderCache),
-            GetEnumName(EnumOf_ShaderProfile(), GetShaderCacheProfile(shaderCache)),
+    auto cachePath = GetShaderCacheDirectoryPath(shaderCache);
+    if(!cachePath || cachePath[0] == '\0') {
+        cachePath = ".shadercache";
+    }
+
+    snprintf(binaryPath, sizeof(binaryPath), "file://%s/%s_%s.vsb",
+             cachePath,
+            GetEnumName(EnumOf_ShaderProfile(), GetShaderCacheProfile(shaderCache)) + strlen("ShaderProfile_"),
             GetFileName(GetStreamPath(GetProgramVertexShaderSource(program))));
     SetStreamPath(GetBinaryProgramVertexShader(binaryProgram), binaryPath);
 
-    snprintf(binaryPath, sizeof(binaryPath), "%s/%s_%s.bin",
-             GetShaderCacheDirectoryPath(shaderCache),
-             GetEnumName(EnumOf_ShaderProfile(), GetShaderCacheProfile(shaderCache)),
+    snprintf(binaryPath, sizeof(binaryPath), "file://%s/%s_%s.psb",
+             cachePath,
+             GetEnumName(EnumOf_ShaderProfile(), GetShaderCacheProfile(shaderCache)) + strlen("ShaderProfile_"),
              GetFileName(GetStreamPath(GetProgramPixelShaderSource(program))));
     SetStreamPath(GetBinaryProgramPixelShader(binaryProgram), binaryPath);
 
@@ -71,6 +76,8 @@ static void InvalidateBinaryProgram(Entity binaryProgram) {
     const void *argumentPtrs[] = { &binaryProgram };
 
     FireEventFast(EventOf_ShaderCompile(), 1, types, argumentPtrs);
+
+    Invalidate(binaryProgram);
 }
 
 LocalFunction(OnStreamChanged, void,
@@ -127,7 +134,6 @@ BeginUnit(ShaderCache)
         RegisterProperty(StringRef, ShaderCacheDefines)
         RegisterProperty(u8, ShaderCacheProfile)
         RegisterProperty(StringRef, ShaderCacheDirectoryPath)
-        RegisterProperty(StringRef, ShaderCacheIncludePath)
         RegisterArrayProperty(BinaryProgram, ShaderCachePrograms)
     EndComponent()
 

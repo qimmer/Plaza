@@ -12,14 +12,7 @@ Unit(Uniform)
         Property(u8, UniformArrayCount)
         Property(Type, UniformType)
         Property(StringRef, UniformIdentifier)
-
-    Component(UniformStateElement)
-        Property(m4x4f, UniformStateElementMat4);
-        Property(v4f, UniformStateElementVec4);
-        ReferenceProperty(Texture, UniformStateElementTexture);
-
-    Component(UniformState)
-        ReferenceProperty(Uniform, UniformStateUniform);
-        ArrayProperty(UniformStateElement, UniformStateElements)
+        ReferenceProperty(Property, UniformEntityProperty)
+        ReferenceProperty(Property, UniformElementProperty)
 
 #endif //PLAZA_UNIFORM_H

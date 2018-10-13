@@ -13,15 +13,8 @@
 #include "Types.h"
 #include <Core/Vector.h>
 
-inline void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
-{
-	return ::malloc(size);
-}
-
-inline void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line)
-{
-	return ::malloc(size);
-}
+void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line);
+void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line);
 
 
 typedef u64 Entity;
@@ -36,6 +29,7 @@ Entity ModuleOf_Core();
 
 u32 GetArrayPropertyCount(Entity property, Entity entity);
 u32 AddArrayPropertyElement(Entity property, Entity entity);
+u32 GetArrayPropertyIndex(Entity property, Entity entity, Entity element);
 bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 index);
 Entity GetArrayPropertyElement(Entity property, Entity entity, u32 index);
 Entity *GetArrayPropertyElements(Entity property, Entity entity);
@@ -51,6 +45,9 @@ bool HasComponent(Entity entity, Entity component);
 u32 GetComponentMax(Entity component);
 Entity GetComponentEntity(Entity component, u32 index);
 char * GetComponentBytes(Entity component, u32 index);
+char * GetComponentData(u32 componentIndex, Entity entity);
+u32 GetComponentTypeIndexByIndex(u32 entityIndex);
+struct ComponentTypeData *GetComponentType(Entity component);
 u32 GetComponentIndex(Entity component, Entity entity);
 Entity GetComponentAddedEvent(Entity component);
 Entity GetComponentRemovedEvent(Entity component);
@@ -58,12 +55,12 @@ void SetComponentSize(Entity entity, u16 size);
 void SetEventArgsByDecl(Entity entity, StringRef decl);
 void SetEventArgumentOffset(Entity entity, u32 offset);
 void SetEventArgumentType(Entity entity, Type type);
-void SetEnumCombinable(Entity entity, bool value);
 Entity AddEnumFlags(Entity entity);
 void SetEnumFlagValue(Entity entity, u64 value);
 void SetPropertyType(Entity entity, Type type);
 void SetPropertyValue(Entity entity, Entity context, const void *valueData);
 void SetPropertyOffset(Entity entity, u32 offset);
+u32 GetPropertyOffset(Entity entity);
 void SetPropertySize(Entity entity, u32 size);
 void SetPropertyChildComponent(Entity entity, Entity component);
 void SetPropertyKind(Entity property, u8 kind);
@@ -97,13 +94,14 @@ Entity GetUniqueEntity(StringRef name, bool *firstTime);
 StringRef GetUniqueEntityName(Entity entity);
 
 // Declaration Macros
+#define GetEntityIndex(handle) (((u32 *) &handle)[0])
 
 #define Declare(TYPE, NAME) \
     inline Entity TYPE ## Of_ ## NAME () {\
         static Entity entity = 0;\
         static bool firstTime = false;\
         if(entity == 0) {\
-            entity = GetUniqueEntity(#TYPE " " #NAME, &firstTime);\
+            entity = GetUniqueEntity(#TYPE "." #NAME, &firstTime);\
         }\
         return entity;\
     }
@@ -163,10 +161,13 @@ StringRef GetUniqueEntityName(Entity entity);
     Event(PROPERTYNAME ## Changed, Entity changedEntity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue)\
     inline PROPERTYTYPE Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        PROPERTYTYPE value;\
-        memset(&value, 0, sizeof(PROPERTYTYPE));\
-        GetPropertyValue(prop, entity, &value);\
-        return value;\
+        static u32 offset = GetPropertyOffset(prop);\
+        static Entity component = GetOwner(prop);\
+        static u32 componentEntityIndex = GetEntityIndex(component);\
+        static u32 componentTypeIndex = GetComponentTypeIndexByIndex(componentEntityIndex);\
+        auto componentData = GetComponentData(componentTypeIndex, entity);\
+        if(!componentData) return PROPERTYTYPE ## _Default;\
+        return *((PROPERTYTYPE*)(componentData + offset));\
     }\
     inline void Set ## PROPERTYNAME(Entity entity, PROPERTYTYPE value) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME ();\
@@ -231,6 +232,10 @@ StringRef GetUniqueEntityName(Entity entity);
     inline void Remove ## PROPERTYNAME(Entity entity, u32 index) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         RemoveArrayPropertyElement(prop, entity, index);\
+    }\
+    inline u32 Get ## PROPERTYNAME ## Index(Entity entity, Entity element) {\
+        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
+        return GetArrayPropertyIndex(prop, entity, element);\
     }
 
 
@@ -258,7 +263,7 @@ StringRef GetUniqueEntityName(Entity entity);
         return 0;\
     }\
     API_EXPORT Entity Add ## PROPERTYNAME(Entity entity) {\
-        auto element = __CreateEntity();\
+        auto element = CreateEntity();\
         auto valueData = Get ## COMPONENT ## Data(entity);\
         VectorAdd(valueData->PROPERTYNAME, element);\
         AddComponent(element, ComponentOf_Ownership());\
@@ -274,7 +279,12 @@ StringRef GetUniqueEntityName(Entity entity);
             entity = GetUniqueEntity("Function " #NAME " " FILE, &firstTime);\
             if(firstTime) {\
                 char unregisteredName[64];\
-                snprintf(unregisteredName, 64, "Func_" #NAME "_%llu", entity);\
+                StringRef lastSlash = strrchr(FILE, '/');\
+                StringRef lastBackSlash = strrchr(FILE, '\\');\
+                if(lastBackSlash && lastSlash && (lastBackSlash - FILE) > (lastSlash - FILE)) lastSlash = lastBackSlash;\
+                if(!lastSlash) lastSlash = lastBackSlash;\
+                if(!lastSlash) lastSlash = FILE;\
+                snprintf(unregisteredName, 64, "%s:" #NAME, lastSlash + 1);\
                 SetName(entity, unregisteredName);\
                 SetFunctionReturnType(entity, TypeOf_ ## R);\
                 SetFunctionArgsByDecl(entity, #__VA_ARGS__);\
@@ -575,5 +585,6 @@ StringRef GetUniqueEntityName(Entity entity);
 #include <Core/Entity.h>
 #include <Core/Component.h>
 #include <Core/Event.h>
+#include <Core/Enum.h>
 
 #endif //PLAZA_NATIVEUTILS_H

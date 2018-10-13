@@ -38,7 +38,6 @@ EXPORTS
 	__SetVectorAmount
 	HasComponent
 	GetComponentEntity
-	CreateVariant
 	CallFunction
 	GetName
 	GetComponentBytes
@@ -48,7 +47,6 @@ EXPORTS
 	RemoveArrayPropertyElement
 	GetPropertyType
 	GetPropertyKind
-	GetPropertyFlags
 	GetNumProperties
 	GetProperties
 	CalculateEntityPath

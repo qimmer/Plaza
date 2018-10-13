@@ -75,7 +75,7 @@ typedef struct {
     v3f x, y, z;
 } m3x3f;
 
-typedef struct ALIGN(64) {
+typedef struct ALIGN(16) {
     v4f x, y, z, w;
 } m4x4f;
 
@@ -95,18 +95,42 @@ typedef struct {
 } rgba8;
 
 typedef struct {
-    float r, g, b, a;
+
+    union {
+        struct {
+            float r, g, b, a;
+        };
+
+        struct {
+            float x, y, z, w;
+        };
+    };
 } rgba32;
 
 typedef struct {
     union {
-        u8 r, g, b, _padding;
+        struct {
+            u8 r, g, b, _padding;
+        };
+
+        struct {
+            u8 x, y, z, w;
+        };
+
         u32 rgbx;
     };
 } rgb8;
 
 typedef struct {
-    float r, g, b;
+    union {
+        struct {
+            float r, g, b;
+        };
+
+        struct {
+            float x, y, z;
+        };
+    };
 } rgb32;
 
 static const m4x4f m4x4f_Identity = { {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1} };
@@ -167,5 +191,43 @@ u32 GetTypeSize(Type type);
 u32 GetTypeAlignment(Type type);
 StringRef GetTypeName(Type type);
 Type FindType(StringRef typeName);
+
+#define u8_Default 0
+#define u16_Default 0
+#define u32_Default 0
+#define u64_Default 0
+#define s8_Default 0
+#define s16_Default 0
+#define s32_Default 0
+#define s64_Default 0
+
+#define float_Default 0.0f
+#define double_Default 0.0
+#define bool_Default false
+#define StringRef_Default ""
+
+#define v2i_Default {0, 0}
+#define v3i_Default {0, 0, 0}
+#define v4i_Default {0, 0, 0, 0}
+
+#define v2f_Default {0.0f, 0.0f}
+#define v3f_Default {0.0f, 0.0f, 0.0f}
+#define v4f_Default {0.0f, 0.0f, 0.0f, 0.0f}
+
+#define m3x3f_Default {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}
+#define m4x4f_Default {{0.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.0f}};
+
+#define Entity_Default 0
+#define Type_Default 0
+
+#define rgba8_Default {0}
+#define rgb8_Default {0}
+
+#define rgba32_Default {0}
+#define rgb32_Default {0}
+
+#define Date_Default 0
+
+#define Variant_Default {0, 0}
 
 #endif

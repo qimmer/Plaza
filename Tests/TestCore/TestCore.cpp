@@ -7,6 +7,8 @@
 #include <Core/NativeUtils.h>
 #include <Core/Entity.h>
 #include <Core/Component.h>
+#include <Core/Instance.h>
+#include <Core/Identification.h>
 #include <Test/Test.h>
 #include "TestCore.h"
 
@@ -15,82 +17,58 @@
 #include <Core/Vector.h>
 #include <Test/TestModule.h>
 
-struct Person {
-    char PersonFirstName[64];
-    u8 PersonAge;
-    Vector(PersonChildren, u64, 128)
+struct TestCore {
+    Entity FamilyWithNoChildren, FamilyWithTwoChildren, FamilyInstance;
 };
 
-Test(TestVector) {
-    auto person = CreateEntity();
-    SetPersonAge(person, 20);
-    auto data = GetPersonData(person);
+struct Family {
+    Vector(FamilyMembers, Entity, 32);
+};
 
-    VectorAdd(data->PersonChildren, 1);
-    VectorAdd(data->PersonChildren, 2);
-    VectorAdd(data->PersonChildren, 3);
-    VectorAdd(data->PersonChildren, 4);
-    VectorAdd(data->PersonChildren, 5);
-    VectorAdd(data->PersonChildren, 6);
+struct Person {
+    u8 PersonAge;
+    Entity PersonPartner, PersonMother, PersonFather;
+};
 
-    const u64 expectedAddedValues[] = {1, 2, 3, 4, 5, 6};
+Test(TestInstance) {
 
-    Verify(memcmp(GetVector(data->PersonChildren), expectedAddedValues, sizeof(expectedAddedValues)) == 0, "Vector values are not as expected after add");
+    auto familyWithNoChildren = GetFamilyWithNoChildren(ModuleOf_TestCore());
 
-    VectorRemove(data->PersonChildren, 1);
-    VectorRemove(data->PersonChildren, 3);
+    auto man = AddFamilyMembers(familyWithNoChildren); SetPersonAge(man, 25); SetName(man, "Finn");
+    auto woman = AddFamilyMembers(familyWithNoChildren); SetPersonAge(woman, 22); SetName(woman, "Gerda");
 
-    const u64 expectedRemovedValues[] = {1, 6, 3, 5};
+    SetPersonPartner(man, woman);
+    SetPersonPartner(woman, man);
 
-    Verify(memcmp(GetVector(data->PersonChildren), expectedRemovedValues, sizeof(expectedRemovedValues)) == 0, "Vector values are not as expected after removal");
+    auto familyWithTwoChildren = GetFamilyWithTwoChildren(ModuleOf_TestCore());
 
-    return Success;
-}
+    SetInstanceTemplate(familyWithTwoChildren, familyWithNoChildren);
 
-Test(TestEntity) {
-    Entity entities[] = {
-        CreateEntity(),
-        CreateEntity(),
-        CreateEntity(),
-        CreateEntity(),
-        0
-    };
+    Verify(GetNumFamilyMembers(familyWithTwoChildren) == 2, "Wrong number of family members after instantiation.");
 
-    for(auto i = 0; i < 4; ++i)
-    {
-        Verify(IsEntityValid(entities[i]), "Entity should be valid");
-    }
+    auto father = GetFamilyMembers(familyWithTwoChildren)[0];
+    auto mother = GetFamilyMembers(familyWithTwoChildren)[1];
 
-    __DestroyEntity(entities[0]);
-    Verify(!IsEntityValid(entities[0]), "Entity should be invalid");
+    Verify(GetName(mother) == Intern("Gerda"), "Mother has wrong name.");
+    Verify(GetName(father) == Intern("Finn"), "Father has wrong name.");
 
-    for(auto i = 0; entities[i]; ++i)
-    {
-        __DestroyEntity(entities[i]);
-    }
+    SetName(man, "George");
+    auto fatherName = GetName(father);
+    Verify(fatherName == Intern("George"), "Father has wrong name after template name changed.");
 
-    return Success;
-}
+    auto child1 = AddFamilyMembers(familyWithTwoChildren); SetPersonAge(child1, 5); SetName(child1, "Anders"); SetPersonMother(child1, mother);
 
-Test(TestComponent) {
-    auto entity = CreateEntity();
+    Verify(GetInstanceTemplate(familyWithTwoChildren) == familyWithNoChildren, "Wrong template set on familyWithTwoChildren");
 
-    Verify(!HasComponent(entity, ComponentOf_Person()), "Should have no person");
-    Verify(AddComponent(entity, ComponentOf_Person()), "Should have added person");
-    Verify(HasComponent(entity, ComponentOf_Person()), "Should have person");
-    Verify(GetPersonAge(entity) == 0, "Age should be 0 (default)");
-    Verify(strcmp(GetPersonFirstName(entity), "") == 0, "FirstName should be empty (default)");
+    auto familyInstance = GetFamilyInstance(ModuleOf_TestCore());
+    SetInstanceTemplate(familyInstance, familyWithTwoChildren);
 
-    SetPersonAge(entity, 45);
-    SetPersonFirstName(entity, "John");
+    Verify(GetInstanceTemplate(familyInstance) == familyWithTwoChildren, "Wrong template set on familyInstance");
+    Verify(GetNumFamilyMembers(familyWithTwoChildren) == 3, "Wrong number of family members. Should be 3 (father, mother, child1)");
 
-    Verify(GetPersonAge(entity) == 45, "Age should be 45");
-    Verify(strcmp(GetPersonFirstName(entity), "John") == 0, "First Name should be John");
+    auto child2 = AddFamilyMembers(familyWithTwoChildren); SetPersonAge(child2, 7); SetName(child2, "Bonnie"); SetPersonMother(child2, mother);
 
-    auto personComponent = ComponentOf_Person();
-    auto index = GetComponentIndex(ComponentOf_Component(), personComponent);
-
-    __DestroyEntity(entity);
+    Verify(GetNumFamilyMembers(familyInstance) == 4, "Wrong number of family members on instance after adding 2nd child to template. Should be 4 (father, mother, child1, child2)");
 
     return Success;
 }
@@ -102,11 +80,11 @@ LocalFunction(OnAgeChanged, void, Entity person, u8 oldValue, u8 newValue) {
 }
 
 Test(TestEvent) {
-    auto entity = CreateEntity();
+    auto entity = GetFamilyWithNoChildren(ModuleOf_TestCore());
 
     auto event = GetPropertyChangedEvent(PropertyOf_PersonAge());
 
-    auto subscription = CreateEntity();
+    auto subscription = AddSubscriptions(ModuleOf_TestCore());
     SetSubscriptionEvent(subscription, EventOf_PersonAgeChanged());
     SetSubscriptionHandler(subscription, FunctionOf_OnAgeChanged());
     SetSubscriptionSender(subscription, 0);
@@ -126,8 +104,7 @@ Test(TestEvent) {
 
     Verify(ageDifference == 1, "Event is triggered on wrong entity");
 
-    __DestroyEntity(entity);
-    __DestroyEntity(subscription);
+    RemoveSubscriptions(ModuleOf_TestCore(), 0);
 
     return Success;
 }
@@ -138,21 +115,24 @@ BeginModule(TestCore)
     RegisterUnit(TestCore)
 EndModule()
 
-struct Property {
-    Entity PropertyEnum, PropertyChangedEvent, PropertyChildComponent;
-    u32 PropertyOffset, PropertySize, PropertyFlags;
-    Type PropertyType;
-    u8 PropertyKind;
-};
-
 BeginUnit(TestCore)
     BeginComponent(Person)
         RegisterProperty(u8, PersonAge)
-        RegisterProperty(StringRef, PersonFirstName)
+        RegisterReferenceProperty(Person, PersonPartner)
+        RegisterReferenceProperty(Person, PersonMother)
+        RegisterReferenceProperty(Person, PersonFather)
+    EndComponent()
+    BeginComponent(Family)
+        RegisterArrayProperty(Person, FamilyMembers)
+    EndComponent()
+    BeginComponent(TestCore)
+        RegisterChildProperty(Family, FamilyWithNoChildren)
+        RegisterChildProperty(Family, FamilyWithTwoChildren)
+        RegisterChildProperty(Family, FamilyInstance)
     EndComponent()
 
-    RegisterTest(TestVector)
-    RegisterTest(TestEntity)
-    RegisterTest(TestComponent)
+    AddComponent(module, ComponentOf_TestCore());
+
+    RegisterTest(TestInstance)
     RegisterTest(TestEvent)
 EndUnit()

@@ -6,16 +6,17 @@
 #include "Material.h"
 #include "Mesh.h"
 #include "Uniform.h"
+#include <Scene/Transform.h>
+#include <Scene/Scene.h>
 
 struct Renderable {
-    Vector(RenderableUniformStates, Entity, 16)
     Entity RenderableMaterial, RenderableSubMesh;
 };
 
 BeginUnit(Renderable)
     BeginComponent(Renderable)
+        RegisterBase(SceneNode)
         RegisterBase(Transform)
-        RegisterArrayProperty(UniformState, RenderableUniformStates)
         RegisterReferenceProperty(Material, RenderableMaterial)
         RegisterReferenceProperty(SubMesh, RenderableSubMesh)
     EndComponent()

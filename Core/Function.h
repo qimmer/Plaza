@@ -30,6 +30,9 @@ void SetNativeFunctionPointer(Entity function, void *ptr);
 
 void SetFunctionArgsByDecl(Entity f, StringRef argsDecl);
 
+void ProfileStart(StringRef tag, double thresholdMsecs);
+void ProfileEnd();
+
 bool CallFunction(
     Entity f,
     void *returnData,

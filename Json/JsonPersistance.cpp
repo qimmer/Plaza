@@ -30,26 +30,49 @@
 #include <unordered_map>
 #include <string>
 #include <Core/Std.h>
+#include <Core/Enum.h>
+#include <Core/Binding.h>
+#include <Core/Instance.h>
 
 using namespace eastl;
 
+const StringRef jsonTypeNames[] = {
+    "Null",
+    "False",
+    "True",
+    "Object",
+    "Array",
+    "String",
+    "Number"
+};
+
 #define WriteIf(TYPE, JSONWRITEFUNC)\
     case TypeOf_ ## TYPE:\
-        writer.JSONWRITEFUNC(*(TYPE*)valueData);\
+        writer.JSONWRITEFUNC(*(TYPE*)&value.data);\
         break;
 
 #define ReadIf(TYPE, JSONREADFUNC)\
     case TypeOf_ ## TYPE:\
-        *(TYPE*)valueData = reader.Get ## JSONREADFUNC ();\
+        if(reader.Is ## JSONREADFUNC ()) {\
+            *(TYPE*)&value.data = reader.Get ## JSONREADFUNC ();\
+        } else {\
+            Log(0, LogSeverity_Error, "Property '%s %s' could not be deserialized: Type is %s but %s was expected.", GetTypeName(GetPropertyType(property)), GetName(property), jsonTypeNames[reader.GetType()], #JSONREADFUNC);\
+        }\
         break;
 
 #define ReadVec2If(TYPE, JSONREADFUNC)\
     case TypeOf_ ## TYPE:\
         {\
         TYPE v;\
-        v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
-        v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
-        *(TYPE*)valueData = v;\
+        if(reader.IsObject()) { \
+            v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
+            v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
+        }\
+        if(reader.IsArray()) {\
+            v.x = reader.GetArray()[0].Get ## JSONREADFUNC ();\
+            v.y = reader.GetArray()[1].Get ## JSONREADFUNC ();\
+        }\
+        *(TYPE*)&value.data = v;\
         }\
         break;
 
@@ -57,10 +80,17 @@ using namespace eastl;
     case TypeOf_ ## TYPE:\
         {\
         TYPE v;\
-        v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
-        v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
-        v.z = reader.GetObject()["z"].Get ## JSONREADFUNC ();\
-        *(TYPE*)valueData = v;\
+        if(reader.IsObject()) { \
+            v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
+            v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
+            v.z = reader.GetObject()["z"].Get ## JSONREADFUNC ();\
+        }\
+        if(reader.IsArray()) {\
+            v.x = reader.GetArray()[0].Get ## JSONREADFUNC ();\
+            v.y = reader.GetArray()[1].Get ## JSONREADFUNC ();\
+            v.z = reader.GetArray()[2].Get ## JSONREADFUNC ();\
+        }\
+        *(TYPE*)&value.data = v;\
         }\
         break;
 
@@ -68,18 +98,26 @@ using namespace eastl;
     case TypeOf_ ## TYPE:\
         {\
         TYPE v;\
-        v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
-        v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
-        v.z = reader.GetObject()["z"].Get ## JSONREADFUNC ();\
-        v.w = reader.GetObject()["w"].Get ## JSONREADFUNC ();\
-        *(TYPE*)valueData = v;\
+        if(reader.IsObject()) { \
+            v.x = reader.GetObject()["x"].Get ## JSONREADFUNC ();\
+            v.y = reader.GetObject()["y"].Get ## JSONREADFUNC ();\
+            v.z = reader.GetObject()["z"].Get ## JSONREADFUNC ();\
+            v.w = reader.GetObject()["w"].Get ## JSONREADFUNC ();\
+        }\
+        if(reader.IsArray()) {\
+            v.x = reader.GetArray()[0].Get ## JSONREADFUNC ();\
+            v.y = reader.GetArray()[1].Get ## JSONREADFUNC ();\
+            v.z = reader.GetArray()[2].Get ## JSONREADFUNC ();\
+            v.w = reader.GetArray()[3].Get ## JSONREADFUNC ();\
+        }\
+        *(TYPE*)&value.data = v;\
         }\
         break;
 
 #define WriteVec2If(TYPE, JSONWRITEFUNC)\
     case TypeOf_ ## TYPE:\
         {\
-            auto v2 = *(TYPE*)valueData;\
+            auto v2 = *(TYPE*)&value.data;\
             writer.StartObject();\
             writer.String("x");\
             writer.JSONWRITEFUNC(v2.x);\
@@ -92,7 +130,7 @@ using namespace eastl;
 #define WriteVec3If(TYPE, JSONWRITEFUNC)\
     case TypeOf_ ## TYPE:\
 {\
-        auto v3 = *(TYPE*)valueData;\
+        auto v3 = *(TYPE*)&value.data;\
         writer.StartObject();\
         writer.String("x");\
         writer.JSONWRITEFUNC(v3.x);\
@@ -107,7 +145,7 @@ using namespace eastl;
 #define WriteVec4If(TYPE, JSONWRITEFUNC)\
     case TypeOf_ ## TYPE:\
 {\
-        auto v4 = *(TYPE*)valueData;\
+        auto v4 = *(TYPE*)&value.data;\
         writer.StartObject();\
         writer.String("x");\
         writer.JSONWRITEFUNC(v4.x);\
@@ -126,9 +164,9 @@ static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& e
 static Entity ResolveEntity(StringRef uuid, rapidjson::Value& entityMap, rapidjson::Document& document);
 
 static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer) {
-    char valueData[64];
+    Variant value;
     auto type = GetPropertyType(property);
-    GetPropertyValue(property, entity, valueData);
+    GetPropertyValue(property, entity, &value.data);
 
     switch(type) {
         WriteIf(u8, Uint)
@@ -152,11 +190,11 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjso
         WriteVec4If(v4i, Int)
         WriteVec4If(rgba8, Int)
         case TypeOf_Type:
-            writer.String(GetTypeName(*(Type*)valueData));
+            writer.String(GetTypeName(value.as_Type));
             break;
         case TypeOf_Entity:
         {
-            auto entity = *(Entity*)valueData;
+            auto entity = value.as_Entity;
             if(IsEntityValid(entity)) {
                 writer.String(GetUuid(entity));
             } else {
@@ -192,51 +230,6 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
 
         writer.String("$owner");
         writer.String(GetUuid(GetOwner(parent)));
-
-        {
-            writer.String("$dependencies");
-            writer.StartArray();
-            for_entity(component, componentData, Component) {
-                if (!HasComponent(parent, component) || component == ComponentOf_Ownership()) {
-                    continue;
-                }
-
-                auto numProperties = GetNumProperties(component);
-                auto properties = GetProperties(component);
-                for (auto pi = 0; pi < numProperties; ++pi) {
-                    auto property = properties[pi];
-                    auto name = GetName(property);
-
-                    if(GetPropertyKind(property) != PropertyKind_Value
-                    || GetPropertyType(property) != TypeOf_Entity) {
-                        continue;
-                    }
-
-                    Entity ref = 0;
-                    if(GetPropertyValue(property, parent, &ref) && IsEntityValid(ref)) {
-                        Entity owner = ref;
-                        while(IsEntityValid(owner)) {
-                            if(HasComponent(owner, ComponentOf_PersistancePoint())) {
-                                char path[512];
-                                CalculateEntityPath(path, sizeof(path), owner, true);
-
-                                writer.StartObject();
-                                writer.String("EntityPath");
-                                writer.String(path);
-                                writer.String("StreamPath");
-                                writer.String(GetStreamPath(owner));
-                                writer.String("Property");
-                                writer.String(GetName(property));
-                                writer.EndObject();
-                            }
-
-                            owner = GetOwner(owner);
-                        }
-                    }
-                }
-            }
-            writer.EndArray();
-        }
 
         for_entity(component, componentData, Component) {
             if(!HasComponent(parent, component)
@@ -352,68 +345,26 @@ static StringRef GetJsonTypeName(const rapidjson::Value& value) {
     return jsonType;
 }
 
-static void DeserializeCodeModel(rapidjson::Value& entityMap, rapidjson::Document& document) {
-    for(auto it = entityMap.MemberBegin(); it != entityMap.MemberEnd(); ++it) {
-        if(it->value.HasMember("Components") && it->value.HasMember("Uuid")) {
-            auto uuid = ToLower(it->value["Uuid"].GetString());
-            auto name = it->value["Name"].GetString();
-
-            auto module = FindEntityByUuid(uuid);
-            if(!IsEntityValid(module)) {
-                module = AddModules(GetModuleRoot());
-                SetUuid(module, uuid);
-                SetName(module, name);
-            }
-        }
-    }
-
-    for(auto it = entityMap.MemberBegin(); it != entityMap.MemberEnd(); ++it) {
-        if(it->value.HasMember("Properties") && it->value.HasMember("Uuid")) {
-            auto uuid = ToLower(it->value["Uuid"].GetString());
-            auto name = it->value["Name"].GetString();
-            auto ownerUuid = ToLower(it->value["$owner"].GetString());
-
-            auto module = FindEntityByUuid(ownerUuid);
-            auto component = FindEntityByUuid(uuid);
-            if(!IsEntityValid(component)) {
-                component = AddComponents(module);
-                SetUuid(component, uuid);
-                SetName(component, name);
-            }
-        }
-    }
-
-    for(auto it = entityMap.MemberBegin(); it != entityMap.MemberEnd(); ++it) {
-        if(it->value.HasMember("PropertyType") && it->value.HasMember("Uuid") && it->value.HasMember("Name")) {
-            auto uuid = ToLower(it->value["Uuid"].GetString());
-            auto name = it->value["Name"].GetString();
-            auto ownerUuid = ToLower(it->value["$owner"].GetString());
-
-            auto component = FindEntityByUuid(ownerUuid);
-
-            auto property = FindEntityByUuid(uuid);
-            if(!IsEntityValid(property)) {
-                property = AddProperties(component);
-                SetUuid(property, uuid);
-                SetName(property, name);
-            }
-        }
-    }
-}
-
 static bool DeserializeEntity(Entity entity, rapidjson::Value& value, rapidjson::Value& entityMap, rapidjson::Document& document) {
     if(!value.IsObject()) {
         Log(0, LogSeverity_Error, "Json value is not an object, but a %s. Skipping this node.", GetJsonTypeName(value));
         return false;
     }
 
-    value.AddMember("$resolved", true, document.GetAllocator());
+    value.AddMember("$resolved", entity, document.GetAllocator());
 
     auto components = value.FindMember("$components");
     if(components != value.MemberEnd() && components->value.IsArray()) {
         for(auto arrayIt = components->value.Begin(); arrayIt != components->value.End(); ++arrayIt) {
             if(arrayIt->IsString()) {
                 auto componentUuid = arrayIt->GetString();
+
+                if(!strchr(componentUuid, '.')) {
+                    auto newUuid = (char*)alloca(strlen("Component.") + arrayIt->GetStringLength() + 1);
+                    sprintf(newUuid, "Component.%s", arrayIt->GetString());
+                    componentUuid = newUuid;
+                }
+
                 auto component = ResolveEntity(componentUuid, entityMap, document);
 
                 if(!IsEntityValid(component)) {
@@ -425,21 +376,33 @@ static bool DeserializeEntity(Entity entity, rapidjson::Value& value, rapidjson:
         }
     }
 
+    auto instanceTemplate = value.FindMember("InstanceTemplate");
+    if(instanceTemplate != value.MemberEnd()) {
+        // Make sure to add instance component early on,
+        // which tracks what properties are being set and should override
+        // template.
+        AddComponent(entity, ComponentOf_Instance());
+    }
+
     for (auto propertyIterator = value.MemberBegin();
          propertyIterator != value.MemberEnd(); ++propertyIterator)
     {
-        auto propertyName = Intern(propertyIterator->name.GetString());
+        auto propertyUuid = Intern(propertyIterator->name.GetString());
 
-        if(propertyName[0] == '$') {
+        if (propertyUuid[0] == '$') {
             continue;
         }
 
-        auto property = FindEntityByName(ComponentOf_Property(), propertyName);
-        auto propertyUuid = GetUuid(property);
-        ResolveEntity(propertyUuid, entityMap, document);
+        if(!strchr(propertyUuid, '.')) {
+            auto newUuid = (char*)alloca(strlen("Property.") + propertyIterator->name.GetStringLength() + 1);
+            sprintf(newUuid, "Property.%s", propertyIterator->name.GetString());
+            propertyUuid = newUuid;
+        }
+
+        auto property = ResolveEntity(propertyUuid, entityMap, document);
 
         if(!HasComponent(property, ComponentOf_Property())) {
-            Log(0, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetDebugName(entity), propertyName);
+            Log(0, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetDebugName(entity), propertyUuid);
             continue;
         }
 
@@ -475,7 +438,8 @@ static bool DeserializeEntity(Entity entity, rapidjson::Value& value, rapidjson:
                     auto uuid = reader[i].GetString();
 
                     if(entityMap.HasMember(uuid)) {
-                        DeserializeEntity(GetArrayPropertyElement(property, entity, i), entityMap[uuid], entityMap,
+                        Entity child = GetArrayPropertyElement(property, entity, i);
+                        DeserializeEntity(child, entityMap[uuid], entityMap,
                                           document);
                     }
                 }
@@ -487,15 +451,20 @@ static bool DeserializeEntity(Entity entity, rapidjson::Value& value, rapidjson:
 }
 
 static Entity ResolveEntity(StringRef uuid, rapidjson::Value& entityMap, rapidjson::Document& document) {
-    if(entityMap.HasMember(uuid) && !entityMap[uuid].HasMember("$resolved")) {
-        // Entity needs to be deserialized
+    if(entityMap.HasMember(uuid)) {
         auto& value = entityMap[uuid];
 
+        auto resolvedIt = value.FindMember("$resolved");
+        if(resolvedIt != value.MemberEnd()) {
+            return (Entity)resolvedIt->value.GetUint64();
+        }
+
+        // Entity needs to be deserialized
         auto uuid = Intern(value["Uuid"].GetString());
         auto ownerUuid = Intern(value["$owner"].GetString());
         auto ownerPropertyUuid = Intern(value["$property"].GetString());
 
-        value.AddMember("$resolved", true, document.GetAllocator());
+        value.AddMember("$resolved", (u64)0, document.GetAllocator());
 
         auto owner = ResolveEntity(ownerUuid, entityMap, document);
         auto ownerProperty = ResolveEntity(ownerPropertyUuid, entityMap, document);
@@ -515,7 +484,7 @@ static Entity ResolveEntity(StringRef uuid, rapidjson::Value& entityMap, rapidjs
             if(GetPropertyKind(ownerProperty) == PropertyKind_Child) {
                 GetPropertyValue(ownerProperty, owner, &entity);
                 Assert(owner, entity);
-            } else {
+            } else if(GetPropertyKind(ownerProperty) == PropertyKind_Array) {
                 auto& indexValue = value["$index"];
                 if(indexValue.GetType() != rapidjson::kNumberType) {
                     Log(0, LogSeverity_Error, "Owner property index is not defined for object '%s'.", uuid);
@@ -529,6 +498,8 @@ static Entity ResolveEntity(StringRef uuid, rapidjson::Value& entityMap, rapidjs
 
                 entity = GetArrayPropertyElement(ownerProperty, owner, index);
                 Assert(owner, entity);
+            } else {
+                Assert(owner, false); // Never reach this!
             }
 
             SetUuid(entity, uuid);
@@ -541,14 +512,10 @@ static Entity ResolveEntity(StringRef uuid, rapidjson::Value& entityMap, rapidjs
 
     // Entity has been deserialized or is external
     auto entity = FindEntityByUuid(uuid);
-    if(!IsEntityValid(entity)) {
-        entity = FindEntityByName(ComponentOf_Property(), uuid); // Properties, and properties only, can be looked up by name
-    }
-
     return entity;
 }
 
-static StringRef ReadNode(rapidjson::Value& value, rapidjson::Value& entityTable, rapidjson::Document& document, StringRef owner, StringRef ownerPropertyName, int index, StringRef existingUuid) {
+static StringRef ReadNode(rapidjson::Value& value, rapidjson::Value& entityTable, rapidjson::Document& document, StringRef owner, StringRef ownerPropertyUuid, int index, StringRef existingUuid) {
     if(value.IsString()) {
         return value.GetString();
     }
@@ -567,7 +534,7 @@ static StringRef ReadNode(rapidjson::Value& value, rapidjson::Value& entityTable
     }
 
     if(!value.HasMember("$property")) {
-        value.AddMember("$property", rapidjson::StringRef(Intern(ownerPropertyName)), document.GetAllocator());
+        value.AddMember("$property", rapidjson::StringRef(Intern(ownerPropertyUuid)), document.GetAllocator());
     }
 
     if(!value.HasMember("$index")) {
@@ -578,10 +545,16 @@ static StringRef ReadNode(rapidjson::Value& value, rapidjson::Value& entityTable
 
     for (auto propertyIterator = value.MemberBegin();
          propertyIterator != value.MemberEnd(); ++propertyIterator) {
-        auto propertyName = propertyIterator->name.GetString();
+        auto propertyUuid = propertyIterator->name.GetString();
 
-        if (propertyName[0] == '$') {
+        if (propertyUuid[0] == '$') {
             continue;
+        }
+
+        if(!strchr(propertyUuid, '.')) {
+            auto newUuid = (char*)alloca(strlen("Property.") + propertyIterator->name.GetStringLength() + 1);
+            sprintf(newUuid, "Property.%s", propertyIterator->name.GetString());
+            propertyUuid = newUuid;
         }
 
         switch (propertyIterator->value.GetType()) {
@@ -590,7 +563,7 @@ static StringRef ReadNode(rapidjson::Value& value, rapidjson::Value& entityTable
                 auto& element = propertyIterator->value;
 
                 if(!element.HasMember("x")) {
-                    auto childUuid = ReadNode(element, entityTable, document, uuid, propertyName, 0, NULL);
+                    auto childUuid = ReadNode(element, entityTable, document, uuid, propertyUuid, 0, NULL);
 
                     element.SetString(rapidjson::StringRef(childUuid));
                 }
@@ -602,7 +575,7 @@ static StringRef ReadNode(rapidjson::Value& value, rapidjson::Value& entityTable
                 for (auto i = 0; i < propertyIterator->value.Size(); ++i) {
                     auto& element = propertyIterator->value[i];
                     if(element.GetType() == rapidjson::kObjectType) {
-                        auto childUuid = ReadNode(element, entityTable, document, uuid, propertyName, i, NULL);
+                        auto childUuid = ReadNode(element, entityTable, document, uuid, propertyUuid, i, NULL);
 
                         element.SetString(rapidjson::StringRef(childUuid));
                     }
@@ -612,10 +585,6 @@ static StringRef ReadNode(rapidjson::Value& value, rapidjson::Value& entityTable
         }
     }
 
-    if(value.HasMember("Name") && value.HasMember("PropertyType")) {
-        entityTable.AddMember(rapidjson::Value(value["Name"], document.GetAllocator()), rapidjson::Value(value, document.GetAllocator()), document.GetAllocator());
-    }
-
     auto& tableValue = entityTable.AddMember(rapidjson::StringRef(uuid), rapidjson::StringRef(uuid), document.GetAllocator());
 
     value.Swap(entityTable[uuid]);
@@ -623,12 +592,119 @@ static StringRef ReadNode(rapidjson::Value& value, rapidjson::Value& entityTable
     return uuid;
 }
 
+static bool ParseBinding(StringRef bindingString, Entity parent, Entity parentProperty, rapidjson::Value& entityMap, rapidjson::Document& document) {
+    auto len = strlen(bindingString);
+    if(bindingString[0] != '{' || bindingString[len - 1] != '}') return false;
+
+    char *bindingWithoutCurlyBraces = (char*)alloca(len - 2);
+    memcpy(bindingWithoutCurlyBraces, bindingString + 1, len - 2);
+    bindingWithoutCurlyBraces[len - 2] = '\0';
+
+    auto entityName = strchr(bindingWithoutCurlyBraces, '@') + 1;
+    auto entity = ResolveEntity(entityName, entityMap, document);
+
+    if(!IsEntityValid(entity)) {
+        Log(0, LogSeverity_Error, "Could not find bindable entity: %s", entityName);
+        return true;
+    }
+
+    Bind(parent, parentProperty, bindingWithoutCurlyBraces);
+
+    return true;
+}
+
+static Type GetVariantType(const rapidjson::Value& value) {
+    switch(value.GetType()) {
+        case rapidjson::kStringType:
+            return TypeOf_StringRef;
+
+        case rapidjson::kNumberType:
+            if (value.IsInt()) {
+                return TypeOf_s32;
+            }
+            return TypeOf_double;
+
+        case rapidjson::kFalseType:
+        case rapidjson::kTrueType:
+            return TypeOf_bool;
+
+        case rapidjson::kArrayType:
+            if (value.GetArray().Size() < 2 || value.GetArray().Size() > 4) {
+                return TypeOf_unknown;
+            }
+            auto elementType = GetVariantType(value.GetArray()[0]);
+            switch (value.GetArray().Size()) {
+                case 2:
+                    switch (elementType) {
+                        case TypeOf_s32:
+                            return TypeOf_v2i;
+                        case TypeOf_double:
+                            return TypeOf_v2f;
+                    }
+                    break;
+                case 3:
+                    switch (elementType) {
+                        case TypeOf_s32:
+                            return TypeOf_v3i;
+                        case TypeOf_double:
+                            return TypeOf_v3f;
+                    }
+                    break;
+                case 4:
+                    switch (elementType) {
+                        case TypeOf_s32:
+                            return TypeOf_v4i;
+                        case TypeOf_double:
+                            return TypeOf_v4f;
+                    }
+                    break;
+            }
+
+    }
+
+    Log(0, LogSeverity_Error, "Complex JSON type %s cannot be cast to variant.", jsonTypeNames[value.GetType()]);
+    return TypeOf_unknown;
+}
 
 static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& entityMap, rapidjson::Document& document, const rapidjson::Value& reader) {
     auto type = GetPropertyType(property);
     auto jsonType = reader.GetType();
     auto typeName = GetTypeName(type);
-    char valueData[64];
+
+    auto enu = GetPropertyEnum(property);
+    auto hasEnum = HasComponent(enu, ComponentOf_Enum());
+    if(hasEnum && reader.GetType() == rapidjson::kStringType) {
+        auto flagString = Intern(reader.GetString());
+        auto flags = GetEnumFlags(enu);
+        auto cnt = GetNumEnumFlags(enu);
+        u64 value = 0;
+        for(auto i = 0; i < cnt; ++i) {
+            auto flagName = GetName(flags[i]);
+            auto foundStr = strstr(flagString, flagName);
+            if(foundStr) {
+                auto endChar = *(foundStr + strlen(flagName));
+                if(endChar == '\0' || endChar == '|') {
+                    value |= GetEnumFlagValue(flags[i]);
+                }
+            }
+        }
+        SetPropertyValue(property, parent, &value);
+        return true;
+    }
+
+    if(reader.IsString() && ParseBinding(reader.GetString(), parent, property, entityMap, document)) {
+        return true;
+    }
+
+    Variant value;
+    auto isVariant = false;
+    if(type == TypeOf_Variant) {
+        isVariant = true;
+
+        type = GetVariantType(reader);
+    }
+
+    value.type = type;
 
     switch(type) {
         ReadIf(u8, Uint)
@@ -653,18 +729,18 @@ static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& e
         ReadVec4If(rgba8, Int)
         case TypeOf_Type:
             if(!reader.IsString()) {
-                Log(parent, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's name.", GetName(property));
+                Log(parent, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's type name.", GetUuid(property));
                 break;
             }
-            *(Type*)valueData = FindType(reader.GetString());
+            value.as_Type = FindType(reader.GetString());
             break;
         case TypeOf_Entity:
         {
             if(reader.IsNull()) {
-                *(Entity*)valueData = 0;
+                value.as_Entity = 0;
                 break;
             } else if(!reader.IsString()) {
-                Log(parent, LogSeverity_Error, "Error parsing property '%s': Entity references should be noted by a path string in JSON. Use $children to note entity hierarchy data.", GetName(property));
+                Log(parent, LogSeverity_Error, "Error parsing property '%s': Entity references should be noted by Uuid.", GetUuid(property));
                 break;
             }
 
@@ -672,28 +748,38 @@ static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& e
             auto id = reader.GetString();
 
             Entity entity = ResolveEntity(id, entityMap, document);
-            if(!IsEntityValid(entity)) {
+            if(!IsEntityValid(entity) && id[0] == '/') {
                 entity = FindEntityByPath(id);
             }
 
-            *(Entity*)valueData = entity;
+            value.as_Entity = entity;
             if(!IsEntityValid(entity)) {
-                Log(parent, LogSeverity_Error, "Could not find entity '%s' referenced by property %s.", id, GetName(property));
+                // If not found, mark it as unresolved and set it when the referenced entity is loaded
+                auto unresolvedReference = AddUnresolvedReferences(parent);
+                SetUnresolvedReferenceProperty(unresolvedReference, property);
+                SetUnresolvedReferenceUuid(unresolvedReference, id);
             }
         }
             break;
         default:
-            Log(parent, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetName(property), typeName);
+            Log(parent, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetUuid(property), typeName);
             return false;
             break;
     }
 
-    SetPropertyValue(property, parent, valueData);
+    if(isVariant) {
+        SetPropertyValue(property, parent, &value);
+    } else {
+        SetPropertyValue(property, parent, &value.data);
+    }
+
 
     return true;
 }
 
 API_EXPORT bool DeserializeJsonFromString(Entity stream, Entity entity, StringRef jsonString) {
+    static s32 serializationLevel = 0;
+
     rapidjson::Document document;
     auto size = strlen(jsonString);
     auto parseResult = (rapidjson::ParseResult)document.Parse(jsonString, size);
@@ -708,8 +794,20 @@ API_EXPORT bool DeserializeJsonFromString(Entity stream, Entity entity, StringRe
 
     rapidjson::Value entityMap(rapidjson::kObjectType);
     auto uuid = ReadNode(document, entityMap, document, "", "", 0, GetUuid(entity));
-    DeserializeCodeModel(entityMap, document);
+
+    serializationLevel++;
     DeserializeEntity(entity, entityMap[uuid], entityMap, document);
+    serializationLevel--;
+
+    // Only resolve references at root serialization level (after all eventual child serializations have finished
+    if(serializationLevel == 0 && !ResolveReferences()) {
+        for_entity(unresolvedReference, data, UnresolvedReference) {
+            Log(entity, LogSeverity_Error, "%s of entity %s has an unresolved reference: %s",
+                    GetUuid(GetUnresolvedReferenceProperty(unresolvedReference)),
+                    GetDebugName(GetOwner(unresolvedReference)),
+                    GetUnresolvedReferenceUuid(unresolvedReference));
+        }
+    }
 
     return true;
 }
@@ -740,6 +838,8 @@ API_EXPORT bool SerializeJson(Entity stream, Entity entity, s16 includeChildLeve
 }
 
 API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
+    static s32 serializationLevel = 0;
+
     bool streamWasOpen = IsStreamOpen(stream);
     auto startOffset = 0;
     if(!streamWasOpen) {
@@ -781,17 +881,23 @@ API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
     entityMap[uuid]["$owner"] = rapidjson::StringRef(GetUuid(GetOwner(entity)));
     entityMap[uuid]["$property"] = rapidjson::StringRef(GetUuid(GetOwnerProperty(entity)));
 
-    /*rapidjson::StringBuffer f;
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(f);
-    entityMap.Accept(writer);
-
-    printf("%s", f.GetString());*/
-
     SetUuid(entity, uuid);
-    DeserializeCodeModel(entityMap, document);
+
+    serializationLevel++;
     DeserializeEntity(entity, entityMap[uuid], entityMap, document);
+    serializationLevel--;
 
     free(data);
+
+    // Only resolve references at root serialization level (after all eventual child serializations have finished
+    if(serializationLevel == 0 && !ResolveReferences()) {
+        for_entity(unresolvedReference, data, UnresolvedReference) {
+            Log(entity, LogSeverity_Error, "%s of entity %s has an unresolved reference: %s",
+                GetName(GetUnresolvedReferenceProperty(unresolvedReference)),
+                GetDebugName(GetOwner(unresolvedReference)),
+                GetUnresolvedReferenceUuid(unresolvedReference));
+        }
+    }
 
     return true;
 }

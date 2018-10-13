@@ -30,7 +30,6 @@ Unit(ShaderCache)
         Property(StringRef, ShaderCacheDefines)
         Property(u8, ShaderCacheProfile)
         Property(StringRef, ShaderCacheDirectoryPath)
-        Property(StringRef, ShaderCacheIncludePath)
         ArrayProperty(BinaryProgram, ShaderCachePrograms)
 
     Event(ShaderCompile, Entity binaryProgram)

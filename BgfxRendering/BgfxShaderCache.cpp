@@ -9,6 +9,7 @@
 #include "BgfxResource.h"
 
 #include <bgfx/bgfx.h>
+#include <Rendering/ShaderCache.h>
 
 struct BgfxBinaryProgram {
 };
@@ -20,26 +21,48 @@ LocalFunction(OnBgfxBinaryProgramRemoved, void, Entity entity) {
         bgfx::destroy(handle);
     }
 }
+
+static void free_func(void* mem, void *userdata) {
+    _mm_free(mem);
+}
+
 LocalFunction(OnValidation, void, Entity entity) {
     if(HasComponent(entity, ComponentOf_BgfxBinaryProgram())) {
         // Eventually free old buffers
         OnBgfxBinaryProgramRemoved(entity);
 
-        if(!StreamOpen(entity, StreamMode_Read)) {
-            Log(entity, LogSeverity_Error, "Could not open binary shader for reading.");
+        auto binaryVertexShader = GetBinaryProgramVertexShader(entity);
+        if(!StreamOpen(binaryVertexShader, StreamMode_Read)) {
+            Log(binaryVertexShader, LogSeverity_Error, "Could not open binary vertex shader for reading.");
             return;
         }
 
-        StreamSeek(entity, StreamSeek_End);
-        u32 size = StreamTell(entity);
+        auto binaryPixelShader = GetBinaryProgramPixelShader(entity);
+        if(!StreamOpen(binaryPixelShader, StreamMode_Read)) {
+            StreamClose(binaryVertexShader);
+            Log(binaryPixelShader, LogSeverity_Error, "Could not open binary pixel shader for reading.");
+            return;
+        }
 
-        auto buffer = malloc(size);
-        StreamSeek(entity, 0);
-        StreamRead(entity, size, buffer);
-        StreamClose(entity);
+        StreamSeek(binaryVertexShader, StreamSeek_End);
+        auto vsSize = StreamTell(binaryVertexShader);
+        auto vs = _mm_malloc(vsSize, 16);
+        StreamSeek(binaryVertexShader, 0);
+        StreamRead(binaryVertexShader, vsSize, vs);
+        StreamClose(binaryVertexShader);
 
-        SetBgfxResourceHandle(entity, bgfx::createShader(bgfx::copy(buffer, size)).idx);
-        free(buffer);
+        StreamSeek(binaryPixelShader, StreamSeek_End);
+        auto psSize = StreamTell(binaryPixelShader);
+        auto ps = _mm_malloc(psSize, 16);
+        StreamSeek(binaryPixelShader, 0);
+        StreamRead(binaryPixelShader, psSize, ps);
+        StreamClose(binaryPixelShader);
+
+        auto vsHandle = bgfx::createShader(bgfx::makeRef(vs, vsSize, free_func));
+        auto psHandle = bgfx::createShader(bgfx::makeRef(ps, psSize, free_func));
+        auto programHandle = bgfx::createProgram(vsHandle, psHandle, true);
+
+        SetBgfxResourceHandle(entity, programHandle.idx);
     }
 }
 

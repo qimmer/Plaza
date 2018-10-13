@@ -16,6 +16,7 @@
 #include <climits>
 #include <Core/Identification.h>
 #include <Rendering/ShaderCache.h>
+#include <Foundation/Invalidation.h>
 
 static const StringRef shaderTypes[] = {
     "vertex",
@@ -59,15 +60,16 @@ private:
     std::stringstream stream;
 };
 
-int Compile(StringRef sourcePath,
+int Compile(StringRef compilerPath,
+            StringRef sourcePath,
             StringRef declSourcePath,
             StringRef binaryPath,
             StringRef includePath,
             u8 shaderType,
             u8 shaderProfile,
             StringRef defines) {
-
     StringRef *paths[] = {
+        &compilerPath,
         &sourcePath,
         &declSourcePath,
         &binaryPath,
@@ -143,11 +145,7 @@ int Compile(StringRef sourcePath,
     snprintf(command,
              4096,
              "%s -f \"%s\" -o \"%s\" -p %s -i \"%s\" --type %s --platform %s --varyingdef \"%s\" -O3 %s %s",
-#ifdef WIN32
-            "shaderc",
-#else
-            "./shaderc",
-#endif
+             compilerPath,
             sourcePath,
             binaryPath,
             profile,
@@ -157,6 +155,15 @@ int Compile(StringRef sourcePath,
             declSourcePath,
              hasDefines ? "--define" : "",
              hasDefines ? defines : "");
+
+#ifdef WIN32
+    // Convert slashes in paths into backslashes
+    char *ptr = command;
+    while(*ptr) {
+        if(*ptr == '/') *ptr = '\\';
+        ptr++;
+    }
+#endif
 
     if (0 == (fpipe = (FILE*)popen(command, "r")))
     {
@@ -206,20 +213,22 @@ LocalFunction(OnShaderCompile, void, Entity binaryProgram) {
 
     // Vertex Shader
     hasErrors |= 0 != Compile(
+            "file://BgfxRendering/Tools/shaderc.exe",
             GetStreamResolvedPath(vertexShader),
             GetStreamResolvedPath(declShader),
             GetStreamResolvedPath(binaryVertexShader),
-            GetShaderCacheIncludePath(shaderCache),
+            "file://BgfxRendering/ShaderIncludes",
             0,
             profile,
             shaderDefines);
 
     // Pixel Shader
     hasErrors |= 0 != Compile(
+            "file://BgfxRendering/Tools/shaderc.exe",
             GetStreamResolvedPath(pixelShader),
             GetStreamResolvedPath(declShader),
             GetStreamResolvedPath(binaryPixelShader),
-            GetShaderCacheIncludePath(shaderCache),
+            "file://BgfxRendering/ShaderIncludes",
             1,
             profile,
             shaderDefines);

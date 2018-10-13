@@ -7,15 +7,12 @@
 
 #include <Core/NativeUtils.h>
 
-
-    Unit(Transform3D)
+Unit(Transform3D)
     Component(Transform3D)
-    DeclareService(Transform3D)
-
-            Property(v3f, Position3D)
-            Property(v3f, RotationEuler3D)
-            Property(v4f, RotationQuat3D)
-            Property(v3f, Scale3D)
+        Property(v3f, Position3D)
+        Property(v3f, RotationEuler3D)
+        Property(v4f, RotationQuat3D)
+        Property(v3f, Scale3D)
 
 void Move3D(Entity transform, v3f direction, bool relativeToRotation);
 

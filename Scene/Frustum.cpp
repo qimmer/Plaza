@@ -6,6 +6,7 @@
 struct Frustum {
     m4x4f FrustumViewMatrix, FrustumInvViewProjectionMatrix, FrustumProjectionMatrix;
     float FrustumNearClip, FrustumFarClip;
+    u64 padding;
 };
 
 static void UpdateViewMatrix(Entity frustum) {

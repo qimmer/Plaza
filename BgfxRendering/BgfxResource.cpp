@@ -21,7 +21,15 @@ LocalFunction(OnBgfxResourceAdded, void, Entity component, Entity entity) {
 LocalFunction(OnBgfxResourceRemoved, void, Entity entity) {
     auto data = GetBgfxResourceData(entity);
 
-    Assert(entity, data->BgfxResourceHandle == bgfx::kInvalidHandle);
+    if(data) {
+        Assert(entity, data->BgfxResourceHandle == bgfx::kInvalidHandle);
+    }
+}
+
+LocalFunction(InvalidateResource, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxResource())) {
+        Invalidate(entity);
+    }
 }
 
 BeginUnit(BgfxResource)
@@ -31,6 +39,8 @@ BeginUnit(BgfxResource)
         RegisterProperty(u16, BgfxResourceHandle)
     EndComponent()
 
-    RegisterSubscription(StreamContentChanged, Invalidate, 0)
-    RegisterSubscription(StreamPathChanged, Invalidate, 0)
+    RegisterSubscription(StreamContentChanged, InvalidateResource, 0)
+    RegisterSubscription(StreamPathChanged, InvalidateResource, 0)
+    RegisterSubscription(EntityComponentAdded, OnBgfxResourceAdded, ComponentOf_BgfxResource())
+    RegisterSubscription(EntityComponentRemoved, OnBgfxResourceRemoved, ComponentOf_BgfxResource())
 EndUnit()

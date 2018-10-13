@@ -29,6 +29,8 @@ void asio::detail::throw_exception(const Exception& e) {
     Log(0, LogSeverity_Error, "%s", e.what());
 }
 
+#define Verbose_TcpClient "tcpclient"
+
 struct TcpStream {
     tcp::socket *socket;
     u64 readOffset;
@@ -180,7 +182,7 @@ static void StartAccept(Entity server) {
 
         StreamOpen(stream, StreamMode_Read | StreamMode_Write);
 
-        Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Client %u connected: %s", GetComponentIndex(ComponentOf_TcpStream(), stream), GetStreamPath(stream));
+        Verbose(Verbose_TcpClient, "Client %u connected: %s", GetComponentIndex(ComponentOf_TcpStream(), stream), GetStreamPath(stream));
 
 		Type types[] = { TypeOf_Entity, TypeOf_Entity };
 		const void* values[] = { &server, &stream };
@@ -225,7 +227,7 @@ LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 new
         for(auto i = 0; i < GetNumTcpServerClients(server); ++i) {
             auto client = clients[i];
             if(!IsOpen(client)) {
-				Verbose(VerboseLevel_ComponentEntityCreationDeletion, "Client %u disconnected: %s", GetComponentIndex(ComponentOf_TcpStream(), client), GetStreamPath(client));
+				Verbose(Verbose_TcpClient, "Client %u disconnected: %s", GetComponentIndex(ComponentOf_TcpStream(), client), GetStreamPath(client));
                 RemoveTcpServerClients(server, i);
                 i--;
             }

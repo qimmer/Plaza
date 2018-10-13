@@ -7,8 +7,8 @@
 #define GetEntityGeneration(handle) (((u32 *) &handle)[1])
 #define GetEntity(index, generation) ((((Entity)generation) << 32) | (index))
 
-Entity __CreateEntity();
-void __DestroyEntity(Entity entity);
+Entity CreateEntity();
+void DestroyEntity(Entity entity);
 Entity GetNextEntity(Entity previousEntity);
 
 Unit(Entity)

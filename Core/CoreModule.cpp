@@ -13,6 +13,8 @@
 #include <Core/Module.h>
 #include <Core/Date.h>
 #include <Core/Debug.h>
+#include <Core/Instance.h>
+#include <Core/Binding.h>
 
 #include <malloc.h>
 
@@ -66,6 +68,8 @@ void __InitModule_Core (Entity module) {
     RegisterUnit(Core)
     RegisterUnit(Debug)
     RegisterUnit(Identification)
+    RegisterUnit(Binding)
+    RegisterUnit(Instance)
 
     SetName(GetModuleRoot(), "Modules");
     AddComponent(GetModuleRoot(), ComponentOf_ModuleRoot());

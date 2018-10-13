@@ -22,7 +22,7 @@ Unit(Identification)
         StringRef GetUuid(Entity entity);
         void SetUuid(Entity entity, StringRef value);
 
-void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bool preferNameToIndices);
+StringRef CalculateEntityPath(Entity entity, bool preferNameToIndices);
 StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo, bool preferNameToIndex);
 Entity FindEntityByPath(StringRef path);
 Entity FindEntityByUuid(StringRef uuid);

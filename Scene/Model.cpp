@@ -3,7 +3,6 @@
 //
 
 #include "Model.h"
-#include "SceneNode.h"
 #include "Transform.h"
 #include <Rendering/Renderable.h>
 
@@ -13,8 +12,6 @@ struct Model {
 BeginUnit(Model)
     BeginComponent(Model)
         RegisterBase(Renderable)
-        RegisterBase(Transform)
-        RegisterBase(SceneNode)
     EndComponent()
 EndUnit()
 

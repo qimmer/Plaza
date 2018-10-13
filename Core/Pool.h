@@ -18,6 +18,8 @@
 static const u64 MemoryMagic = 0xdeadbeefdeadbeef;
 static const size_t MemoryGuardSize = sizeof(u64);
 
+static const size_t PoolAlignment = 32;
+
 class Pool
 {
 private:
@@ -73,11 +75,12 @@ inline void Pool::SetElementSize(u32 size) {
 #if MemoryGuard
     blockSize = UpperPowerOf2(size + 1 + MemoryGuardSize * 2);
 #else
-    blockSize = UpperPowerOf2(size + 1);
+    blockSize = UpperPowerOf2(Max(size + 1, 32));
 #endif
     // Make sure to expand every single existing element with the new size by allocating new pages
     for(auto i = 0; i < entryPages.size(); ++i) {
-        auto newPage = (char*)calloc(PoolPageElements, blockSize);
+        auto newPage = (char*)_mm_malloc(PoolPageElements * blockSize, PoolAlignment);
+        memset(newPage, 0, PoolPageElements * blockSize);
 
 #if MemoryGuard
         // Set magic numbers before and after element data
@@ -102,7 +105,7 @@ inline void Pool::SetElementSize(u32 size) {
                 newBlock[blockSize - 1] = oldBlock[oldBlockSize - 1];
             }
 
-            free(oldPage);
+            _mm_free(oldPage);
         }
 
         entryPages[i] = newPage;
@@ -147,7 +150,8 @@ inline bool Pool::Insert(u32 index)
     if(page >= this->entryPages.size())
     {
         for(auto i = this->entryPages.size(); i <= page; ++i) {
-            auto newPage = (char*)calloc(PoolPageElements, blockSize);
+            auto newPage = (char*)_mm_malloc(PoolPageElements * blockSize, PoolAlignment);
+            memset(newPage, 0, PoolPageElements * blockSize);
             this->entryPages.push_back(newPage);
 
 #if MemoryGuard
@@ -162,6 +166,10 @@ inline bool Pool::Insert(u32 index)
     }
 
     auto block = &this->entryPages[page][index * blockSize];
+
+    // Assert that this block is at least 16 byte aligned
+    Assert(0, ((unsigned long)(u64)block & 15) == 0);
+
     auto blockState = block[blockSize - 1];
 
 #if MemoryGuard

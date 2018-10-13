@@ -4,7 +4,6 @@
 
 #include "RenderTarget.h"
 #include "RenderContext.h"
-#include "SceneRenderingSimple/Renderer.h"
 
 struct RenderTarget {
     v2i RenderTargetSize;
@@ -14,6 +13,5 @@ struct RenderTarget {
 BeginUnit(RenderTarget)
     BeginComponent(RenderTarget)
         RegisterProperty(v2i, RenderTargetSize)
-        RegisterArrayProperty(Renderer, RenderTargetRenderers)
     EndComponent()
 EndUnit()

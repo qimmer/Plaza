@@ -10,7 +10,6 @@
 Unit(Renderable)
 
 Component(Renderable)
-    ArrayProperty(UniformState, RenderableUniformStates)
     ReferenceProperty(Material, RenderableMaterial)
     ReferenceProperty(SubMesh, RenderableSubMesh)
 

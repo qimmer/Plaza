@@ -39,14 +39,14 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
     for(int i = 0; i < invocation->InvocationArguments.Count; ++i) {
         auto argument = GetInvocationArgumentData(GetVector(invocation->InvocationArguments)[i]);
 
-        argumentPtrs[i] = argument->InvocationArgumentValue.buffer;
+        argumentPtrs[i] = &argument->InvocationArgumentValue.data;
         argumentTypeIndices[i] = argument->InvocationArgumentValue.type;
     }
 
     if(HasComponent(invocation->InvocationFunction, ComponentOf_Function())) {
         CallFunction(
                 invocation->InvocationFunction,
-                result.buffer,
+                &result.data,
                 invocation->InvocationArguments.Count,
                 argumentTypeIndices,
                 argumentPtrs

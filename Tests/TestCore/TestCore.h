@@ -11,8 +11,18 @@ Module(TestCore)
 
 Unit(TestCore)
 
+Component(TestCore)
+    ChildProperty(Family, FamilyWithNoChildren)
+    ChildProperty(Family, FamilyWithTwoChildren)
+    ChildProperty(Family, FamilyInstance)
+
+Component(Family)
+    ArrayProperty(Person, FamilyMembers)
+
 Component(Person)
     Property(u8, PersonAge)
-    Property(StringRef, PersonFirstName)
+    ReferenceProperty(Person, PersonPartner)
+    ReferenceProperty(Person, PersonMother)
+    ReferenceProperty(Person, PersonFather)
 
 #endif //PLAZA_TESTCORE_H

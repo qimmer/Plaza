@@ -353,7 +353,7 @@ ffi_closure_free (void *ptr)
 #elif FFI_MMAP_EXEC_WRIT /* !FFI_EXEC_TRAMPOLINE_TABLE */
 
 #define USE_LOCKS 1
-#define USE_DL_PREFIX 1
+
 #ifdef __GNUC__
 #ifndef USE_BUILTIN_FFS
 #define USE_BUILTIN_FFS 1

@@ -16,6 +16,15 @@ struct PersistancePoint {
     bool PersistancePointLoading, PersistancePointSaving, PersistancePointAsync, PersistancePointLoaded;
 };
 
+struct UnresolvedReference {
+    Entity UnresolvedReferenceProperty;
+    StringRef UnresolvedReferenceUuid;
+};
+
+struct UnresolvedEntity {
+    Vector(UnresolvedReferences, Entity, 32)
+};
+
 LocalFunction(OnStreamContentChanged, void, Entity persistancePoint) {
     // If serialized content has changed, re-deserialize (load) it!
     if(HasComponent(persistancePoint, ComponentOf_PersistancePoint()) && !GetPersistancePointLoading(persistancePoint) && !GetPersistancePointSaving(persistancePoint) && GetPersistancePointLoaded(persistancePoint)) {
@@ -43,6 +52,8 @@ LocalFunction(Load, void, Entity persistancePoint) {
         return;
     }
 
+    auto path = GetStreamPath(persistancePoint);
+
     // Find serializer
     Entity serializer = 0;
     for_entity(serializerEntity, serializerData, Serializer) {
@@ -62,6 +73,8 @@ LocalFunction(Load, void, Entity persistancePoint) {
         SetPersistancePointLoading(persistancePoint, false);
         return;
     }
+
+    Log(persistancePoint, LogSeverity_Info, "Loading %s ...", path);
 
     auto result = GetSerializerData(serializer)->DeserializeHandler(persistancePoint);
 
@@ -142,6 +155,35 @@ API_EXPORT bool LoadEntityPath(StringRef entityPath) {
     return false;
 }
 
+API_EXPORT bool ResolveReferences() {
+    const auto component = ComponentOf_UnresolvedReference();
+
+    bool areAllResolved = true;
+    Entity unresolvedReference = 0;
+    UnresolvedReference *data = NULL;
+    for(u32 i = GetNextComponent(component, InvalidIndex, (void**)&data, &unresolvedReference);
+        i != InvalidIndex;
+        i = GetNextComponent(component, i, (void**)&data, &unresolvedReference)
+    ) {
+        auto reference = FindEntityByUuid(data->UnresolvedReferenceUuid);
+        if(!IsEntityValid(reference)) {
+            areAllResolved = false;
+            continue;
+        }
+
+        auto entity = GetOwner(unresolvedReference);
+
+        SetPropertyValue(data->UnresolvedReferenceProperty, entity, &reference);
+
+        auto index = GetUnresolvedReferencesIndex(entity, unresolvedReference);
+        RemoveUnresolvedReferences(entity, index);
+
+        --i;
+    }
+
+    return areAllResolved;
+}
+
 BeginUnit(PersistancePoint)
     BeginComponent(PersistancePoint)
         RegisterProperty(bool, PersistancePointAsync)
@@ -150,6 +192,15 @@ BeginUnit(PersistancePoint)
         RegisterProperty(bool, PersistancePointSaving)
 
         RegisterBase(Stream)
+    EndComponent()
+
+    BeginComponent(UnresolvedReference)
+        RegisterReferenceProperty(Property, UnresolvedReferenceProperty)
+        RegisterProperty(StringRef, UnresolvedReferenceUuid)
+    EndComponent()
+
+    BeginComponent(UnresolvedEntity)
+        RegisterArrayProperty(UnresolvedReference, UnresolvedReferences)
     EndComponent()
 
     RegisterSubscription(StreamContentChanged, OnStreamContentChanged, 0)

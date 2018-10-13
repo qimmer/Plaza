@@ -1,0 +1,11 @@
+cv2pdb .\cmake-build-relwithdebinfo\Debugger.exe
+cv2pdb .\cmake-build-relwithdebinfo\libCore.dll
+cv2pdb .\cmake-build-relwithdebinfo\libFoundation.dll
+cv2pdb .\cmake-build-relwithdebinfo\libRendering.dll
+cv2pdb .\cmake-build-relwithdebinfo\libJson.dll
+cv2pdb .\cmake-build-relwithdebinfo\libFile.dll
+cv2pdb .\cmake-build-relwithdebinfo\libBgfxRendering.dll
+cv2pdb .\cmake-build-relwithdebinfo\librelwithdebinfo.dll
+cv2pdb .\cmake-build-relwithdebinfo\libAnimation.dll
+cv2pdb .\cmake-build-relwithdebinfo\libInput.dll
+cv2pdb .\cmake-build-relwithdebinfo\libScene.dll

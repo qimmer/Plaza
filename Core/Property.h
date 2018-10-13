@@ -30,12 +30,6 @@ Component(Ownership)
     __PropertyCoreGetOnly(Ownership, Entity, OwnerProperty, PropertyFlag_ReadOnly, PropertyFlag_Transient)
     void SetOwner(Entity entity, Entity owner, Entity ownerProperty);
 
-Component(Binding)
-    Property(Entity, BindingSourceEntity)
-    Property(Entity, BindingSourceProperty)
-    Property(Entity, BindingTargetEntity)
-    Property(Entity, BindingTargetProperty)
-
 Event(PropertyChanged, Entity property, Entity context)
 
 StringRef Intern(StringRef sourceString);
@@ -47,10 +41,11 @@ Entity *GetArrayPropertyElements(Entity property, Entity entity);
 Function(GetArrayPropertyCount, u32, Entity property, Entity entity);
 Function(AddArrayPropertyElement, u32, Entity property, Entity entity);
 Function(RemoveArrayPropertyElement, bool, Entity property, Entity entity, u32 index);
+Function(GetArrayPropertyIndex, u32, Entity property, Entity entity, Entity element);
 Function(SetArrayPropertyCount, bool, Entity property, Entity entity, u32 count);
 Function(GetArrayPropertyElement, Entity, Entity property, Entity entity, u32 index);
 
-u32 __InjectArrayPropertyElement(Entity property, Entity entity, Entity element);
+u32 __InjectArrayPropertyElement(Entity property, Entity entity, Entity element, s32 index = -1);
 void __InjectChildPropertyValue(Entity property, Entity entity, Entity value);
 
 void SetPropertyMeta(Entity property, StringRef metaString);
@@ -62,7 +57,8 @@ void __InitializeString();
 void AddElementFromDecl(Entity property, Entity module, StringRef decl);
 void SetChildFromDecl(Entity property, Entity module, StringRef decl);
 
-Function(CopyEntity, void, Entity source, Entity destination, bool removeRedundantComponents = true)
+void EmitChangedEvent(Entity entity, Type propertyType, Entity property, const void *oldValueData, const void *newValueData);
+
 Function(MergeArray, void, Entity property, Entity left, Entity right, Entity destination)
 Function(ConcatArray, void, Entity property, Entity source, Entity destination)
 Function(ClearArray, void, Entity property, Entity entity)

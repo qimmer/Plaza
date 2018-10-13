@@ -31,7 +31,7 @@ struct Identification {
     StringRef Name, Uuid;
 };
 
-API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bool preferNamesToIndices) {
+API_EXPORT StringRef CalculateEntityPath(Entity entity, bool preferNamesToIndices) {
     typedef char Path[PathMax];
     Path paths[2];
 
@@ -46,12 +46,12 @@ API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bo
 
         if(!IsEntityValid(owner)) {
             Log(entity, LogSeverity_Error, "Entity has no owner: %s", GetDebugName(entity));
-            return;
+            return 0;
         }
 
         if(!IsEntityValid(ownerProperty)) {
             Log(entity, LogSeverity_Error, "Entity has no owner property: %s", GetDebugName(entity));
-            return;
+            return 0;
         }
 
         auto ownerPropertyKind = GetPropertyKind(ownerProperty);
@@ -92,7 +92,7 @@ API_EXPORT void CalculateEntityPath(char *dest, size_t bufMax, Entity entity, bo
     }
 
     StringRef finalPath = paths[1 - currentPath];
-    strncpy(dest, finalPath, bufMax);
+    return Intern(finalPath);
 }
 
 API_EXPORT Entity FindEntityByName(Entity component, StringRef typeName) {
@@ -191,7 +191,7 @@ API_EXPORT Entity FindEntityByUuid(StringRef uuid) {
         return 0;
     }
 
-    uuid = Intern(ToLower(uuid));
+    uuid = Intern(uuid);
 
     for_entity(entity, data, Identification) {
         if(data->Uuid == uuid) {
@@ -203,8 +203,7 @@ API_EXPORT Entity FindEntityByUuid(StringRef uuid) {
 }
 
 API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo, bool preferNameToIndex) {
-    char parentPath[2048];
-    CalculateEntityPath(parentPath, 2048, relativeTo, preferNameToIndex);
+    auto parentPath = CalculateEntityPath(relativeTo, preferNameToIndex);
 
     if(memcmp(entityPath, parentPath, Min(strlen(parentPath), strlen(entityPath))) != 0) {
         // Entity in entityPath is not a descendant of relativeTo. Return the absolute path given.
@@ -239,16 +238,16 @@ API_EXPORT void SetName(Entity entity, StringRef name) {
 
     auto data = GetIdentificationData(entity);
 
-    if(!data->Name || !name || strcmp(data->Name, name)) {
+    name = Intern(name);
+
+    if(data->Name != name) {
         auto oldName = data->Name;
-        ReleaseStringRef(oldName);
+
         data->Name = AddStringRef(name);
+        EmitChangedEvent(entity, TypeOf_StringRef, PropertyOf_Name(), &oldName, &name);
 
-        const Type argumentTypes[] = {TypeOf_Entity, TypeOf_StringRef, TypeOf_StringRef};
-        const void * argumentData[] = {&entity, &oldName, &name};
+        ReleaseStringRef(oldName);
 
-        auto changedEvent = GetPropertyChangedEvent(PropertyOf_Name());
-        FireEventFast(changedEvent, 3, argumentTypes, argumentData);
     }
 }
 
@@ -262,13 +261,7 @@ API_EXPORT StringRef GetUuid(Entity entity)  {
 
         auto uniqueName = GetUniqueEntityName(entity);
         if(uniqueName) {
-            auto hash1 = HashCreate(uniqueName, strlen(uniqueName), 0xdeadbeef);
-            auto hash2 = HashCreate(uniqueName, strlen(uniqueName), 0xdeafabcd);
-
-            char guid[128];
-            snprintf(guid, 128, "%08x-0000-0000-0000-0000%08x", hash1, hash2);
-
-            SetUuid(entity, guid);
+            SetUuid(entity, uniqueName);
         } else {
             SetUuid(entity, CreateGuid());
         }
@@ -299,14 +292,11 @@ API_EXPORT void SetUuid(Entity entity, StringRef value) {
         }
 
         auto oldValue = data->Uuid;
+
+        EmitChangedEvent(entity, TypeOf_StringRef, PropertyOf_Uuid(), &data->Uuid, &value);
+
         ReleaseStringRef(oldValue);
         data->Uuid = AddStringRef(value);
-
-        const Type argumentTypes[] = {TypeOf_Entity, TypeOf_StringRef, TypeOf_StringRef};
-        const void * argumentData[] = {&entity, &oldValue, &value};
-
-        auto changedEvent = GetPropertyChangedEvent(PropertyOf_Uuid());
-        FireEventFast(changedEvent, 3, argumentTypes, argumentData);
     }
 }
 
@@ -335,7 +325,7 @@ API_EXPORT StringRef CreateGuid() {
     GUID guid;
     CoCreateGuid(&guid);
 
-    snprintf(buf, 128, "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX",
+    snprintf(buf, 128, "%08lx-%04hx-%04hx-%02hhx%02hhx-%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
            guid.Data1, guid.Data2, guid.Data3,
            guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
            guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
@@ -349,19 +339,9 @@ API_EXPORT StringRef CreateGuidFromPath(StringRef path) {
     return nullptr;
 }
 
-LocalFunction(OnUuidChanged, void, Entity entity, StringRef oldUuid, StringRef newUuid) {
-    auto lowerCase = ToLower(newUuid);
-
-    if(lowerCase != newUuid) {
-        SetUuid(entity, lowerCase);
-    }
-}
-
 BeginUnit(Identification)
     BeginComponent(Identification)
         RegisterProperty(StringRef, Name)
         RegisterProperty(StringRef, Uuid)
     EndComponent()
-
-    RegisterSubscription(UuidChanged, OnUuidChanged, 0)
 EndUnit()
