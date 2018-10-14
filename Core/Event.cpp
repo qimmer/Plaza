@@ -10,9 +10,10 @@
 #include <Core/Debug.h>
 #include <Core/Property.h>
 #include <Core/Algorithms.h>
+#include "Identification.h"
 
 #include <stdarg.h>
-#include "Identification.h"
+#include <EASTL/fixed_vector.h>
 
 #define Verbose_Event "event"
 
@@ -21,14 +22,24 @@ struct Subscription {
 };
 
 struct Event {
-    Vector(SubscriptionCache, Subscription, 64)
-    Vector(EventArguments, Entity, 8)
 };
 
 struct EventArgument {
     u32 EventArgumentOffset;
     u8 EventArgumentType;
 };
+
+typedef std::vector<Subscription> SubscriptionCacheVector;
+
+static std::vector<SubscriptionCacheVector> EventSubscriptionCache;
+
+static inline SubscriptionCacheVector& GetSubscriptionCache(u32 eventEntityIndex) {
+    if(EventSubscriptionCache.size() <= eventEntityIndex) {
+        EventSubscriptionCache.resize(eventEntityIndex + 1);
+    }
+
+    return EventSubscriptionCache[eventEntityIndex];
+}
 
 LocalFunction(OnEventArgumentTypeChanged, void, Entity argument, Type oldType, Type newType) {
     auto data = GetEventArgumentData(argument);
@@ -49,18 +60,19 @@ LocalFunction(OnSubscriptionHandlerChanged, void, Entity context, Entity oldValu
 
     if(IsEntityValid(subscription->SubscriptionEvent)) {
         AddComponent(subscription->SubscriptionEvent, ComponentOf_Event ());
-        auto event = GetEventData (subscription->SubscriptionEvent);
 
-        for(auto i = 0; i < event->SubscriptionCache.Count; ++i) {
-            if(GetVector(event->SubscriptionCache)[i].SubscriptionHandler == oldValue) {
-                VectorRemove(event->SubscriptionCache, i);
+        auto eventIndex = GetEntityIndex(subscription->SubscriptionEvent);
+
+        auto& cache = GetSubscriptionCache(eventIndex);
+        for(auto i = 0; i < cache.size(); ++i) {
+            if(cache[i].SubscriptionHandler == oldValue) {
+                cache.erase(cache.begin() + i);
                 break;
             }
         }
 
         if(IsEntityValid(newValue)) {
-            VectorAdd(event->SubscriptionCache, *subscription);
-            Assert(0, memcmp(&GetVector(event->SubscriptionCache)[event->SubscriptionCache.Count-1], subscription, sizeof(Subscription)) == 0);
+            cache.push_back(*subscription);
         }
     }
 }
@@ -70,11 +82,12 @@ LocalFunction(OnSubscriptionSenderChanged, void, Entity context, Entity oldValue
 
     if(IsEntityValid(subscription->SubscriptionEvent)) {
         AddComponent(subscription->SubscriptionEvent, ComponentOf_Event ());
-        auto event = GetEventData (subscription->SubscriptionEvent);
+        auto eventIndex = GetEntityIndex(subscription->SubscriptionEvent);
 
-        for(auto i = 0; i < event->SubscriptionCache.Count; ++i) {
-            if(GetVector(event->SubscriptionCache)[i].SubscriptionSender == oldValue) {
-                GetVector(event->SubscriptionCache)[i].SubscriptionSender = newValue;
+        auto& cache = GetSubscriptionCache(eventIndex);
+        for(auto i = 0; i < cache.size(); ++i) {
+            if(cache[i].SubscriptionSender == oldValue) {
+                cache[i].SubscriptionSender = newValue;
                 break;
             }
         }
@@ -86,11 +99,13 @@ LocalFunction(OnSubscriptionEventChanged, void, Entity context, Entity oldValue,
 
     if(IsEntityValid(oldValue)) {
         AddComponent(oldValue, ComponentOf_Event ());
-        auto event = GetEventData (oldValue);
 
-        for(auto i = 0; i < event->SubscriptionCache.Count; ++i) {
-            if(GetVector(event->SubscriptionCache)[i].SubscriptionEvent == subscription->SubscriptionEvent) {
-                VectorRemove(event->SubscriptionCache, i);
+        auto eventIndex = GetEntityIndex(oldValue);
+        auto& cache = GetSubscriptionCache(eventIndex);
+
+        for(auto i = 0; i < cache.size(); ++i) {
+            if(cache[i].SubscriptionEvent == subscription->SubscriptionEvent) {
+                cache.erase(cache.begin() + i);
                 break;
             }
         }
@@ -98,8 +113,11 @@ LocalFunction(OnSubscriptionEventChanged, void, Entity context, Entity oldValue,
 
     if(IsEntityValid(newValue) && IsEntityValid(subscription->SubscriptionEvent)) {
         AddComponent(newValue, ComponentOf_Event());
-        auto event = GetEventData(newValue);
-        VectorAdd(event->SubscriptionCache, *subscription);
+
+        auto eventIndex = GetEntityIndex(newValue);
+        auto& cache = GetSubscriptionCache(eventIndex);
+
+        cache.push_back(*subscription);
     }
 }
 
@@ -131,13 +149,16 @@ API_EXPORT void FireEventFast(Entity event, u32 numArguments, const u8* argument
 
     auto data = GetEventData(event);
 
+    auto eventIndex = GetEntityIndex(event);
+    auto& cache = GetSubscriptionCache(eventIndex);
+
     if(data) {
         auto sender = *(const Entity*)argumentDataPtrs[0];
-        for(auto i = 0; i < data->SubscriptionCache.Count; ++i) {
-            auto subscription = &GetVector(data->SubscriptionCache)[i];
-            if(!subscription->SubscriptionSender || !sender || subscription->SubscriptionSender == sender) {
-                if(IsEntityValid(subscription->SubscriptionHandler)) {
-                    CallFunction(subscription->SubscriptionHandler, NULL, numArguments, argumentTypeIndices, argumentDataPtrs);
+        for(auto i = 0; i < cache.size(); ++i) {
+            auto& subscription = cache[i];
+            if(!subscription.SubscriptionSender || !sender || subscription.SubscriptionSender == sender) {
+                if(IsEntityValid(subscription.SubscriptionHandler)) {
+                    CallFunction(subscription.SubscriptionHandler, NULL, numArguments, argumentTypeIndices, argumentDataPtrs);
                 }
             }
         }
@@ -264,5 +285,5 @@ BeginUnit(Event)
     RegisterFunction(OnSubscriptionEventChanged)
     RegisterFunction(OnSubscriptionSenderChanged)
 
-    RegisterSubscription(EventArgumentTypeChanged, OnEventArgumentTypeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_EventArgumentType()), OnEventArgumentTypeChanged, 0)
 EndUnit()

@@ -69,7 +69,7 @@ LocalFunction(OnComponentRemoved, void, Entity component, Entity context) {
     }
 }
 
-LocalFunction(OnPropertyChanged, void, Entity property, Entity entity) {
+static void OnPropertyChanged(Entity property, Entity entity, Type valueType, const void *oldValue, const void *newValue) {
     auto data = GetReplicationData(entity);
     if(data) {
         data->ReplicationLastChangeFrame = GetAppLoopFrame(GetReplicationAppLoop(ModuleOf_Networking()));
@@ -81,7 +81,7 @@ BeginUnit(Replication)
         RegisterProperty(u64, ReplicationLastChangeFrame)
     EndComponent()
 
-    RegisterSubscription(PropertyChanged, OnPropertyChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnComponentAdded, 0)
-    RegisterSubscription(EntityComponentRemoved, OnComponentRemoved, 0)
+    RegisterGenericPropertyChangedListener(OnPropertyChanged);
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnComponentAdded, 0)
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnComponentRemoved, 0)
 EndUnit()

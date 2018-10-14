@@ -62,7 +62,7 @@ static void LoadScript(Entity entity) {
 }
 
 DefineService(LuaScript)
-	RegisterSubscription(StreamChanged, LoadScript, 0)
-    RegisterSubscription(StreamContentChanged, LoadScript, 0)
+	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Stream()), LoadScript, 0)
+    RegisterSubscription(EventOf_StreamContentChanged(), LoadScript, 0)
     RegisterSubscription(LuaScriptAdded, LoadScript, 0)
 EndService()

@@ -11,9 +11,9 @@
 
 #define RegisterStreamProtocol(COMPONENT, IDENTIFIER) \
     {\
-        auto protocol = GetUniqueEntity("Protocol " #COMPONENT, NULL );\
+        auto protocol = GetUniqueEntity("Protocol." #COMPONENT, NULL );\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
-        __InjectArrayPropertyElement(PropertyOf_ModuleStreamProtocols(), module, protocol); \
+        AddChild(PropertyOf_ModuleStreamProtocols(), module, protocol, true); \
         SetName(protocol, #COMPONENT "Protocol");\
         SetStreamProtocolIdentifier(protocol, IDENTIFIER); \
         SetStreamProtocolComponent(protocol, ComponentOf_ ## COMPONENT ()); \
@@ -31,9 +31,9 @@
 
 #define RegisterStreamCompressor(COMPONENT, MIMETYPE) \
     {\
-        auto compressor = GetUniqueEntity("Compressor " #COMPONENT, NULL );\
+        auto compressor = GetUniqueEntity("Compressor." #COMPONENT, NULL );\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
-        __InjectArrayPropertyElement(PropertyOf_ModuleStreamCompressors(), module, compressor); \
+        AddChild(PropertyOf_ModuleStreamCompressors(), module, compressor, true); \
         SetName(compressor, #COMPONENT "Compressor");\
         SetStreamCompressor(compressor, MIMETYPE); \
         auto compressorData = GetStreamCompressorData(compressor); \
@@ -43,9 +43,9 @@
 
 #define RegisterSerializer(NAME, MIMETYPE) \
     {\
-        auto serializer = GetUniqueEntity("Serializer " #NAME, NULL);\
+        auto serializer = GetUniqueEntity("Serializer." #NAME, NULL);\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
-        __InjectArrayPropertyElement(PropertyOf_ModuleSerializers(), module, serializer); \
+        AddChild(PropertyOf_ModuleSerializers(), module, serializer, true); \
         SetName(serializer, #NAME "Serializer");\
         SetSerializerMimeType(serializer, MIMETYPE); \
         auto serializerData = GetSerializerData(serializer); \

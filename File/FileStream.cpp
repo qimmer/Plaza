@@ -185,10 +185,10 @@ BeginUnit(FileStream)
         RegisterBase(Stream)
     EndComponent()
 
-    RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnFileStreamAdded, ComponentOf_FileStream())
-    RegisterSubscription(EntityComponentRemoved, OnFileStreamRemoved, ComponentOf_FileStream())
-    RegisterSubscription(AppLoopFrameChanged, OnFileWatcherUpdate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), OnStreamPathChanged, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnFileStreamAdded, ComponentOf_FileStream())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnFileStreamRemoved, ComponentOf_FileStream())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnFileWatcherUpdate, 0)
 
     RegisterStreamProtocol(FileStream, "file")
 

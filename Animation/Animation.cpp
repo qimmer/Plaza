@@ -14,12 +14,10 @@ struct AnimationFrame {
 };
 
 struct AnimationTrack {
-    Vector(AnimationTrackFrames, Entity, 128)
     Entity AnimationTrackProperty;
 };
 
 struct Animation {
-    Vector(AnimationTracks, Entity, 16)
 };
 
 #define INTERP_NUM(TYPE) \
@@ -101,9 +99,15 @@ static Variant Interpolate(Variant left, Variant right, float t) {
 
 API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bool loop) {
     auto data = GetAnimationTrackData(animationTrack);
-    if(!data) return Variant_Empty;
+    if(!data) {
+        return Variant_Empty;
+    }
 
-    if(!data->AnimationTrackFrames.Count) return Variant_Empty;
+    u32 numFrames = 0;
+    auto frames = GetAnimationTrackFrames(animationTrack, &numFrames);
+    if(!numFrames) {
+        return Variant_Empty;
+    }
 
     Entity firstFrame = 0, lastFrame = 0;
     double firstTime, lastTime;

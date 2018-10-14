@@ -82,8 +82,8 @@ LocalFunction(OnLabelAdded, void, Entity component, Entity entity) {
 }
 
 DefineService(Label)
-    RegisterSubscription(FontChanged, RebuildLabelsWithFont, 0)
-    RegisterSubscription(WidgetSizeChanged, RebuildLabel, 0)
-    RegisterSubscription(LabelChanged, RebuildLabel, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Font()), RebuildLabelsWithFont, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetSize()), RebuildLabel, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Label()), RebuildLabel, 0)
     RegisterSubscription(LabelAdded, OnLabelAdded, 0)
 EndService()

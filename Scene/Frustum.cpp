@@ -1,5 +1,6 @@
 #include "Frustum.h"
 #include <Scene/Transform.h>
+#include <Foundation/Invalidation.h>
 
 #include <cglm/cglm.h>
 
@@ -9,34 +10,29 @@ struct Frustum {
     u64 padding;
 };
 
-static void UpdateViewMatrix(Entity frustum) {
-    m4x4f viewMat;
-    m4x4f globalMat = GetTransformGlobalMatrix(frustum);
-    glm_mat4_inv((vec4*)&globalMat.x.x, (vec4*)&viewMat.x.x);
-    SetFrustumViewMatrix(frustum, viewMat);
-}
+LocalFunction(OnValidateTransforms, void, Entity component) {
+    for_entity(frustum, transformData, Frustum) {
+        if(!IsDirty(frustum)) continue;
 
-LocalFunction(UpdateInvProjectionMatrix, void, Entity frustum, m4x4f oldValue, m4x4f newValue) {
-    auto data = GetFrustumData(frustum);
-    m4x4f viewProjMat, invViewProjMat;
+        auto data = GetFrustumData(frustum);
+        auto globalMat = GetTransformGlobalMatrix(frustum);
 
-    glm_mat4_mul((vec4*)&data->FrustumProjectionMatrix, (vec4*)&data->FrustumViewMatrix, (vec4*)&viewProjMat);
-    glm_mat4_inv((vec4*)&viewProjMat, (vec4*)&invViewProjMat);
+        m4x4f viewMat;
+        glm_mat4_inv((vec4*)&globalMat.x.x, (vec4*)&viewMat.x.x);
+        SetFrustumViewMatrix(frustum, viewMat);
 
-    SetFrustumInvViewProjectionMatrix(frustum, invViewProjMat);
-}
+        m4x4f viewProjMat, invViewProjMat;
 
-LocalFunction(OnGlobalTransformChanged, void, Entity entity, m4x4f oldValue, m4x4f newValue) {
-    if(HasComponent(entity, ComponentOf_Frustum())) {
-        UpdateViewMatrix(entity);
+        glm_mat4_mul((vec4*)&data->FrustumProjectionMatrix, (vec4*)&data->FrustumViewMatrix, (vec4*)&viewProjMat);
+        glm_mat4_inv((vec4*)&viewProjMat, (vec4*)&invViewProjMat);
+
+        SetFrustumInvViewProjectionMatrix(frustum, invViewProjMat);
     }
-}
-LocalFunction(OnFrustumAdded, void, Entity component, Entity entity) {
-    UpdateViewMatrix(entity);
 }
 
 BeginUnit(Frustum)
     BeginComponent(Frustum)
+        RegisterBase(Transform)
         RegisterPropertyReadOnly(m4x4f, FrustumViewMatrix)
         RegisterPropertyReadOnly(m4x4f, FrustumInvViewProjectionMatrix)
 
@@ -45,8 +41,8 @@ BeginUnit(Frustum)
         RegisterProperty(float, FrustumFarClip)
     EndComponent()
 
-    RegisterSubscription(TransformGlobalMatrixChanged, OnGlobalTransformChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnFrustumAdded, ComponentOf_Frustum())
-    RegisterSubscription(FrustumProjectionMatrixChanged, UpdateInvProjectionMatrix, 0)
-    RegisterSubscription(FrustumViewMatrixChanged, UpdateInvProjectionMatrix, 0)
+    RegisterSubscription(EventOf_Validate(), OnValidateTransforms, ComponentOf_Transform())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumProjectionMatrix()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumNearClip()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumFarClip()), Invalidate, 0)
 EndUnit()

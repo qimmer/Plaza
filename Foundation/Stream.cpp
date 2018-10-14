@@ -27,10 +27,6 @@
 using namespace eastl;
 
 struct StreamExtensionModule {
-    Vector(ModuleStreamProtocols, Entity, 8)
-    Vector(ModuleStreamCompressors, Entity, 8)
-    Vector(ModuleFileTypes, Entity, 8)
-    Vector(ModuleSerializers, Entity, 8)
 };
 
 struct Stream {
@@ -566,13 +562,13 @@ BeginUnit(Stream)
 
     RegisterEvent(StreamContentChanged)
 
-    RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
-    RegisterSubscription(StreamProtocolIdentifierChanged, OnProtocolChanged, 0)
-    RegisterSubscription(StreamProtocolComponentChanged, OnProtocolChanged, 0)
-    RegisterSubscription(FileTypeExtensionChanged, OnFileTypeChanged, 0)
-    RegisterSubscription(FileTypeMimeTypeChanged, OnFileTypeChanged, 0)
-    RegisterSubscription(StreamCompressorMimeTypeChanged, OnCompressorChanged, 0)
-    RegisterSubscription(StreamFileTypeChanged, OnStreamFileTypeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), OnStreamPathChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamProtocolIdentifier()), OnProtocolChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamProtocolComponent()), OnProtocolChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FileTypeExtension()), OnFileTypeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FileTypeMimeType()), OnFileTypeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamCompressorMimeType()), OnCompressorChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamFileType()), OnStreamFileTypeChanged, 0)
 EndUnit()
 
 

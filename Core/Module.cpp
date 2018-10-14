@@ -13,8 +13,6 @@
 typedef Entity(*ModuleOfSignature)();
 
 struct ModuleRoot {
-    Vector(Modules, Entity, 64)
-    Vector(ModuleLoaders, Entity, 64)
 };
 
 struct Dependency {
@@ -25,15 +23,6 @@ struct Module {
     StringRef ModuleVersion;
     StringRef ModuleSourcePath;
     StringRef ModuleBinaryPath;
-
-    Vector(Dependencies, Entity, 16)
-    Vector(Components, Entity, 64)
-    Vector(Events, Entity, 64)
-    Vector(Enums, Entity, 16)
-    Vector(Functions, Entity, 128)
-    Vector(Extensions, Entity, 64)
-    Vector(Subscriptions, Entity, 128)
-    Vector(Roots, Entity, 128)
 };
 
 struct ModuleLoader {
@@ -50,7 +39,7 @@ API_EXPORT Entity GetModuleRoot() {
         root = CreateEntity();
         AddComponent(root, ComponentOf_ModuleRoot());
         SetName(root, "ModuleRoot");
-        SetUuid(root, "00000000-0000-0000-0000-000000000000");
+        SetUuid(root, "ModuleRoot");
     }
     return root;
 }
@@ -150,18 +139,18 @@ void __InitializeModule() {
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(Module));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_Components(), offsetof(Module, Components), sizeof(Module::Components), TypeOf_Entity, component, ComponentOf_Component(), PropertyKind_Array);
-    __Property(PropertyOf_Events(), offsetof(Module, Events), sizeof(Module::Events), TypeOf_Entity, component, ComponentOf_Event(), PropertyKind_Array);
-    __Property(PropertyOf_Functions(), offsetof(Module, Functions), sizeof(Module::Functions), TypeOf_Entity, component, ComponentOf_Function(), PropertyKind_Array);
-    __Property(PropertyOf_Extensions(), offsetof(Module, Extensions), sizeof(Module::Extensions), TypeOf_Entity, component, ComponentOf_Extension(), PropertyKind_Array);
-    __Property(PropertyOf_Subscriptions(), offsetof(Module, Subscriptions), sizeof(Module::Subscriptions), TypeOf_Entity, component, ComponentOf_Subscription(), PropertyKind_Array);
-    __Property(PropertyOf_Dependencies(), offsetof(Module, Dependencies), sizeof(Module::Dependencies), TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
+    __Property(PropertyOf_Components(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Component(), PropertyKind_Array);
+    __Property(PropertyOf_Events(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Event(), PropertyKind_Array);
+    __Property(PropertyOf_Functions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Function(), PropertyKind_Array);
+    __Property(PropertyOf_Extensions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Extension(), PropertyKind_Array);
+    __Property(PropertyOf_Subscriptions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Subscription(), PropertyKind_Array);
+    __Property(PropertyOf_Dependencies(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
 
     component = ComponentOf_ModuleRoot();
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(ModuleRoot));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_Modules(), offsetof(ModuleRoot, Modules), sizeof(ModuleRoot::Modules), TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
+    __Property(PropertyOf_Modules(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
 }
 
 
@@ -199,5 +188,5 @@ BeginUnit(Module)
 
     RegisterEvent(ModuleInitialized)
 
-    RegisterSubscription(ModuleLoaderLibraryPathChanged, OnModuleLoaderLibraryPathChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ModuleLoaderLibraryPath()), OnModuleLoaderLibraryPathChanged, 0)
 EndUnit()

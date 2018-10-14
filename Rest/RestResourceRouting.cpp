@@ -117,5 +117,5 @@ BeginUnit(RestResourceRouting)
         RegisterProperty(StringRef, RestResourceRoutingDefaultFile)
     EndComponent()
 
-    RegisterSubscription(RestRoutingRequest, OnRestRoutingRequest, 0)
+    RegisterSubscription(EventOf_RestRoutingRequest(), OnRestRoutingRequest, 0)
 EndUnit()

@@ -240,8 +240,8 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
 
 
 
-            auto numProperties = GetNumProperties(component);
-            auto properties = GetProperties(component);
+            u32 numProperties = 0;
+            auto properties = GetProperties(component, &numProperties);
             for(auto pi = 0; pi < numProperties; ++pi) {
                 auto property = properties[pi];
                 auto name = GetName(property);
@@ -358,12 +358,6 @@ static bool DeserializeEntity(Entity entity, rapidjson::Value& value, rapidjson:
         for(auto arrayIt = components->value.Begin(); arrayIt != components->value.End(); ++arrayIt) {
             if(arrayIt->IsString()) {
                 auto componentUuid = arrayIt->GetString();
-
-                if(!strchr(componentUuid, '.')) {
-                    auto newUuid = (char*)alloca(strlen("Component.") + arrayIt->GetStringLength() + 1);
-                    sprintf(newUuid, "Component.%s", arrayIt->GetString());
-                    componentUuid = newUuid;
-                }
 
                 auto component = ResolveEntity(componentUuid, entityMap, document);
 
@@ -675,8 +669,8 @@ static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& e
     auto hasEnum = HasComponent(enu, ComponentOf_Enum());
     if(hasEnum && reader.GetType() == rapidjson::kStringType) {
         auto flagString = Intern(reader.GetString());
-        auto flags = GetEnumFlags(enu);
-        auto cnt = GetNumEnumFlags(enu);
+        u32 cnt = 0;
+        auto flags = GetEnumFlags(enu, &cnt);
         u64 value = 0;
         for(auto i = 0; i < cnt; ++i) {
             auto flagName = GetName(flags[i]);
@@ -916,7 +910,7 @@ BeginUnit(JsonPersistance)
 	ModuleData(
 		{
 			"FileTypes": [
-				{ "FileTypeExtension": ".json", "FileTypeMimeType" : "application/json" }
+				{ "Uuid": "FileType.Json", "FileTypeExtension": ".json", "FileTypeMimeType" : "application/json" }
 			]
 		}
 	);

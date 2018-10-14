@@ -65,7 +65,6 @@ LocalFunction(OnBgfxIndexBufferRemoved, void, Entity entity) {
 static void ValidateVertexBuffer(Entity entity) {
     auto data = GetBgfxVertexBufferData(entity);
     auto decl = GetVertexBufferDeclaration(entity);
-    Validate(decl);
 
     auto& declData = GetBgfxVertexDeclarationData(decl)->decl;
 
@@ -209,16 +208,23 @@ static void ValidateVertexDeclaration(Entity entity) {
     }
 }
 
-LocalFunction(OnValidation, void, Entity entity) {
-    if(HasComponent(entity, ComponentOf_BgfxVertexDeclaration())) {
+LocalFunction(OnVertexDeclarationValidation, void, Entity component) {
+    for_entity(entity, data, BgfxVertexDeclaration) {
+        if(!IsDirty(entity)) continue;
         ValidateVertexDeclaration(entity);
     }
+}
 
-    if(HasComponent(entity, ComponentOf_BgfxVertexBuffer())) {
+LocalFunction(OnVertexBufferValidation, void, Entity component) {
+    for_entity(entity, data, BgfxVertexBuffer) {
+        if(!IsDirty(entity)) continue;
         ValidateVertexBuffer(entity);
     }
+}
 
-    if(HasComponent(entity, ComponentOf_BgfxIndexBuffer())) {
+LocalFunction(OnIndexBufferValidation, void, Entity component) {
+    for_entity(entity, data, BgfxIndexBuffer) {
+        if(!IsDirty(entity)) continue;
         ValidateIndexBuffer(entity);
     }
 }
@@ -234,7 +240,9 @@ BeginUnit(BgfxMesh)
         RegisterBase(BgfxResource)
     EndComponent()
 
-    RegisterSubscription(EntityComponentRemoved, OnBgfxIndexBufferRemoved, ComponentOf_BgfxIndexBuffer())
-    RegisterSubscription(EntityComponentRemoved, OnBgfxVertexBufferRemoved, ComponentOf_BgfxVertexBuffer())
-    RegisterSubscription(Validate, OnValidation, 0)
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxIndexBufferRemoved, ComponentOf_BgfxIndexBuffer())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxVertexBufferRemoved, ComponentOf_BgfxVertexBuffer())
+    RegisterSubscription(EventOf_Validate(), OnVertexDeclarationValidation, ComponentOf_VertexDeclaration())
+    RegisterSubscription(EventOf_Validate(), OnVertexBufferValidation, ComponentOf_VertexBuffer())
+    RegisterSubscription(EventOf_Validate(), OnIndexBufferValidation, ComponentOf_IndexBuffer())
 EndUnit()

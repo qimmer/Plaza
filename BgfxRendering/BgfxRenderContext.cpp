@@ -21,8 +21,11 @@
 #include <Rendering/Texture.h>
 #include <Rendering/RenderContext.h>
 
+#include <Scene/Transform.h>
+
 #include <Core/Debug.h>
 #include <Foundation/AppLoop.h>
+#include <Foundation/Invalidation.h>
 
 #include <Input/InputContext.h>
 #include <Input/Key.h>
@@ -74,6 +77,18 @@ struct BgfxRenderContext {
 static u32 NumContexts = 0;
 static Entity PrimaryContext = 0;
 
+static void ValidateResources() {
+    Validate(ComponentOf_Texture());
+    Validate(ComponentOf_OffscreenRenderTarget());
+    Validate(ComponentOf_BinaryProgram());
+    Validate(ComponentOf_Uniform());
+    Validate(ComponentOf_VertexDeclaration());
+    Validate(ComponentOf_Mesh());
+    Validate(ComponentOf_VertexBuffer());
+    Validate(ComponentOf_IndexBuffer());
+    Validate(ComponentOf_Transform());
+}
+
 LocalFunction(OnAppUpdate, void, Entity appLoop) {
     auto owner = GetOwner(appLoop);
     auto moduleData = GetBgfxRenderingData(owner);
@@ -117,6 +132,8 @@ LocalFunction(OnAppUpdate, void, Entity appLoop) {
             glfwPollEvents();
 
             auto viewId = 0;
+
+            ValidateResources();
 
             for_entity(commandList, commandListData, BgfxCommandList) {
                 RenderCommandList(commandList, viewId);
@@ -347,17 +364,17 @@ BeginUnit(BgfxRenderContext)
         RegisterBase(BgfxResource)
     EndComponent()
 
-    RegisterSubscription(EntityComponentAdded, OnContextAdded, ComponentOf_RenderContext())
-    RegisterSubscription(EntityComponentAdded, OnBgfxRenderContextAdded, ComponentOf_BgfxRenderContext())
-    RegisterSubscription(EntityComponentRemoved, OnContextRemoved, ComponentOf_RenderContext())
-    RegisterSubscription(EntityComponentRemoved, OnBgfxRenderContextRemoved, ComponentOf_BgfxRenderContext())
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnContextAdded, ComponentOf_RenderContext())
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnBgfxRenderContextAdded, ComponentOf_BgfxRenderContext())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnContextRemoved, ComponentOf_RenderContext())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxRenderContextRemoved, ComponentOf_BgfxRenderContext())
 
-    RegisterSubscription(AppLoopFrameChanged, OnAppUpdate, 0)
-    RegisterSubscription(RenderTargetSizeChanged, OnContextResized, 0)
-    RegisterSubscription(RenderContextTitleChanged, OnContextTitleChanged, 0)
-    RegisterSubscription(RenderContextVsyncChanged, OnContextFlagChanged, 0)
-    RegisterSubscription(RenderContextShowDebugChanged, OnContextFlagChanged, 0)
-    RegisterSubscription(RenderContextShowStatsChanged, OnContextFlagChanged, 0)
-    RegisterSubscription(RenderContextFullscreenChanged, OnContextFlagChanged, 0)
-    RegisterSubscription(InputContextGrabMouseChanged, OnContextGrabMouseChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppUpdate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderTargetSize()), OnContextResized, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextTitle()), OnContextTitleChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextVsync()), OnContextFlagChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextShowDebug()), OnContextFlagChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextShowStats()), OnContextFlagChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextFullscreen()), OnContextFlagChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_InputContextGrabMouse()), OnContextGrabMouseChanged, 0)
 EndUnit()

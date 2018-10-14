@@ -26,8 +26,10 @@ static void free_func(void* mem, void *userdata) {
     _mm_free(mem);
 }
 
-LocalFunction(OnValidation, void, Entity entity) {
-    if(HasComponent(entity, ComponentOf_BgfxBinaryProgram())) {
+LocalFunction(OnBinaryProgramValidation, void, Entity component) {
+    for_entity(entity, data, BgfxBinaryProgram) {
+        if(!IsDirty(entity)) continue;
+
         // Eventually free old buffers
         OnBgfxBinaryProgramRemoved(entity);
 
@@ -71,6 +73,6 @@ BeginUnit(BgfxShaderCache)
         RegisterBase(BgfxResource)
     EndComponent()
 
-    RegisterSubscription(EntityComponentRemoved, OnBgfxBinaryProgramRemoved, ComponentOf_BgfxBinaryProgram())
-    RegisterSubscription(Validate, OnValidation, 0)
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxBinaryProgramRemoved, ComponentOf_BgfxBinaryProgram())
+    RegisterSubscription(EventOf_Validate(), OnBinaryProgramValidation, ComponentOf_BinaryProgram())
 EndUnit()

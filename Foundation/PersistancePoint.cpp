@@ -22,7 +22,6 @@ struct UnresolvedReference {
 };
 
 struct UnresolvedEntity {
-    Vector(UnresolvedReferences, Entity, 32)
 };
 
 LocalFunction(OnStreamContentChanged, void, Entity persistancePoint) {
@@ -177,8 +176,6 @@ API_EXPORT bool ResolveReferences() {
 
         auto index = GetUnresolvedReferencesIndex(entity, unresolvedReference);
         RemoveUnresolvedReferences(entity, index);
-
-        --i;
     }
 
     return areAllResolved;
@@ -203,8 +200,8 @@ BeginUnit(PersistancePoint)
         RegisterArrayProperty(UnresolvedReference, UnresolvedReferences)
     EndComponent()
 
-    RegisterSubscription(StreamContentChanged, OnStreamContentChanged, 0)
-    RegisterSubscription(StreamPathChanged, OnStreamPathChanged, 0)
-    RegisterSubscription(PersistancePointLoadingChanged, OnPersistancePointLoadingChanged, 0)
-    RegisterSubscription(PersistancePointSavingChanged, OnPersistancePointSavingChanged, 0)
+    RegisterSubscription(EventOf_StreamContentChanged(), OnStreamContentChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), OnStreamPathChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PersistancePointLoading()), OnPersistancePointLoadingChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PersistancePointSaving()), OnPersistancePointSavingChanged, 0)
 EndUnit()

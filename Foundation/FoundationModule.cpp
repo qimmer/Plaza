@@ -26,7 +26,6 @@ struct FoundationModule {
 };
 
 struct FoundationExtension {
-	Vector(FileTypes, Entity, 32)
 };
 
 BeginUnit(Foundation)

@@ -7,7 +7,6 @@
 #include "RestRouting.h"
 
 struct RestServer {
-    Vector(RestServerRoutes, Entity, 128)
 };
 
 BeginUnit(RestServer)

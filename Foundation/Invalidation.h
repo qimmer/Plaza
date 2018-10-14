@@ -8,12 +8,12 @@
 #include <Core/NativeUtils.h>
 
 Unit(Invalidation)
-    Component(Invalidation)
-        Property(bool, DirtyFlag)
+    Function(Invalidate, void, Entity entity)
+    Function(InvalidateParent, void, Entity child)
 
-Function(Invalidate, void, Entity entity)
-Function(Validate, void, Entity entity)
+    Function(Validate, void, Entity component)
+    bool IsDirty(Entity entity);
 
-Event(Validate, Entity entity)
+    Event(Validate, Entity component)
 
 #endif //PLAZA_INVALIDATION_H

@@ -8,11 +8,9 @@
 
 struct Binding {
     Entity BindingProperty, BindingTargetEntity, BindingTargetProperty;
-    Vector(BindingConverters, Entity, 8);
 };
 
 struct Bindable {
-    Vector(Bindings, Entity, 16);
 };
 
 struct ValueConverterArgument {
@@ -21,7 +19,6 @@ struct ValueConverterArgument {
 
 struct ValueConverter {
     Entity ValueConverterFunction;
-    Vector(ValueConverterArguments, Entity, 8);
 };
 
 static void EvaluateBinding(Entity binding) {
@@ -32,23 +29,28 @@ static void EvaluateBinding(Entity binding) {
     value.type = GetPropertyType(data->BindingProperty);
     GetPropertyValue(data->BindingProperty, entity, &value.data);
 
-    for(auto i = 0; i < data->BindingConverters.Count; ++i) {
-        auto converterData = GetValueConverterData(GetVector(data->BindingConverters)[i]);
+    u32 numBindingConverters = 0;
+    auto bindingConverters = GetBindingConverters(binding, &numBindingConverters);
+    for(auto i = 0; i < numBindingConverters; ++i) {
+        auto converterData = GetValueConverterData(bindingConverters[i]);
 
-        auto argumentTypes = (Type*)alloca(1 + (converterData->ValueConverterArguments.Count) * sizeof(Type));
-        auto argumentData = (const void**)alloca(1 + (converterData->ValueConverterArguments.Count) * sizeof(const void*));
+        u32 numArguments = 0;
+        auto arguments = GetValueConverterArguments(bindingConverters[i], &numArguments);
+
+        auto argumentTypes = (Type*)alloca(1 + numArguments * sizeof(Type));
+        auto argumentData = (const void**)alloca(1 + numArguments * sizeof(const void*));
 
         argumentTypes[0] = TypeOf_Variant;
         argumentData[0] = &value;
 
-        for(auto j = 1; j < converterData->ValueConverterArguments.Count; ++j) {
-            auto argument = GetVector(converterData->ValueConverterArguments)[j-1];
+        for(auto j = 1; j < numArguments; ++j) {
+            auto argument = arguments[j-1];
             auto value = GetValueConverterArgumentData(argument);
             argumentTypes[j] = TypeOf_Variant;
             argumentData[j] = &value->ValueConverterArgumentValue;
         }
 
-        CallFunction(converterData->ValueConverterFunction, &value, 1 + converterData->ValueConverterArguments.Count, argumentTypes, argumentData);
+        CallFunction(converterData->ValueConverterFunction, &value, 1 + numArguments, argumentTypes, argumentData);
     }
 
     value = Cast(value, GetPropertyType(data->BindingTargetProperty));
@@ -160,11 +162,11 @@ API_EXPORT bool Bind(Entity entity, Entity property, StringRef sourceBindingStri
     return true;
 }
 
-LocalFunction(OnPropertyChanged, void, Entity property, Entity entity, Variant oldValue, Variant newValue) {
-    auto bindings = GetBindings(entity);
+static void OnPropertyChanged(Entity property, Entity entity, Type valueType, const void* oldValue, const void* newValue) {
+    u32 numBindings = 0;
+    auto bindings = GetBindings(entity, &numBindings);
     if(!bindings) return;
 
-    auto numBindings = GetNumBindings(entity);
     for(auto i = 0; i < numBindings; ++i) {
         if(GetBindingProperty(bindings[i]) != property) continue;
 
@@ -193,5 +195,5 @@ BeginUnit(Binding)
         RegisterArrayProperty(ValueConverterArgument, ValueConverterArguments)
     EndComponent()
 
-    RegisterSubscription(PropertyChanged, OnPropertyChanged, 0)
+    RegisterGenericPropertyChangedListener(OnPropertyChanged);
 EndUnit()

@@ -14,7 +14,6 @@ struct Template {};
 struct Instance {
     bool InstanceIgnoreChanges;
     Entity InstanceTemplate;
-    Vector(InstanceOverrides, Entity, 32)
 };
 
 struct InstanceOverride {
@@ -91,7 +90,7 @@ API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
                         if(GetPropertyType(property) == TypeOf_Entity) {
                             // If the reference points to an entity inside the template tree, translate the reference
                             // to point into the equilivant entity in the instance tree
-                            *((Entity*)buffer) = GetInstanceReference(templateEntity, destination, *((Entity*)buffer));
+                            *((Entity*)buffer) = GetInstanceReference(templateEntity, destinationEntity, *((Entity*)buffer));
                         }
                         SetPropertyValue(property, destinationEntity, buffer);
                         break;
@@ -105,9 +104,10 @@ API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
                     case PropertyKind_Array:
                         SetArrayPropertyCount(property, destinationEntity, GetArrayPropertyCount(property, templateEntity));
 
-                        auto sourceElements = GetArrayPropertyElements(property, templateEntity);
-                        auto destinationElements = GetArrayPropertyElements(property, destinationEntity);
-                        for(auto i = 0; i < GetArrayPropertyCount(property, templateEntity); ++i) {
+                        u32 sourceCount = 0, destinationCount = 0;
+                        auto sourceElements = GetArrayPropertyElements(property, templateEntity, &sourceCount);
+                        auto destinationElements = GetArrayPropertyElements(property, destinationEntity, &destinationCount);
+                        for(auto i = 0; i < sourceCount; ++i) {
                             Instantiate(sourceElements[i], destinationElements[i]);
                         }
                 }
@@ -134,7 +134,7 @@ LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOw
     }
 }
 
-LocalFunction(OnPropertyChanged, void, Entity property, Entity templateEntity, Variant oldValue, Variant newValue) {
+static void OnPropertyChanged(Entity property, Entity templateEntity, Type valueType, const void *oldValue, const void *newValue) {
     if(HasComponent(templateEntity, ComponentOf_Template())) {
         auto component = GetOwner(property);
         if(component == ComponentOf_Ownership()
@@ -155,31 +155,36 @@ LocalFunction(OnPropertyChanged, void, Entity property, Entity templateEntity, V
                     Verbose(Verbose_Instance, "Template %s updates %s on instance %s", GetUuid(templateEntity), GetUuid(property), GetUuid(instance));
 
                     GetPropertyValue(property, instance, instanceValue);
-                    SetPropertyValue(property, instance, &newValue.data);
+                    SetPropertyValue(property, instance, newValue);
                 }
                 break;
             }
             case PropertyKind_Array:
             {
+                auto newEntity = *(Entity*)newValue;
+                auto oldEntity = *(Entity*)oldValue;
                 // If element has been added, add one to all instances and bind template/instance relation
-                if(newValue.as_Entity && !oldValue.as_Entity) {
+                if(newEntity && !oldEntity) {
                     for_entity(instance, data, Instance) {
                         if(data->InstanceTemplate != templateEntity) continue;
 
                         auto addedIndex = AddArrayPropertyElement(property, instance);
-                        SetInstanceTemplate(GetArrayPropertyElement(property, instance, addedIndex), newValue.as_Entity);
+                        SetInstanceTemplate(GetArrayPropertyElement(property, instance, addedIndex), newEntity);
                     }
                 }
 
                 // If element has been removed, remove all instanced elements as well
-                if(!newValue.as_Entity && oldValue.as_Entity) {
+                if(!newEntity && oldEntity) {
                     for_entity(instance, data, Instance) {
                         if(data->InstanceTemplate != templateEntity) continue;
 
-                        auto elements = GetArrayPropertyElements(property, instance);
-                        for(auto i = 0; i < GetArrayPropertyCount(property, instance); ++i) {
-                            if(GetInstanceTemplate(elements[i]) == oldValue.as_Entity) {
+                        u32 count = 0;
+                        auto elements = GetArrayPropertyElements(property, instance, &count);
+                        for(auto i = 0; i < count; ++i) {
+                            if(GetInstanceTemplate(elements[i]) == oldEntity) {
                                 RemoveArrayPropertyElement(property, instance, i);
+                                --count;
+                                --i;
                                 break;
                             }
                         }
@@ -189,15 +194,6 @@ LocalFunction(OnPropertyChanged, void, Entity property, Entity templateEntity, V
             }
             default:
                 break;
-        }
-    }
-
-    if(property != PropertyOf_InstanceOverrides() && HasComponent(templateEntity, ComponentOf_Instance())) {
-        if(!GetInstanceIgnoreChanges(templateEntity) && !IsInstanceOverriding(templateEntity, property)) {
-            // Tag this property as overridden by this instance!
-            SetInstanceOverrideProperty(AddInstanceOverrides(templateEntity), property);
-
-            Verbose(Verbose_Instance, "Instance %s overrides %s", GetUuid(templateEntity), GetUuid(property));
         }
     }
 }
@@ -217,7 +213,7 @@ BeginUnit(Instance)
     BeginComponent(Template)
     EndComponent()
 
-    RegisterSubscription(PropertyChanged, OnPropertyChanged, 0)
-    RegisterSubscription(InstanceTemplateChanged, OnInstanceTemplateChanged, 0)
-    RegisterSubscription(OwnerChanged, OnOwnerChanged, 0)
+    RegisterGenericPropertyChangedListener(OnPropertyChanged);
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_InstanceTemplate()), OnInstanceTemplateChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
 EndUnit()

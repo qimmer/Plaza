@@ -45,9 +45,6 @@ struct HttpStreamPartialRequest {
 };
 
 struct HttpStream {
-    Vector(HttpServerRequests, Entity, 128)
-    Vector(HttpServerResponses, Entity, 128)
-
     HttpStreamPartialRequest *partial;
 };
 
@@ -403,8 +400,8 @@ BeginUnit(HttpServer)
     EndComponent()
 
     RegisterEvent(HttpServerRequest)
-    RegisterSubscription(AppLoopFrameChanged, OnAppLoopChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnHttpStreamAdded, ComponentOf_HttpStream())
-    RegisterSubscription(EntityComponentRemoved, OnHttpStreamRemoved, ComponentOf_HttpStream())
-    RegisterSubscription(TcpClientConnected, OnTcpClientConnected, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopChanged, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnHttpStreamAdded, ComponentOf_HttpStream())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnHttpStreamRemoved, ComponentOf_HttpStream())
+    RegisterSubscription(EventOf_TcpClientConnected(), OnTcpClientConnected, 0)
 EndUnit()

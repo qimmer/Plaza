@@ -28,6 +28,11 @@ extern const char* VerboseTag;
 #define LogSeverity_Fatal 3
 
 void Log(Entity context, int severity, StringRef format, ...);
+
+void Error(Entity context, StringRef format, ...);
+void Warning(Entity context, StringRef format, ...);
+void Info(Entity context, StringRef format, ...);
+
 void DebuggerBreak();
 void Exit(s32 returnCode);
 
@@ -39,12 +44,5 @@ StringRef GetStackTrace();
 #include <Core/NativeUtils.h>
 
 Unit(Debug)
-    Component(LogMessage)
-        Property(StringRef, LogMessageEntity)
-        Property(StringRef, LogMessageText)
-        Property(StringRef, LogMessageStackTrace)
-        Property(u8, LogMessageSeverity)
-        Property(u32, LogMessageCount)
-        Property(Date, LogMessageTime)
 
 #endif //PLAZA_DEBUG_H

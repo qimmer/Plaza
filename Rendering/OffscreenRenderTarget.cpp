@@ -8,7 +8,6 @@
 #include "Texture.h"
 
 struct OffscreenRenderTarget {
-    Vector(OffscreenRenderTargetTextures, Entity, 8)
 };
 
 LocalFunction(OnOffscreenRenderTargetTexturesChanged, void, Entity stage, Entity oldTexture, Entity newTexture) {
@@ -18,10 +17,9 @@ LocalFunction(OnOffscreenRenderTargetTexturesChanged, void, Entity stage, Entity
 }
 
 LocalFunction(OnRenderTargetSizeChanged, void, Entity entity, v2i oldSize, v2i newSize) {
-    auto data = GetOffscreenRenderTargetData(entity);
-    if(data) {
-        auto numStages = data->OffscreenRenderTargetTextures.Count;
-        auto stages = GetVector(data->OffscreenRenderTargetTextures);
+    u32 numStages = 0;
+    auto stages = GetOffscreenRenderTargetTextures(entity, &numStages);
+    if(stages) {
         for(auto i = 0; i < numStages; ++i) {
             SetTextureSize2D(stages[i], newSize);
         }
@@ -33,6 +31,6 @@ BeginUnit(OffscreenRenderTarget)
         RegisterArrayProperty(Texture2D, OffscreenRenderTargetTextures)
     EndComponent()
 
-    RegisterSubscription(RenderTargetSizeChanged, OnRenderTargetSizeChanged, 0)
-    RegisterSubscription(OffscreenRenderTargetTexturesChanged, OnOffscreenRenderTargetTexturesChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderTargetSize()), OnRenderTargetSizeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_OffscreenRenderTargetTextures()), OnOffscreenRenderTargetTexturesChanged, 0)
 EndUnit()

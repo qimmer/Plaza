@@ -31,6 +31,8 @@ struct Identification {
     StringRef Name, Uuid;
 };
 
+static std::map<const void*, Entity> uuidTable;
+
 API_EXPORT StringRef CalculateEntityPath(Entity entity, bool preferNamesToIndices) {
     typedef char Path[PathMax];
     Path paths[2];
@@ -65,8 +67,9 @@ API_EXPORT StringRef CalculateEntityPath(Entity entity, bool preferNamesToIndice
             case PropertyKind_Array:
             {
                 unsigned long index = -1;
-                auto elements = GetArrayPropertyElements(ownerProperty, owner);
-                for(auto i = 0; i < GetArrayPropertyCount(ownerProperty, owner); ++i) {
+                u32 count = 0;
+                auto elements = GetArrayPropertyElements(ownerProperty, owner, &count);
+                for(auto i = 0; i < count; ++i) {
                     if(elements[i] == entity) {
                         index = i;
                         break;
@@ -129,8 +132,8 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
         auto internedElement = Intern(element);
 
         if(currentArrayProperty != 0) { // Path element is a name of one child element of the current array property
-            auto childCount = GetArrayPropertyCount(currentArrayProperty, currentEntity);
-            auto children = GetArrayPropertyElements(currentArrayProperty, currentEntity);
+            u32 childCount = 0;
+            auto children = GetArrayPropertyElements(currentArrayProperty, currentEntity, &childCount);
 
             for(auto i = 0; i < childCount; ++i) {
                 if(internedElement == GetName(children[i])) {
@@ -193,13 +196,12 @@ API_EXPORT Entity FindEntityByUuid(StringRef uuid) {
 
     uuid = Intern(uuid);
 
-    for_entity(entity, data, Identification) {
-        if(data->Uuid == uuid) {
-            return entity;
-        }
+    auto it = uuidTable.find(uuid);
+    if(it == uuidTable.end()) {
+        return 0;
     }
 
-    return 0;
+    return it->second;
 }
 
 API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo, bool preferNameToIndex) {
@@ -244,7 +246,7 @@ API_EXPORT void SetName(Entity entity, StringRef name) {
         auto oldName = data->Name;
 
         data->Name = AddStringRef(name);
-        EmitChangedEvent(entity, TypeOf_StringRef, PropertyOf_Name(), &oldName, &name);
+        EmitChangedEvent(entity, PropertyOf_Name(), GetPropertyData(PropertyOf_Name()), &oldName, &name);
 
         ReleaseStringRef(oldName);
 
@@ -285,15 +287,17 @@ API_EXPORT void SetUuid(Entity entity, StringRef value) {
     }
 
     if(data->Uuid != value) {
-        auto existing = FindEntityByUuid(value);
-        if(IsEntityValid(existing)) {
-            Log(entity, LogSeverity_Error, "Uuid '%s' is already occupied by '%s'. Uuid has not changed.", value, GetDebugName(existing));
+        auto newUuidIt = uuidTable.find(value);
+        if(newUuidIt != uuidTable.end()) {
+            Log(entity, LogSeverity_Error, "Uuid '%s' is already occupied by '%s'. Uuid has not changed.", value, GetDebugName(newUuidIt->second));
             return;
         }
 
         auto oldValue = data->Uuid;
 
-        EmitChangedEvent(entity, TypeOf_StringRef, PropertyOf_Uuid(), &data->Uuid, &value);
+        uuidTable[value] = entity;
+
+        EmitChangedEvent(entity, PropertyOf_Uuid(), GetPropertyData(PropertyOf_Uuid()), &data->Uuid, &value);
 
         ReleaseStringRef(oldValue);
         data->Uuid = AddStringRef(value);
@@ -339,9 +343,17 @@ API_EXPORT StringRef CreateGuidFromPath(StringRef path) {
     return nullptr;
 }
 
+LocalFunction(OnUuidChanged, void, Entity entity, StringRef oldValue, StringRef newValue) {
+    auto oldUuidIt = uuidTable.find(oldValue);
+    if(oldUuidIt != uuidTable.end()) uuidTable.erase(oldUuidIt);
+    uuidTable[newValue] = entity;
+}
+
 BeginUnit(Identification)
     BeginComponent(Identification)
         RegisterProperty(StringRef, Name)
         RegisterProperty(StringRef, Uuid)
     EndComponent()
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Uuid()), OnUuidChanged, 0)
 EndUnit()

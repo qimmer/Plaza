@@ -10,7 +10,6 @@
 
 struct Enum {
     bool EnumCombinable;
-    Vector(EnumFlags, Entity, 64)
 };
 
 struct EnumFlag {

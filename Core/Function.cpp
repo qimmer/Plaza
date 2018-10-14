@@ -168,8 +168,6 @@ struct Function {
     Type FunctionReturnType;
     FunctionCallerType FunctionCaller;
     u32 FunctionMaxDuration;
-
-    Vector(FunctionArguments, Entity, 16)
 };
 
 struct NativeFunction {
@@ -193,8 +191,8 @@ API_EXPORT void SetNativeFunctionPointer(Entity function, void *ptr) {
 
     if(ptr) {
 
-        auto numArgs = GetNumFunctionArguments(function);
-        auto args = GetFunctionArguments(function);
+        u32 numArgs = 0;
+        auto args = GetFunctionArguments(function, &numArgs);
         Assert(function, numArgs < 32);
 
         auto argPtrs = data->args = (ffi_type**)malloc(sizeof(ffi_type*) * numArgs);
@@ -302,7 +300,9 @@ API_EXPORT bool CallFunction(
 
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
-    for(auto i = 0; i < data->FunctionArguments.Count; ++i) {
+    u32 numArgs = 0;
+    auto arguments = GetFunctionArguments(f, &numArgs);
+    for(auto i = 0; i < numArgs; ++i) {
         if(i >= numArguments) {
             finalArgumentPtrs[i] = nullData;
         } else {
@@ -310,7 +310,7 @@ API_EXPORT bool CallFunction(
         }
     }
 
-    if(numArguments < data->FunctionArguments.Count) {
+    if(numArguments < numArgs) {
         Log(f, LogSeverity_Error, "Insufficient function arguments provided when calling %s", GetDebugName(f));
         return false;
     }
@@ -376,7 +376,7 @@ void __InitializeFunction() {
     SetComponentSize(component, sizeof(Function));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
     __Property(PropertyOf_FunctionReturnType(), offsetof(Function, FunctionReturnType), sizeof(Function::FunctionReturnType), TypeOf_Type,  component, 0, PropertyKind_Value);
-    __Property(PropertyOf_FunctionArguments(), offsetof(Function, FunctionArguments), sizeof(Function::FunctionArguments), TypeOf_Entity,  component, ComponentOf_FunctionArgument(), PropertyKind_Array);
+    __Property(PropertyOf_FunctionArguments(), InvalidIndex, 0, TypeOf_Entity,  component, ComponentOf_FunctionArgument(), PropertyKind_Array);
 
     component = ComponentOf_FunctionArgument();
     AddComponent(component, ComponentOf_Component());
@@ -404,17 +404,6 @@ int __ArgStackOffset(int value) {
     int val = 0;
     auto offset = ((char*)&value - (char*)&val);
     return offset;
-}
-
-API_EXPORT u32 GetFunctionArguments(u32 functionIndex, u32 maxArguments, Type *argumentTypes) {
-    auto data = (Function*) GetComponentBytes(ComponentOf_Function(), functionIndex);
-
-    for(auto i = 0; i < data->FunctionArguments.Count; ++i) {
-        auto argumentData = GetFunctionArgumentData(GetVector(data->FunctionArguments)[i]);
-        argumentTypes[i] = argumentData->FunctionArgumentType;
-    }
-
-    return data->FunctionArguments.Count;
 }
 
 API_EXPORT Type GetFunctionReturnTypeByIndex(u32 functionIndex) {
@@ -449,5 +438,5 @@ BeginUnit(Function)
         // RegisterBase(Function)
     EndComponent()
 
-    RegisterSubscription(EntityComponentRemoved, OnNativeFunctionRemoved, ComponentOf_NativeFunction())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnNativeFunctionRemoved, ComponentOf_NativeFunction())
 EndUnit()

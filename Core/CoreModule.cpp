@@ -23,7 +23,7 @@ bool __IsCoreInitialized = false;
 void __InitializeBase() {
     SetComponentSize(ComponentOf_Component(), 500);
     SetComponentSize(ComponentOf_Property(), 38);
-    SetComponentSize(ComponentOf_Ownership(), 8);
+    SetComponentSize(ComponentOf_Ownership(), 16);
     SetComponentSize(ComponentOf_Identification(), 1024);
     SetComponentSize(ComponentOf_Event(), 1000);
     SetComponentSize(ComponentOf_EventArgument(), 5);
@@ -48,13 +48,14 @@ API_EXPORT Entity ModuleOf_Core () {
     static Entity module = 0;
     static bool firstTime = false;
     if(!module) {
-        module = GetUniqueEntity("Module Core", &firstTime);
+        module = GetUniqueEntity("Module.Core", &firstTime);
         __InitModule_Core(module);
     }
     return module;
 }
 
 void __InitModule_Core (Entity module) {
+    __PreInitialize();
     __InitializeBase();
     AddComponent(module, ComponentOf_Module());
     RegisterUnit(Module)
@@ -65,28 +66,17 @@ void __InitModule_Core (Entity module) {
     RegisterUnit(Function)
     RegisterUnit(Entity)
     RegisterUnit(Date)
-    RegisterUnit(Core)
     RegisterUnit(Debug)
     RegisterUnit(Identification)
     RegisterUnit(Binding)
     RegisterUnit(Instance)
 
-    SetName(GetModuleRoot(), "Modules");
     AddComponent(GetModuleRoot(), ComponentOf_ModuleRoot());
 
-    __InjectArrayPropertyElement(PropertyOf_Modules(), GetModuleRoot(), module);
+    AddChild(PropertyOf_Modules(), GetModuleRoot(), module, true);
+    SetOwner(module, GetModuleRoot(), PropertyOf_Modules());
     SetName(module, "Core");
 
     SetModuleSourcePath(module, __FILE__);
     SetModuleVersion(module, __DATE__ " " __TIME__);
 EndModule()
-
-struct CoreModule {
-    Vector(LogMessages, Entity, 1024)
-};
-
-BeginUnit(Core)
-    BeginComponent(CoreModule)
-        RegisterArrayProperty(LogMessage, LogMessages)
-    EndComponent()
-EndUnit()

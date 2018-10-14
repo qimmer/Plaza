@@ -17,7 +17,6 @@ struct EntityModification {
 };
 
 struct EntityTracker {
-    Vector(EntityModifications, Entity, 128);
     ChangeSet *changedSet;
 };
 
@@ -54,9 +53,7 @@ API_EXPORT u16 GetEntityTrackerChanges(Entity entityTracker, Entity responseStre
         responseCode = 500;
     }
 
-    while(GetNumEntityModifications(entityTracker)) {
-        RemoveEntityModifications(entityTracker, 0);
-    }
+    SetNumEntityModifications(entityTracker, 0);
 
     trackerData->changedSet->clear();
 
@@ -101,7 +98,7 @@ LocalFunction(OnComponentRemoved, void, Entity component, Entity entity) {
     }
 }
 
-LocalFunction(OnPropertyChanged, void, Entity property, Entity entity) {
+static void OnPropertyChanged(Entity property, Entity entity, Type valueType, const void *oldValue, const void *newValue) {
     TriggerChange(entity);
 }
 
@@ -116,7 +113,7 @@ BeginUnit(EntityTracker)
 
     RegisterFunction(GetEntityTrackerChanges)
 
-    RegisterSubscription(EntityComponentAdded, OnComponentAdded, 0)
-    RegisterSubscription(EntityComponentRemoved, OnComponentRemoved, 0)
-    RegisterSubscription(PropertyChanged, OnPropertyChanged, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnComponentAdded, 0)
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnComponentRemoved, 0)
+    //RegisterGenericPropertyChangedListener(OnPropertyChanged);
 EndUnit()

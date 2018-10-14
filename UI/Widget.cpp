@@ -217,7 +217,7 @@ static void CreateWidgetMaterial(Entity material) {
 }
 
 DefineService(Widget)
-    RegisterSubscription(WidgetSizeChanged, OnWidgetSizeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetSize()), OnWidgetSizeChanged, 0)
     RegisterSubscription(WidgetAdded, OnWidgetAdded, 0)
 
     ServiceEntity(WidgetVertexDeclaration, CreateWidgetVertexDeclaration)

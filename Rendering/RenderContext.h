@@ -8,6 +8,12 @@
 #include <Core/Types.h>
 #include <Core/Entity.h>
 
+struct RenderContext {
+    StringRef RenderContextTitle;
+    bool RenderContextFullscreen, RenderContextVsync, RenderContextShowDebug, RenderContextShowStats;
+    Entity RenderContextLoop;
+};
+
 Unit(RenderContext)
     Component(RenderContext)
         Property(StringRef, RenderContextTitle)

@@ -24,8 +24,8 @@ LocalFunction(OnTexture2DRemoved, void, Entity entity) {
     }
 }
 
-LocalFunction(OnValidation, void, Entity entity) {
-    if(HasComponent(entity, ComponentOf_BgfxTexture2D())) {
+LocalFunction(OnValidation, void, Entity component) {
+    for_entity(entity, data, BgfxTexture2D) {
         bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
         auto data = GetBgfxTexture2DData(entity);
 
@@ -67,11 +67,11 @@ BeginUnit(BgfxTexture2D)
         RegisterBase(BgfxResource)
     EndComponent()
 
-    RegisterSubscription(EntityComponentRemoved, OnTexture2DRemoved, ComponentOf_BgfxTexture2D())
-    RegisterSubscription(Validate, OnValidation, 0)
-    RegisterSubscription(TextureSize2DChanged, Invalidate, 0)
-    RegisterSubscription(TextureFormatChanged, Invalidate, 0)
-    RegisterSubscription(TextureFlagChanged, Invalidate, 0)
-    RegisterSubscription(TextureDynamicChanged, Invalidate, 0)
-    RegisterSubscription(TextureMipLevelsChanged, Invalidate, 0)
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnTexture2DRemoved, ComponentOf_BgfxTexture2D())
+    RegisterSubscription(EventOf_Validate(), OnValidation, ComponentOf_Texture())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureSize2D()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureFormat()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureFlag()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureDynamic()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureMipLevels()), Invalidate, 0)
 EndUnit()

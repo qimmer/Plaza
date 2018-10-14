@@ -22,7 +22,6 @@ struct TestCore {
 };
 
 struct Family {
-    Vector(FamilyMembers, Entity, 32);
 };
 
 struct Person {

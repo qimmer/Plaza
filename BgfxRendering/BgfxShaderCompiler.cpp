@@ -235,5 +235,5 @@ LocalFunction(OnShaderCompile, void, Entity binaryProgram) {
 }
 
 BeginUnit(BgfxShaderCompiler)
-    RegisterSubscription(ShaderCompile, OnShaderCompile, 0)
+    RegisterSubscription(EventOf_ShaderCompile(), OnShaderCompile, 0)
 EndUnit()

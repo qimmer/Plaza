@@ -12,6 +12,32 @@
 #define ClearTarget_Depth 2
 #define ClearTarget_Stencil 4
 
+struct RenderPass {
+    Entity RenderPassShaderCache;
+    Entity RenderPassRenderState;
+    float RenderPassClearDepth;
+    rgba8 RenderPassClearColor;
+    u8 RenderPassClearStencil, RenderPassClearTargets;
+    bool RenderPassForceOrder;
+};
+
+struct RenderPath {
+};
+
+struct Batch {
+    Entity BatchRenderable, BatchBinaryProgram;
+    bool BatchDisabled;
+};
+
+struct CommandList {
+    Entity CommandListPass;
+};
+
+struct SceneRenderer {
+    Entity SceneRendererScene, SceneRendererTarget, SceneRendererCamera, SceneRendererPath;
+    v4f SceneRendererViewport;
+};
+
 Unit(SceneRenderer)
     Enum(ClearTarget)
 

@@ -45,14 +45,12 @@ struct LogMessage {
     Date LogMessageTime;
 };
 
-API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
+API_EXPORT void Log(Entity context, int severity, StringRef format, va_list arg) {
     char buffer[4096];
-    va_list arg;
 
     auto numWritten = 0;
-    va_start(arg, format);
+
     numWritten += vsnprintf(buffer + numWritten, 4095, format, arg);
-    va_end(arg);
 
     buffer[numWritten] = '\0';
 
@@ -61,30 +59,37 @@ API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
     printf("%s\n", buffer);
 #endif
 
-    auto component = GetOwner(PropertyOf_LogMessages());
-    if(IsEntityValid(component)) {
-        auto messageText = Intern(buffer);
-        auto uuid = GetUuid(context);
-        for_entity(message, data, LogMessage) {
-            if(messageText == data->LogMessageText) {
-                SetLogMessageCount(message, data->LogMessageCount + 1);
-                SetLogMessageTime(message, GetDateNow());
-                return;
-            }
-        }
-
-        message = AddLogMessages(ModuleOf_Core());
-        SetLogMessageEntity(message, uuid);
-        SetLogMessageText(message, messageText);
-        SetLogMessageStackTrace(message, GetStackTrace());
-        SetLogMessageTime(message, GetDateNow());
-        SetLogMessageSeverity(message, severity);
-    }
-
-
     if(severity >= LogSeverity_Error) {
         DebuggerBreak();
     }
+}
+
+API_EXPORT void Log(Entity context, int severity, StringRef format, ...) {
+    va_list arg;
+    va_start(arg, format);
+    Log(context, severity, format, arg);
+    va_end(arg);
+}
+
+API_EXPORT void Error(Entity context, StringRef format, ...) {
+    va_list arg;
+    va_start(arg, format);
+    Log(context, LogSeverity_Error, format, arg);
+    va_end(arg);
+}
+
+API_EXPORT void Warning(Entity context, StringRef format, ...) {
+    va_list arg;
+    va_start(arg, format);
+    Log(context, LogSeverity_Warning, format, arg);
+    va_end(arg);
+}
+
+API_EXPORT void Info(Entity context, StringRef format, ...) {
+    va_list arg;
+    va_start(arg, format);
+    Log(context, LogSeverity_Info, format, arg);
+    va_end(arg);
 }
 
 API_EXPORT void DebuggerBreak() {
@@ -146,8 +151,9 @@ static void PrintNode(int level, Entity entity) {
     for_entity(component, componentData, Component) {
         if(!HasComponent(entity, component)) continue;
 
-        auto properties = GetProperties(component);
-        for(auto i = 0; i < GetNumProperties(component); ++i) {
+        u32 numProperties = 0;
+        auto properties = GetProperties(component, &numProperties);
+        for(auto i = 0; i < numProperties; ++i) {
             auto property = properties[i];
             Entity value = 0;
             GetPropertyValue(property, entity, &value);
@@ -158,8 +164,9 @@ static void PrintNode(int level, Entity entity) {
                     break;
                 case PropertyKind_Array:
                     printf("%*s%s: [\n", (level + 1) * identation, " ", GetDebugName(property));
-                    auto elements = GetArrayPropertyElements(property, entity);
-                    for(auto j = 0; j < GetArrayPropertyCount(property, entity); ++j) {
+                    u32 count = 0;
+                    auto elements = GetArrayPropertyElements(property, entity, &count);
+                    for(auto j = 0; j < count; ++j) {
                         printf("%*s [%d]: ", (level + 2) * identation, " ", j);
                         PrintNode(level+2, elements[j]);
                     }
@@ -178,14 +185,6 @@ API_EXPORT void DumpNode() {
 }
 
 BeginUnit(Debug)
-    BeginComponent(LogMessage)
-        RegisterProperty(StringRef, LogMessageEntity)
-        RegisterProperty(StringRef, LogMessageText)
-        RegisterProperty(StringRef, LogMessageStackTrace)
-        RegisterProperty(u8, LogMessageSeverity)
-        RegisterProperty(u32, LogMessageCount)
-        RegisterProperty(Date, LogMessageTime)
-    EndComponent()
 EndUnit()
 
 API_EXPORT StringRef GetStackTrace() {

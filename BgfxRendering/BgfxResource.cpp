@@ -34,13 +34,11 @@ LocalFunction(InvalidateResource, void, Entity entity) {
 
 BeginUnit(BgfxResource)
     BeginComponent(BgfxResource)
-        RegisterBase(Invalidation)
-
         RegisterProperty(u16, BgfxResourceHandle)
     EndComponent()
 
-    RegisterSubscription(StreamContentChanged, InvalidateResource, 0)
-    RegisterSubscription(StreamPathChanged, InvalidateResource, 0)
-    RegisterSubscription(EntityComponentAdded, OnBgfxResourceAdded, ComponentOf_BgfxResource())
-    RegisterSubscription(EntityComponentRemoved, OnBgfxResourceRemoved, ComponentOf_BgfxResource())
+    RegisterSubscription(EventOf_StreamContentChanged(), InvalidateResource, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), InvalidateResource, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnBgfxResourceAdded, ComponentOf_BgfxResource())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxResourceRemoved, ComponentOf_BgfxResource())
 EndUnit()

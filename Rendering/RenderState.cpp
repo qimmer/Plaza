@@ -5,10 +5,6 @@
 #include "RenderState.h"
 
 
-struct RenderState {
-    u64 RenderStateDepthTest, RenderStateWriteMask, RenderStateMultisampleMode, RenderStateBlendMode;
-};
-
 LocalFunction(OnAdded, void, Entity component, Entity entity) {
     SetRenderStateDepthTest(entity, RenderState_STATE_DEPTH_TEST_LEQUAL);
     SetRenderStateWriteMask(entity, RenderState_STATE_RGB_WRITE | RenderState_STATE_ALPHA_WRITE | RenderState_STATE_DEPTH_WRITE);
@@ -61,5 +57,5 @@ BeginUnit(RenderState)
         RegisterPropertyEnum(u64, RenderStateBlendMode, BlendMode)
     EndComponent()
 
-    RegisterSubscription(EntityComponentAdded, OnAdded, ComponentOf_RenderState())
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnAdded, ComponentOf_RenderState())
 EndUnit()

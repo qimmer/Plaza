@@ -13,7 +13,6 @@ struct InputState {
 struct InputContext {
     v2i InputContextCursorPosition;
     bool InputContextGrabMouse;
-    Vector(InputContextStates, Entity, 128)
     s8 InputContextLastCharacter;
 };
 

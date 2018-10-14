@@ -6,7 +6,6 @@
 #include "Test.h"
 
 struct Test {
-    Vector(TestEntities, Entity, 128)
 };
 
 BeginUnit(Test)

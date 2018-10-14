@@ -109,8 +109,8 @@ static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
         return FindResponseCode(403);
     }
 
-    auto children = GetArrayPropertyElements(property, parent);
-    auto numChildren = GetArrayPropertyCount(property, parent);
+    u32 numChildren = 0;
+    auto children = GetArrayPropertyElements(property, parent, &numChildren);
     for(auto i = 0; i < numChildren; ++i) {
         if(children[i] == existing) {
 			if (!RemoveArrayPropertyElement(property, parent, i)) {
@@ -167,5 +167,5 @@ BeginUnit(RestEntityRouting)
         RegisterProperty(u8, RestEntityRoutingDepth)
     EndComponent()
 
-    RegisterSubscription(RestRoutingRequest, OnRestRoutingRequest, 0)
+    RegisterSubscription(EventOf_RestRoutingRequest(), OnRestRoutingRequest, 0)
 EndUnit()

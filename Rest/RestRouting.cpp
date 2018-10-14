@@ -13,8 +13,9 @@ struct RestRouting {
 };
 
 LocalFunction(OnHttpServerRequest, void, Entity server, Entity request, Entity response) {
-    auto routes = GetRestServerRoutes(server);
-    for(auto i = 0; i < GetNumRestServerRoutes(server); ++i) {
+    u32 numRoutes = 0;
+    auto routes = GetRestServerRoutes(server, &numRoutes);
+    for(auto i = 0; i < numRoutes; ++i) {
         auto data = GetRestRoutingData(routes[i]);
         if(data) {
             auto requestUrl = GetHttpRequestUrl(request);
@@ -35,5 +36,5 @@ BeginUnit(RestRouting)
 
     RegisterEvent(RestRoutingRequest)
 
-    RegisterSubscription(HttpServerRequest, OnHttpServerRequest, 0)
+    RegisterSubscription(EventOf_HttpServerRequest(), OnHttpServerRequest, 0)
 EndUnit()

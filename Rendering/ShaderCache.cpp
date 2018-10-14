@@ -21,7 +21,6 @@ struct BinaryProgram {
 };
 
 struct ShaderCache {
-    Vector(ShaderCachePrograms, Entity, 256)
     StringRef ShaderCacheDirectoryPath;
     u8 ShaderCacheProfile;
     StringRef ShaderCacheDefines;
@@ -139,8 +138,8 @@ BeginUnit(ShaderCache)
 
     RegisterEvent(ShaderCompile)
 
-    RegisterSubscription(StreamContentChanged, OnStreamChanged, 0)
-    RegisterSubscription(StreamPathChanged, OnStreamChanged, 0)
-    RegisterSubscription(ShaderCacheProfileChanged, OnShaderCacheChanged, 0)
-    RegisterSubscription(ShaderCacheDefinesChanged, OnShaderCacheChanged, 0)
+    RegisterSubscription(EventOf_StreamContentChanged(), OnStreamChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), OnStreamChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ShaderCacheProfile()), OnShaderCacheChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ShaderCacheDefines()), OnShaderCacheChanged, 0)
 EndUnit()

@@ -3,47 +3,38 @@
 //
 
 #include <cglm/cglm.h>
+#include <Foundation/Invalidation.h>
 
 #include "Transform.h"
 
 struct Transform {
     m4x4f TransformGlobalMatrix, TransformLocalMatrix;
     Entity TransformParent;
+    bool GlobalInvalidated;
 };
 
-static void UpdateGlobal(Entity entity) {
-    auto local = GetTransformLocalMatrix(entity);
-    auto parent = GetTransformParent(entity);
+LocalFunction(OnTransformValidation, void, Entity component) {
+    for_entity(entity, transformData, Transform) {
+        if(!IsDirty(entity)) continue;
 
-    m4x4f global = local;
+        auto local = transformData->TransformLocalMatrix;
+        auto parent = GetTransformParent(entity);
 
-    if(HasComponent(parent, ComponentOf_Transform()) > 0) {
-        auto parentGlobalMatrix = GetTransformGlobalMatrix(parent);
-        glm_mat4_mul((vec4*)&parentGlobalMatrix, (vec4*)&local, (vec4*)&global);
+        m4x4f global = local;
 
-    }
+        if(HasComponent(parent, ComponentOf_Transform()) > 0) {
+            auto parentGlobalMatrix = GetTransformGlobalMatrix(parent);
+            glm_mat4_mul((vec4*)&parentGlobalMatrix, (vec4*)&local, (vec4*)&global);
 
-    SetTransformGlobalMatrix(entity, global);
-
-    for_entity(child, data, Transform) {
-        if(data->TransformParent == entity) {
-            UpdateGlobal(child);
         }
-    }
-}
 
-LocalFunction(OnLocalChanged, void, Entity entity, m4x4f oldMatrix, m4x4f newMatrix) {
-    UpdateGlobal(entity);
-}
-
-LocalFunction(OnParentChanged, void, Entity child, Entity oldParent, Entity newParent) {
-    if(HasComponent(child, ComponentOf_Transform())) {
-        UpdateGlobal(child);
+        SetTransformGlobalMatrix(entity, global);
     }
 }
 
 LocalFunction(OnAdded, void, Entity component, Entity entity) {
     SetTransformLocalMatrix(entity, m4x4f_Identity);
+    SetTransformGlobalMatrix(entity, m4x4f_Identity);
 }
 
 BeginUnit(Transform)
@@ -53,7 +44,8 @@ BeginUnit(Transform)
         RegisterReferenceProperty(Transform, TransformParent)
     EndComponent()
 
-    RegisterSubscription(TransformLocalMatrixChanged, OnLocalChanged, 0)
-    RegisterSubscription(TransformParentChanged, OnParentChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnAdded, ComponentOf_Transform())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TransformLocalMatrix()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TransformParent()), Invalidate, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnAdded, ComponentOf_Transform())
+    RegisterSubscription(EventOf_Validate(), OnTransformValidation, ComponentOf_Transform())
 EndUnit()

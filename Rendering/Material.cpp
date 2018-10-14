@@ -7,10 +7,6 @@
 #include "Uniform.h"
 #include <Core/Enum.h>
 
-struct Material {
-    Entity MaterialProgram;
-};
-
 BeginUnit(Material)
     BeginComponent(Material)
         RegisterProperty(Entity, MaterialProgram)

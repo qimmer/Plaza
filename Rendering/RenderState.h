@@ -7,6 +7,10 @@
 
 #include <Core/NativeUtils.h>
 
+struct RenderState {
+	u64 RenderStateDepthTest, RenderStateWriteMask, RenderStateMultisampleMode, RenderStateBlendMode;
+};
+
 Unit(RenderState)
     Enum(DepthTest)
     Enum(WriteMask)

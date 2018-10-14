@@ -28,16 +28,19 @@ typedef bool(*FunctionCaller)(u64 functionImplementation, Type returnArgumentTyp
 Entity ModuleOf_Core();
 
 u32 GetArrayPropertyCount(Entity property, Entity entity);
+bool SetArrayPropertyCount(Entity property, Entity entity, u32 count);
 u32 AddArrayPropertyElement(Entity property, Entity entity);
 u32 GetArrayPropertyIndex(Entity property, Entity entity, Entity element);
 bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 index);
 Entity GetArrayPropertyElement(Entity property, Entity entity, u32 index);
-Entity *GetArrayPropertyElements(Entity property, Entity entity);
+Entity *GetArrayPropertyElements(Entity property, Entity entity, u32 *count);
 
 void SetModuleSourcePath(Entity module, StringRef sourcePath);
 void SetModuleVersion(Entity module, StringRef version);
 Entity GetModuleRoot();
 Entity GetUnregisteredEntitiesRoot();
+StringRef GetUuid(Entity entity);
+void SetUuid(Entity entity, StringRef uuid);
 void SetName(Entity entity, StringRef name);
 void SetOwner(Entity entity, Entity owner, Entity ownerProperty);
 bool AddComponent(Entity entity, Entity type);
@@ -46,7 +49,6 @@ u32 GetComponentMax(Entity component);
 Entity GetComponentEntity(Entity component, u32 index);
 char * GetComponentBytes(Entity component, u32 index);
 char * GetComponentData(u32 componentIndex, Entity entity);
-u32 GetComponentTypeIndexByIndex(u32 entityIndex);
 struct ComponentTypeData *GetComponentType(Entity component);
 u32 GetComponentIndex(Entity component, Entity entity);
 Entity GetComponentAddedEvent(Entity component);
@@ -68,6 +70,9 @@ bool GetPropertyValue(Entity entity, Entity context, void *dataOut);
 Entity GetOwner(Entity entity);
 StringRef GetDebugName(Entity entity);
 void Log(Entity context, int severity, StringRef format, ...);
+void Info(Entity context, StringRef format, ...);
+void Warning(Entity context, StringRef format, ...);
+void Error(Entity context, StringRef format, ...);
 void FireEventFast(
         Entity event,
         u32 numArguments,
@@ -130,7 +135,6 @@ StringRef GetUniqueEntityName(Entity entity);
 #define __PropertyCoreGetOnly(COMPONENT, PROPERTYTYPE, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
     static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
-    Event(PROPERTYNAME ## Changed, Entity changedEntity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue)\
     PROPERTYTYPE Get ## PROPERTYNAME(Entity entity);\
 
 #define __PropertyCore(COMPONENT, PROPERTYTYPE, PROPERTYNAME, ...) \
@@ -158,14 +162,12 @@ StringRef GetUniqueEntityName(Entity entity);
 
 #define Property(PROPERTYTYPE, PROPERTYNAME) \
     Declare(Property, PROPERTYNAME) \
-    Event(PROPERTYNAME ## Changed, Entity changedEntity, PROPERTYTYPE oldValue, PROPERTYTYPE newValue)\
     inline PROPERTYTYPE Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         static u32 offset = GetPropertyOffset(prop);\
         static Entity component = GetOwner(prop);\
         static u32 componentEntityIndex = GetEntityIndex(component);\
-        static u32 componentTypeIndex = GetComponentTypeIndexByIndex(componentEntityIndex);\
-        auto componentData = GetComponentData(componentTypeIndex, entity);\
+        auto componentData = GetComponentData(componentEntityIndex, entity);\
         if(!componentData) return PROPERTYTYPE ## _Default;\
         return *((PROPERTYTYPE*)(componentData + offset));\
     }\
@@ -176,12 +178,14 @@ StringRef GetUniqueEntityName(Entity entity);
 
 #define ReferenceProperty(REFERENCECOMPONENT, PROPERTYNAME) \
     Declare(Property, PROPERTYNAME) \
-    Event(PROPERTYNAME ## Changed, Entity changedEntity, Entity oldValue, Entity newValue)\
     inline Entity Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        Entity value = 0;\
-        GetPropertyValue(prop, entity, &value);\
-        return value;\
+        static u32 offset = GetPropertyOffset(prop);\
+        static Entity component = GetOwner(prop);\
+        static u32 componentEntityIndex = GetEntityIndex(component);\
+        auto componentData = GetComponentData(componentEntityIndex, entity);\
+        if(!componentData) return Entity_Default;\
+        return *((Entity*)(componentData + offset));\
     }\
     inline void Set ## PROPERTYNAME(Entity entity, Entity value) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME ();\
@@ -192,9 +196,12 @@ StringRef GetUniqueEntityName(Entity entity);
     Declare(Property, PROPERTYNAME) \
     inline Entity Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        Entity value = 0;\
-        GetPropertyValue(prop, entity, &value);\
-        return value;\
+        static u32 offset = GetPropertyOffset(prop);\
+        static Entity component = GetOwner(prop);\
+        static u32 componentEntityIndex = GetEntityIndex(component);\
+        auto componentData = GetComponentData(componentEntityIndex, entity);\
+        if(!componentData) return Entity_Default;\
+        return *((Entity*)(componentData + offset));\
     }
 
 
@@ -214,15 +221,10 @@ StringRef GetUniqueEntityName(Entity entity);
 
 #define ArrayProperty(ELEMENTCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
-    Event(PROPERTYNAME ## Changed, Entity changedEntity, Entity oldValue, Entity newValue)\
     static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
-    inline const Entity* Get ## PROPERTYNAME(Entity entity) {\
+    inline const Entity* Get ## PROPERTYNAME(Entity entity, u32 *count) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        return GetArrayPropertyElements(prop, entity);\
-    }\
-    inline u32 GetNum ## PROPERTYNAME(Entity entity) {\
-        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        return GetArrayPropertyCount(prop, entity);\
+        return GetArrayPropertyElements(prop, entity, count);\
     }\
     inline Entity Add ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
@@ -236,15 +238,17 @@ StringRef GetUniqueEntityName(Entity entity);
     inline u32 Get ## PROPERTYNAME ## Index(Entity entity, Entity element) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         return GetArrayPropertyIndex(prop, entity, element);\
+    }\
+    inline void SetNum ## PROPERTYNAME(Entity entity, u32 count) {\
+        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
+        SetArrayPropertyCount(prop, entity, count);\
     }
 
 
 #define __ArrayPropertyCore(ELEMENTCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
-    Event(PROPERTYNAME ## Changed, Entity changedEntity, Entity oldValue, Entity newValue)\
     static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
-    const Entity* Get ## PROPERTYNAME(Entity entity);\
-    u32 GetNum ## PROPERTYNAME(Entity entity);\
+    const Entity* Get ## PROPERTYNAME(Entity entity, u32 *count);\
     Entity Add ## PROPERTYNAME(Entity entity);\
     inline void Remove ## PROPERTYNAME(Entity entity, u32 index) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
@@ -252,22 +256,12 @@ StringRef GetUniqueEntityName(Entity entity);
     }
 
 #define __ArrayPropertyCoreImpl(ELEMENTCOMPONENT, PROPERTYNAME, COMPONENT) \
-    API_EXPORT const Entity* Get ## PROPERTYNAME(Entity entity) {\
-        auto data = Get ## COMPONENT ## Data(entity);\
-        if(data) return GetVector(data-> PROPERTYNAME);\
-        return 0;\
-    }\
-    API_EXPORT u32 GetNum ## PROPERTYNAME(Entity entity) {\
-        auto data = Get ## COMPONENT ## Data(entity);\
-        if(data) return data-> PROPERTYNAME .Count;\
-        return 0;\
+    API_EXPORT const Entity* Get ## PROPERTYNAME(Entity entity, u32 *count) {\
+        return GetChildren(PropertyOf_ ## PROPERTYNAME(), entity, count);\
     }\
     API_EXPORT Entity Add ## PROPERTYNAME(Entity entity) {\
         auto element = CreateEntity();\
-        auto valueData = Get ## COMPONENT ## Data(entity);\
-        VectorAdd(valueData->PROPERTYNAME, element);\
-        AddComponent(element, ComponentOf_Ownership());\
-        SetOwner(element, entity, PropertyOf_ ## PROPERTYNAME ());\
+        auto index = AddChild(PropertyOf_ ## PROPERTYNAME (), entity, element, true);\
         AddComponent(element, ComponentOf_ ## ELEMENTCOMPONENT ());\
         return element;\
     }
@@ -276,7 +270,7 @@ StringRef GetUniqueEntityName(Entity entity);
         static Entity entity = 0;\
         static bool firstTime = false;\
         if(!entity) {\
-            entity = GetUniqueEntity("Function " #NAME " " FILE, &firstTime);\
+            entity = GetUniqueEntity("Function." #NAME FILE, &firstTime);\
             if(firstTime) {\
                 char unregisteredName[64];\
                 StringRef lastSlash = strrchr(FILE, '/');\
@@ -296,7 +290,7 @@ StringRef GetUniqueEntityName(Entity entity);
 #define Function(NAME, R, ...) \
     R NAME( __VA_ARGS__ ); \
     inline Entity FunctionOf_ ## NAME () {\
-        __Function(__FILE__, NAME, R, ##__VA_ARGS__)\
+        __Function("", NAME, R, ##__VA_ARGS__)\
     }
 
 #define Test(NAME) \
@@ -306,7 +300,7 @@ StringRef GetUniqueEntityName(Entity entity);
 #define LocalFunction(NAME, R, ...) \
     static R NAME(__VA_ARGS__);\
     static Entity FunctionOf_ ## NAME () {\
-        __Function(__FILE__, NAME, R, __VA_ARGS__) \
+        __Function("." __FILE__, NAME, R, __VA_ARGS__) \
     }\
     static R NAME(__VA_ARGS__)
 
@@ -381,13 +375,14 @@ StringRef GetUniqueEntityName(Entity entity);
         static bool firstTime = false;\
         if(!module) {\
             ModuleOf_Core();\
-            module = GetUniqueEntity("Module " #NAME, &firstTime);\
+            module = GetUniqueEntity("Module." #NAME, &firstTime);\
             if(firstTime) {\
-                SetName(module, #NAME);\
                 SetModuleSourcePath(module, __FILE__);\
                 SetModuleVersion(module, __DATE__ " " __TIME__);\
-                __InjectArrayPropertyElement(PropertyOf_Modules(), GetModuleRoot(), module);\
+                SetName(module, #NAME);\
+                AddChild(PropertyOf_Modules(), GetModuleRoot(), module, true);\
                 __InitModule_ ## NAME(module);\
+                Info(module, "Loaded Module: %s", GetUuid(module));\
             }\
         }\
         return module;\
@@ -401,11 +396,6 @@ StringRef GetUniqueEntityName(Entity entity);
         ModuleOf_ ## MODULE (); // Reference and call module initializer
 
 #define EndModule() \
-        for_entity(entity, data, Ownership) {\
-            if(!IsEntityValid(GetOwner(entity))) {\
-                Log(module, 2, "Entity is not registered: %s", GetDebugName(entity));\
-            }  \
-        }\
 		Type types[] = { TypeOf_Entity };\
 		const void* values[] = { &module };\
         FireEventFast(EventOf_ModuleInitialized(), 1, types, values);\
@@ -422,40 +412,33 @@ StringRef GetUniqueEntityName(Entity entity);
 
 #define BeginComponent(COMPONENT) \
         component = ComponentOf_ ## COMPONENT ();\
+        SetName(component, #COMPONENT);\
         AddComponent(component, ComponentOf_Component());\
         SetComponentExplicitSize(component, true);\
         SetComponentSize(component, sizeof(COMPONENT));\
-        __InjectArrayPropertyElement(PropertyOf_Components(), module, component);\
-        SetName(component, #COMPONENT);\
+        AddChild(PropertyOf_Components(), module, component, true);\
         {\
             typedef COMPONENT ComponentType;
 
 #define EndComponent() \
         }
 
-#define RegisterNode(NAME) \
-        node = NodeOf_ ## NAME ();\
-        __InjectArrayPropertyElement(PropertyOf_Nodes(), module, node);\
-        SetName(node, #NAME);
-
 #define RegisterEvent(NAME) \
         event = EventOf_ ## NAME ();\
-        __InjectArrayPropertyElement(PropertyOf_Events(), module, event);\
         SetName(event, #NAME);\
+        AddChild(PropertyOf_Events(), module, event, true);\
         SetEventArgsByDecl(event, __Event ## NAME);
 
 #define RegisterProperty(PROPERTYTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
-    __InjectArrayPropertyElement(PropertyOf_Properties(), component, property);\
     SetName(property, #PROPERTYNAME);\
+    AddChild(PropertyOf_Properties(), component, property, true);\
     SetPropertyType(property, TypeOf_ ## PROPERTYTYPE);\
     SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
     SetPropertyKind(property, PropertyKind_Value);\
-    event = EventOf_ ## PROPERTYNAME ## Changed ();\
-    __InjectChildPropertyValue(PropertyOf_PropertyChangedEvent(), property, event);\
-    SetName(event, #PROPERTYNAME "Changed");\
-    SetEventArgsByDecl(event, __Event ## PROPERTYNAME ## Changed);
+    event = GetPropertyChangedEvent(property);\
+    SetEventArgsByDecl(event, "Entity entity, " #PROPERTYTYPE " oldValue, " #PROPERTYTYPE " newValue");
 
 #define RegisterPropertyEnum(PROPERTYTYPE, PROPERTYNAME, ENUM) \
     RegisterProperty(PROPERTYTYPE, PROPERTYNAME) \
@@ -468,22 +451,19 @@ StringRef GetUniqueEntityName(Entity entity);
 
 #define RegisterArrayProperty(COMPONENTTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
-    __InjectArrayPropertyElement(PropertyOf_Properties(), component, property);\
     SetName(property, #PROPERTYNAME);\
+    AddChild(PropertyOf_Properties(), component, property, true);\
     SetPropertyType(property, TypeOf_Entity);\
-    SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
-    SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
+    SetPropertyOffset(property, InvalidIndex);\
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
     SetPropertyKind(property, PropertyKind_Array);\
-    event = EventOf_ ## PROPERTYNAME ## Changed ();\
-    __InjectChildPropertyValue(PropertyOf_PropertyChangedEvent(), property, event);\
-    SetName(event, #PROPERTYNAME "Changed");\
-    SetEventArgsByDecl(event, __Event ## PROPERTYNAME ## Changed);
+    event = GetPropertyChangedEvent(property);\
+    SetEventArgsByDecl(event, "Entity entity, Entity oldValue, Entity newValue");
 
 #define RegisterChildProperty(COMPONENTTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
-    __InjectArrayPropertyElement(PropertyOf_Properties(), component, property);\
     SetName(property, #PROPERTYNAME);\
+    AddChild(PropertyOf_Properties(), component, property, true);\
     SetPropertyType(property, TypeOf_Entity);\
     SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
@@ -493,17 +473,15 @@ StringRef GetUniqueEntityName(Entity entity);
 
 #define RegisterReferenceProperty(COMPONENTTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
-    __InjectArrayPropertyElement(PropertyOf_Properties(), component, property);\
     SetName(property, #PROPERTYNAME);\
+    AddChild(PropertyOf_Properties(), component, property, true);\
     SetPropertyType(property, TypeOf_Entity);\
     SetPropertyOffset(property, offsetof(ComponentType, PROPERTYNAME));\
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
     SetPropertyKind(property, PropertyKind_Value);\
-    event = EventOf_ ## PROPERTYNAME ## Changed ();\
-    __InjectChildPropertyValue(PropertyOf_PropertyChangedEvent(), property, event);\
-    SetName(event, #PROPERTYNAME "Changed");\
-    SetEventArgsByDecl(event, __Event ## PROPERTYNAME ## Changed);
+    event = GetPropertyChangedEvent(property);\
+    SetEventArgsByDecl(event, "Entity entity, Entity oldValue, Entity newValue");
 
 #define RegisterReferencePropertyReadOnly(COMPONENTTYPE, PROPERTYNAME)\
     RegisterReferenceProperty(COMPONENTTYPE, PROPERTYNAME)\
@@ -517,45 +495,51 @@ StringRef GetUniqueEntityName(Entity entity);
 #define RegisterBase(BASECOMPONENT) \
     {\
         auto base = AddBases(component);\
+        SetName(base, #BASECOMPONENT);\
+        snprintf(buffer, 1024, "%s.Bases.%s", GetUuid(component), #BASECOMPONENT);\
+        SetUuid(base, buffer);\
         SetBaseComponent(base, ComponentOf_ ## BASECOMPONENT ());\
     }
 
 #define RegisterExtension(BASECOMPONENT, EXTENSIONCOMPONENT) \
     extension = GetArrayPropertyElement(PropertyOf_Extensions(), module, AddArrayPropertyElement(PropertyOf_Extensions(), module));\
+    snprintf(buffer, 1024, "%s.Extensions.%s", GetUuid(module), #EXTENSIONCOMPONENT);\
     SetName(extension, #BASECOMPONENT "_" #EXTENSIONCOMPONENT);\
     SetExtensionComponent(extension, ComponentOf_ ## BASECOMPONENT ());\
     SetExtensionExtenderComponent(extension, ComponentOf_ ## EXTENSIONCOMPONENT ());
 
 #define RegisterFunction(FUNCTION) \
     function = FunctionOf_ ## FUNCTION ();\
-    __InjectArrayPropertyElement(PropertyOf_Functions(), module, function);\
-    SetName(function, #FUNCTION);
+    SetName(function, #FUNCTION);\
+    AddChild(PropertyOf_Functions(), module, function, true);
 
 #define RegisterTest(TEST) \
     RegisterFunction(TEST)\
     AddComponent(function, ComponentOf_Test());
 
 #define RegisterSubscription(EVENT, FUNCTION, SENDER) \
-    snprintf(buffer, 1024, "%s_%s", unitName, #EVENT);\
+    snprintf(buffer, 1024, "%s.%s.Subscriptions.%s.%s", GetUuid(module), unitName, #EVENT, #FUNCTION);\
     subscription = AddSubscriptions(module);\
-    SetName(subscription, buffer);\
+    SetUuid(subscription, buffer);\
     subscriptionFunction = FunctionOf_ ## FUNCTION ();\
     SetSubscriptionSender(subscription, SENDER);\
-    SetSubscriptionEvent(subscription, EventOf_ ## EVENT ());\
+    SetSubscriptionEvent(subscription, EVENT);\
     SetSubscriptionHandler(subscription, subscriptionFunction);\
     if(!IsEntityValid(GetOwner(subscriptionFunction))) {\
-        __InjectArrayPropertyElement(PropertyOf_Functions(), module, subscriptionFunction);\
+        AddChild(PropertyOf_Functions(), module, subscriptionFunction, true);\
     }
 
 #define BeginEnum(ENUM, COMBINABLE) \
     eenum = EnumOf_ ## ENUM ();\
-    __InjectArrayPropertyElement(PropertyOf_Enums(), module, eenum);\
-    SetName(eenum, #ENUM); \
+    SetName(eenum, #ENUM);\
+    AddChild(PropertyOf_Enums(), module, eenum, true);\
     SetEnumCombinable(eenum, (COMBINABLE));
 
 #define RegisterFlag(FLAG) \
+    snprintf(buffer, 1024, "%s.%s", GetUuid(eenum), #FLAG);\
     flag = AddEnumFlags(eenum);\
     SetName(flag, #FLAG);\
+    SetUuid(flag, buffer);\
     SetEnumFlagValue(flag, (FLAG));
 
 #define EndEnum()
@@ -575,8 +559,8 @@ StringRef GetUniqueEntityName(Entity entity);
 
 #define for_children(VARNAME, PROPERTY, PARENTENTITY) \
     Entity VARNAME = 0;\
-    auto count = GetNum ## PROPERTY (PARENTENTITY);\
-    auto entries = Get ## PROPERTY (PARENTENTITY);\
+    u32 count = 0;\
+    auto entries = Get ## PROPERTY (PARENTENTITY, &count);\
     auto i = 0;\
     for(VARNAME = entries ? (entries[i]) : 0; i < count; VARNAME = entries [++i])
 

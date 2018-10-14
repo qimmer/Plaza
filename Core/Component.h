@@ -44,6 +44,7 @@ char * GetComponentData(u32 componentTypeIndex, Entity entity);
 u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Entity *entity);
 
 void __InitializeComponent();
+void __PreInitialize();
 
 #define for_entity(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
     auto __component ## DATAVAR = ComponentOf_ ## COMPONENTTYPE ();\

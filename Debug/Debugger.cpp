@@ -24,39 +24,42 @@ void OnExit() {
     }
 }
 
-int main(int argc, char** argv) { \
+int main(int argc, char** argv) {
     atexit(OnExit);
+
+    for(auto i = 1; i < argc; ++i) {
+        auto path = argv[i];
+
+        if(strstr(path, "-verbose=")) {
+            VerboseTag = path + strlen("-verbose=");
+        }
+    }
 
     RegisterDependency(Core)
     RegisterDependency(Foundation)
     RegisterDependency(File)
     RegisterDependency(Json)
-    //RegisterDependency(Debug) // Enables debugging server
+    RegisterDependency(Debug) // Enables debugging server
 
     for(auto i = 1; i < argc; ++i) {
         auto path = argv[i];
 
         if(strstr(path, ".dll") || strstr(path, ".so") || strstr(path, ".dylib")) {
-            auto module = LoadPlazaModule(path);
-            if (IsEntityValid(module)) {
-                printf("Module '%s' Loaded from '%s'.\n", GetName(module), argv[i]);
-            }
-        } else if(strstr(path, "-verbose=")) {
-            VerboseTag = path + strlen("-verbose=");
-        } else {
+            LoadPlazaModule(path);
+        } else if (strstr(path, ".json")){
             char vpath[512];
             snprintf(vpath, sizeof(vpath), "file://%s", path);
 
             auto module = AddModules(GetModuleRoot());
             SetStreamPath(module, vpath);
             SetPersistancePointLoading(module, true);
-
-            printf("Module '%s' Loaded from '%s'.\n", GetName(module), path);
         }
 
     }
 
     RunAppLoops();
+
+    //DumpTree(GetModuleRoot());
 
     hasRunAsExpected = true;
 

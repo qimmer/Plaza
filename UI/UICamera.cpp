@@ -74,9 +74,9 @@ LocalFunction(OnRenderTargetSizeChanged, void, Entity entity, v2i oldValue, v2i 
 }
 
 DefineService(UICamera)
-    RegisterSubscription(UICameraPixelsPerUnitChanged, OnUICameraPixelsPerUnitChanged, 0)
-    RegisterSubscription(CameraViewportChanged, OnCameraViewportChanged, 0)
-    RegisterSubscription(CameraRenderTargetChanged, OnCameraRenderTargetChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UICameraPixelsPerUnit()), OnUICameraPixelsPerUnitChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CameraViewport()), OnCameraViewportChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CameraRenderTarget()), OnCameraRenderTargetChanged, 0)
     RegisterSubscription(UICameraAdded, UpdateProjectionMatrix, 0)
-    RegisterSubscription(RenderTargetSizeChanged, OnRenderTargetSizeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderTargetSize()), OnRenderTargetSizeChanged, 0)
 EndService()

@@ -8,8 +8,5 @@
 #include <Core/Module.h>
 
 Module(Core)
-    Unit(Core)
-        Component(CoreModule)
-            ArrayProperty(LogMessage, LogMessages)
 
 #endif //PLAZA_COREMODULE_H

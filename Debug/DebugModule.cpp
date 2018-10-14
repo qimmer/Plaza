@@ -24,7 +24,6 @@ struct DebugSession {
 
 struct Debug {
     Entity DebugServer;
-    Vector(DebugServerSessions, Entity, 64)
 };
 
 struct DebugServer {

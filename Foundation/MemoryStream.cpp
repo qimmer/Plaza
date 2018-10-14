@@ -82,5 +82,5 @@ BeginUnit(MemoryStream)
 
     RegisterStreamProtocol(MemoryStream, "memory")
 
-    RegisterSubscription(EntityComponentRemoved, OnMemoryStreamRemoved, ComponentOf_MemoryStream())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnMemoryStreamRemoved, ComponentOf_MemoryStream())
 EndUnit()

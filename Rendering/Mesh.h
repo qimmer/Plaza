@@ -39,6 +39,33 @@ enum
     VertexAttributeUsage_TexCoord7
 };
 
+struct VertexBuffer {
+    Entity VertexBufferDeclaration;
+    bool VertexBufferDynamic;
+};
+
+struct VertexDeclaration {
+};
+
+struct VertexAttribute {
+    Type VertexAttributeType;
+    u8 VertexAttributeUsage;
+    bool VertexAttributeNormalize, VertexAttributeAsInt;
+};
+
+struct IndexBuffer {
+    bool IndexBufferLong, IndexBufferDynamic;
+};
+
+struct Mesh {
+    Entity MeshVertexBuffer, MeshIndexBuffer;
+};
+
+struct SubMesh {
+    u32 SubMeshStartVertex, SubMeshStartIndex, SubMeshNumIndices, SubMeshNumVertices;
+    u64 SubMeshPrimitiveType, SubMeshCullMode;
+};
+
 u32 GetVertexStride(Entity vertexDeclaration);
 
 Unit(Mesh)

@@ -10,30 +10,28 @@
 #endif
 
 struct HttpHeaderType {
-    char HttpHeaderTypeIdentifier[256];
+    StringRef HttpHeaderTypeIdentifier;
 };
 
 struct HttpResponseCode {
-    char HttpResponseCodeMessage[64];
+    StringRef HttpResponseCodeMessage;
     u16 HttpResponseCodeNumber;
 };
 
 struct HttpHeader {
     Entity HttpHeaderType;
-    char HttpHeaderValue[1024];
+    StringRef HttpHeaderValue;
 };
 
 struct HttpRequest {
-    char HttpRequestMethod[16];
-    char HttpRequestVersion[16];
-    char HttpRequestUrl[512];
-    Vector(HttpRequestHeaders, Entity, 32);
+    StringRef HttpRequestMethod;
+    StringRef HttpRequestVersion;
+    StringRef HttpRequestUrl;
     Entity HttpRequestContentStream;
 };
 
 struct HttpResponse {
     Entity HttpResponseCode;
-    Vector(HttpResponseHeaders, Entity, 32);
     Entity HttpResponseContentStream;
 };
 

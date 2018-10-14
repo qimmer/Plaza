@@ -7,6 +7,19 @@
 
 #include <Core/NativeUtils.h>
 
+struct MeshBuilderVertex {
+    v3f MeshBuilderVertexPosition, MeshBuilderVertexNormal;
+    v2f MeshBuilderVertexTexCoord0;
+    rgba8 MeshBuilderVertexColor0;
+};
+
+struct MeshBuilderIndex {
+    u32 MeshBuilderIndexVertexIndex;
+};
+
+struct MeshBuilder {
+};
+
 Unit(MeshBuilder)
     Component(MeshBuilderVertex)
         Property(v3f, MeshBuilderVertexPosition)

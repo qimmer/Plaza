@@ -124,7 +124,7 @@ angular.module('plaza').service('entityService', function ($http, $timeout, $int
         var componentLists = {};
 
         var connection = {
-            getRoot: function() { return "00000000-0000-0000-0000-000000000000"; },
+            getRoot: function() { return "ModuleRoot"; },
             getEntities: function(uuids) {
                 if(!connection.isConnected) return {};
 

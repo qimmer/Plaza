@@ -22,8 +22,10 @@ LocalFunction(OnUniformRemoved, void, Entity entity) {
     }
 }
 
-LocalFunction(OnValidation, void, Entity entity) {
-    if(HasComponent(entity, ComponentOf_BgfxUniform())) {
+LocalFunction(OnUniformValidation, void, Entity component) {
+    for_entity(entity, data, BgfxUniform) {
+        if(!IsDirty(entity)) continue;
+
         // Eventually free old buffers
         OnUniformRemoved(entity);
 
@@ -52,8 +54,8 @@ BeginUnit(BgfxUniform)
         RegisterBase(BgfxResource)
     EndComponent()
 
-    RegisterSubscription(EntityComponentRemoved, OnUniformRemoved, ComponentOf_BgfxUniform())
-    RegisterSubscription(Validate, OnValidation, 0)
-    RegisterSubscription(UniformTypeChanged, Invalidate, 0)
-    RegisterSubscription(UniformIdentifierChanged, Invalidate, 0)
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnUniformRemoved, ComponentOf_BgfxUniform())
+    RegisterSubscription(EventOf_Validate(), OnUniformValidation, ComponentOf_Uniform())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformType()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformIdentifier()), Invalidate, 0)
 EndUnit()

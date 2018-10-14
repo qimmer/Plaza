@@ -9,10 +9,6 @@
 #include <Scene/Transform.h>
 #include <Scene/Scene.h>
 
-struct Renderable {
-    Entity RenderableMaterial, RenderableSubMesh;
-};
-
 BeginUnit(Renderable)
     BeginComponent(Renderable)
         RegisterBase(SceneNode)

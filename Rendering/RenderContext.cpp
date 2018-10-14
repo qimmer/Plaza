@@ -13,12 +13,6 @@
 #include <Algorithms.h>
 
 
-struct RenderContext {
-    StringRef RenderContextTitle;
-    bool RenderContextFullscreen, RenderContextVsync, RenderContextShowDebug, RenderContextShowStats;
-    Entity RenderContextLoop;
-};
-
 BeginUnit(RenderContext)
     BeginComponent(RenderContext)
         RegisterBase(RenderTarget)

@@ -21,21 +21,27 @@ LocalFunction(OnBgfxOffscreenRenderTargetRemoved, void, Entity entity) {
     }
 }
 
-LocalFunction(OnValidation, void, Entity entity) {
-    if(HasComponent(entity, ComponentOf_Texture())) {
+LocalFunction(OnTextureValidation, void, Entity component) {
+    for_entity(entity, data, BgfxOffscreenRenderTarget) {
+        if(!IsDirty(entity)) continue;
+
         auto owner = GetOwner(entity);
         if(HasComponent(owner, ComponentOf_BgfxOffscreenRenderTarget())) {
             Invalidate(owner);
         }
     }
+}
 
-    if(HasComponent(entity, ComponentOf_BgfxOffscreenRenderTarget())) {
+LocalFunction(OnOffscreenRenderTargetValidation, void, Entity component) {
+    for_entity(entity, data, BgfxOffscreenRenderTarget) {
+        if(!IsDirty(entity)) continue;
+
         bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
 
         OnBgfxOffscreenRenderTargetRemoved(entity);
 
-        auto numStages = GetNumOffscreenRenderTargetTextures(entity);
-        auto stages = GetOffscreenRenderTargetTextures(entity);
+        u32 numStages = 0;
+        auto stages = GetOffscreenRenderTargetTextures(entity, &numStages);
         auto targets = (bgfx::TextureHandle*)alloca(numStages * sizeof(bgfx::TextureHandle));
 
         for(auto i = 0; i < numStages; ++i) {
@@ -53,7 +59,8 @@ BeginUnit(BgfxOffscreenRenderTarget)
         RegisterBase(BgfxResource)
     EndComponent()
 
-    RegisterSubscription(EntityComponentRemoved, OnBgfxOffscreenRenderTargetRemoved, ComponentOf_BgfxOffscreenRenderTarget())
-    RegisterSubscription(Validate, OnValidation, 0)
-    RegisterSubscription(OffscreenRenderTargetTexturesChanged, Invalidate, 0)
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxOffscreenRenderTargetRemoved, ComponentOf_BgfxOffscreenRenderTarget())
+    RegisterSubscription(EventOf_Validate(), OnTextureValidation, ComponentOf_Texture())
+    RegisterSubscription(EventOf_Validate(), OnOffscreenRenderTargetValidation, ComponentOf_OffscreenRenderTarget())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_OffscreenRenderTargetTextures()), Invalidate, 0)
 EndUnit()

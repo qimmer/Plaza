@@ -16,8 +16,6 @@
 #include <Foundation/FoundationModule.h>
 
 struct Networking {
-    Vector(HttpHeaderTypes, Entity, 64)
-    Vector(HttpResponseCodes, Entity, 64)
     bool TcpWaitOnNoWork;
     Entity ReplicationAppLoop;
 };

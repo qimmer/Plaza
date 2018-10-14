@@ -14,45 +14,13 @@
 #include <Scene/Scene.h>
 #include <Foundation/AppNode.h>
 
-struct RenderPass {
-    Entity RenderPassShaderCache;
-    Entity RenderPassRenderState;
-    float RenderPassClearDepth;
-    rgba8 RenderPassClearColor;
-    u8 RenderPassClearStencil, RenderPassClearTargets;
-    bool RenderPassForceOrder;
-    Vector(RenderPassSceneUniforms, Entity, 16);
-    Vector(RenderPassCameraUniforms, Entity, 16);
-    Vector(RenderPassMaterialUniforms, Entity, 32);
-    Vector(RenderPassRenderableUniforms, Entity, 16);
-};
-
-struct RenderPath {
-    Vector(RenderPathPasses, Entity, 8);
-};
-
-struct Batch {
-    Entity BatchRenderable, BatchBinaryProgram;
-    bool BatchDisabled;
-};
-
-struct CommandList {
-    Vector(CommandListBatches, Entity, 512)
-    Entity CommandListPass;
-};
-
-struct SceneRenderer {
-    Entity SceneRendererScene, SceneRendererTarget, SceneRendererCamera, SceneRendererPath;
-    Vector(SceneRendererCommandLists, Entity, 8)
-    v4f SceneRendererViewport;
-};
-
 static void SyncBatches(Entity commandList) {
     auto sceneRenderer = GetOwner(commandList);
     auto scene = GetSceneRendererScene(sceneRenderer);
 
-    auto numExisting = GetNumCommandListBatches(commandList);
-    auto numBatches = 0;
+    u32 numExisting = 0;
+    GetCommandListBatches(commandList, &numExisting);
+    u32 numBatches = 0;
     {
         for_entity(renderable, data, Renderable) {
             if(GetAppNodeRoot(renderable) != scene) continue;
@@ -63,7 +31,7 @@ static void SyncBatches(Entity commandList) {
 
     SetArrayPropertyCount(PropertyOf_CommandListBatches(), commandList, numBatches);
 
-    auto batches = GetCommandListBatches(commandList);
+    auto batches = GetCommandListBatches(commandList, &numBatches);
     {
         auto i = 0;
         for_entity(renderable, data, Renderable) {
@@ -83,12 +51,13 @@ static void SyncCommandLists(Entity sceneRenderer) {
 
     if(!renderPathData) return;
 
-    auto numRenderPasses = renderPathData->RenderPathPasses.Count;
+    u32 numRenderPasses = 0;
+    auto renderPasses = GetRenderPathPasses(renderPath, &numRenderPasses);
 
     SetArrayPropertyCount(PropertyOf_SceneRendererCommandLists(), sceneRenderer, numRenderPasses);
-    auto commandLists = GetSceneRendererCommandLists(sceneRenderer);
+    auto commandLists = GetSceneRendererCommandLists(sceneRenderer, &numRenderPasses);
     for(auto i = 0; i < numRenderPasses; ++i) {
-        SetCommandListPass(commandLists[i], GetVector(renderPathData->RenderPathPasses)[i]);
+        SetCommandListPass(commandLists[i], renderPasses[i]);
 
         SyncBatches(commandLists[i]);
     }
@@ -199,12 +168,12 @@ BeginUnit(SceneRenderer)
         RegisterArrayProperty(CommandList, SceneRendererCommandLists)
     EndComponent()
 
-    RegisterSubscription(SceneRendererPathChanged, OnSceneRendererPathChanged, 0)
-    RegisterSubscription(SceneRendererSceneChanged, OnSceneRendererSceneChanged, 0)
-    RegisterSubscription(AppNodeRootChanged, OnSceneNodeSceneChanged, 0)
-    RegisterSubscription(RenderPathPassesChanged, OnRenderPathPassesChanged, 0)
-    RegisterSubscription(BatchRenderableChanged, OnBatchRenderableChanged, 0)
-    RegisterSubscription(RenderableMaterialChanged, OnRenderableMaterialChanged, 0)
-    RegisterSubscription(MaterialProgramChanged, OnMaterialProgramChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnRenderableAdded, ComponentOf_Renderable())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneRendererPath()), OnSceneRendererPathChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneRendererScene()), OnSceneRendererSceneChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppNodeRoot()), OnSceneNodeSceneChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderPathPasses()), OnRenderPathPassesChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BatchRenderable()), OnBatchRenderableChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderableMaterial()), OnRenderableMaterialChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MaterialProgram()), OnMaterialProgramChanged, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnRenderableAdded, ComponentOf_Renderable())
 EndUnit()

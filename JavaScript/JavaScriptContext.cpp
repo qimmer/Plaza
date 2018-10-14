@@ -223,8 +223,8 @@ BeginUnit(JavaScriptContext)
     BeginComponent(JavaScriptContext)
     EndComponent()
 
-    RegisterSubscription(EntityComponentAdded, OnJavaScriptContextAdded, ComponentOf_JavaScriptContext())
-    RegisterSubscription(EntityComponentRemoved, OnJavaScriptContextRemoved, ComponentOf_JavaScriptContext())
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnJavaScriptContextAdded, ComponentOf_JavaScriptContext())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnJavaScriptContextRemoved, ComponentOf_JavaScriptContext())
 
     auto context = NodeOf_JavaScriptMainContext();
     SetName(context, "MainJavaScriptContext");

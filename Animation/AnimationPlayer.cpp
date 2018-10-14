@@ -6,6 +6,8 @@
 #include "Animation.h"
 #include "AnimationModule.h"
 #include <Foundation/StopWatch.h>
+#include <Foundation/AppNode.h>
+#include <Core/Instance.h>
 
 struct AnimationPlayerLayer {
     Entity AnimationPlayerLayerAnimation;
@@ -14,13 +16,14 @@ struct AnimationPlayerLayer {
 };
 
 struct AnimationPlayer {
-    Vector(AnimationPlayerLayers, Entity, 16)
 };
 
 LocalFunction(OnElapsedChanged, void, Entity stopWatch, double oldElapsed, double newElapsed) {
     auto deltaTime = newElapsed - oldElapsed;
 
     for_entity(animationPlayer, playerData, AnimationPlayer) {
+        if(!GetAppRootActive(GetAppNodeRoot(animationPlayer))) continue;
+
         for_children(layer, AnimationPlayerLayers, animationPlayer) {
             auto layerData = GetAnimationPlayerLayerData(layer);
             if(layerData->AnimationPlayerLayerSpeed != 0.0f) {
@@ -51,8 +54,9 @@ BeginUnit(AnimationPlayer)
     EndComponent()
 
     BeginComponent(AnimationPlayer)
+        RegisterBase(AppNode)
         RegisterArrayProperty(AnimationPlayerLayer, AnimationPlayerLayers)
     EndComponent()
 
-    RegisterSubscription(StopWatchElapsedSecondsChanged, OnElapsedChanged, GetAnimationStopWatch(module))
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StopWatchElapsedSeconds()), OnElapsedChanged, GetAnimationStopWatch(module))
 EndUnit()

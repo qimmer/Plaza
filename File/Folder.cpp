@@ -23,14 +23,10 @@
 
 struct Folder {
     char FolderPath[PathMax];
-    Vector(FolderSubfolders, Entity, 32);
-    Vector(FolderFiles, Entity, 128);
 };
 
 API_EXPORT void ScanFolder(Entity entity) {
-    while(GetNumFolderFiles(entity)) {
-        RemoveFolderFiles(entity, 0);
-    }
+    SetNumFolderFiles(entity, 0);
 
     DIR *dir;
     struct dirent *ent;
@@ -138,7 +134,7 @@ BeginUnit(Folder)
         RegisterProperty(StringRef, FolderPath)
     EndComponent()
 
-    RegisterSubscription(EntityComponentAdded, OnFolderAdded, ComponentOf_Folder())
-    RegisterSubscription(EntityComponentRemoved, OnFolderRemoved, ComponentOf_Folder())
-    RegisterSubscription(FolderPathChanged, OnFolderPathChanged, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnFolderAdded, ComponentOf_Folder())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnFolderRemoved, ComponentOf_Folder())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FolderPath()), OnFolderPathChanged, 0)
 EndComponent()

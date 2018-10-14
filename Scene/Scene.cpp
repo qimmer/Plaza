@@ -41,6 +41,6 @@ BeginUnit(Scene)
         RegisterBase(SceneNode)
     EndComponent()
 
-    RegisterSubscription(OwnerChanged, OnOwnerChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnSceneNodeAdded, ComponentOf_SceneNode())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnSceneNodeAdded, ComponentOf_SceneNode())
 EndUnit()

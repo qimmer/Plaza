@@ -31,7 +31,7 @@ static void UpdateLocalTransform(Entity entity) {
     SetTransformLocalMatrix(entity, *(m4x4f *) srMat);
 }
 
-LocalFunction(OnPosition3DChanged, void, Entity entity, v3f before, v3f after) {
+LocalFunction(OnPositionScale3DChanged, void, Entity entity, v3f before, v3f after) {
     UpdateLocalTransform(entity);
 }
 
@@ -91,9 +91,9 @@ BeginUnit(Transform3D)
         RegisterPropertyReadOnly(v4f, RotationQuat3D)
     EndComponent()
 
-    RegisterSubscription(Scale3DChanged, OnPosition3DChanged, 0)
-    RegisterSubscription(Position3DChanged, OnPosition3DChanged, 0)
-    RegisterSubscription(RotationQuat3DChanged, OnRotationQuat3DChanged, 0)
-    RegisterSubscription(RotationEuler3DChanged, OnRotationEuler3DChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnAdded, ComponentOf_Transform3D())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Scale3D()), OnPositionScale3DChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Position3D()), OnPositionScale3DChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RotationQuat3D()), OnRotationQuat3DChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RotationEuler3D()), OnRotationEuler3DChanged, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnAdded, ComponentOf_Transform3D())
 EndUnit()

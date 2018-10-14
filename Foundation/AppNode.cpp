@@ -10,7 +10,6 @@ struct AppRoot {
 
 struct AppNode {
     Entity AppNodeRoot;
-    Vector(AppNodeChildren, Entity, 32);
 };
 
 static Entity FindAppRoot(Entity entity) {
@@ -45,6 +44,6 @@ BeginUnit(AppNode)
         RegisterProperty(bool, AppRootActive)
     EndComponent()
 
-    RegisterSubscription(OwnerChanged, OnOwnerChanged, 0)
-    RegisterSubscription(EntityComponentAdded, OnAppNodeAdded, ComponentOf_AppNode())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnAppNodeAdded, ComponentOf_AppNode())
 EndUnit()

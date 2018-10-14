@@ -88,8 +88,8 @@ LocalFunction(OnAppUpdate, void, double deltaTime) {
 
 DefineService(VoxelPalette)
     ServiceDependency(VoxelMesh)
-    RegisterSubscription(VoxelColorChanged, OnVoxelColorChanged, 0)
-    RegisterSubscription(ParentChanged, OnParentChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VoxelColor()), OnVoxelColorChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Parent()), OnParentChanged, 0)
     RegisterSubscription(VoxelPaletteAdded, OnAdded, 0)
     RegisterSubscription(AppUpdate, OnAppUpdate, 0)
 EndService()

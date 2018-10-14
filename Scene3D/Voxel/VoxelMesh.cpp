@@ -368,11 +368,11 @@ LocalFunction(OnVoxelMeshAdded, void, Entity component, Entity voxelMesh) {
 
 DefineService(VoxelMesh)
     RegisterSubscription(VoxelMeshAdded, OnVoxelMeshAdded, 0)
-    RegisterSubscription(VoxelPaletteChanged, OnVoxelPaletteChanged, 0)
-    RegisterSubscription(VoxelChunkChanged, OnVoxelChunkChanged, 0)
-    RegisterSubscription(VoxelMeshChanged, RegenerateVoxelMesh, 0)
-    RegisterSubscription(StreamContentChanged, OnVoxelChunkChanged, 0)
-    RegisterSubscription(StreamChanged, OnVoxelChunkChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VoxelPalette()), OnVoxelPaletteChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VoxelChunk()), OnVoxelChunkChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VoxelMesh()) RegenerateVoxelMesh, 0)
+    RegisterSubscription(EventOf_StreamContentChanged(), OnVoxelChunkChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Stream()), OnVoxelChunkChanged, 0)
     ServiceEntity(VoxelDataRoot, InitializeVoxelRoot)
 EndService()
 

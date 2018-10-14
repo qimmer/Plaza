@@ -8,6 +8,10 @@
 
 #include <Core/Entity.h>
 
+struct Material {
+    Entity MaterialProgram;
+};
+
 Enum(RenderState)
 
 Unit(Material)

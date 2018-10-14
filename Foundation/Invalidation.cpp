@@ -8,48 +8,39 @@ struct Invalidation {
     bool DirtyFlag, Validating;
 };
 
+static eastl::vector<bool> entityDirtyFlags;
+
+API_EXPORT bool IsDirty(Entity entity) {
+    auto entityIndex = GetEntityIndex(entity);
+
+    return entityDirtyFlags.size() > entityIndex && entityDirtyFlags[entityIndex];
+}
+
 API_EXPORT void Invalidate(Entity entity) {
-    auto data = GetInvalidationData(entity);
-    if(data && data->Validating) return;
-
-    SetDirtyFlag(entity, true);
-}
-
-API_EXPORT void Validate(Entity entity) {
-    auto data = GetInvalidationData(entity);
-    if(data->DirtyFlag) {
-        SetDirtyFlag(entity, false);
-
-        data->Validating = true;
-        Type types[] = { TypeOf_Entity };
-        const void * argumentPtrs[] = { &entity };
-
-        FireEventFast(EventOf_Validate(), 1, types, argumentPtrs);
-
-        data->Validating = false;
+    auto entityIndex = GetEntityIndex(entity);
+    if(entityDirtyFlags.size() <= entityIndex) {
+        entityDirtyFlags.resize(entityIndex + 1, false);
     }
+
+    entityDirtyFlags[entityIndex] = true;
 }
 
-LocalFunction(OnInvalidationAdded, void, Entity component, Entity entity) {
-    GetInvalidationData(entity)->DirtyFlag = true;
+API_EXPORT void InvalidateParent(Entity child) {
+    Invalidate(GetOwner(child));
 }
 
-LocalFunction(OnPropertyChanged, void, Entity property, Entity entity) {
-    if(property == PropertyOf_DirtyFlag()) return;
+API_EXPORT void Validate(Entity component) {
+    Type types[] = { TypeOf_Entity };
+    const void * argumentPtrs[] = { &component };
 
-    auto data = GetInvalidationData(entity);
-    if(data && !data->DirtyFlag) {
-        Invalidate(entity);
+    FireEventFast(EventOf_Validate(), 1, types, argumentPtrs);
+
+    Entity entity = 0;
+    for(u32 i = GetNextComponent(component, InvalidIndex, NULL, &entity); i != InvalidIndex; i = GetNextComponent(component, i, NULL, &entity)) {
+        entityDirtyFlags[GetEntityIndex(entity)] = false;
     }
 }
 
 BeginUnit(Invalidation)
-    BeginComponent(Invalidation)
-        RegisterProperty(bool, DirtyFlag)
-    EndComponent()
-
     RegisterEvent(Validate)
-
-    RegisterSubscription(EntityComponentAdded, OnInvalidationAdded, ComponentOf_Invalidation())
-    RegisterSubscription(PropertyChanged, OnPropertyChanged, 0)
 EndUnit()

@@ -7,7 +7,6 @@
 
 struct RenderTarget {
     v2i RenderTargetSize;
-    Vector(RenderTargetRenderers, Entity, 16)
 };
 
 BeginUnit(RenderTarget)

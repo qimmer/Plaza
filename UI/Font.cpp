@@ -262,9 +262,9 @@ LocalFunction(OnFontStopped, void, Service service) {
 }
 
 DefineService(Font)
-    RegisterSubscription(FontChanged, InvalidateFont, 0)
-    RegisterSubscription(StreamChanged, ChangeFont, 0)
-    RegisterSubscription(StreamContentChanged, ChangeFont, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Font()), InvalidateFont, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Stream()), ChangeFont, 0)
+    RegisterSubscription(EventOf_StreamContentChanged(), ChangeFont, 0)
     RegisterSubscription(FontAdded, OnFontAdded, 0)
     RegisterSubscription(FontStarted, OnFontStarted, 0)
     RegisterSubscription(FontStopped, OnFontStopped, 0)

@@ -7,27 +7,13 @@
 #include "MeshBuilder.h"
 #include "Mesh.h"
 
-struct MeshBuilderVertex {
-    v3f MeshBuilderVertexPosition, MeshBuilderVertexNormal;
-    v2f MeshBuilderVertexTexCoord0;
-    rgba8 MeshBuilderVertexColor0;
-};
-
-struct MeshBuilderIndex {
-    u32 MeshBuilderIndexVertexIndex;
-};
-
-struct MeshBuilder {
-    Vector(MeshBuilderVertices, Entity, 128);
-    Vector(MeshBuilderIndices, Entity, 128);
-};
-
 static void BuildVertexBuffer(Entity mesh) {
+    u32 numAttribs = 0;
+    u32 numVertices = 0;
     auto vb = GetMeshVertexBuffer(mesh);
     auto decl = GetVertexBufferDeclaration(vb);
-    auto attribs = GetVertexDeclarationAttributes(decl);
-    auto numAttribs = GetNumVertexDeclarationAttributes(decl);
-    auto numVertices = GetNumMeshBuilderVertices(mesh);
+    auto attribs = GetVertexDeclarationAttributes(decl, &numAttribs);
+    auto vertices = GetMeshBuilderVertices(mesh, &numVertices);
 
     auto vertexStride = 0;
     for(auto i = 0; i < numAttribs; ++i) {
@@ -36,7 +22,6 @@ static void BuildVertexBuffer(Entity mesh) {
 
     auto vertexBufferSize = vertexStride * numVertices;
     auto vertexData = (char*)malloc(vertexBufferSize);
-    auto vertices = GetMeshBuilderVertices(mesh);
 
     auto attribOffset = 0;
     for(auto i = 0; i < numAttribs; ++i) {
@@ -94,13 +79,13 @@ static void BuildVertexBuffer(Entity mesh) {
 static void BuildIndexBuffer(Entity mesh) {
     auto ib = GetMeshIndexBuffer(mesh);
 
-    auto numIndices = GetNumMeshBuilderIndices(mesh);
+    u32 numIndices = 0;
+    auto indices = GetMeshBuilderIndices(mesh, &numIndices);
     auto isIndexLong = GetIndexBufferLong(ib);
 
     auto indexBufferSize = (isIndexLong ? 4 : 2) * numIndices;
     auto indexData = (char*)malloc(indexBufferSize);
 
-    auto indices = GetMeshBuilderIndices(mesh);
     auto offset = 0;
     if(isIndexLong) {
         for(auto i = 0; i < numIndices; ++i) {
@@ -139,8 +124,10 @@ LocalFunction(OnMeshBuilderChildChanged, void, Entity vertex) {
     Invalidate(mesh);
 }
 
-LocalFunction(OnValidation, void, Entity entity) {
-    if(HasComponent(entity, ComponentOf_MeshBuilder())) {
+LocalFunction(OnMeshValidation, void, Entity component) {
+    for_entity(entity, data, MeshBuilder) {
+        if(!IsDirty(entity)) continue;
+
         BuildMesh(entity);
     }
 
@@ -154,6 +141,22 @@ LocalFunction(OnValidation, void, Entity entity) {
             }
         }
     }
+}
+
+LocalFunction(OnVertexDeclarationValidation, void, Entity component) {
+    for_entity(entity, vdData, VertexDeclaration) {
+        if(!IsDirty(entity)) continue;
+
+        for_entity(mb, data, MeshBuilder) {
+            auto vb = GetMeshVertexBuffer(mb);
+            auto vd = GetVertexBufferDeclaration(vb);
+
+            if(vd == entity) {
+                BuildMesh(GetOwner(vb));
+            }
+        }
+    }
+
 }
 
 BeginUnit(MeshBuilder)
@@ -174,14 +177,14 @@ BeginUnit(MeshBuilder)
         RegisterArrayProperty(MeshBuilderIndex, MeshBuilderIndices)
     EndComponent()
 
-    RegisterSubscription(MeshBuilderVertexPositionChanged, OnMeshBuilderChildChanged, 0)
-    RegisterSubscription(MeshBuilderVertexNormalChanged, OnMeshBuilderChildChanged, 0)
-    RegisterSubscription(MeshBuilderVertexTexCoord0Changed, OnMeshBuilderChildChanged, 0)
-    RegisterSubscription(MeshBuilderVertexColor0Changed, OnMeshBuilderChildChanged, 0)
-    RegisterSubscription(MeshBuilderVertexColor0Changed, OnMeshBuilderChildChanged, 0)
-    RegisterSubscription(MeshBuilderIndexVertexIndexChanged, OnMeshBuilderChildChanged, 0)
-    RegisterSubscription(IndexBufferLongChanged, OnMeshBuilderChildChanged, 0)
-    RegisterSubscription(MeshBuilderVerticesChanged, Invalidate, 0)
-    RegisterSubscription(MeshBuilderIndicesChanged, Invalidate, 0)
-    RegisterSubscription(Validate, OnValidation, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexPosition()), OnMeshBuilderChildChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexNormal()), OnMeshBuilderChildChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexTexCoord0()), OnMeshBuilderChildChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexColor0()), OnMeshBuilderChildChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderIndexVertexIndex()), OnMeshBuilderChildChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_IndexBufferLong()), OnMeshBuilderChildChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertices()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderIndices()), Invalidate, 0)
+    RegisterSubscription(EventOf_Validate(), OnMeshValidation, ComponentOf_Mesh())
+    RegisterSubscription(EventOf_Validate(), OnVertexDeclarationValidation, ComponentOf_VertexDeclaration())
 EndUnit()

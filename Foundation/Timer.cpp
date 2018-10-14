@@ -50,6 +50,6 @@ BeginUnit(Timer)
     EndComponent()
     RegisterEvent(TimerTick)
 
-    RegisterSubscription(StopWatchElapsedSecondsChanged, OnStopWatchElapsedSecondsChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StopWatchElapsedSeconds()), OnStopWatchElapsedSecondsChanged, 0)
 EndUnit()
 

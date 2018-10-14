@@ -7,6 +7,10 @@
 
 #include <Core/NativeUtils.h>
 
+struct Renderable {
+    Entity RenderableMaterial, RenderableSubMesh;
+};
+
 Unit(Renderable)
 
 Component(Renderable)

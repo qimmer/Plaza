@@ -103,6 +103,9 @@ static void SetUniformState(Entity uniform, Entity entity) {
 }
 
 void RenderBatch(u32 viewId, Entity batch, Entity renderState, Entity pass) {
+    auto batchData = GetBatchData(batch);
+    auto renderStateData = GetRenderStateData(renderState);
+
     auto renderable = GetBatchRenderable(batch);
     auto binaryProgram = GetBatchBinaryProgram(batch);
 
@@ -111,44 +114,47 @@ void RenderBatch(u32 viewId, Entity batch, Entity renderState, Entity pass) {
     auto worldMatrix = GetTransformGlobalMatrix(renderable);
 
     auto subMesh = GetRenderableSubMesh(renderable);
+    auto subMeshData = GetSubMeshData(subMesh);
+
     auto material = GetRenderableMaterial(renderable);
 
     if(!IsEntityValid(binaryProgram) || !IsEntityValid(subMesh) || !IsEntityValid(material)) return;
 
     auto mesh = GetOwner(subMesh);
-    auto vertexBuffer = GetMeshVertexBuffer(mesh); Validate(vertexBuffer);
-    auto indexBuffer = GetMeshIndexBuffer(mesh); Validate(indexBuffer);
-    auto vertexDeclaration = GetVertexBufferDeclaration(vertexBuffer); Validate(vertexDeclaration);
-    Validate(mesh);
+    auto meshData = GetMeshData(mesh);
 
-    auto programHandle = GetBgfxResourceHandle(binaryProgram); Validate(binaryProgram);
+    auto vertexBuffer = meshData->MeshVertexBuffer; auto vertexBufferData = GetVertexBufferData(vertexBuffer);
+    auto indexBuffer = meshData->MeshIndexBuffer; auto indexBufferData = GetIndexBufferData(indexBuffer);
+    auto vertexDeclaration = vertexBufferData->VertexBufferDeclaration;
 
-    if(GetBgfxResourceHandle(vertexBuffer) == bgfx::kInvalidHandle) return;
-    if(programHandle == bgfx::kInvalidHandle) return;
-    if(IsEntityValid(indexBuffer) && GetBgfxResourceHandle(indexBuffer) == bgfx::kInvalidHandle) return;
+    auto programHandle = GetBgfxResourceHandle(binaryProgram);
+    auto vertexBufferHandle = GetBgfxResourceHandle(vertexBuffer);
+    auto indexBufferHandle = GetBgfxResourceHandle(indexBuffer);
+
+    if(vertexBufferHandle == bgfx::kInvalidHandle || (indexBuffer && indexBufferHandle == bgfx::kInvalidHandle) || programHandle == bgfx::kInvalidHandle) return;
 
     bgfx::setState(
-            GetRenderStateWriteMask(renderState) |
-       GetRenderStateBlendMode(renderState) |
-       GetRenderStateDepthTest(renderState) |
-       GetRenderStateMultisampleMode(renderState) |
-       GetSubMeshCullMode(subMesh) |
-       GetSubMeshPrimitiveType(subMesh)
+            renderStateData->RenderStateWriteMask |
+                    renderStateData->RenderStateBlendMode |
+                    renderStateData->RenderStateDepthTest |
+                    renderStateData->RenderStateMultisampleMode |
+       subMeshData->SubMeshCullMode |
+       subMeshData->SubMeshPrimitiveType
     );
 
     bgfx::setTransform(&worldMatrix);
 
-    if(GetVertexBufferDynamic(vertexBuffer)) {
-        bgfx::setVertexBuffer(0, bgfx::DynamicVertexBufferHandle {GetBgfxResourceHandle(vertexBuffer)}, GetSubMeshStartVertex(subMesh), GetSubMeshNumVertices(subMesh));
+    if(vertexBufferData->VertexBufferDynamic) {
+        bgfx::setVertexBuffer(0, bgfx::DynamicVertexBufferHandle {vertexBufferHandle}, subMeshData->SubMeshStartVertex, subMeshData->SubMeshNumVertices);
     } else {
-        bgfx::setVertexBuffer(0, bgfx::VertexBufferHandle {GetBgfxResourceHandle(vertexBuffer)}, GetSubMeshStartVertex(subMesh), GetSubMeshNumVertices(subMesh));
+        bgfx::setVertexBuffer(0, bgfx::VertexBufferHandle {vertexBufferHandle}, subMeshData->SubMeshStartVertex, subMeshData->SubMeshNumVertices);
     }
 
-    if(IsEntityValid(indexBuffer)) {
-        if(GetIndexBufferDynamic(indexBuffer)) {
-            bgfx::setIndexBuffer(bgfx::DynamicIndexBufferHandle {GetBgfxResourceHandle(indexBuffer)}, GetSubMeshStartIndex(subMesh), GetSubMeshNumIndices(subMesh));
+    if(indexBufferHandle != bgfx::kInvalidHandle) {
+        if(indexBufferData->IndexBufferDynamic) {
+            bgfx::setIndexBuffer(bgfx::DynamicIndexBufferHandle {indexBufferHandle}, subMeshData->SubMeshStartIndex, subMeshData->SubMeshNumIndices);
         } else {
-            bgfx::setIndexBuffer(bgfx::IndexBufferHandle {GetBgfxResourceHandle(indexBuffer)}, GetSubMeshStartIndex(subMesh), GetSubMeshNumIndices(subMesh));
+            bgfx::setIndexBuffer(bgfx::IndexBufferHandle {indexBufferHandle}, subMeshData->SubMeshStartIndex, subMeshData->SubMeshNumIndices);
         }
     }
 
