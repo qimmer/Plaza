@@ -24,7 +24,7 @@ class Pool
 {
 private:
     u32 elementSize, blockSize, endIndex;
-    Vector<char*> entryPages;
+    Vector(entryPages, char*, 0);
     Vector<u32> freeIndices;
 public:
     Pool() {
@@ -51,7 +51,7 @@ inline char* Pool::operator[](u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
-    auto block = &this->entryPages[page][index * blockSize];
+    auto block = &GetVector(this->entryPages)[page][index * blockSize];
 
 #if MemoryGuard
     auto firstGuard = (u64*)block;
@@ -78,7 +78,7 @@ inline void Pool::SetElementSize(u32 size) {
     blockSize = UpperPowerOf2(Max(size + 1, 32));
 #endif
     // Make sure to expand every single existing element with the new size by allocating new pages
-    for(auto i = 0; i < entryPages.size(); ++i) {
+    for(auto i = 0; i < entryPages.Count; ++i) {
         auto newPage = (char*)_mm_malloc(PoolPageElements * blockSize, PoolAlignment);
         memset(newPage, 0, PoolPageElements * blockSize);
 
@@ -91,7 +91,7 @@ inline void Pool::SetElementSize(u32 size) {
         }
 #endif
 
-        auto oldPage = entryPages[i];
+        auto oldPage = GetVector(entryPages)[i];
 
         if(oldBlockSize > 0) {
             for (auto j = 0; j < PoolPageElements; ++j) {
@@ -108,7 +108,7 @@ inline void Pool::SetElementSize(u32 size) {
             _mm_free(oldPage);
         }
 
-        entryPages[i] = newPage;
+        GetVector(entryPages)[i] = newPage;
     }
 }
 
@@ -117,9 +117,9 @@ inline bool Pool::IsValid(u32 index) const
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
 
-    if(this->entryPages.size() <= page) return false;
+    if(this->entryPages.Count <= page) return false;
 
-    auto block = &this->entryPages[page][index * blockSize];
+    auto block = &GetVector(this->entryPages)[page][index * blockSize];
     auto blockState = block[blockSize - 1];
 
 #if MemoryGuard
@@ -147,12 +147,12 @@ inline bool Pool::Insert(u32 index)
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
 
-    if(page >= this->entryPages.size())
+    if(page >= this->entryPages.Count)
     {
-        for(auto i = this->entryPages.size(); i <= page; ++i) {
+        for(auto i = this->entryPages.Count; i <= page; ++i) {
             auto newPage = (char*)_mm_malloc(PoolPageElements * blockSize, PoolAlignment);
             memset(newPage, 0, PoolPageElements * blockSize);
-            this->entryPages.push_back(newPage);
+            VectorAdd(this->entryPages, newPage);
 
 #if MemoryGuard
             // Set magic numbers before and after element data
@@ -165,7 +165,7 @@ inline bool Pool::Insert(u32 index)
         }
     }
 
-    auto block = &this->entryPages[page][index * blockSize];
+    auto block = &GetVector(this->entryPages)[page][index * blockSize];
 
     // Assert that this block is at least 16 byte aligned
     Assert(0, ((unsigned long)(u64)block & 15) == 0);
@@ -207,9 +207,9 @@ inline bool Pool::Remove(u32 index)
     auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
 
-    if(this->entryPages.size() <= page) return false;
+    if(this->entryPages.Count <= page) return false;
 
-    auto block = &this->entryPages[page][index * blockSize];
+    auto block = &GetVector(this->entryPages)[page][index * blockSize];
 
     if(block[blockSize - 1] == AvailableBlock) return false;
 

@@ -102,14 +102,12 @@ static void SetUniformState(Entity uniform, Entity entity) {
     }*/
 }
 
-void RenderBatch(u32 viewId, Entity batch, Entity renderState, Entity pass) {
+inline void RenderBatch(u32 viewId, Entity batch, Entity renderState, Entity pass) {
     auto batchData = GetBatchData(batch);
     auto renderStateData = GetRenderStateData(renderState);
 
-    auto renderable = GetBatchRenderable(batch);
-    auto binaryProgram = GetBatchBinaryProgram(batch);
-
-    if(!HasComponent(renderable, ComponentOf_Renderable()) || !HasComponent(binaryProgram, ComponentOf_BinaryProgram())) return;
+    auto renderable = batchData->BatchRenderable;
+    auto binaryProgram = batchData->BatchBinaryProgram;
 
     auto worldMatrix = GetTransformGlobalMatrix(renderable);
 
@@ -117,8 +115,6 @@ void RenderBatch(u32 viewId, Entity batch, Entity renderState, Entity pass) {
     auto subMeshData = GetSubMeshData(subMesh);
 
     auto material = GetRenderableMaterial(renderable);
-
-    if(!IsEntityValid(binaryProgram) || !IsEntityValid(subMesh) || !IsEntityValid(material)) return;
 
     auto mesh = GetOwner(subMesh);
     auto meshData = GetMeshData(mesh);

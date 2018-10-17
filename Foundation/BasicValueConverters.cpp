@@ -15,7 +15,7 @@ API_EXPORT Variant Not(Variant value) {
 API_EXPORT Variant Equals(Variant value, Variant other) {
     other = Cast(other, value.type);
     auto result = memcmp(&value.data, &other.data, GetTypeSize(value.type)) == 0;
-    return Variant(bool, result);
+    return MakeVariant(bool, result);
 }
 
 #define MATH_OP(NAME, OP) \
@@ -78,7 +78,7 @@ API_EXPORT Variant Ratio(Variant value) {
             break;
     }
 
-    Variant result = Variant(float, ratio);
+    Variant result = MakeVariant(float, ratio);
 
     return result;
 }

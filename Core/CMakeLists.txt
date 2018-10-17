@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 14)
 
 include(ExternalProject)
 
-add_subdirectory(libffi)
-
 ExternalProject_Add(ex_intern
         GIT_REPOSITORY "https://github.com/chriso/intern"
         UPDATE_COMMAND ""
@@ -45,7 +43,7 @@ ELSE()
 SET_PROPERTY(TARGET eastl PROPERTY IMPORTED_LOCATION "${ex_eastl_lib_dir}/libEASTL.a")
 ENDIF()
 
-add_library(Core Entity.cpp Entity.h Types.h Pool.h Function.h Event.h Debug.cpp Debug.h Property.h Property.cpp Vector.cpp Vector.h StackContainer.h Variant.h Module.cpp Module.h CoreModule.cpp CoreModule.h Function.cpp Base64.cpp Base64.h Enum.cpp Enum.h AlignedAllocator.h ShortAlloc.h Hashing.h Hashing.cpp Event.cpp Variant.cpp Component.cpp Component.h NativeUtils.h NativeUtils.cpp Types.cpp Algorithms.h Identification.cpp Identification.h Std.cpp Std.h Date.cpp Date.h Strings.cpp Strings.h Instance.cpp Instance.h Binding.cpp Binding.h)
+add_library(Core Entity.cpp Entity.h Types.h Pool.h Function.h Event.h Debug.cpp Debug.h Property.h Property.cpp Vector.cpp Vector.h StackContainer.h Variant.h Module.cpp Module.h CoreModule.cpp CoreModule.h Function.cpp Base64.cpp Base64.h Enum.cpp Enum.h AlignedAllocator.h ShortAlloc.h Hashing.h Hashing.cpp Event.cpp Variant.cpp Component.cpp Component.h NativeUtils.h NativeUtils.cpp Types.cpp Algorithms.h Identification.cpp Identification.h Std.cpp Std.h Date.cpp Date.h Strings.cpp Strings.h Instance.cpp Instance.h Binding.cpp Binding.h NativeFunction.h NativeFunction.cpp FunctionCommonSignatures.h FunctionCommonSignatures.cpp)
 
 add_dependencies(Core ex_intern ex_eastl)
 
@@ -53,7 +51,7 @@ if(MSVC)
     target_sources(Core PRIVATE Core.def)
 endif()
 
-target_link_libraries(Core PUBLIC intern eastl ffi)
+target_link_libraries(Core PUBLIC intern eastl)
 
 if(UNIX)
     target_link_libraries(Core PUBLIC dl)
@@ -65,7 +63,7 @@ if(WIN32)
     target_include_directories(Core PRIVATE libffi/src/x86)
 endif()
 
-target_include_directories(Core PUBLIC ".." "${PROJECT_BINARY_DIR}/libffi" "cglm/include" "${ex_intern_inc_dir}" "${ex_eastl_inc_dir}" "${ex_eastl_inc_dir}/../test/packages/EABase/include/Common" "${ex_libffi_lib_dir}" "${ex_libffi_inc_dir}" "${ex_libffi_inc_dir}/../src/x86")
+target_include_directories(Core PUBLIC ".." "cglm/include" "${ex_intern_inc_dir}" "${ex_eastl_inc_dir}" "${ex_eastl_inc_dir}/../test/packages/EABase/include/Common" "${ex_libffi_lib_dir}" "${ex_libffi_inc_dir}" "${ex_libffi_inc_dir}/../src/x86")
 target_compile_options(Core PUBLIC "-fno-rtti" "-fno-exceptions" "-std=c++14")
 set_property(TARGET Core PROPERTY POSITION_INDEPENDENT_CODE ON)
 

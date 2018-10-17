@@ -12,7 +12,7 @@ struct Timer {
     double LastStopWatchTime;
 };
 
-LocalFunction(OnStopWatchElapsedSecondsChanged, void, Entity stopWatch, double oldTime, u64 newTime) {
+LocalFunction(OnStopWatchElapsedSecondsChanged, void, Entity stopWatch, double oldTime, double newTime) {
     auto timer = GetTimerData(stopWatch);
 
     if(timer) {

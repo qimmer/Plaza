@@ -81,9 +81,12 @@ void FireEventFast(
 );
 void SetEventSize(Entity event, u32 size);
 
-void SetNativeFunctionPointer(Entity function, void *func);
-void SetFunctionReturnType(Entity entity, Entity returnType);
+void SetNativeFunctionPointer(Entity function, NativePtr func);
+void SetFunctionCaller(Entity entity, NativePtr callerFunc);
+void SetFunctionReturnType(Entity entity, Type returnType);
 void SetFunctionArgsByDecl(Entity entity, StringRef decl);
+void RegisterFunctionSignatureImpl(NativePtr invokerFuncPtr, StringRef signature);
+void SetNativeFunctionInvokerBySignature(Entity function, StringRef signature);
 
 bool CallNativeFunction(
         Entity f,
@@ -266,6 +269,86 @@ StringRef GetUniqueEntityName(Entity entity);
         return element;\
     }
 
+
+#define RegisterFunctionSignature(Function, ...) \
+    RegisterFunctionSignatureImpl((NativePtr)Function, #__VA_ARGS__);
+
+#define __NFI_Typedef(ReturnType, ...)\
+    typedef ReturnType(*FunctionType)(__VA_ARGS__);\
+    auto funcPtr = (FunctionType)genericFuncPtr;\
+
+#define __NFI_InvokeVoid(...)\
+    funcPtr(__VA_ARGS__);\
+    return true;
+
+#define __NFI_Invoke(ReturnType, ...)\
+    *(ReturnType*)returnData = funcPtr(__VA_ARGS__);\
+    return true;
+
+#define __NFI_Arg(TYPE, INDEX) \
+    *(TYPE*)(argumentDataPtrs[INDEX])
+
+#define NativeFunctionInvokerVoid0() \
+    inline bool NativeFunctionInvoker_void (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(void)\
+        __NFI_InvokeVoid()\
+    }
+
+#define NativeFunctionInvoker0(ReturnType) \
+    inline bool NativeFunctionInvoker_ ## ReturnType (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(ReturnType)\
+        __NFI_Invoke(ReturnType)\
+    }
+
+#define NativeFunctionInvokerVoid1(ArgType0) \
+    inline bool NativeFunctionInvoker_void_ ## ArgType0 (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(void, ArgType0)\
+        __NFI_InvokeVoid(__NFI_Arg(ArgType0, 0))\
+    }
+
+#define NativeFunctionInvoker1(ReturnType, ArgType0) \
+    inline bool NativeFunctionInvoker_ ## ReturnType ## _ ## ArgType0 (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(ReturnType, ArgType0)\
+        __NFI_Invoke(ReturnType, __NFI_Arg(ArgType0, 0))\
+        return true;\
+    }
+
+#define NativeFunctionInvokerVoid2(ArgType0, ArgType1) \
+    inline bool NativeFunctionInvoker_void_ ## ArgType0 ## _ ## ArgType1 (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(void, ArgType0, ArgType1)\
+        __NFI_InvokeVoid(__NFI_Arg(ArgType0, 0), __NFI_Arg(ArgType1, 1))\
+    }
+
+#define NativeFunctionInvoker2(ReturnType, ArgType0, ArgType1) \
+    inline bool NativeFunctionInvoker_ ## ReturnType ## _ ## ArgType0 ## _ ## ArgType1 (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(ReturnType, ArgType0, ArgType1)\
+        __NFI_Invoke(ReturnType, __NFI_Arg(ArgType0, 0), __NFI_Arg(ArgType1, 1))\
+    }
+
+#define NativeFunctionInvokerVoid3(ArgType0, ArgType1, ArgType2) \
+    inline bool NativeFunctionInvoker_void_ ## ArgType0 ## _ ## ArgType1 ## _ ## ArgType2 (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(void, ArgType0, ArgType1, ArgType2)\
+        __NFI_InvokeVoid(__NFI_Arg(ArgType0, 0), __NFI_Arg(ArgType1, 1), __NFI_Arg(ArgType2, 2))\
+    }
+
+#define NativeFunctionInvoker3(ReturnType, ArgType0, ArgType1, ArgType2) \
+    inline bool NativeFunctionInvoker_ ## ReturnType ## _ ## ArgType0 ## _ ## ArgType1 ## _ ## ArgType2 (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(ReturnType, ArgType0, ArgType1, ArgType2)\
+        __NFI_Invoke(ReturnType, __NFI_Arg(ArgType0, 0), __NFI_Arg(ArgType1, 1), __NFI_Arg(ArgType2, 2))\
+    }
+
+#define NativeFunctionInvokerVoid4(ArgType0, ArgType1, ArgType2, ArgType3) \
+    inline bool NativeFunctionInvoker_void_ ## ArgType0 ## _ ## ArgType1 ## _ArgType2 ## _ ## ArgType3 (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(void, ArgType0, ArgType1, ArgType2, ArgType3)\
+        __NFI_InvokeVoid(__NFI_Arg(ArgType0, 0), __NFI_Arg(ArgType1, 1), __NFI_Arg(ArgType2, 2), __NFI_Arg(ArgType3, 3))\
+    }
+
+#define NativeFunctionInvoker4(ReturnType, ArgType0, ArgType1, ArgType2, ArgType3) \
+    inline bool NativeFunctionInvoker_ ## ReturnType ## _ ## ArgType0 ## _ ## ArgType1 ## _ ## ArgType2 ## _ ## ArgType3 (void *genericFuncPtr, void *returnData, const void **argumentDataPtrs) {\
+        __NFI_Typedef(ReturnType, ArgType0, ArgType1, ArgType2, ArgType3)\
+        __NFI_Invoke(ReturnType, __NFI_Arg(ArgType0, 0), __NFI_Arg(ArgType1, 1), __NFI_Arg(ArgType2, 2), __NFI_Arg(ArgType3, 3))\
+    }
+
 #define __Function(FILE, NAME, R, ...) \
         static Entity entity = 0;\
         static bool firstTime = false;\
@@ -282,7 +365,9 @@ StringRef GetUniqueEntityName(Entity entity);
                 SetName(entity, unregisteredName);\
                 SetFunctionReturnType(entity, TypeOf_ ## R);\
                 SetFunctionArgsByDecl(entity, #__VA_ARGS__);\
-                SetNativeFunctionPointer(entity, (void*)& NAME );\
+                SetFunctionCaller(entity, (NativePtr)&CallNativeFunction);\
+                SetNativeFunctionPointer(entity, (NativePtr)& NAME );\
+                SetNativeFunctionInvokerBySignature(entity, #R ", " #__VA_ARGS__);\
             }\
         }\
         return entity;

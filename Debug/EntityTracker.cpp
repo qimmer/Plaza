@@ -10,6 +10,8 @@
 #include "EntityTracker.h"
 #include "DebugModule.h"
 
+NativeFunctionInvoker2(u16, Entity, Entity)
+
 typedef std::vector<bool> ChangeSet;
 
 struct EntityModification {
@@ -110,6 +112,8 @@ BeginUnit(EntityTracker)
     BeginComponent(EntityTracker)
         RegisterArrayProperty(EntityModification, EntityModifications)
     EndComponent()
+
+    RegisterFunctionSignature(NativeFunctionInvoker_u16_Entity_Entity, u16, Entity, Entity);
 
     RegisterFunction(GetEntityTrackerChanges)
 

@@ -24,7 +24,7 @@ struct Animation {
     case TypeOf_ ## TYPE :\
     {\
        auto result = (TYPE)(((double)left.as_ ## TYPE * (1.0 - t)) + ((double)right.as_ ## TYPE * t));\
-        return Variant(TYPE, result);\
+        return MakeVariant(TYPE, result);\
         break;\
     }
 
@@ -34,7 +34,7 @@ struct Animation {
         TYPE TYPE ## value;\
         TYPE ## value.x = (ELEMTYPE)(((double)left.as_ ## TYPE.x * (1.0 - t)) + ((double)right.as_ ## TYPE.x * t));\
         TYPE ## value.y = (ELEMTYPE)(((double)left.as_ ## TYPE.y * (1.0 - t)) + ((double)right.as_ ## TYPE.y * t));\
-        return Variant(TYPE, TYPE ## value);\
+        return MakeVariant(TYPE, TYPE ## value);\
         break;
 
 #define INTERP_VEC3(TYPE, ELEMTYPE) \
@@ -43,7 +43,7 @@ struct Animation {
         TYPE ## value.x = (ELEMTYPE)(((double)left.as_ ## TYPE.x * (1.0 - t)) + ((double)right.as_ ## TYPE.x * t));\
         TYPE ## value.y = (ELEMTYPE)(((double)left.as_ ## TYPE.y * (1.0 - t)) + ((double)right.as_ ## TYPE.y * t));\
         TYPE ## value.z = (ELEMTYPE)(((double)left.as_ ## TYPE.z * (1.0 - t)) + ((double)right.as_ ## TYPE.z * t));\
-        return Variant(TYPE, TYPE ## value);\
+        return MakeVariant(TYPE, TYPE ## value);\
         break;
 
 #define INTERP_VEC4(TYPE, ELEMTYPE) \
@@ -53,7 +53,7 @@ struct Animation {
         TYPE ## value.y = (ELEMTYPE)(((double)left.as_ ## TYPE.y * (1.0 - t)) + ((double)right.as_ ## TYPE.y * t));\
         TYPE ## value.z = (ELEMTYPE)(((double)left.as_ ## TYPE.z * (1.0 - t)) + ((double)right.as_ ## TYPE.z * t));\
         TYPE ## value.w = (ELEMTYPE)(((double)left.as_ ## TYPE.w * (1.0 - t)) + ((double)right.as_ ## TYPE.w * t));\
-        return Variant(TYPE, TYPE ## value);\
+        return MakeVariant(TYPE, TYPE ## value);\
         break;
 
 static Variant Interpolate(Variant left, Variant right, float t) {
@@ -86,7 +86,7 @@ static Variant Interpolate(Variant left, Variant right, float t) {
         case TypeOf_bool:
         {
             auto result = (t < 0.5f ? left.as_bool : right.as_bool);
-            return Variant(bool, result);
+            return MakeVariant(bool, result);
             break;
         }
         default:

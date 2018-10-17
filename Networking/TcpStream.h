@@ -14,4 +14,14 @@ Unit(TcpStream)
 
     Event(TcpClientConnected, Entity server, Entity clientStream)
 
+
+namespace asio {
+    namespace detail {
+        template <typename Exception>
+        void throw_exception(const Exception& e) {
+            //Log(0, LogSeverity_Error, "%s", e.what());
+        }
+    }
+}
+
 #endif //PLAZA_HTTPSTREAM_H

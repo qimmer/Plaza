@@ -14,210 +14,15 @@
 #include "Property.h"
 #include "Identification.h"
 #include "Date.h"
+#include "NativeFunction.h"
 
-#include <ffi.h>
+#include "FunctionCommonSignatures.h"
 
 #include <time.h>
 
 #define Verbose_Function "function"
 
-static ffi_type
-        type_v2i, type_v3i, type_v4i,
-        type_v2f, type_v3f, type_v4f,
-        type_m3x3f, type_m4x4f, type_variant;
-
-
-static ffi_type* type_variant_elements[] = {
-        &type_m4x4f,
-        &ffi_type_sint8,
-        NULL
-};
-
-
-static ffi_type* type_v2i_elements[] = {
-        &ffi_type_sint32,
-        &ffi_type_sint32,
-        NULL
-};
-
-static ffi_type* type_v3i_elements[] = {
-        &ffi_type_sint32,
-        &ffi_type_sint32,
-        &ffi_type_sint32,
-        NULL
-};
-
-static ffi_type* type_v4i_elements[] = {
-        &ffi_type_sint32,
-        &ffi_type_sint32,
-        &ffi_type_sint32,
-        &ffi_type_sint32,
-        NULL
-};
-
-static ffi_type* type_v2f_elements[] = {
-        &ffi_type_float,
-        &ffi_type_float,
-        NULL
-};
-
-static ffi_type* type_v3f_elements[] = {
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-        NULL
-};
-
-static ffi_type* type_v4f_elements[] = {
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-        NULL
-};
-
-static ffi_type* type_m3x3f_elements[] = {
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-
-        NULL
-};
-
-static ffi_type* type_m4x4f_elements[] = {
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-        &ffi_type_float,
-
-        NULL
-};
-
-static ffi_type* ffi_types[] = {
-        &ffi_type_void, //TypeOf_unknown,
-
-        &ffi_type_void, //TypeOf_void,
-        &ffi_type_uint8, //TypeOf_u8,
-        &ffi_type_uint16, //TypeOf_u16,
-        &ffi_type_uint32, //TypeOf_u32,
-        &ffi_type_uint64, //TypeOf_u64,
-        &ffi_type_sint8, //TypeOf_s8,
-        &ffi_type_sint16, //TypeOf_s16,
-        &ffi_type_sint32, //TypeOf_s32,
-        &ffi_type_sint64, //TypeOf_s64,
-        &ffi_type_float, //TypeOf_float,
-        &ffi_type_double, //TypeOf_double,
-        &ffi_type_uint8, //TypeOf_bool,
-        &ffi_type_pointer, //TypeOf_StringRef,
-
-        &type_v2i, //TypeOf_v2i,
-        &type_v3i, //TypeOf_v3i,
-        &type_v4i, //TypeOf_v4i,
-
-        &type_v2f, //TypeOf_v2f,
-        &type_v3f, //TypeOf_v3f,
-        &type_v4f, //TypeOf_v4f,
-
-        &type_m3x3f, //TypeOf_m3x3f,
-        &type_m4x4f, //TypeOf_m4x4f,
-
-        &ffi_type_uint64, //TypeOf_Entity,
-        &ffi_type_uint8, //TypeOf_Type,
-
-        &ffi_type_uint32, //TypeOf_rgba8,
-        &ffi_type_uint32, //TypeOf_rgb8,
-
-        &type_v4f, //TypeOf_rgba32,
-        &type_v3f, //TypeOf_rgb32,
-
-        &ffi_type_uint64, //TypeOf_Date,
-
-        &type_variant, //TypeOf_Variant,
-};
-
 #define ALIGNMENT_SSE 16
-
-struct FunctionArgument {
-    Type FunctionArgumentType;
-};
-
-struct Function {
-    Type FunctionReturnType;
-    FunctionCallerType FunctionCaller;
-    u32 FunctionMaxDuration;
-};
-
-struct NativeFunction {
-    ffi_cif cif;
-    ffi_type** args;
-    void(*funcPtr)();
-};
-
-API_EXPORT void SetNativeFunctionPointer(Entity function, void *ptr) {
-    AddComponent(function, ComponentOf_NativeFunction());
-    auto data = GetNativeFunctionData(function);
-
-    if(data->args) {
-        free(data->args);
-        data->args = NULL;
-    }
-
-    data->funcPtr = (void(*)())ptr;
-
-    SetFunctionCaller(function, NULL);
-
-    if(ptr) {
-
-        u32 numArgs = 0;
-        auto args = GetFunctionArguments(function, &numArgs);
-        Assert(function, numArgs < 32);
-
-        auto argPtrs = data->args = (ffi_type**)malloc(sizeof(ffi_type*) * numArgs);
-
-        auto i = 0;
-        for(i = 0; i < numArgs; ++i) {
-            argPtrs[i] = ffi_types[GetFunctionArgumentType(args[i])];
-            Assert(function, argPtrs[i]);
-        }
-
-        ffi_prep_cif(
-                &data->cif,
-                FFI_DEFAULT_ABI,
-                numArgs,
-                ffi_types[GetFunctionReturnType(function)],
-                argPtrs
-        );
-
-        SetFunctionCaller(function, CallNativeFunction);
-    }
-}
-
-LocalFunction(OnNativeFunctionRemoved, void, Entity component, Entity entity) {
-    SetNativeFunctionPointer(entity, NULL);
-}
 
 API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
     auto len = strlen(arguments);
@@ -270,20 +75,6 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
     }
 }
 
-API_EXPORT bool CallNativeFunction(
-        Entity function,
-        void *returnData,
-        u32 numArguments,
-        const u8 *argumentTypes,
-        const void **argumentDataPtrs
-) {
-    auto data = GetNativeFunctionData(function);
-
-    ffi_call(&data->cif, data->funcPtr, returnData, const_cast<void**>(argumentDataPtrs));
-
-    return true;
-}
-
 API_EXPORT bool CallFunction(
         Entity f,
         void *returnData,
@@ -318,7 +109,8 @@ API_EXPORT bool CallFunction(
 #ifdef PROFILE
     ProfileStart(GetName(f), 100.0);
 #endif
-    auto result = data->FunctionCaller(
+    auto caller = (FunctionCallerType)data->FunctionCaller;
+    auto result = caller(
             f,
             returnData,
             numArguments,
@@ -365,11 +157,6 @@ API_EXPORT void ProfileEnd() {
     }
 }
 
-#define INIT_FFI_STRUCT(T) \
-    type_ ## T .size = type_ ## T .alignment = 0;\
-    type_ ## T .type = FFI_TYPE_STRUCT;\
-    type_ ## T .elements = type_ ## T ## _elements
-
 void __InitializeFunction() {
     auto component = ComponentOf_Function();
     AddComponent(component, ComponentOf_Component());
@@ -389,15 +176,7 @@ void __InitializeFunction() {
     SetComponentSize(component, sizeof(NativeFunction));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
 
-    INIT_FFI_STRUCT(v2i);
-    INIT_FFI_STRUCT(v3i);
-    INIT_FFI_STRUCT(v4i);
-    INIT_FFI_STRUCT(v2f);
-    INIT_FFI_STRUCT(v3f);
-    INIT_FFI_STRUCT(v4f);
-    INIT_FFI_STRUCT(m3x3f);
-    INIT_FFI_STRUCT(m4x4f);
-    INIT_FFI_STRUCT(variant);
+    RegisterCommonSignatures();
 }
 
 int __ArgStackOffset(int value) {
@@ -411,18 +190,7 @@ API_EXPORT Type GetFunctionReturnTypeByIndex(u32 functionIndex) {
     return data->FunctionReturnType;
 }
 
-API_EXPORT FunctionCallerType GetFunctionCaller(Entity function) {
-    auto data = GetFunctionData(function);
-    return data->FunctionCaller;
-}
-
-API_EXPORT void SetFunctionCaller(Entity function, FunctionCallerType caller) {
-    auto data = GetFunctionData(function);
-    if(data) {
-        data->FunctionCaller = caller;
-    }
-}
-
+__PropertyCoreImpl(NativePtr, FunctionCaller, Function)
 
 BeginUnit(Function)
     BeginComponent(Function)
@@ -437,6 +205,4 @@ BeginUnit(Function)
     BeginComponent(NativeFunction)
         // RegisterBase(Function)
     EndComponent()
-
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnNativeFunctionRemoved, ComponentOf_NativeFunction())
 EndUnit()

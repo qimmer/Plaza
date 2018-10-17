@@ -24,10 +24,6 @@ using namespace asio::ip;
 
 static asio::io_service s_io_service;
 
-template <typename Exception>
-void asio::detail::throw_exception(const Exception& e) {
-    Log(0, LogSeverity_Error, "%s", e.what());
-}
 
 #define Verbose_TcpClient "tcpclient"
 

@@ -151,6 +151,8 @@ void __InitializeModule() {
     SetComponentSize(component, sizeof(ModuleRoot));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
     __Property(PropertyOf_Modules(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
+
+    RegisterFunctionSignature(NativeFunctionInvoker_bool_StringRef, bool, StringRef);
 }
 
 

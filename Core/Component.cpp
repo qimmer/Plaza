@@ -276,11 +276,11 @@ API_EXPORT void SetComponentSize(Entity entity, u16 value) {
     auto data = GetComponentData(entity);
     Variant oldValue, newValue;
     if(data) {
-        oldValue = Variant(u16, data->ComponentSize);
+        oldValue = MakeVariant(u16, data->ComponentSize);
         data->ComponentSize = value;
     }
 
-    newValue = Variant(u16, value);
+    newValue = MakeVariant(u16, value);
 
     auto componentData = GetComponentType(entity);
     componentData->DataBuffer.SetElementSize(value + sizeof(Entity)*2);

@@ -60,6 +60,8 @@ static u16 DebugComponent(StringRef path, bool(*func)(Entity, Entity)) {
     return 200;
 }
 
+NativeFunctionInvoker2(u16, Entity, StringRef)
+
 u16 DebugAddComponent(Entity responseStream, StringRef path) {
     return DebugComponent(path, AddComponent);
 }
@@ -103,6 +105,7 @@ u16 DebugGetChanges(Entity responseStream, StringRef path) {
 }
 
 BeginUnit(DebugModule)
+    RegisterFunctionSignature(NativeFunctionInvoker_u16_Entity_StringRef, u16, Entity, StringRef)
     RegisterFunction(DebugAddComponent)
     RegisterFunction(DebugRemoveComponent)
     RegisterFunction(DebugGetChanges)

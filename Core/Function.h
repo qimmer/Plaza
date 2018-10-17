@@ -12,21 +12,23 @@ typedef bool(*FunctionCallerType)(
     const void **argumentDataPtrs
 );
 
+struct FunctionArgument {
+    Type FunctionArgumentType;
+};
+
+struct Function {
+    Type FunctionReturnType;
+    NativePtr FunctionCaller;
+};
+
 Unit(Function)
     Component(FunctionArgument)
-        Property(Entity, FunctionArgumentType)
+        Property(Type, FunctionArgumentType)
 
     Component(Function)
-        Property(Entity, FunctionReturnType)
+        __PropertyCore(Function, NativePtr, FunctionCaller)
+        Property(Type, FunctionReturnType)
         ArrayProperty(FunctionArgument, FunctionArguments)
-
-    Component(NativeFunction)
-
-Function(FindFunctionByName, Entity, StringRef name)
-FunctionCallerType GetFunctionCaller(Entity function);
-
-void SetFunctionCaller(Entity function, FunctionCallerType caller);
-void SetNativeFunctionPointer(Entity function, void *ptr);
 
 void SetFunctionArgsByDecl(Entity f, StringRef argsDecl);
 

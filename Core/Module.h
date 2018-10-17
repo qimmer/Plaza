@@ -38,6 +38,8 @@ Event(ModuleInitialized)
 Function(GetModuleRoot, Entity)
 Function(LoadPlazaModule, bool, StringRef libraryPath)
 
+NativeFunctionInvoker1(bool, StringRef)
+
 void __InitializeModule();
 
 #endif //PLAZA_MODULE_H

@@ -20,6 +20,7 @@
 #endif
 
 typedef const char* StringRef;
+typedef void* NativePtr;
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -183,6 +184,7 @@ enum {
     TypeOf_Date,
 
     TypeOf_Variant,
+    TypeOf_NativePtr,
 
     TypeOf_MAX,
 };
@@ -229,5 +231,6 @@ Type FindType(StringRef typeName);
 #define Date_Default 0
 
 #define Variant_Default {0, 0}
+#define NativePtr_Default NULL
 
 #endif

@@ -44,7 +44,7 @@ struct ALIGN(16) Variant {
     Type type;
 };
 
-#define Variant(TYPE, VALUE) __MakeVariant(&(VALUE), TypeOf_ ## TYPE)
+#define MakeVariant(TYPE, VALUE) __MakeVariant(&(VALUE), TypeOf_ ## TYPE)
 
 inline Variant __MakeVariant(const void *data, Type type) {
     Variant v;

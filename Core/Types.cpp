@@ -44,7 +44,9 @@ static StringRef typeNames[] = {
 
         "Date",
 
-        "Variant"
+        "Variant",
+
+        "NativePtr"
 };
 
 API_EXPORT u32 GetTypeSize(Type type) {
@@ -87,7 +89,8 @@ API_EXPORT u32 GetTypeSize(Type type) {
 
         sizeof(Date),
 
-        sizeof(Variant)
+        sizeof(Variant),
+        sizeof(NativePtr)
     };
 
     Assert(0, type < TypeOf_MAX);
@@ -135,7 +138,8 @@ API_EXPORT u32 GetTypeAlignment(Type type) {
 
             alignof(Date),
 
-            alignof(Variant)
+            alignof(Variant),
+            alignof(NativePtr)
     };
 
     Assert(0, type < TypeOf_MAX);
