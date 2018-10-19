@@ -52,7 +52,7 @@ Entity GetCurrentSceneEditorCamera() {
 static void Draw(Entity context) {
     CurrentCamera = 0;
 
-    for_entity(sceneEditor, data, SceneEditor) {
+    for_entity(sceneEditor, data, SceneEditor, {
         auto data = GetSceneEditor(sceneEditor);
         auto scene = GetSceneEditorScene(sceneEditor);
 

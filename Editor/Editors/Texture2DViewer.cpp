@@ -41,7 +41,7 @@ LocalFunction(OnChanged, void, Entity viewer) {
 }
 
 static void Draw(Entity context) {
-    for_entity(viewer, data, Texture2DViewer) {
+    for_entity(viewer, data, Texture2DViewer, {
         auto data = GetTexture2DViewer(viewer);
         auto texture = GetTexture2DViewerTexture(viewer);
 

@@ -72,14 +72,14 @@ static inline void TriggerChange(Entity entity) {
     }
 
     auto index = GetEntityIndex(entity);
-    for_entity(tracker, trackerData, EntityTracker) {
+    for_entity(tracker, trackerData, EntityTracker, {
 
         if(index >= trackerData->changedSet->size()) {
             trackerData->changedSet->resize(index + 1, false);
         }
 
         (*trackerData->changedSet)[index] = true;
-    }
+    });
 }
 
 LocalFunction(OnComponentAdded, void, Entity component, Entity entity) {

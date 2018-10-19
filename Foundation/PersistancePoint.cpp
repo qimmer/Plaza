@@ -55,12 +55,12 @@ LocalFunction(Load, void, Entity persistancePoint) {
 
     // Find serializer
     Entity serializer = 0;
-    for_entity(serializerEntity, serializerData, Serializer) {
+    for_entity(serializerEntity, serializerData, Serializer, {
         if(mimeType == serializerData->SerializerMimeType) {
             serializer = serializerEntity;
             break;
         }
-    }
+    });
 
     if(!IsEntityValid(serializer)) {
         Log(persistancePoint, LogSeverity_Error, "Load failed. No compatible serializer for mime type '%s' found when deserializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
@@ -119,12 +119,12 @@ LocalFunction(OnPersistancePointSavingChanged, void, Entity persistancePoint, bo
         }
 
         Entity serializer = 0;
-        for_entity(serializerEntity, serializerData, Serializer) {
+        for_entity(serializerEntity, serializerData, Serializer, {
             if(mimeType == serializerData->SerializerMimeType) {
                 serializer = serializerEntity;
                 break;
             }
-        }
+        });
 
         if(!IsEntityValid(serializer)) {
             Log(persistancePoint, LogSeverity_Error, "Save failed. No compatible serialiser for mime type '%s' found when serializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
@@ -155,15 +155,11 @@ API_EXPORT bool LoadEntityPath(StringRef entityPath) {
 }
 
 API_EXPORT bool ResolveReferences() {
-    const auto component = ComponentOf_UnresolvedReference();
-
     bool areAllResolved = true;
     Entity unresolvedReference = 0;
     UnresolvedReference *data = NULL;
-    for(u32 i = GetNextComponent(component, InvalidIndex, (void**)&data, &unresolvedReference);
-        i != InvalidIndex;
-        i = GetNextComponent(component, i, (void**)&data, &unresolvedReference)
-    ) {
+
+    for_entity(unresolvedReference, data, UnresolvedReference, {
         auto reference = FindEntityByUuid(data->UnresolvedReferenceUuid);
         if(!IsEntityValid(reference)) {
             areAllResolved = false;
@@ -176,7 +172,7 @@ API_EXPORT bool ResolveReferences() {
 
         auto index = GetUnresolvedReferencesIndex(entity, unresolvedReference);
         RemoveUnresolvedReferences(entity, index);
-    }
+    });
 
     return areAllResolved;
 }

@@ -119,13 +119,13 @@ API_EXPORT bool Bind(Entity entity, Entity property, StringRef sourceBindingStri
     }
 
     // First, remove all existing bindings to this property
-    for_entity(existingBinding, data, Binding) {
+    for_entity(existingBinding, data, Binding, {
         if(data->BindingTargetEntity == entity && data->BindingTargetProperty == property) {
             auto owner = GetOwner(existingBinding);
             auto index = GetArrayPropertyIndex(PropertyOf_Bindings(), owner, existingBinding);
             RemoveBindings(owner, index);
         }
-    }
+    });
 
     auto sourceEntity = FindEntityByUuid(sourceEntityUuid);
     if(!sourceEntity) {

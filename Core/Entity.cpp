@@ -90,9 +90,9 @@ API_EXPORT void DestroyEntity(Entity entity) {
         return;
     }
 
-    for_entity(component, componentData, Component) {
+    for_entity(component, componentData, Component, {
         RemoveComponent(entity, component);
-    }
+    });
 
 	Type types[] = { TypeOf_Entity };
 	const void* values[] = { &entity };

@@ -23,7 +23,7 @@ EndUnit()
 API_EXPORT void RunAppLoops() {
     while(true) {
         bool any = false;
-        for_entity(appLoop, appLoopData, AppLoop) {
+        for_entity(appLoop, appLoopData, AppLoop, {
             if(!appLoopData->AppLoopDisabled) {
                 SetAppLoopFrame(appLoop, appLoopData->AppLoopFrame + 1);
 
@@ -31,7 +31,7 @@ API_EXPORT void RunAppLoops() {
                     any = true;
                 }
             }
-        }
+        });
 
         CleanupStrings();
 

@@ -220,18 +220,18 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
         {
             writer.String("$components");
             writer.StartArray();
-            for_entity(component, componentData, Component) {
+            for_entity(component, componentData, Component, {
                 if(HasComponent(parent, component)) {
                     writer.String(GetUuid(component));
                 }
-            }
+            });
             writer.EndArray();
         }
 
         writer.String("$owner");
         writer.String(GetUuid(GetOwner(parent)));
 
-        for_entity(component, componentData, Component) {
+        for_entity(component, componentData, Component, {
             if(!HasComponent(parent, component)
                || (parent == root && (component == ComponentOf_PersistancePoint()))
                || component == ComponentOf_Ownership()) {
@@ -304,7 +304,7 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
                         break;
                 }
             }
-        }
+        });
 
         writer.EndObject();
     } else {
@@ -795,12 +795,12 @@ API_EXPORT bool DeserializeJsonFromString(Entity stream, Entity entity, StringRe
 
     // Only resolve references at root serialization level (after all eventual child serializations have finished
     if(serializationLevel == 0 && !ResolveReferences()) {
-        for_entity(unresolvedReference, data, UnresolvedReference) {
+        for_entity(unresolvedReference, data, UnresolvedReference, {
             Log(entity, LogSeverity_Error, "%s of entity %s has an unresolved reference: %s",
                     GetUuid(GetUnresolvedReferenceProperty(unresolvedReference)),
                     GetDebugName(GetOwner(unresolvedReference)),
                     GetUnresolvedReferenceUuid(unresolvedReference));
-        }
+        });
     }
 
     return true;
@@ -885,12 +885,12 @@ API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
 
     // Only resolve references at root serialization level (after all eventual child serializations have finished
     if(serializationLevel == 0 && !ResolveReferences()) {
-        for_entity(unresolvedReference, data, UnresolvedReference) {
+        for_entity(unresolvedReference, data, UnresolvedReference, {
             Log(entity, LogSeverity_Error, "%s of entity %s has an unresolved reference: %s",
                 GetName(GetUnresolvedReferenceProperty(unresolvedReference)),
                 GetDebugName(GetOwner(unresolvedReference)),
                 GetUnresolvedReferenceUuid(unresolvedReference));
-        }
+        });
     }
 
     return true;

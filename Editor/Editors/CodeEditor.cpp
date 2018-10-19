@@ -34,7 +34,7 @@ static void SaveCode(Entity codeEditor) {
 
 LocalFunction(OnCommandReleased, void, Entity command) {
     if(command == GetSaveCommand()) {
-        for_entity(codeEditor, data, CodeEditor) {
+        for_entity(codeEditor, data, CodeEditor, {
             auto data = GetCodeEditor(codeEditor);
 
             if(!data->Invalidated || !data->Active) continue;
@@ -55,7 +55,7 @@ void EditCode(Entity stream) {
 static void Draw(Entity context) {
     static String buffer;
 
-    for_entity(codeEditor, data, CodeEditor) {
+    for_entity(codeEditor, data, CodeEditor, {
         auto data = GetCodeEditor(codeEditor);
         auto stream = GetCodeEditorStream(codeEditor);
 
@@ -85,7 +85,7 @@ static void Draw(Entity context) {
 }
 
 LocalFunction(OnStreamChanged, void, Entity stream) {
-    for_entity(codeEditor, data, CodeEditor) {
+    for_entity(codeEditor, data, CodeEditor, {
         if(GetCodeEditorStream(codeEditor) == stream) {
             FireEvent(EventOf_CodeEditorChanged(), codeEditor);
         }

@@ -13,7 +13,7 @@ struct VirtualPath {
 
 API_EXPORT void ResolveVirtualPath(StringRef virtualPath, u32 bufferLength, char *resolvedPath) {
     auto len = strlen(virtualPath);
-    for_entity(entity, data, VirtualPath) {
+    for_entity(entity, data, VirtualPath, {
         auto triggerLen = strlen(data->VirtualPathTrigger);
 
         if(len < triggerLen) continue;
@@ -23,7 +23,7 @@ API_EXPORT void ResolveVirtualPath(StringRef virtualPath, u32 bufferLength, char
                 return;
             }
         }
-    }
+    });
 
     strcpy(resolvedPath, virtualPath);
 }

@@ -85,21 +85,21 @@ LocalFunction(OnStreamChanged, void,
     if(HasComponent(owner, ComponentOf_Program())) {
         auto program = owner;
 
-        for_entity(binaryProgram, binaryProgramData, BinaryProgram) {
+        for_entity(binaryProgram, binaryProgramData, BinaryProgram, {
             if(binaryProgramData->BinaryProgramProgram == program) {
                 InvalidateBinaryProgram(binaryProgram);
             }
-        }
+        });
     }
 }
 
 LocalFunction(OnProgramChanged, void,
               Entity program) {
-    for_entity(binaryProgram, binaryProgramData, BinaryProgram) {
+    for_entity(binaryProgram, binaryProgramData, BinaryProgram, {
         if(binaryProgramData->BinaryProgramProgram == program) {
             InvalidateBinaryProgram(binaryProgram);
         }
-    }
+    });
 }
 
 LocalFunction(OnShaderCacheChanged, void,

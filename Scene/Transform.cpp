@@ -14,7 +14,7 @@ struct Transform {
 };
 
 LocalFunction(OnTransformValidation, void, Entity component) {
-    for_entity(entity, transformData, Transform) {
+    for_entity(entity, transformData, Transform, {
         if(!IsDirty(entity)) continue;
 
         auto local = transformData->TransformLocalMatrix;
@@ -29,7 +29,7 @@ LocalFunction(OnTransformValidation, void, Entity component) {
         }
 
         SetTransformGlobalMatrix(entity, global);
-    }
+    });
 }
 
 LocalFunction(OnAdded, void, Entity component, Entity entity) {

@@ -87,11 +87,11 @@ API_EXPORT int GetNumThreads() {
 }
 
 LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    for_entity(task, data, Task) {
+    for_entity(task, data, Task, {
         if(GetTaskRunning(task) || GetTaskFinished(task)) continue;
 
         SetTaskFinished(task, true);
-    }
+    });
 }
 
 LocalFunction(OnCoreModuleInitialized, void, Entity module) {

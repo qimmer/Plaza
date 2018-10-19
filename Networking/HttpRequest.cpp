@@ -36,22 +36,22 @@ struct HttpResponse {
 };
 
 API_EXPORT Entity FindHeaderType(const char *identifier) {
-    for_entity(headerType, data, HttpHeaderType) {
+    for_entity(headerType, data, HttpHeaderType, {
         auto headerIdentifier = GetHttpHeaderTypeIdentifier(headerType);
         if(stricmp(headerIdentifier, identifier) == 0) {
             return headerType;
         }
-    }
+    });
 
     return 0;
 }
 
 API_EXPORT Entity FindResponseCode(u16 responseCodeNumber) {
-    for_entity(responseCode, data, HttpResponseCode) {
+    for_entity(responseCode, data, HttpResponseCode, {
         if(GetHttpResponseCodeNumber(responseCode) == responseCodeNumber) {
             return responseCode;
         }
-    }
+    });
 
     return 0;
 }

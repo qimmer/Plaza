@@ -66,7 +66,7 @@ LocalFunction(OnCameraRenderTargetChanged, void, Entity entity, Entity before, E
 }
 
 LocalFunction(OnRenderTargetSizeChanged, void, Entity entity, v2i oldValue, v2i newValue) {
-    for_entity(camera, data, UICamera) {
+    for_entity(camera, data, UICamera, {
         if(GetCameraRenderTarget(camera) == entity) {
             UpdateProjectionMatrix(camera);
         }

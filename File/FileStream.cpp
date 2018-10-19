@@ -31,7 +31,7 @@ public:
                           FW::Action action)
     {
         if(action == FW::Actions::Modified) {
-            for_entity(fileStream, data, FileStream) {
+            for_entity(fileStream, data, FileStream, {
                 auto data = GetFileStreamData(fileStream);
                 if(data->watchID == watchid) {
 					Type types[] = { TypeOf_Entity };
@@ -39,7 +39,7 @@ public:
 					FireEventFast(EventOf_StreamContentChanged(), 1, types, values);
                     break;
                 }
-            }
+            });
         }
     }
 };

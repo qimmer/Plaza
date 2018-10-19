@@ -28,6 +28,8 @@ macro (add_linker_flags)
     set (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${_FLAGS}")
 endmacro ()
 
+add_compiler_flags("-fopenmp")
+
 # Plaza Libraries
 add_subdirectory(Core)
 add_subdirectory(Foundation)

@@ -21,7 +21,8 @@ struct AnimationPlayer {
 LocalFunction(OnElapsedChanged, void, Entity stopWatch, double oldElapsed, double newElapsed) {
     auto deltaTime = newElapsed - oldElapsed;
 
-    for_entity(animationPlayer, playerData, AnimationPlayer) {
+    #pragma omp parallel
+    for_entity_parallel(animationPlayer, playerData, AnimationPlayer, {
         if(!GetAppRootActive(GetAppNodeRoot(animationPlayer))) continue;
 
         for_children(layer, AnimationPlayerLayers, animationPlayer) {
@@ -41,7 +42,7 @@ LocalFunction(OnElapsedChanged, void, Entity stopWatch, double oldElapsed, doubl
 
             }
         }
-    }
+    });
 }
 
 BeginUnit(AnimationPlayer)

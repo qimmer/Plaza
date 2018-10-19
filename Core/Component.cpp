@@ -55,11 +55,8 @@ API_EXPORT u32 GetComponentMax (Entity component) {
 API_EXPORT Entity GetComponentEntity(Entity component, u32 index) {
     auto componentData = GetComponentType(component);
 
-    if(!componentData->DataBuffer.IsValid(index)) {
-        return 0;
-    }
-
-    return *(Entity*)componentData->DataBuffer[index];
+    auto entity = *(Entity*)componentData->DataBuffer[index];
+    return entity;
 }
 
 API_EXPORT u32 GetComponentIndex(Entity component, Entity entity) {
@@ -170,13 +167,13 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
 			const void* values[] = { &component, &entity };
 			FireEventFast(EventOf_EntityComponentAdded(), 2, types, values);
 
-			for_entity(extension, extensionData, Extension) {
+            for_entity(extension, extensionData, Extension, {
 			    if(extensionData->ExtensionComponent == component) {
                     if(!extensionData->ExtensionDisabled) {
                         AddComponent(entity, extensionData->ExtensionExtenderComponent);
                     }
 			    }
-			}
+			});
         }
 
         Verbose(Verbose_Component, "Component %s has been added to Entity %s.", GetDebugName(component), GetDebugName(entity));
@@ -198,13 +195,13 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     }
 
     if(HasComponent(entity, component)) {
-        for_entity(extension, extensionData, Extension) {
+        for_entity(extension, extensionData, Extension, {
             if(extensionData->ExtensionComponent == component) {
                 if(!extensionData->ExtensionDisabled) {
                     RemoveComponent(entity, extensionData->ExtensionExtenderComponent);
                 }
             }
-        }
+        });
 
 		Type types[] = { TypeOf_Entity, TypeOf_Entity };
 		const void* values[] = { &component, &entity };
@@ -249,6 +246,19 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     }
     return false;
 }
+
+
+API_EXPORT u32 GetNumComponentPages(Entity component) {
+    auto componentData = GetComponentType(component);
+    return componentData->DataBuffer.GetNumPages();
+}
+
+API_EXPORT char *GetComponentPage(Entity component, u32 index, u32 *elementStride) {
+    auto componentData = GetComponentType(component);
+    *elementStride = componentData->DataBuffer.GetBlockSize();
+    return componentData->DataBuffer.GetPage(index);
+}
+
 
 API_EXPORT u32 GetNextComponent(Entity component, u32 index, void **dataPtr, Entity *entity) {
     ++index;
@@ -303,9 +313,9 @@ __ArrayPropertyCoreImpl(Property, Properties, Component)
 __ArrayPropertyCoreImpl(Base, Bases, Component)
 
 LocalFunction(OnEntityDestroyed, void, Entity entity) {
-    for_entity(component, data, Component) {
+    for_entity(component, data, Component, {
         RemoveComponent(entity, component);
-    }
+    });
 }
 
 static void RemoveExtensions(Entity component, Entity extensionComponent) {

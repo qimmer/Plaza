@@ -75,7 +75,7 @@ API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
 
     SetInstanceTemplate(destinationEntity, templateEntity);
 
-    for_entity(component, data, Component) {
+    for_entity(component, data, Component, {
         if (component != ComponentOf_Ownership() && component != ComponentOf_Template() && component != ComponentOf_Instance() && HasComponent(templateEntity, component)) {
             AddComponent(destinationEntity, component);
 
@@ -104,7 +104,8 @@ API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
                     case PropertyKind_Array:
                         SetArrayPropertyCount(property, destinationEntity, GetArrayPropertyCount(property, templateEntity));
 
-                        u32 sourceCount = 0, destinationCount = 0;
+                        u32 sourceCount = 0;
+                        u32 destinationCount = 0;
                         auto sourceElements = GetArrayPropertyElements(property, templateEntity, &sourceCount);
                         auto destinationElements = GetArrayPropertyElements(property, destinationEntity, &destinationCount);
                         for(auto i = 0; i < sourceCount; ++i) {
@@ -113,7 +114,7 @@ API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
                 }
             }
         }
-    }
+    });
 
     SetInstanceIgnoreChanges(destinationEntity, false);
 }
@@ -148,7 +149,7 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
         switch(GetPropertyKind(property)) {
             case PropertyKind_Value:
             {
-                for_entity(instance, data, Instance) {
+                for_entity(instance, data, Instance, {
                     if(data->InstanceTemplate != templateEntity) continue;
                     if(IsInstanceOverriding(instance, property)) continue;
 
@@ -156,7 +157,7 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
 
                     GetPropertyValue(property, instance, instanceValue);
                     SetPropertyValue(property, instance, newValue);
-                }
+                });
                 break;
             }
             case PropertyKind_Array:
@@ -165,17 +166,17 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
                 auto oldEntity = *(Entity*)oldValue;
                 // If element has been added, add one to all instances and bind template/instance relation
                 if(newEntity && !oldEntity) {
-                    for_entity(instance, data, Instance) {
+                    for_entity(instance, data, Instance, {
                         if(data->InstanceTemplate != templateEntity) continue;
 
                         auto addedIndex = AddArrayPropertyElement(property, instance);
                         SetInstanceTemplate(GetArrayPropertyElement(property, instance, addedIndex), newEntity);
-                    }
+                    });
                 }
 
                 // If element has been removed, remove all instanced elements as well
                 if(!newEntity && oldEntity) {
-                    for_entity(instance, data, Instance) {
+                    for_entity(instance, data, Instance, {
                         if(data->InstanceTemplate != templateEntity) continue;
 
                         u32 count = 0;
@@ -188,7 +189,7 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
                                 break;
                             }
                         }
-                    }
+                    });
                 }
                 break;
             }

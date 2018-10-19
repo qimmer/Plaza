@@ -45,8 +45,23 @@ public:
 
     inline void SetElementSize(u32 size);
     inline u32 GetElementSize();
+    inline u32 GetBlockSize();
+
+    inline u32 GetNumPages();
+    inline char *GetPage(u32 index);
 };
 
+inline u32 Pool::GetNumPages() {
+    return this->entryPages.Count;
+}
+
+inline char *Pool::GetPage(u32 index) {
+    return GetVector(this->entryPages)[index];
+}
+
+inline u32 Pool::GetBlockSize() {
+    return this->blockSize;
+}
 inline char* Pool::operator[](u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;

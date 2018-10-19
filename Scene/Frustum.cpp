@@ -11,7 +11,7 @@ struct Frustum {
 };
 
 LocalFunction(OnValidateTransforms, void, Entity component) {
-    for_entity(frustum, transformData, Frustum) {
+    for_entity(frustum, transformData, Frustum, {
         if(!IsDirty(frustum)) continue;
 
         auto data = GetFrustumData(frustum);
@@ -21,13 +21,14 @@ LocalFunction(OnValidateTransforms, void, Entity component) {
         glm_mat4_inv((vec4*)&globalMat.x.x, (vec4*)&viewMat.x.x);
         SetFrustumViewMatrix(frustum, viewMat);
 
-        m4x4f viewProjMat, invViewProjMat;
+        m4x4f viewProjMat;
+        m4x4f invViewProjMat;
 
         glm_mat4_mul((vec4*)&data->FrustumProjectionMatrix, (vec4*)&data->FrustumViewMatrix, (vec4*)&viewProjMat);
         glm_mat4_inv((vec4*)&viewProjMat, (vec4*)&invViewProjMat);
 
         SetFrustumInvViewProjectionMatrix(frustum, invViewProjMat);
-    }
+    });
 }
 
 BeginUnit(Frustum)

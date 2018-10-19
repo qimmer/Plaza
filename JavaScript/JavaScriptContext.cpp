@@ -164,7 +164,7 @@ LocalFunction(OnJavaScriptContextAdded, void, Entity component, Entity context) 
 
     data->ctx = duk_create_heap_default();
 
-    for_entity(module, moduleData, Module) {
+    for_entity(module, moduleData, Module, {
         BindModule(data->ctx, module);
     }
 }
@@ -176,7 +176,7 @@ LocalFunction(OnJavaScriptContextRemoved, void, Entity component, Entity context
 }
 
 static void RebindModuleChild(Entity module, Entity child, StringRef oldName) {
-    for_entity(context, contextData, JavaScriptContext) {
+    for_entity(context, contextData, JavaScriptContext, {
         BindModule(contextData->ctx, module);
     }
 }
@@ -193,7 +193,7 @@ API_EXPORT bool EvaluateJavaScript(Entity context, StringRef name, StringRef cod
 
         duk_push_global_object(data->ctx);
 
-        for_entity(function, functionData, Function) {
+        for_entity(function, functionData, Function, {
             auto caller = GetFunctionCaller(function);
 
             // If function has no caller or has a JavaScript caller,

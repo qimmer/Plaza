@@ -27,7 +27,7 @@ static void free_func(void* mem, void *userdata) {
 }
 
 LocalFunction(OnBinaryProgramValidation, void, Entity component) {
-    for_entity(entity, data, BgfxBinaryProgram) {
+    for_entity(entity, data, BgfxBinaryProgram, {
         if(!IsDirty(entity)) continue;
 
         // Eventually free old buffers
@@ -65,7 +65,7 @@ LocalFunction(OnBinaryProgramValidation, void, Entity component) {
         auto programHandle = bgfx::createProgram(vsHandle, psHandle, true);
 
         SetBgfxResourceHandle(entity, programHandle.idx);
-    }
+    });
 }
 
 BeginUnit(BgfxShaderCache)

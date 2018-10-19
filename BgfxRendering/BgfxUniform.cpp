@@ -23,7 +23,7 @@ LocalFunction(OnUniformRemoved, void, Entity entity) {
 }
 
 LocalFunction(OnUniformValidation, void, Entity component) {
-    for_entity(entity, data, BgfxUniform) {
+    for_entity(entity, data, BgfxUniform, {
         if(!IsDirty(entity)) continue;
 
         // Eventually free old buffers
@@ -46,7 +46,7 @@ LocalFunction(OnUniformValidation, void, Entity component) {
         auto name = GetName(entity);
         auto arrayCount = Max((u32)1, GetUniformArrayCount(entity));
         SetBgfxResourceHandle(entity, bgfx::createUniform(name, type, arrayCount).idx);
-    }
+    });
 }
 
 BeginUnit(BgfxUniform)

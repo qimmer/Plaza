@@ -34,7 +34,14 @@
         {
             "Uuid": "SpinningCube.Prefab",
             "RenderableMaterial": "Rendering.Primitives.Material",
-            "RenderableSubMesh": "Rendering.Primitives.Meshes.Cube.SubMesh0"
+            "RenderableSubMesh": "Rendering.Primitives.Meshes.Cube.SubMesh0",
+            "AnimationPlayerLayers": [
+                {
+                    "AnimationPlayerLayerAnimation": "SpinningCube.Animation",
+                    "AnimationPlayerLayerSpeed": 0.01,
+                    "AnimationPlayerLayerLooping": true
+                }
+            ]
         }
     ]
 }

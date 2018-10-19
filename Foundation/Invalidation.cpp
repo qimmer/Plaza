@@ -36,9 +36,9 @@ API_EXPORT void Validate(Entity component) {
     FireEventFast(EventOf_Validate(), 1, types, argumentPtrs);
 
     Entity entity = 0;
-    for(u32 i = GetNextComponent(component, InvalidIndex, NULL, &entity); i != InvalidIndex; i = GetNextComponent(component, i, NULL, &entity)) {
+    for_entity_abstract(entity, data, component, {
         entityDirtyFlags[GetEntityIndex(entity)] = false;
-    }
+    });
 }
 
 BeginUnit(Invalidation)

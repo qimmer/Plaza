@@ -201,32 +201,32 @@ static void ValidateVertexDeclaration(Entity entity) {
     }
     data->decl.end();
 
-    for_entity(vertexBuffer, vertexBufferData, VertexBuffer) {
+    for_entity(vertexBuffer, vertexBufferData, VertexBuffer, {
         if(GetVertexBufferDeclaration(vertexBuffer) == entity) {
             Invalidate(vertexBuffer);
         }
-    }
+    });
 }
 
 LocalFunction(OnVertexDeclarationValidation, void, Entity component) {
-    for_entity(entity, data, BgfxVertexDeclaration) {
+    for_entity(entity, data, BgfxVertexDeclaration, {
         if(!IsDirty(entity)) continue;
         ValidateVertexDeclaration(entity);
-    }
+    });
 }
 
 LocalFunction(OnVertexBufferValidation, void, Entity component) {
-    for_entity(entity, data, BgfxVertexBuffer) {
+    for_entity(entity, data, BgfxVertexBuffer, {
         if(!IsDirty(entity)) continue;
         ValidateVertexBuffer(entity);
-    }
+    });
 }
 
 LocalFunction(OnIndexBufferValidation, void, Entity component) {
-    for_entity(entity, data, BgfxIndexBuffer) {
+    for_entity(entity, data, BgfxIndexBuffer, {
         if(!IsDirty(entity)) continue;
         ValidateIndexBuffer(entity);
-    }
+    });
 }
 
 BeginUnit(BgfxMesh)

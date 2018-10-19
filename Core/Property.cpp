@@ -542,12 +542,7 @@ LocalFunction(OnPropertyKindChanged, void, Entity property, u32 oldKind, u32 new
     auto propertyData = GetPropertyData(property);
     auto component = GetOwner(property);
 
-    Entity entity = 0;
-    char * data = 0;
-    for(auto i = GetNextComponent(component, InvalidIndex, (void**)&data, &entity);
-        i != InvalidIndex;
-        i = GetNextComponent(component, i, (void**)&data, &entity)) {
-
+    for_entity_abstract(entity, data, component, {
         if(oldKind == PropertyKind_Array) {
             EntityVectorStruct *vec = (EntityVectorStruct*)(data + propertyData->PropertyOffset);
             for(auto i = 0; i < vec->Count; ++i) {
@@ -563,16 +558,13 @@ LocalFunction(OnPropertyKindChanged, void, Entity property, u32 oldKind, u32 new
             }
             *child = 0;
         }
-    }
+    });
 
     if(!GetComponentExplicitSize(component)) {
         LayoutProperties(component);
     }
 
-    for(auto i = GetNextComponent(component, InvalidIndex, (void**)&data, &entity);
-        i != InvalidIndex;
-        i = GetNextComponent(component, i, (void**)&data, &entity)) {
-
+    for_entity_abstract(entity, data, component, {
         if(newKind == PropertyKind_Array) {
             EntityVectorStruct *vec = (EntityVectorStruct*)(data + propertyData->PropertyOffset);
             memset(vec, 0, sizeof(EntityVectorStruct));
@@ -584,7 +576,7 @@ LocalFunction(OnPropertyKindChanged, void, Entity property, u32 oldKind, u32 new
         } else {
             memset(data + propertyData->PropertyOffset, 0, GetTypeSize(propertyData->PropertyType));
         }
-    }
+    });
 }
 
 LocalFunction(OnPropertyAdded, void, Entity unused, Entity property) {
@@ -610,11 +602,10 @@ LocalFunction(OnPropertyOffsetChanged, void, Entity property, u32 oldValue, u32 
 
     Entity entity = 0;
     char * data = 0;
-    for(auto i = GetNextComponent(component, InvalidIndex, (void**)&data, &entity);
-        i != InvalidIndex;
-        i = GetNextComponent(component, i, (void**)&data, &entity)) {
+
+    for_entity_abstract(entity, data, component, {
         memmove(data + newValue, data + oldValue, propertySize);
-    }
+    });
 }
 
 BeginUnit(Property)
@@ -650,11 +641,11 @@ static void DumpEntity(Entity entity, u32 indentLevel) {
     for(auto i = 0; i < indentLevel; ++i) printf("%s", "  ");
     printf("%s\n", GetUuid(entity));
 
-    for_entity(child, data, Identification) {
+    for_entity(child, data, Identification, {
         if(GetOwner(child) == entity) {
             DumpEntity(child, indentLevel+1);
         }
-    }
+    });
 }
 
 API_EXPORT void DumpTree(Entity entity) {

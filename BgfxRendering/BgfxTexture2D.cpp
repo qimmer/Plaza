@@ -25,7 +25,7 @@ LocalFunction(OnTexture2DRemoved, void, Entity entity) {
 }
 
 LocalFunction(OnValidation, void, Entity component) {
-    for_entity(entity, data, BgfxTexture2D) {
+    for_entity(entity, data, BgfxTexture2D, {
         bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
         auto data = GetBgfxTexture2DData(entity);
 
@@ -59,7 +59,7 @@ LocalFunction(OnValidation, void, Entity component) {
 
         free(buffer);
         data->size = info.storageSize;
-    }
+    });
 }
 
 BeginUnit(BgfxTexture2D)

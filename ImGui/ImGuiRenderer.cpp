@@ -283,7 +283,7 @@ static void RenderImGui(Entity context, double deltaTime) {
 }
 
 LocalFunction(OnAppUpdate, void, double deltaTime) {
-    for_entity(context, data, ImGuiRenderer) {
+    for_entity(context, data, ImGuiRenderer, {
         RenderImGui(context, deltaTime);
     }
 }

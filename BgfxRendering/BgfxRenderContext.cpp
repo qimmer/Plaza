@@ -97,7 +97,7 @@ LocalFunction(OnAppUpdate, void, Entity appLoop) {
         auto numContexts = 0;
         auto debugFlags = 0;
 
-        for_entity(context, contextData, BgfxRenderContext) {
+        for_entity(context, contextData, BgfxRenderContext, {
             numContexts++;
 
             if(GetRenderContextShowDebug(context)) {
@@ -126,7 +126,7 @@ LocalFunction(OnAppUpdate, void, Entity appLoop) {
             if(!glfwGetWindowAttrib(contextData->window, GLFW_VISIBLE)) {
                 glfwShowWindow(contextData->window);
             }
-        }
+        });
 
         if(numContexts) {
             glfwPollEvents();
@@ -135,10 +135,10 @@ LocalFunction(OnAppUpdate, void, Entity appLoop) {
 
             ValidateResources();
 
-            for_entity(commandList, commandListData, BgfxCommandList) {
+            for_entity(commandList, commandListData, BgfxCommandList, {
                 RenderCommandList(commandList, viewId);
                 viewId++;
-            }
+            });
 
             bgfx::setDebug(debugFlags);
             auto frame = bgfx::frame();

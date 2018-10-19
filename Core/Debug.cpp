@@ -141,14 +141,14 @@ static void PrintNode(int level, Entity entity) {
 
     printf("{ (%s) (", GetDebugName(entity));
 
-    for_entity(component2, componentData2, Component) {
+    for_entity(component2, componentData2, Component, {
         if (!HasComponent(entity, component2)) continue;
         printf("%s, ", GetName(component2));
-    }
+    });
 
     printf(")\n");
 
-    for_entity(component, componentData, Component) {
+    for_entity(component, componentData, Component, {
         if(!HasComponent(entity, component)) continue;
 
         u32 numProperties = 0;
@@ -175,7 +175,7 @@ static void PrintNode(int level, Entity entity) {
             }
 
         }
-    }
+    });
 
     printf("%*s}\n", level * identation, " ");
 }

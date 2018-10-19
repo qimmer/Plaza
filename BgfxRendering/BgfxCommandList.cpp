@@ -35,6 +35,7 @@
 #include <bgfx/bgfx.h>
 #include <Rendering/RenderTarget.h>
 #include <Foundation/Invalidation.h>
+#include <omp.h>
 
 struct BgfxCommandList {
 };
@@ -102,7 +103,7 @@ static void SetUniformState(Entity uniform, Entity entity) {
     }*/
 }
 
-inline void RenderBatch(u32 viewId, Entity batch, Entity renderState, Entity pass) {
+inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity renderState, Entity pass) {
     auto batchData = GetBatchData(batch);
     auto renderStateData = GetRenderStateData(renderState);
 
@@ -129,7 +130,7 @@ inline void RenderBatch(u32 viewId, Entity batch, Entity renderState, Entity pas
 
     if(vertexBufferHandle == bgfx::kInvalidHandle || (indexBuffer && indexBufferHandle == bgfx::kInvalidHandle) || programHandle == bgfx::kInvalidHandle) return;
 
-    bgfx::setState(
+    encoder->setState(
             renderStateData->RenderStateWriteMask |
                     renderStateData->RenderStateBlendMode |
                     renderStateData->RenderStateDepthTest |
@@ -138,19 +139,19 @@ inline void RenderBatch(u32 viewId, Entity batch, Entity renderState, Entity pas
        subMeshData->SubMeshPrimitiveType
     );
 
-    bgfx::setTransform(&worldMatrix);
+    encoder->setTransform(&worldMatrix);
 
     if(vertexBufferData->VertexBufferDynamic) {
-        bgfx::setVertexBuffer(0, bgfx::DynamicVertexBufferHandle {vertexBufferHandle}, subMeshData->SubMeshStartVertex, subMeshData->SubMeshNumVertices);
+        encoder->setVertexBuffer(0, bgfx::DynamicVertexBufferHandle {vertexBufferHandle}, subMeshData->SubMeshStartVertex, subMeshData->SubMeshNumVertices);
     } else {
-        bgfx::setVertexBuffer(0, bgfx::VertexBufferHandle {vertexBufferHandle}, subMeshData->SubMeshStartVertex, subMeshData->SubMeshNumVertices);
+        encoder->setVertexBuffer(0, bgfx::VertexBufferHandle {vertexBufferHandle}, subMeshData->SubMeshStartVertex, subMeshData->SubMeshNumVertices);
     }
 
     if(indexBufferHandle != bgfx::kInvalidHandle) {
         if(indexBufferData->IndexBufferDynamic) {
-            bgfx::setIndexBuffer(bgfx::DynamicIndexBufferHandle {indexBufferHandle}, subMeshData->SubMeshStartIndex, subMeshData->SubMeshNumIndices);
+            encoder->setIndexBuffer(bgfx::DynamicIndexBufferHandle {indexBufferHandle}, subMeshData->SubMeshStartIndex, subMeshData->SubMeshNumIndices);
         } else {
-            bgfx::setIndexBuffer(bgfx::IndexBufferHandle {indexBufferHandle}, subMeshData->SubMeshStartIndex, subMeshData->SubMeshNumIndices);
+            encoder->setIndexBuffer(bgfx::IndexBufferHandle {indexBufferHandle}, subMeshData->SubMeshStartIndex, subMeshData->SubMeshNumIndices);
         }
     }
 
@@ -166,7 +167,7 @@ inline void RenderBatch(u32 viewId, Entity batch, Entity renderState, Entity pas
         }
     }
 
-    bgfx::submit(viewId, bgfx::ProgramHandle {programHandle});
+    encoder->submit(viewId, bgfx::ProgramHandle {programHandle});
 }
 
 void RenderCommandList(Entity commandList, unsigned char viewId) {
@@ -269,9 +270,37 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
     }
 
     {
-        for_children(batch, CommandListBatches, commandList) {
-            RenderBatch(viewId, batch, renderState, pass);
+        u32 numBatches = 0;
+        auto batches = GetCommandListBatches(commandList, &numBatches);
+
+        if(true) {
+            #pragma omp parallel
+            {
+                auto threadnum = omp_get_thread_num();
+                auto numthreads = omp_get_num_threads();
+                auto low = numBatches*threadnum/numthreads;
+                auto high = numBatches*(threadnum+1)/numthreads;
+
+                auto encoder = bgfx::begin();
+
+                for (auto i=low; i<high; i++) {
+                    RenderBatch(viewId, encoder, batches[i], renderState, pass);
+                }
+
+                bgfx::end(encoder);
+            }
+        } else {
+            auto encoder = bgfx::begin();
+
+            for (auto i=0; i < numBatches; i++) {
+                RenderBatch(viewId, encoder, batches[i], renderState, pass);
+            }
+
+            bgfx::end(encoder);
         }
+
+
+
     }
 }
 

@@ -125,37 +125,26 @@ LocalFunction(OnMeshBuilderChildChanged, void, Entity vertex) {
 }
 
 LocalFunction(OnMeshValidation, void, Entity component) {
-    for_entity(entity, data, MeshBuilder) {
+    for_entity(entity, data, MeshBuilder, {
         if(!IsDirty(entity)) continue;
 
         BuildMesh(entity);
-    }
-
-    if(HasComponent(entity, ComponentOf_VertexDeclaration())) {
-        for_entity(mb, data, MeshBuilder) {
-            auto vb = GetMeshVertexBuffer(mb);
-            auto vd = GetVertexBufferDeclaration(vb);
-
-            if(vd == entity) {
-                Invalidate(mb);
-            }
-        }
-    }
+    });
 }
 
 LocalFunction(OnVertexDeclarationValidation, void, Entity component) {
-    for_entity(entity, vdData, VertexDeclaration) {
+    for_entity(entity, vdData, VertexDeclaration, {
         if(!IsDirty(entity)) continue;
 
-        for_entity(mb, data, MeshBuilder) {
+        for_entity(mb, data, MeshBuilder, {
             auto vb = GetMeshVertexBuffer(mb);
             auto vd = GetVertexBufferDeclaration(vb);
 
             if(vd == entity) {
                 BuildMesh(GetOwner(vb));
             }
-        }
-    }
+        });
+    });
 
 }
 
