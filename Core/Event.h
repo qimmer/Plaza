@@ -2,6 +2,7 @@
 #define PLAZA_DELEGATE_H
 
 #include <Core/NativeUtils.h>
+#include <Core/Variant.h>
 
 Unit(Event)
     Component(EventArgument)
@@ -18,11 +19,10 @@ Unit(Event)
 
 void SetEventArgsByDecl(Entity entity, StringRef decl);
 
-void FireEventFast(
+Variant FireEventFast(
     Entity event,
     u32 numArguments,
-    const u8* argumentTypeIndices,
-    const void **argumentDataPtrs
+    const Variant *arguments
 );
 
 void __InitializeEvent();

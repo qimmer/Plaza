@@ -1,0 +1,47 @@
+{
+    "Children": [
+        {
+            "Uuid": "SpinningCube.Animation",
+            "AnimationTracks": [
+                {
+                    "Uuid": "SpinningCube.Animation.RotationTrack",
+                    "AnimationTrackProperty": "Property.RotationEuler3D",
+                    "AnimationTrackFrames": [
+                        {
+                            "AnimationFrameDuration": 0.25,
+                            "AnimationFrameValue": [0.0, 0.0, 0.0]
+                        },
+                        {
+                            "AnimationFrameDuration": 0.25,
+                            "AnimationFrameValue": [90.0, 180.0, 0.0]
+                        },
+                        {
+                            "AnimationFrameDuration": 0.25,
+                            "AnimationFrameValue": [180.0, 360.0, 0.0]
+                        },
+                        {
+                            "AnimationFrameDuration": 0.25,
+                            "AnimationFrameValue": [270.0, 540.0, 0.0]
+                        },
+                        {
+                            "AnimationFrameDuration": 0.0,
+                            "AnimationFrameValue": [360.0, 720.0, 0.0]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Uuid": "SpinningCube.Prefab",
+            "RenderableMaterial": "Rendering.Primitives.Material",
+            "RenderableSubMesh": "Rendering.Primitives.Meshes.Cube.SubMesh0",
+            "AnimationPlayerLayers": [
+                {
+                    "AnimationPlayerLayerAnimation": "SpinningCube.Animation",
+                    "AnimationPlayerLayerSpeed": 0.01,
+                    "AnimationPlayerLayerLooping": true
+                }
+            ]
+        }
+    ]
+}

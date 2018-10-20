@@ -1,0 +1,77 @@
+{
+    "Uuid": "Module.TestPBR",
+    "$components": [
+        "Component.AppRoot",
+        "Component.Module"
+    ],
+    "Children": [
+        {
+            "Uuid": "TestPBR.Context",
+            "RenderContextTitle": "Test - Physically Based Rendering",
+            "RenderTargetSize": [800, 450],
+            "RenderContextLoop": {
+                "AppLoopKeepAlive": "{Not():InputStateValue@TestPBR.Context.Keys.Close}"
+            },
+            "RenderContextShowStats": "{InputStateValue@TestPBR.Context.Keys.ShowStats}",
+            "RenderContextShowDebug": "{InputStateValue@TestPBR.Context.Keys.ShowDebug}",
+            "InputContextStates": [
+                {
+                    "Uuid": "TestPBR.Context.Keys.Close",
+                    "InputStateKey": "KEY_WINDOW_CLOSE"
+                },
+                {
+                    "Uuid": "TestPBR.Context.Keys.ShowStats",
+                    "InputStateKey": "KEY_F8"
+                },
+                {
+                    "Uuid": "TestPBR.Context.Keys.ShowDebug",
+                    "InputStateKey": "KEY_F9"
+                }
+            ]
+        },
+        {
+            "Uuid": "TestPBR.Renderer",
+            "SceneRendererPath": "TestAssets.RenderPaths.Default",
+            "SceneRendererViewport": [0.0, 0.0, 1.0, 1.0],
+            "SceneRendererScene": "TestPBR.Scene",
+            "SceneRendererTarget": "TestPBR.Context",
+            "SceneRendererCamera": "TestPBR.Scene.Camera"
+        },
+        {
+            "Uuid": "TestPBR.Scene",
+            "$components": ["Component.AppRoot"],
+            "AppRootActive": true,
+            "Children": [
+                {
+                    "Uuid": "TestPBR.Scene.Camera",
+                    "FrustumNearClip": 0.1,
+                    "FrustumFarClip": 1000.0,
+                    "PerspectiveFrustumFieldOfView": 90.0,
+                    "PerspectiveFrustumAspectRatio": "{Ratio():RenderTargetSize@TestPBR.Context}",
+                    "Position3D": [0, 0, -2]
+                },
+                {
+                    "InstanceTemplate": "SpinningCube.Prefab",
+                    "Position3D": [0, 0, 0]
+                }
+            ]
+        },
+        {
+            "Uuid": "TestPBR.Externals",
+            "Children": [
+                {
+                    "StreamPath": "file://TestAssets/TestAssets.json",
+                    "PersistancePointLoading": true
+                },
+                {
+                    "StreamPath": "file://TestAssets/SpinningCube.json",
+                    "PersistancePointLoading": true
+                },
+                {
+                    "StreamPath": "file://Rendering/Primitives.json",
+                    "PersistancePointLoading": true
+                }
+            ]
+        }
+    ]
+}

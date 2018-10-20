@@ -66,9 +66,11 @@ static void ValidateVertexBuffer(Entity entity) {
     auto data = GetBgfxVertexBufferData(entity);
     auto decl = GetVertexBufferDeclaration(entity);
 
-    auto& declData = GetBgfxVertexDeclarationData(decl)->decl;
+    auto declData = GetBgfxVertexDeclarationData(decl);
 
-    if(declData.m_hash == 0) return;
+    if(!declData) return;
+
+    if(declData->decl.m_hash == 0) return;
 
     if(!StreamOpen(entity, StreamMode_Read)) return;
 
@@ -92,9 +94,9 @@ static void ValidateVertexBuffer(Entity entity) {
     if(GetVertexBufferDynamic(entity)) {
         auto handle = GetBgfxResourceHandle(entity);
 
-        if(handle != bgfx::kInvalidHandle || !data->dynamic || data->declHash != declData.m_hash) {
+        if(handle != bgfx::kInvalidHandle || !data->dynamic || data->declHash != declData->decl.m_hash) {
             OnBgfxVertexBufferRemoved(entity);
-            SetBgfxResourceHandle(entity, bgfx::createDynamicVertexBuffer(bgfx::copy(buffer, size), declData).idx);
+            SetBgfxResourceHandle(entity, bgfx::createDynamicVertexBuffer(bgfx::copy(buffer, size), declData->decl).idx);
         } else {
             bgfx::DynamicVertexBufferHandle specHandle = {handle};
             bgfx::update(specHandle, 0, bgfx::copy(buffer, size));
@@ -103,13 +105,13 @@ static void ValidateVertexBuffer(Entity entity) {
         data->dynamic = true;
     } else {
         OnBgfxVertexBufferRemoved(entity);
-        SetBgfxResourceHandle(entity, bgfx::createVertexBuffer(bgfx::copy(buffer, size), declData).idx);
+        SetBgfxResourceHandle(entity, bgfx::createVertexBuffer(bgfx::copy(buffer, size), declData->decl).idx);
 
         data->dynamic = false;
     }
 
     data->size = size;
-    data->declHash = declData.m_hash;
+    data->declHash = declData->decl.m_hash;
     
     free(buffer);
 }
@@ -165,7 +167,7 @@ static void ValidateIndexBuffer(Entity entity) {
 static void ValidateVertexDeclaration(Entity entity) {
     auto data = GetBgfxVertexDeclarationData(entity);
     data->decl.begin();
-    for_children(attribute, VertexDeclarationAttributes, entity) {
+    for_children(attribute, VertexDeclarationAttributes, entity, {
         bgfx::AttribType::Enum elementType;
         u32 elementCount;
         if(GetVertexAttributeType(attribute) == TypeOf_float) {
@@ -198,7 +200,8 @@ static void ValidateVertexDeclaration(Entity entity) {
                 elementType,
                 GetVertexAttributeNormalize(attribute),
                 GetVertexAttributeAsInt(attribute));
-    }
+    });
+
     data->decl.end();
 
     for_entity(vertexBuffer, vertexBufferData, VertexBuffer, {

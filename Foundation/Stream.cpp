@@ -174,9 +174,8 @@ API_EXPORT bool StreamClose(Entity entity) {
             data->InvalidationPending = false;
             data->StreamMode = 0;
 
-			Type types[] = { TypeOf_Entity };
-			const void* values[] = { &entity };
-			FireEventFast(EventOf_StreamContentChanged(), 1, types, values);
+			auto value = MakeVariant(Entity, entity);
+			FireEventFast(EventOf_StreamContentChanged(), 1, &value);
         }
 
         return true;
@@ -202,11 +201,13 @@ API_EXPORT void StreamWriteAsync(Entity entity, u64 size, const void *data, Stre
 }
 
 API_EXPORT StringRef GetStreamResolvedPath(Entity entity) {
-    Assert(entity, IsEntityValid(entity));
+    if(!HasComponent(entity, ComponentOf_Stream())) return NULL;
+
     return GetStreamData(entity)->StreamResolvedPath;
 }
 
 API_EXPORT int GetStreamMode(Entity entity) {
+    if(!HasComponent(entity, ComponentOf_Stream())) return StreamMode_Closed;
     return GetStreamData(entity)->StreamMode;
 }
 
@@ -249,12 +250,16 @@ API_EXPORT u64 StreamCompress(Entity entity, u64 uncompressedOffset, u64 uncompr
 
 
 API_EXPORT StringRef GetFileName(StringRef absolutePath) {
+    if(!absolutePath) return NULL;
+
     auto fileName = strrchr(absolutePath, '/');
     if(!fileName) return absolutePath;
     return Intern(fileName + 1);
 }
 
 API_EXPORT StringRef GetFileExtension(StringRef absolutePath) {
+    if(!absolutePath) return NULL;
+
     auto lastSlash = strrchr(absolutePath, '/');
     if(lastSlash) absolutePath = lastSlash + 1;
     auto extension = strrchr(absolutePath, '.');
@@ -262,15 +267,18 @@ API_EXPORT StringRef GetFileExtension(StringRef absolutePath) {
     return Intern(extension);
 }
 
-API_EXPORT void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t bufMax) {
-    strncpy(parentFolder, absolutePath, bufMax);
-    auto ptr = strrchr(parentFolder, '/');
+API_EXPORT StringRef GetParentFolder(StringRef absolutePath) {
+    if(!absolutePath) return NULL;
+    auto buffer = (char*)alloca(strlen(absolutePath) + 1);
+    strcpy(buffer, absolutePath);
+    auto ptr = strrchr(buffer, '/');
     if(!ptr) {
-        *parentFolder = 0;
-        return;
+        return NULL;
     }
 
-    parentFolder[ptr - parentFolder] = '\0';
+    buffer[ptr - buffer] = '\0';
+
+    return Intern(buffer);
 }
 
 API_EXPORT StringRef GetCurrentWorkingDirectory() {
@@ -496,9 +504,8 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
         }
     });
 
-	Type types[] = { TypeOf_Entity };
-	const void* values[] = { &entity };
-	FireEventFast(EventOf_StreamContentChanged(), 1, types, values);
+    auto value = MakeVariant(Entity, entity);
+	FireEventFast(EventOf_StreamContentChanged(), 1, &value);
 }
 
 LocalFunction(OnProtocolChanged, void, Entity protocol) {

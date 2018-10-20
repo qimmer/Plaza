@@ -37,13 +37,13 @@ API_EXPORT Entity GetShaderCacheBinaryProgram(
         Entity shaderCache,
         Entity program) {
 
-    for_children(binaryProgram, ShaderCachePrograms, shaderCache) {
+    for_children(binaryProgram, ShaderCachePrograms, shaderCache, {
         auto binaryProgramData = GetBinaryProgramData(binaryProgram);
 
         if(binaryProgramData->BinaryProgramProgram == program) {
             return binaryProgram;
         }
-    }
+    });
 
     return CreateBinaryProgram(shaderCache, program);
 }
@@ -71,10 +71,9 @@ static void InvalidateBinaryProgram(Entity binaryProgram) {
              GetFileName(GetStreamPath(GetProgramPixelShaderSource(program))));
     SetStreamPath(GetBinaryProgramPixelShader(binaryProgram), binaryPath);
 
-    Type types[] = { TypeOf_Entity };
-    const void *argumentPtrs[] = { &binaryProgram };
+    Variant argument = MakeVariant(Entity, binaryProgram);
 
-    FireEventFast(EventOf_ShaderCompile(), 1, types, argumentPtrs);
+    FireEventFast(EventOf_ShaderCompile(), 1, &argument);
 
     Invalidate(binaryProgram);
 }
@@ -104,9 +103,9 @@ LocalFunction(OnProgramChanged, void,
 
 LocalFunction(OnShaderCacheChanged, void,
               Entity shaderCache) {
-    for_children(binaryProgram, ShaderCachePrograms, shaderCache) {
+    for_children(binaryProgram, ShaderCachePrograms, shaderCache, {
         InvalidateBinaryProgram(binaryProgram);
-    }
+    });
 }
 
 BeginUnit(ShaderCache)

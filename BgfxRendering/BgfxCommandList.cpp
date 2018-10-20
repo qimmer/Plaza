@@ -128,7 +128,20 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     auto vertexBufferHandle = GetBgfxResourceHandle(vertexBuffer);
     auto indexBufferHandle = GetBgfxResourceHandle(indexBuffer);
 
-    if(vertexBufferHandle == bgfx::kInvalidHandle || (indexBuffer && indexBufferHandle == bgfx::kInvalidHandle) || programHandle == bgfx::kInvalidHandle) return;
+    if(vertexBufferHandle == bgfx::kInvalidHandle) {
+        Error(batch, "Invalid Vertex Buffer for renderable %s", GetUuid(renderable));
+        return;
+    }
+
+    if(subMeshData->SubMeshNumIndices && indexBufferHandle == bgfx::kInvalidHandle) {
+        Error(batch, "Invalid Index Buffer for renderable %s", GetUuid(renderable));
+        return;
+    }
+
+    if(programHandle == bgfx::kInvalidHandle) {
+        Error(batch, "Invalid Program for renderable %s", GetUuid(renderable));
+        return;
+    }
 
     encoder->setState(
             renderStateData->RenderStateWriteMask |
@@ -156,15 +169,15 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     }
 
     {
-        for_children(uniform, RenderPassMaterialUniforms, pass) {
+        for_children(uniform, RenderPassMaterialUniforms, pass, {
             SetUniformState(uniform, material);
-        }
+        });
     }
 
     {
-        for_children(uniform, RenderPassRenderableUniforms, pass) {
+        for_children(uniform, RenderPassRenderableUniforms, pass, {
             SetUniformState(uniform, renderable);
-        }
+        });
     }
 
     encoder->submit(viewId, bgfx::ProgramHandle {programHandle});
@@ -211,6 +224,7 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
     }
 
     SetShaderCacheProfile(shaderCache, shaderProfile);
+    Validate(ComponentOf_BinaryProgram()); // Validate, as shaders could have changed after profile changed
 
     v2i renderTargetSize;
     if(IsEntityValid(renderTarget)) {
@@ -258,15 +272,15 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
 
 
     {
-        for_children(uniform, RenderPassSceneUniforms, pass) {
+        for_children(uniform, RenderPassSceneUniforms, pass, {
             SetUniformState(uniform, scene);
-        }
+        });
     }
 
     {
-        for_children(uniform, RenderPassCameraUniforms, pass) {
+        for_children(uniform, RenderPassCameraUniforms, pass, {
             SetUniformState(uniform, camera);
-        }
+        });
     }
 
     {

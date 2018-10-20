@@ -73,13 +73,12 @@ API_EXPORT Entity CreateEntity() {
     Assert(0, Generations[index] % 2 != 0);
     
     auto entity = GetEntity(index, Generations[index]);
+    auto argument = MakeVariant(Entity, entity);
 
     Verbose(Verbose_Entity, "Entity Created: %s", GetDebugName(entity));
 
     if(__IsCoreInitialized) {
-		Type types[] = { TypeOf_Entity };
-		const void* values[] = { &entity };
-        FireEventFast(EventOf_EntityCreated(), 1, types, values);
+        FireEventFast(EventOf_EntityCreated(), 1, &argument);
     }
 
     return entity;
@@ -94,9 +93,8 @@ API_EXPORT void DestroyEntity(Entity entity) {
         RemoveComponent(entity, component);
     });
 
-	Type types[] = { TypeOf_Entity };
-	const void* values[] = { &entity };
-	FireEventFast(EventOf_EntityDestroyed(), 1, types, values);
+    auto argument = MakeVariant(Entity, entity);
+	FireEventFast(EventOf_EntityDestroyed(), 1, &argument);
     
     auto index = GetEntityIndex(entity);
     FreeSlots.push_back(index);

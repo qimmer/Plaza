@@ -139,7 +139,7 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
         }
 
         if(__isComponentInitialized) {
-            for_children(property, Properties, component) {
+            for_children(property, Properties, component, {
                 auto propertyData = GetPropertyData(property);
                 if(GetPropertyKind(property) != PropertyKind_Child) continue;
 
@@ -156,16 +156,15 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
                 SetOwner(child, entity, property);
 
                 AddComponent(child, GetPropertyChildComponent(property));
-            }
-            {
-                for_children(base, Bases, component) {
-                    AddComponent(entity, GetBaseComponent(base));
-                }
-            }
+            });
 
-			Type types[] = { TypeOf_Entity, TypeOf_Entity };
-			const void* values[] = { &component, &entity };
-			FireEventFast(EventOf_EntityComponentAdded(), 2, types, values);
+            for_children(base, Bases, component, {
+                AddComponent(entity, GetBaseComponent(base));
+            });
+
+
+            Variant arguments[] = {MakeVariant(Entity, component), MakeVariant(Entity, entity)};
+			FireEventFast(EventOf_EntityComponentAdded(), 2, arguments);
 
             for_entity(extension, extensionData, Extension, {
 			    if(extensionData->ExtensionComponent == component) {
@@ -204,8 +203,8 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
         });
 
 		Type types[] = { TypeOf_Entity, TypeOf_Entity };
-		const void* values[] = { &component, &entity };
-		FireEventFast(EventOf_EntityComponentRemoved(), 2, types, values);
+		const Variant values[] = { MakeVariant(Entity, component), MakeVariant(Entity, entity) };
+		FireEventFast(EventOf_EntityComponentRemoved(), 2, values);
 
         if(HasComponent(entity, component)) {
             auto componentData = GetComponentType(component);
@@ -219,9 +218,8 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
                 auto kind = GetPropertyKind(property);
 
                 if(kind == PropertyKind_Child) {
-                    Entity childEntity = 0;
-                    GetPropertyValue(property, entity, &childEntity);
-                    DestroyEntity(childEntity);
+                    auto childEntity = GetPropertyValue(property, entity);
+                    DestroyEntity(childEntity.as_Entity);
                 } else if(kind == PropertyKind_Array) {
                     while(GetArrayPropertyCount(property, entity)) {
                         RemoveArrayPropertyElement(property, entity, 0);
@@ -229,7 +227,7 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
                 } else {
                     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
-                    SetPropertyValue(property, entity, nullData); // Reset value to default before removal
+                    SetPropertyValue(property, entity, Variant_Empty); // Reset value to default before removal
                 }
             }
 
@@ -296,7 +294,7 @@ API_EXPORT void SetComponentSize(Entity entity, u16 value) {
     componentData->DataBuffer.SetElementSize(value + sizeof(Entity)*2);
 
     if(__isComponentInitialized) {
-        EmitChangedEvent(entity, PropertyOf_ComponentSize(), GetPropertyData(PropertyOf_ComponentSize()), &oldValue, &value);
+        EmitChangedEvent(entity, PropertyOf_ComponentSize(), GetPropertyData(PropertyOf_ComponentSize()), oldValue, MakeVariant(u16, value));
     }
 }
 

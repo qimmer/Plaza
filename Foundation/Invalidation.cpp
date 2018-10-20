@@ -30,10 +30,9 @@ API_EXPORT void InvalidateParent(Entity child) {
 }
 
 API_EXPORT void Validate(Entity component) {
-    Type types[] = { TypeOf_Entity };
-    const void * argumentPtrs[] = { &component };
+    auto argument = MakeVariant(Entity, component);
 
-    FireEventFast(EventOf_Validate(), 1, types, argumentPtrs);
+    FireEventFast(EventOf_Validate(), 1, &argument);
 
     Entity entity = 0;
     for_entity_abstract(entity, data, component, {

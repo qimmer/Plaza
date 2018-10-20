@@ -1,0 +1,72 @@
+{
+  "Children": [
+    {
+      "Uuid": "DebugGui.Font",
+      "Children": [
+        {
+          "Uuid": "DebuGui.Fonts.Default",
+          "StreamPath": "file://DebugGui/Fonts/kongtext.ttf"
+        }
+      ]
+    },
+    {
+      "Uuid": "DebugGui.Styles",
+      "Children": [
+        {
+          "Uuid": "DebugGui.Styles.Default",
+          "AppNodeChildren": [
+            {
+              "Uuid": "DebugGui.Styles.Default.Label",
+              "WidgetFont": "DebugGui.Fonts.Default",
+              "WidgetColor": [0, 0, 0, 1],
+              "WidgetBackgroundColor": [0, 0, 0, 0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Uuid": "DebugGui.Styles.Current",
+      "InstanceTemplate": "DebugGui.Styles.Default"
+    },
+    {
+      "Uuid": "DebuGui.MainFrame",
+      "WidgetSize": [800, 600],
+      "WidgetLayout": "WidgetLayout_Vertical",
+      "Children": [
+        {
+          "Uuid": "DebugGui.MainFrame.TopBar",
+          "WidgetStretch": [1.0, 0.1],
+          "Children": [
+            {
+              "Uuid": "DebugGui.MainFrame.TopBar.BuildInfo",
+              "WidgetStretch": [0.2, 1.0],
+              "WidgetText": "Build 0.1.4537",
+              "InstanceTemplate": "DebugGui.Styles.Current.Label"
+            },
+            {
+              "Uuid": "DebugGui.MainFrame.TopBar.Title",
+              "WidgetStretch": [0.6, 1.0],
+              "WidgetText": "Hello World",
+              "InstanceTemplate": "DebugGui.Styles.Current.Label"
+            },
+            {
+              "Uuid": "DebugGui.MainFrame.TopBar.Fps",
+              "WidgetStretch": [0.2, 1.0],
+              "WidgetText": "FPS: ???",
+              "InstanceTemplate": "DebugGui.Styles.Current.Label"
+            }
+          ]
+        },
+        {
+          "Uuid": "DebugGui.MainFrame.ContentFrame",
+          "WidgetStretch": [1.0, 0.8]
+        },
+        {
+          "Uuid": "DebugGui.MainFrame.BottomBar",
+          "WidgetStretch": [1.0, 0.1]
+        }
+      ]
+    }
+  ]
+}

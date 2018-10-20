@@ -4,7 +4,7 @@
         "Component.AppRoot",
         "Component.Module"
     ],
-    "AppNodeChildren": [        
+    "Children": [
         {
             "Uuid": "TestGame.Context",
             "RenderContextTitle": "Test Game",
@@ -31,7 +31,7 @@
         },
         {
             "Uuid": "TestGame.Renderer",
-            "SceneRendererPath": "DemoAssets.RenderPaths.Default",
+            "SceneRendererPath": "TestAssets.RenderPaths.Default",
             "SceneRendererViewport": [0.0, 0.0, 1.0, 1.0],
             "SceneRendererScene": "TestGame.Scene",
             "SceneRendererTarget": "TestGame.Context",
@@ -41,7 +41,7 @@
             "Uuid": "TestGame.Scene",
             "$components": ["Component.AppRoot"],
             "AppRootActive": true,
-            "AppNodeChildren": [
+            "Children": [
                 {
                     "Uuid": "TestGame.Scene.Camera",
                     "FrustumNearClip": 0.1,
@@ -14502,9 +14502,9 @@
         },
         {
             "Uuid": "TestGame.Externals",
-            "AppNodeChildren": [
+            "Children": [
                 {
-                    "StreamPath": "file://TestGame/DemoAssets.json",
+                    "StreamPath": "file://TestGame/TestAssets.json",
                     "PersistancePointLoading": true
                 },
                 {

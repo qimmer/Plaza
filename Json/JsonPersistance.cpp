@@ -164,11 +164,9 @@ static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& e
 static Entity ResolveEntity(StringRef uuid, rapidjson::Value& entityMap, rapidjson::Document& document);
 
 static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjson::Writer<rapidjson::StringBuffer>& writer) {
-    Variant value;
-    auto type = GetPropertyType(property);
-    GetPropertyValue(property, entity, &value.data);
+    Variant value = GetPropertyValue(property, entity);
 
-    switch(type) {
+    switch(value.type) {
         WriteIf(u8, Uint)
         WriteIf(u16, Uint)
         WriteIf(u32, Uint)
@@ -204,7 +202,7 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjso
 
             break;
         default:
-            Log(entity, LogSeverity_Warning, "Unsupported type when serializing property '%s': %s", GetName(property), GetTypeName(type));
+            Log(entity, LogSeverity_Warning, "Unsupported type when serializing property '%s': %s", GetName(property), GetTypeName(value.type));
             writer.Null();
     }
 
@@ -258,8 +256,7 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
                         writer.String(name);
 
                         if(includeReferenceLevels > 0 && GetPropertyType(property) == TypeOf_Entity) {
-                            Entity child = 0;
-                            GetPropertyValue(property, parent, &child);
+                            Entity child = GetPropertyValue(property, parent).as_Entity;
 
                             if(IsEntityValid(child)) {
                                 result &= SerializeNode(child, root, name, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0), includePersistedChildren, includeNativeEntities);
@@ -273,8 +270,7 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
                         break;
                     case PropertyKind_Child:
                     {
-                        Entity child = 0;
-                        GetPropertyValue(property, parent, &child);
+                        Entity child = GetPropertyValue(property, parent).as_Entity;
                         if(IsEntityValid(child)) {
                             writer.String(GetName(property));
                             result &= SerializeNode(child, root, name, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0), includePersistedChildren, includeNativeEntities);
@@ -407,8 +403,6 @@ static bool DeserializeEntity(Entity entity, rapidjson::Value& value, rapidjson:
         auto propertyKind = GetPropertyKind(property);
         auto& reader = propertyIterator->value;
 
-        Entity child = 0;
-
         AddComponent(entity, component);
         switch(propertyKind) {
             case PropertyKind_Value:
@@ -416,8 +410,7 @@ static bool DeserializeEntity(Entity entity, rapidjson::Value& value, rapidjson:
                 break;
             case PropertyKind_Child:
                 if(entityMap.HasMember(reader)) {
-                    GetPropertyValue(property, entity, &child);
-                    DeserializeEntity(child, entityMap[reader], entityMap, document);
+                    DeserializeEntity(GetPropertyValue(property, entity).as_Entity, entityMap[reader], entityMap, document);
                 }
                 break;
             case PropertyKind_Array:
@@ -476,8 +469,7 @@ static Entity ResolveEntity(StringRef uuid, rapidjson::Value& entityMap, rapidjs
         Entity entity = FindEntityByUuid(uuid);
         if(!IsEntityValid(entity)) {
             if(GetPropertyKind(ownerProperty) == PropertyKind_Child) {
-                GetPropertyValue(ownerProperty, owner, &entity);
-                Assert(owner, entity);
+                Assert(owner, GetPropertyValue(ownerProperty, owner).as_Entity);
             } else if(GetPropertyKind(ownerProperty) == PropertyKind_Array) {
                 auto& indexValue = value["$index"];
                 if(indexValue.GetType() != rapidjson::kNumberType) {
@@ -590,7 +582,7 @@ static bool ParseBinding(StringRef bindingString, Entity parent, Entity parentPr
     auto len = strlen(bindingString);
     if(bindingString[0] != '{' || bindingString[len - 1] != '}') return false;
 
-    char *bindingWithoutCurlyBraces = (char*)alloca(len - 2);
+    char *bindingWithoutCurlyBraces = (char*)alloca(len - 1);
     memcpy(bindingWithoutCurlyBraces, bindingString + 1, len - 2);
     bindingWithoutCurlyBraces[len - 2] = '\0';
 
@@ -682,7 +674,7 @@ static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& e
                 }
             }
         }
-        SetPropertyValue(property, parent, &value);
+        SetPropertyValue(property, parent, __MakeVariant(&value, type));
         return true;
     }
 
@@ -761,12 +753,7 @@ static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& e
             break;
     }
 
-    if(isVariant) {
-        SetPropertyValue(property, parent, &value);
-    } else {
-        SetPropertyValue(property, parent, &value.data);
-    }
-
+    SetPropertyValue(property, parent, value);
 
     return true;
 }

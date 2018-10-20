@@ -34,15 +34,11 @@ int main(int argc, char** argv) { \
     for(auto i = 0; i < GetComponentMax(ComponentOf_Test()); ++i) {
         auto entity = GetComponentEntity(ComponentOf_Test(), i);
         if(IsEntityValid(entity)) {
-            u32 result = -1;
+            auto argument = MakeVariant(Entity, entity);
+            auto result = CallFunction(entity, 1, &argument);
+            printf("%s %s.\n", GetName(entity), (result.as_u32 == 0) ? "Succeeded" : "Failed");
 
-            const Type argumentTypes[] = {TypeOf_Entity};
-            const void* argumentPtrs[] = {&entity};
-
-            CallFunction(entity, &result, 1, argumentTypes, argumentPtrs);
-            printf("%s %s.\n", GetName(entity), (result == 0) ? "Succeeded" : "Failed");
-
-            if(result == 0) {
+            if(result.as_u32 == 0) {
                 numSucceeded++;
             } else {
                 numFailed++;

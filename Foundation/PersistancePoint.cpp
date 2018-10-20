@@ -167,8 +167,9 @@ API_EXPORT bool ResolveReferences() {
         }
 
         auto entity = GetOwner(unresolvedReference);
+        auto value = MakeVariant(Entity, reference);
 
-        SetPropertyValue(data->UnresolvedReferenceProperty, entity, &reference);
+        SetPropertyValue(data->UnresolvedReferenceProperty, entity, value);
 
         auto index = GetUnresolvedReferencesIndex(entity, unresolvedReference);
         RemoveUnresolvedReferences(entity, index);

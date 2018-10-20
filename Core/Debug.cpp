@@ -45,6 +45,8 @@ struct LogMessage {
     Date LogMessageTime;
 };
 
+static StringRef lastLogMessage = 0;
+
 API_EXPORT void Log(Entity context, int severity, StringRef format, va_list arg) {
     char buffer[4096];
 
@@ -54,9 +56,15 @@ API_EXPORT void Log(Entity context, int severity, StringRef format, va_list arg)
 
     buffer[numWritten] = '\0';
 
+    auto interned = Intern(buffer);
+
+    if(lastLogMessage == interned) return; // Prevents log spam
+
+    lastLogMessage = interned;
+
 #ifndef NDEBUG
     setbuf(stdout, 0);
-    printf("%s\n", buffer);
+    printf("%s\n", interned);
 #endif
 
     if(severity >= LogSeverity_Error) {
@@ -155,12 +163,11 @@ static void PrintNode(int level, Entity entity) {
         auto properties = GetProperties(component, &numProperties);
         for(auto i = 0; i < numProperties; ++i) {
             auto property = properties[i];
-            Entity value = 0;
-            GetPropertyValue(property, entity, &value);
+            auto value = GetPropertyValue(property, entity);
             switch(GetPropertyKind(property)) {
                 case PropertyKind_Child:
                     printf("%*s%s: ", (level + 1) * identation, " ", GetDebugName(property));
-                    PrintNode(level+1, value);
+                    PrintNode(level+1, value.as_Entity);
                     break;
                 case PropertyKind_Array:
                     printf("%*s%s: [\n", (level + 1) * identation, " ", GetDebugName(property));

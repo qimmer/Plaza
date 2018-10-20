@@ -25,23 +25,22 @@ LocalFunction(OnElapsedChanged, void, Entity stopWatch, double oldElapsed, doubl
     for_entity_parallel(animationPlayer, playerData, AnimationPlayer, {
         if(!GetAppRootActive(GetAppNodeRoot(animationPlayer))) continue;
 
-        for_children(layer, AnimationPlayerLayers, animationPlayer) {
+        for_children(layer, AnimationPlayerLayers, animationPlayer, {
             auto layerData = GetAnimationPlayerLayerData(layer);
             if(layerData->AnimationPlayerLayerSpeed != 0.0f) {
                 auto newTime = layerData->AnimationPlayerLayerTime;
                 newTime += deltaTime * layerData->AnimationPlayerLayerSpeed;
                 SetAnimationPlayerLayerTime(layer, newTime);
 
-                for_children(track, AnimationTracks, GetAnimationPlayerLayerAnimation(layer)) {
+                for_children(track, AnimationTracks, GetAnimationPlayerLayerAnimation(layer), {
                     auto value = EvaluateAnimationFrame(track, newTime, layerData->AnimationPlayerLayerLooping);
 
                     auto property = GetAnimationTrackProperty(track);
                     value = Cast(value, GetPropertyType(property));
-                    SetPropertyValue(property, animationPlayer, &value.data);
-                }
-
+                    SetPropertyValue(property, animationPlayer, value);
+                });
             }
-        }
+        });
     });
 }
 

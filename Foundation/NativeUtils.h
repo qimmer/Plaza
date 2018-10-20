@@ -35,7 +35,7 @@
         AddComponent(module, ComponentOf_StreamExtensionModule());\
         AddChild(PropertyOf_ModuleStreamCompressors(), module, compressor, true); \
         SetName(compressor, #COMPONENT "Compressor");\
-        SetStreamCompressor(compressor, MIMETYPE); \
+        SetStreamCompressorMimeType(compressor, MIMETYPE); \
         auto compressorData = GetStreamCompressorData(compressor); \
         compressorData->CompressHandler = Compress; \
         compressorData->DecompressHandler = Decompress; \

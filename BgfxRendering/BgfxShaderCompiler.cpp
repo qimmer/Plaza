@@ -79,11 +79,7 @@ int Compile(StringRef compilerPath,
     auto numPaths = sizeof(paths) / sizeof(StringRef);
 
     for(auto i = 0; i < numPaths; ++i) {
-        if(!strlen(*paths[i])) {
-            return -1;
-        }
-
-        if(memcmp(*paths[i], "file://", 7) != 0) {
+        if(!*paths[i] || !strlen(*paths[i]) || memcmp(*paths[i], "file://", 7) != 0) {
             Log(0, LogSeverity_Error, "Bgfx shader compiler tool only supports file:// paths.");
             return -1;
         }
@@ -91,8 +87,7 @@ int Compile(StringRef compilerPath,
         *paths[i] += 7; // Skip 'file://'
     }
 
-    char parentPath[PathMax];
-    GetParentFolder(binaryPath, parentPath, PathMax);
+    auto parentPath = GetParentFolder(binaryPath);
     CreateDirectories(parentPath);
 
     char profile[128];
@@ -232,6 +227,8 @@ LocalFunction(OnShaderCompile, void, Entity binaryProgram) {
             1,
             profile,
             shaderDefines);
+
+    Invalidate(binaryProgram);
 }
 
 BeginUnit(BgfxShaderCompiler)

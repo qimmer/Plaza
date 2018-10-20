@@ -21,9 +21,9 @@ struct InstanceOverride {
 };
 
 static bool IsInstanceOverriding(Entity instance, Entity property) {
-    for_children(override, InstanceOverrides, instance) {
+    for_children(override, InstanceOverrides, instance, {
         if(GetInstanceOverrideProperty(override) == property) return true;
-    }
+    });
 
     return false;
 }
@@ -56,8 +56,7 @@ Entity GetInstanceReference(Entity templateEntity, Entity instanceEntity, Entity
 }
 
 API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
-    char buffer[128];
-    Entity source, destination;
+    Variant source, destination;
 
     if(!IsEntityValid(templateEntity)) {
         Log(0, LogSeverity_Error, "Cannot copy from invalid entity", GetDebugName(templateEntity));
@@ -79,26 +78,27 @@ API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
         if (component != ComponentOf_Ownership() && component != ComponentOf_Template() && component != ComponentOf_Instance() && HasComponent(templateEntity, component)) {
             AddComponent(destinationEntity, component);
 
-            for_children(property, Properties, component) {
+            for_children(property, Properties, component, {
                 if(property == PropertyOf_Uuid() || GetPropertyReadOnly(property)) continue;
 
                 if(IsInstanceOverriding(destinationEntity, property)) continue;
 
+                Variant value;
                 switch (GetPropertyKind(property)) {
                     case PropertyKind_Value:
-                        GetPropertyValue(property, templateEntity, buffer);
+                        value = GetPropertyValue(property, templateEntity);
                         if(GetPropertyType(property) == TypeOf_Entity) {
                             // If the reference points to an entity inside the template tree, translate the reference
                             // to point into the equilivant entity in the instance tree
-                            *((Entity*)buffer) = GetInstanceReference(templateEntity, destinationEntity, *((Entity*)buffer));
+                            value.as_Entity = GetInstanceReference(templateEntity, destinationEntity, value.as_Entity);
                         }
-                        SetPropertyValue(property, destinationEntity, buffer);
+                        SetPropertyValue(property, destinationEntity, value);
                         break;
                     case PropertyKind_Child:
-                        GetPropertyValue(property, templateEntity, &source);
-                        GetPropertyValue(property, destinationEntity, &destination);
-                        if(IsEntityValid(source) && IsEntityValid(destination)) {
-                            Instantiate(source, destination);
+                        source = GetPropertyValue(property, templateEntity);
+                        destination = GetPropertyValue(property, destinationEntity);
+                        if(IsEntityValid(source.as_Entity) && IsEntityValid(destination.as_Entity)) {
+                            Instantiate(source.as_Entity, destination.as_Entity);
                         }
                         break;
                     case PropertyKind_Array:
@@ -112,7 +112,7 @@ API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
                             Instantiate(sourceElements[i], destinationElements[i]);
                         }
                 }
-            }
+            });
         }
     });
 
@@ -135,7 +135,7 @@ LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOw
     }
 }
 
-static void OnPropertyChanged(Entity property, Entity templateEntity, Type valueType, const void *oldValue, const void *newValue) {
+static void OnPropertyChanged(Entity property, Entity templateEntity, Type valueType, Variant oldValue, Variant newValue) {
     if(HasComponent(templateEntity, ComponentOf_Template())) {
         auto component = GetOwner(property);
         if(component == ComponentOf_Ownership()
@@ -155,15 +155,14 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
 
                     Verbose(Verbose_Instance, "Template %s updates %s on instance %s", GetUuid(templateEntity), GetUuid(property), GetUuid(instance));
 
-                    GetPropertyValue(property, instance, instanceValue);
-                    SetPropertyValue(property, instance, newValue);
+                    SetPropertyValue(property, instance, GetPropertyValue(property, instance));
                 });
                 break;
             }
             case PropertyKind_Array:
             {
-                auto newEntity = *(Entity*)newValue;
-                auto oldEntity = *(Entity*)oldValue;
+                auto newEntity = newValue.as_Entity;
+                auto oldEntity = oldValue.as_Entity;
                 // If element has been added, add one to all instances and bind template/instance relation
                 if(newEntity && !oldEntity) {
                     for_entity(instance, data, Instance, {

@@ -42,6 +42,7 @@ EndUnit()
             case TypeOf_double: CastNumberCase(double, T_TO);\
             case TypeOf_bool: CastNumberCase(bool, T_TO);\
             case TypeOf_StringRef: CastStringCase(T_TO);\
+            case TypeOf_Variant: newVar.as_ ## T_TO = v.as_ ## T_TO; return newVar; break;\
         }\
         break;\
     }
@@ -60,6 +61,7 @@ EndUnit()
             case TypeOf_float: CastNumberCase(float, bool);\
             case TypeOf_double: CastNumberCase(double, bool);\
             case TypeOf_StringRef: newVar.as_bool = tolower(v.as_StringRef[0]) == 't'; return newVar; break;\
+            case TypeOf_Variant: newVar.as_bool = v.as_u64 != 0; return newVar; break;\
         }\
         break;\
     }
@@ -102,6 +104,8 @@ API_EXPORT Variant Cast(Variant v, Type type) {
         case TypeOf_u16: CastNumber(u16)
         case TypeOf_u32: CastNumber(u32)
         case TypeOf_u64: CastNumber(u64)
+        case TypeOf_float: CastNumber(float)
+        case TypeOf_double: CastNumber(double)
         case TypeOf_bool: CastBool()
         case TypeOf_StringRef: CastString()
     }

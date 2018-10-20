@@ -1,0 +1,10 @@
+$input v_texcoord0, v_normal
+
+#include <common.sh>
+
+void main()
+{
+    v_normal = abs(v_normal);
+    vec4 albedo = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_FragColor = albedo;
+}

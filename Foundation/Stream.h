@@ -103,7 +103,7 @@ void StreamReadAsync(Entity entity, u64 size, StreamReadAsyncHandler readFinishe
 void StreamWriteAsync(Entity entity, u64 size, const void *data, StreamWriteAsyncHandler writeFinishedHandler);
 
 char GetPathSeparator();
-void GetParentFolder(StringRef absolutePath, char *parentFolder, size_t maxBuf);
+StringRef GetParentFolder(StringRef absolutePath);
 StringRef GetFileName(StringRef absolutePath);
 StringRef GetFileExtension(StringRef absolutePath);
 void CleanupPath(char* messyPath);

@@ -17,11 +17,11 @@ struct EnumFlag {
 };
 
 API_EXPORT StringRef GetEnumName(Entity e, u64 value) {
-    for_children(flag, EnumFlags, e) {
+    for_children(flag, EnumFlags, e, {
         if(GetEnumFlagValue(flag) == value) {
             return GetName(flag);
         }
-    }
+    });
 
     return "";
 }

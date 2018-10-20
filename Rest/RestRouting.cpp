@@ -21,9 +21,8 @@ LocalFunction(OnHttpServerRequest, void, Entity server, Entity request, Entity r
             auto requestUrl = GetHttpRequestUrl(request);
             if(memcmp(GetHttpRequestUrl(request), data->RestRoutingRoute, Min(strlen(requestUrl), strlen(data->RestRoutingRoute))) == 0) {
 
-				Type types[] = { TypeOf_Entity, TypeOf_Entity, TypeOf_Entity };
-				const void* values[] = { &routes[i], &request, &response };
-				FireEventFast(EventOf_RestRoutingRequest(), 3, types, values);
+				Variant values[] = { MakeVariant(Entity, routes[i]), MakeVariant(Entity, request), MakeVariant(Entity, response) };
+				FireEventFast(EventOf_RestRoutingRequest(), 3, values);
             }
         }
     }

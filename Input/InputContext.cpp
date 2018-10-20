@@ -17,21 +17,21 @@ struct InputContext {
 };
 
 API_EXPORT Entity FindInputState(Entity context, u16 key) {
-    for_children(inputState, InputContextStates, context) {
+    for_children(inputState, InputContextStates, context, {
         if(GetInputStateKey(inputState) == key) {
             return inputState;
         }
-    }
+    });
 
     return 0;
 }
 
 API_EXPORT void SetInputStateValueByKey(Entity context, u16 key, float value) {
-    for_children(inputState, InputContextStates, context) {
+    for_children(inputState, InputContextStates, context, {
         if(GetInputStateKey(inputState) == key) {
             SetInputStateValue(inputState, value);
         }
-    }
+    });
 }
 
 BeginUnit(InputContext)

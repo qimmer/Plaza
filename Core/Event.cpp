@@ -143,7 +143,7 @@ void __InitializeEvent() {
     __Property(PropertyOf_SubscriptionSender(), offsetof(Subscription, SubscriptionSender), sizeof(Subscription::SubscriptionSender), TypeOf_Entity,  component, 0, PropertyKind_Value);
 }
 
-API_EXPORT void FireEventFast(Entity event, u32 numArguments, const u8* argumentTypeIndices, const void **argumentDataPtrs) {
+API_EXPORT Variant FireEventFast(Entity event, u32 numArguments, const Variant* arguments) {
 
     Verbose(Verbose_Event, "Firing event %llu ...", event);
 
@@ -152,17 +152,22 @@ API_EXPORT void FireEventFast(Entity event, u32 numArguments, const u8* argument
     auto eventIndex = GetEntityIndex(event);
     auto& cache = GetSubscriptionCache(eventIndex);
 
+    Variant returnData;
+    memset(&returnData, 0, sizeof(Variant));
+
     if(data) {
-        auto sender = *(const Entity*)argumentDataPtrs[0];
+        auto sender = arguments[0].as_Entity;
         for(auto i = 0; i < cache.size(); ++i) {
             auto& subscription = cache[i];
             if(!subscription.SubscriptionSender || !sender || subscription.SubscriptionSender == sender) {
                 if(IsEntityValid(subscription.SubscriptionHandler)) {
-                    CallFunction(subscription.SubscriptionHandler, NULL, numArguments, argumentTypeIndices, argumentDataPtrs);
+                    returnData = CallFunction(subscription.SubscriptionHandler, numArguments, arguments);
                 }
             }
         }
     }
+
+    return returnData;
 }
 
 API_EXPORT Entity GetSubscriptionHandler(Entity entity) {
@@ -186,7 +191,7 @@ API_EXPORT Entity GetSubscriptionEvent(Entity entity) {
 API_EXPORT void SetSubscriptionHandler(Entity entity, Entity value)  {
     static Entity prop = PropertyOf_SubscriptionHandler ();
     auto oldValue = GetSubscriptionHandler(entity);
-    SetPropertyValue(prop, entity, &value);
+    SetPropertyValue(prop, entity, MakeVariant(Entity, value));
 
     OnSubscriptionHandlerChanged(entity, oldValue, value);
 }
@@ -194,7 +199,7 @@ API_EXPORT void SetSubscriptionHandler(Entity entity, Entity value)  {
 API_EXPORT void SetSubscriptionEvent(Entity entity, Entity value)  {
     static Entity prop = PropertyOf_SubscriptionEvent ();
     auto oldValue = GetSubscriptionEvent(entity);
-    SetPropertyValue(prop, entity, &value);
+    SetPropertyValue(prop, entity, MakeVariant(Entity, value));
 
     OnSubscriptionEventChanged(entity, oldValue, value);
 }
@@ -202,7 +207,7 @@ API_EXPORT void SetSubscriptionEvent(Entity entity, Entity value)  {
 API_EXPORT void SetSubscriptionSender(Entity entity, Entity value)  {
     static Entity prop = PropertyOf_SubscriptionSender ();
     auto oldValue = GetSubscriptionSender(entity);
-    SetPropertyValue(prop, entity, &value);
+    SetPropertyValue(prop, entity, MakeVariant(Entity, value));
 
     OnSubscriptionSenderChanged(entity, oldValue, value);
 }

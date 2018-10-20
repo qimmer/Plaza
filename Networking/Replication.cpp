@@ -31,8 +31,7 @@ static void Replicate(Entity context) {
             }
 
             if(kind == PropertyKind_Child) {
-                Entity child = 0;
-                GetPropertyValue(property, context, &child);
+                Entity child = GetPropertyValue(property, context).as_Entity;
                 if(IsEntityValid(child)) {
                     AddComponent(child, ComponentOf_Replication());
                     Replicate(child);
@@ -69,7 +68,7 @@ LocalFunction(OnComponentRemoved, void, Entity component, Entity context) {
     }
 }
 
-static void OnPropertyChanged(Entity property, Entity entity, Type valueType, const void *oldValue, const void *newValue) {
+static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue) {
     auto data = GetReplicationData(entity);
     if(data) {
         data->ReplicationLastChangeFrame = GetAppLoopFrame(GetReplicationAppLoop(ModuleOf_Networking()));

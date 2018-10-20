@@ -34,9 +34,8 @@ public:
             for_entity(fileStream, data, FileStream, {
                 auto data = GetFileStreamData(fileStream);
                 if(data->watchID == watchid) {
-					Type types[] = { TypeOf_Entity };
-					const void* values[] = { &fileStream };
-					FireEventFast(EventOf_StreamContentChanged(), 1, types, values);
+                    auto value = MakeVariant(Entity, fileStream);
+					FireEventFast(EventOf_StreamContentChanged(), 1, &value);
                     break;
                 }
             });
@@ -151,8 +150,7 @@ LocalFunction(OnStreamPathChanged, void, Entity stream, StringRef oldPath, Strin
 
         nativePath += 7; // Remove 'file://'
 
-        char parentFolder[PathMax];
-        GetParentFolder(nativePath, parentFolder, PathMax);
+        auto parentFolder = GetParentFolder(nativePath);
         data->watchID = fileWatcher.addWatch(parentFolder, &listener, false);
     }
 }

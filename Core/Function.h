@@ -4,12 +4,10 @@
 #include <Core/NativeUtils.h>
 #include "Variant.h"
 
-typedef bool(*FunctionCallerType)(
+typedef Variant(*FunctionCallerType)(
     Entity entity,
-    void *returnData,
     u32 numArguments,
-    const Type *argumentTypes,
-    const void **argumentDataPtrs
+    const Variant *arguments
 );
 
 struct FunctionArgument {
@@ -35,12 +33,10 @@ void SetFunctionArgsByDecl(Entity f, StringRef argsDecl);
 void ProfileStart(StringRef tag, double thresholdMsecs);
 void ProfileEnd();
 
-bool CallFunction(
+Variant CallFunction(
     Entity f,
-    void *returnData,
     u32 numArguments,
-    const Type *argumentTypes,
-    const void **argumentDataPtrs
+    const Variant *arguments
 );
 
 void __InitializeFunction();

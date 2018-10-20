@@ -7,5 +7,6 @@
 
 #include <Core/NativeUtils.h>
 
+Unit(StbImagePersistance)
 
 #endif //PLAZA_STBIMAGEDECODER_H

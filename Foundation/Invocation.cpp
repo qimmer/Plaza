@@ -21,8 +21,6 @@ struct InvocationArgument {
 };
 
 API_EXPORT bool Invoke(Entity invocationEntity) {
-    const void *argumentPtrs[16];
-    u8 argumentTypeIndices[16];
     Variant result;
 
     u32 count = 0;
@@ -31,28 +29,20 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
 
     if(!invocationArguments) return false;
 
-    if(count > 16) {
-        Log(invocationEntity, LogSeverity_Error, "Function invocation '%s' failed: Too many arguments.", GetName(invocationEntity));
-        return false;
-    }
-
+    auto arguments = (Variant*)alloca(sizeof(Variant) * count);
     for(int i = 0; i < count; ++i) {
         auto argument = GetInvocationArgumentData(invocationArguments[i]);
 
-        argumentPtrs[i] = &argument->InvocationArgumentValue.data;
-        argumentTypeIndices[i] = argument->InvocationArgumentValue.type;
+        arguments[i] = argument->InvocationArgumentValue;
     }
 
     if(HasComponent(invocation->InvocationFunction, ComponentOf_Function())) {
-        CallFunction(
+        result = CallFunction(
                 invocation->InvocationFunction,
-                &result.data,
                 count,
-                argumentTypeIndices,
-                argumentPtrs
+                arguments
         );
 
-        result.type = GetFunctionReturnType(invocation->InvocationFunction);
         SetInvocationResult(invocationEntity, result);
 
         return true;
@@ -60,8 +50,7 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
         FireEventFast(
                 invocation->InvocationFunction,
                 count,
-                argumentTypeIndices,
-                argumentPtrs
+                arguments
         );
 
         result.type = TypeOf_unknown;

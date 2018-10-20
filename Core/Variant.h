@@ -5,7 +5,8 @@
 #ifndef PLAZA_VARIANT_H
 #define PLAZA_VARIANT_H
 
-#include <Core/NativeUtils.h>
+#include <Core/Types.h>
+#include <memory.h>
 
 struct ALIGN(16) Variant {
     union {
@@ -57,7 +58,7 @@ inline Variant __MakeVariant(const void *data, Type type) {
     return v;
 }
 
-static const Variant Variant_Empty = __MakeVariant(NULL, TypeOf_unknown);
+static const Variant Variant_Empty = __MakeVariant(0, TypeOf_unknown);
 
 Variant Cast(Variant v, Type type);
 

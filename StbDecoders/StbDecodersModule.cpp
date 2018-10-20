@@ -3,11 +3,34 @@
 //
 
 #include <Foundation/FoundationModule.h>
+#include <Gui/GuiModule.h>
+#include <Json/NativeUtils.h>
+#include <Rendering/RenderingModule.h>
+
 #include "StbDecodersModule.h"
 #include "StbImagePersistance.h"
+#include "StbTrueTypePersistance.h"
 
 BeginModule(StbDecoders)
-        ModuleDependency(Foundation)
+    RegisterDependency(Gui)
+    RegisterDependency(Rendering)
+    RegisterUnit(StbTrueTypePersistance)
+    RegisterUnit(StbImagePersistance)
 
-        ModuleService(StbImagePersistance)
+    ModuleData(
+            {
+                "FileTypes":[
+                    {
+                        "Uuid": "FileType.ttf",
+                        "FileTypeExtension": ".ttf",
+                        "FileTypeMimeType" : "font/ttf"
+                    },
+                    {
+                        "Uuid": "FileType.png",
+                        "FileTypeExtension": ".png",
+                        "FileTypeMimeType" : "image/png"
+                    }
+                ]
+            }
+    );
 EndModule()

@@ -4,6 +4,7 @@
 
 #include "Texture2D.h"
 #include "Texture.h"
+#include <Foundation/Invalidation.h>
 
 struct Texture2D {
     v2i TextureSize2D;
@@ -13,4 +14,6 @@ BeginUnit(Texture2D)
     BeginComponent(Texture2D)
         RegisterProperty(v2i, TextureSize2D)
     EndComponent()
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureSize2D()), Invalidate, 0)
 EndUnit()

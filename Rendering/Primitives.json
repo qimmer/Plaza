@@ -1,5 +1,5 @@
 {
-    "AppNodeChildren": [
+    "Children": [
         {
             "Uuid": "Rendering.Primitives.VertexDeclaration",
             "VertexDeclarationAttributes": [
@@ -29,7 +29,7 @@
             "ProgramVertexShaderSource": "Rendering.Primitives.Program.VertexShader",
             "ProgramPixelShaderSource": "Rendering.Primitives.Program.PixelShader",
             "ProgramDeclShaderSource": "Rendering.Primitives.Program.DeclShader",
-            "AppNodeChildren": [
+            "Children": [
                 {
                     "Uuid": "Rendering.Primitives.Program.VertexShader",
                     "StreamPath": "file://Rendering/PrimitiveProgram.vs"

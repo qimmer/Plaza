@@ -169,7 +169,7 @@ API_EXPORT bool RemoveChild(Entity property, Entity entity, u32 index) {
 
 API_EXPORT u32 GetChildIndex(Entity property, Entity entity, Entity child) {
     u32 count = 0;
-    auto children = GetChildren(property, entity, &count);
+    auto children = GetChildArray(property, entity, &count);
     if(!children) return InvalidIndex;
 
     for(auto i = 0; i < count; ++i) {
@@ -179,7 +179,7 @@ API_EXPORT u32 GetChildIndex(Entity property, Entity entity, Entity child) {
     return InvalidIndex;
 }
 
-API_EXPORT Entity* GetChildren(Entity property, Entity entity, u32 *count) {
+API_EXPORT Entity* GetChildArray(Entity property, Entity entity, u32 *count) {
     auto propertyChildren = GetPropertyChildren(property);
     if(!propertyChildren) return NULL;
 
@@ -197,12 +197,11 @@ API_EXPORT Entity* GetChildren(Entity property, Entity entity, u32 *count) {
     return propertyChildren->PerEntityChildrenInfo[entityIndex].children.data(); //&propertyChildren->ChildrenPool[info.StartIndex];
 }
 
-API_EXPORT void EmitChangedEvent(Entity entity, Entity property, Property *propertyData, const void *oldValueData, const void *newValueData) {
+API_EXPORT void EmitChangedEvent(Entity entity, Entity property, Property *propertyData, Variant oldValueData, Variant newValueData) {
     if(propertyData) {
-        const Type argumentTypes[] = {TypeOf_Entity, propertyData->PropertyType, propertyData->PropertyType};
-        const void * argumentData[] = {&entity, oldValueData, newValueData};
+        Variant arguments[] = { MakeVariant(Entity, entity), oldValueData, newValueData};
 
-        FireEventFast(propertyData->PropertyChangedEvent, 3, argumentTypes, argumentData);
+        FireEventFast(propertyData->PropertyChangedEvent, 3, arguments);
     }
 
     for(auto& listener : PropertyChangedListeners) {
@@ -210,7 +209,7 @@ API_EXPORT void EmitChangedEvent(Entity entity, Entity property, Property *prope
     }
 }
 
-API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *newValueData) {
+API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newValueData) {
     auto component = GetOwner(property);
 
     static auto componentOfProperty = ComponentOf_Property();
@@ -242,45 +241,56 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, const void *ne
 
         ReleaseStringRef(*(StringRef*)valueData);
 
-        internedString = AddStringRef(*(StringRef *) newValueData);
-        newValueData = &internedString;
+        internedString = AddStringRef(newValueData.as_StringRef);
+        newValueData.as_StringRef = internedString;
     }
 
-    if(memcmp(valueData, newValueData, size) != 0) {
-        auto oldValueData = alloca(size);
-        memcpy(oldValueData, valueData, size);
-        memcpy(valueData, newValueData, size);
+    if(propertyData->PropertyType == TypeOf_Variant) {
+        if(memcmp(valueData, &newValueData, size) != 0) {
+            Variant oldValueData;
+            memcpy(&oldValueData, valueData, size);
+            memcpy(valueData, &newValueData, size);
 
-        EmitChangedEvent(context, property, propertyData, oldValueData, newValueData);
+            EmitChangedEvent(context, property, propertyData, oldValueData, newValueData);
+        }
+    } else {
+        if(memcmp(valueData, &newValueData.data, size) != 0) {
+            Variant oldValueData;
+            oldValueData.type = propertyData->PropertyType;
+            memcpy(&oldValueData.data, valueData, size);
+            memcpy(valueData, &newValueData.data, size);
+
+            EmitChangedEvent(context, property, propertyData, oldValueData, newValueData);
+        }
     }
+
 }
 
-API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut) {
+API_EXPORT Variant GetPropertyValue(Entity property, Entity context) {
     auto component = GetOwner(property);
 
     if(!IsEntityValid(property)) {
         Log(context, LogSeverity_Error, "Invalid property when trying to get property");
-        return false;
+        return Variant_Empty;
     }
 
     if(!IsEntityValid(component)) {
         Log(context, LogSeverity_Error, "Invalid component when trying to get property %s", GetDebugName(property));
-        return false;
+        return Variant_Empty;
     }
 
     if(!IsEntityValid(context)) {
         Log(0, LogSeverity_Error, "Invalid entity when trying to get property %s", GetDebugName(property));
-        return false;
+        return Variant_Empty;
     }
 
     static StringRef nullStr = Intern("");
-    static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
     auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
     auto propertyData = (Property*) GetComponentBytes(ComponentOf_Property(), propertyIndex);
 
     if(!propertyData) {
         Log(context, LogSeverity_Error, "Property has not been registered.");
-        return false;
+        return Variant_Empty;
     }
 
     auto offset = propertyData->PropertyOffset;
@@ -290,28 +300,18 @@ API_EXPORT bool GetPropertyValue(Entity property, Entity context, void *dataOut)
     auto componentData = GetComponentBytes(component, componentIndex);
 
     if(componentIndex == InvalidIndex || !componentData) {
-        if(propertyData->PropertyKind == PropertyKind_Array) {
-            *(VectorStruct**)dataOut = 0;
-        } else {
-            memset(dataOut, 0, size);
-        }
-
         Verbose(Verbose_PropertyChanges, "'%s' is not present on entity '%s'. Returning default value.", GetDebugName(property), GetDebugName(component));
 
-        return false;
+        return Variant_Empty;
     }
 
     auto valueData = componentData + offset;
-    if(propertyData->PropertyKind == PropertyKind_Array) {
-        *(VectorStruct**)dataOut = (VectorStruct*)valueData;
-    } else {
-        if(propertyData->PropertyType == TypeOf_StringRef && !memcmp(valueData, "\0\0\0\0\0\0\0\0", sizeof(StringRef))) {
-            *(StringRef*)valueData = nullStr;
-        }
-        memcpy(dataOut, valueData, size);
+
+    if(propertyData->PropertyType == TypeOf_StringRef && !memcmp(valueData, "\0\0\0\0\0\0\0\0", sizeof(StringRef))) {
+        return MakeVariant(StringRef, nullStr);
     }
 
-    return true;
+    return __MakeVariant(valueData, propertyData->PropertyType);
 }
 
 
@@ -350,7 +350,7 @@ API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Enti
 
 API_EXPORT u32 GetArrayPropertyCount(Entity property, Entity entity) {
     u32 count = 0;
-    GetChildren(property, entity, &count);
+    GetChildArray(property, entity, &count);
     return count;
 }
 
@@ -400,7 +400,7 @@ API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity) {
     auto propertyData = GetPropertyData(property);
     AddComponent(element, propertyData->PropertyChildComponent);
 
-    EmitChangedEvent(entity, property, propertyData, &nullEntity, &element);
+    EmitChangedEvent(entity, property, propertyData, MakeVariant(Entity, nullEntity), MakeVariant(Entity, element));
 
     return index;
 }
@@ -409,13 +409,13 @@ API_EXPORT bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 i
     if(!HasComponent(property, ComponentOf_Property())) return false;
 
     u32 count = 0;
-    auto children = GetChildren(property, entity, &count);
+    auto children = GetChildArray(property, entity, &count);
 
     if(index >= count) return false;
 
     auto child = children[index];
 
-    EmitChangedEvent(entity, property, GetPropertyData(property), &child, &nullEntity);
+    EmitChangedEvent(entity, property, GetPropertyData(property), MakeVariant(Entity, child), MakeVariant(Entity, nullEntity));
 
     RemoveChild(property, entity, index);
 
@@ -433,7 +433,7 @@ API_EXPORT u32 GetArrayPropertyIndex(Entity property, Entity entity, Entity elem
 
 API_EXPORT Entity GetArrayPropertyElement(Entity property, Entity entity, u32 index) {
     u32 count = 0;
-    auto children = GetChildren(property, entity, &count);
+    auto children = GetChildArray(property, entity, &count);
     if(!children) return 0;
     if(index >= count) return 0;
 
@@ -441,7 +441,7 @@ API_EXPORT Entity GetArrayPropertyElement(Entity property, Entity entity, u32 in
 }
 
 API_EXPORT Entity *GetArrayPropertyElements(Entity property, Entity entity, u32 *count) {
-    return GetChildren(property, entity, count);
+    return GetChildArray(property, entity, count);
 }
 
 void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind) {
@@ -490,14 +490,14 @@ API_EXPORT void SetOwner(Entity entity, Entity owner, Entity ownerProperty) {
     AddComponent(entity, ComponentOf_Ownership());
     auto data = GetOwnershipData(entity);
 
-    auto oldOwner = data->Owner;
-    auto oldOwnerProperty = data->OwnerProperty;
+    auto oldOwner = MakeVariant(Entity, data->Owner);
+    auto oldOwnerProperty = MakeVariant(Entity, data->OwnerProperty);
 
     data->Owner = owner;
     data->OwnerProperty = ownerProperty;
 
-    EmitChangedEvent(entity, PropertyOf_Owner(), GetPropertyData(PropertyOf_Owner()), &oldOwner, &owner);
-    EmitChangedEvent(entity, PropertyOf_OwnerProperty(), GetPropertyData(PropertyOf_OwnerProperty()), &oldOwnerProperty, &ownerProperty);
+    EmitChangedEvent(entity, PropertyOf_Owner(), GetPropertyData(PropertyOf_Owner()), oldOwner, MakeVariant(Entity, owner));
+    EmitChangedEvent(entity, PropertyOf_OwnerProperty(), GetPropertyData(PropertyOf_OwnerProperty()), oldOwnerProperty, MakeVariant(Entity, ownerProperty));
 }
 
 API_EXPORT void SetPropertyMeta(Entity property, StringRef metaString) {
@@ -507,7 +507,7 @@ API_EXPORT void SetPropertyMeta(Entity property, StringRef metaString) {
 static void LayoutProperties(Entity component) {
     auto offset = 0;
 
-    for_children(property, Properties, component) {
+    for_children(property, Properties, component, {
         auto data = GetPropertyData(property);
 
         auto alignment = GetTypeAlignment(data->PropertyType);
@@ -522,7 +522,7 @@ static void LayoutProperties(Entity component) {
         SetPropertyOffset(property, offset);
 
         offset += size;
-    }
+    });
 
     offset = Align(offset, alignof(max_align_t)); // Align component size to maximum possible alignment
 

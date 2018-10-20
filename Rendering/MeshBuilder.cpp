@@ -49,6 +49,10 @@ static void BuildVertexBuffer(Entity mesh) {
                     value.type = TypeOf_v2f;
                     value.as_v2f = vertex->MeshBuilderVertexTexCoord0;
                     break;
+                case VertexAttributeUsage_TexCoord1:
+                    value.type = TypeOf_v2f;
+                    value.as_v2f = vertex->MeshBuilderVertexTexCoord1;
+                    break;
                 case VertexAttributeUsage_Color0:
                     value.type = TypeOf_rgba8;
                     value.as_rgba8 = vertex->MeshBuilderVertexColor0;
@@ -65,9 +69,13 @@ static void BuildVertexBuffer(Entity mesh) {
         attribOffset += GetTypeSize(attribType);
     }
 
-    char path[1024];
-    snprintf(path, sizeof(path), "memory://%llu.vtx", vb);
-    SetStreamPath(vb, path);
+    auto currentPath = GetStreamPath(vb);
+    if(!currentPath || !strlen(currentPath)) {
+        char path[1024];
+        snprintf(path, sizeof(path), "memory://%s", GetUuid(vb));
+        SetStreamPath(vb, path);
+    }
+
     if(StreamOpen(vb, StreamMode_Write)) {
         StreamWrite(vb, vertexBufferSize, vertexData);
         StreamClose(vb);
@@ -103,9 +111,13 @@ static void BuildIndexBuffer(Entity mesh) {
         }
     }
 
-    char path[1024];
-    snprintf(path, sizeof(path), "memory://%llu.idx", ib);
-    SetStreamPath(ib, path);
+    auto currentPath = GetStreamPath(ib);
+    if(!currentPath || !strlen(currentPath)) {
+        char path[1024];
+        snprintf(path, sizeof(path), "memory://%s", GetUuid(ib));
+        SetStreamPath(ib, path);
+    }
+
     if(StreamOpen(ib, StreamMode_Write)) {
         StreamWrite(ib, indexBufferSize, indexData);
         StreamClose(ib);
@@ -153,6 +165,7 @@ BeginUnit(MeshBuilder)
         RegisterProperty(v3f, MeshBuilderVertexPosition)
         RegisterProperty(v3f, MeshBuilderVertexNormal)
         RegisterProperty(v2f, MeshBuilderVertexTexCoord0)
+        RegisterProperty(v2f, MeshBuilderVertexTexCoord1)
         RegisterProperty(rgba8, MeshBuilderVertexColor0)
     EndComponent()
 
@@ -169,6 +182,7 @@ BeginUnit(MeshBuilder)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexPosition()), OnMeshBuilderChildChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexNormal()), OnMeshBuilderChildChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexTexCoord0()), OnMeshBuilderChildChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexTexCoord1()), OnMeshBuilderChildChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexColor0()), OnMeshBuilderChildChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderIndexVertexIndex()), OnMeshBuilderChildChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_IndexBufferLong()), OnMeshBuilderChildChanged, 0)

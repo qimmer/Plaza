@@ -179,9 +179,8 @@ static void StartAccept(Entity server) {
 
         Verbose(Verbose_TcpClient, "Client %u connected: %s", GetComponentIndex(ComponentOf_TcpStream(), stream), GetStreamPath(stream));
 
-		Type types[] = { TypeOf_Entity, TypeOf_Entity };
-		const void* values[] = { &server, &stream };
-		FireEventFast(EventOf_TcpClientConnected(), 2, types, values);
+		Variant values[] = { MakeVariant(Entity, server), MakeVariant(Entity, stream) };
+		FireEventFast(EventOf_TcpClientConnected(), 2, values);
     });
 }
 

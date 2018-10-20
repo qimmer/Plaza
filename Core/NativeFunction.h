@@ -7,10 +7,9 @@
 
 #include "NativeUtils.h"
 
-typedef bool(*NativeFunctionInvokerType)(
+typedef Variant(*NativeFunctionInvokerType)(
         void *funcPtr,
-        void *returnData,
-        const void **argumentDataPtrs
+        const Variant *arguments
 );
 
 struct NativeFunction {

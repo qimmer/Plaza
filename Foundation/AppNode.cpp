@@ -37,7 +37,7 @@ LocalFunction(OnAppNodeAdded, void, Entity component, Entity entity) {
 BeginUnit(AppNode)
     BeginComponent(AppNode)
         RegisterReferencePropertyReadOnly(AppRoot, AppNodeRoot)
-        RegisterArrayProperty(AppNode, AppNodeChildren)
+        RegisterArrayProperty(AppNode, Children)
     EndComponent()
     BeginComponent(AppRoot)
         RegisterBase(AppNode)

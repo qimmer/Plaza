@@ -97,7 +97,7 @@ void ApplyResponseContentHeaders(Entity server, Entity request, Entity response)
     SetHttpHeaderType(header, contentLengthHeader);
     SetHttpHeaderValue(header, headerValue);
 
-    for_children(requestHeader, HttpRequestHeaders, request) {
+    for_children(requestHeader, HttpRequestHeaders, request, {
 
         // If we have keep-alive, apply this to response as well
         if(GetHttpHeaderType(requestHeader) == connectionHeader) {
@@ -111,7 +111,7 @@ void ApplyResponseContentHeaders(Entity server, Entity request, Entity response)
             SetHttpHeaderType(header, keepAliveHeader);
             SetHttpHeaderValue(header, keepAliveHeaderValue);
         }
-    }
+    });
 
     char serverHeaderValue[256];
     snprintf(serverHeaderValue, sizeof(serverHeaderValue), "%s", GetName(server));
@@ -210,14 +210,14 @@ static void WriteResponse(Entity server, Entity clientStream, Entity request, En
     responseQueue.insert(responseQueue.end(), headerLine, headerLine + strlen(headerLine));
 
     // Write additional HTTP headers
-    for_children(header, HttpResponseHeaders, response) {
+    for_children(header, HttpResponseHeaders, response, {
         auto identifier = GetHttpHeaderTypeIdentifier(GetHttpHeaderType(header));
         auto value = GetHttpHeaderValue(header);
 
         snprintf(headerLine, sizeof(headerLine), "%s: %s\r\n", identifier, value);
 
         responseQueue.insert(responseQueue.end(), headerLine, headerLine + strlen(headerLine));
-    }
+    });
 
     // Write header-to-content terminator
     strncpy(headerLine, "\r\n", sizeof(headerLine));
@@ -247,9 +247,8 @@ static void OnRequestComplete(Entity server, Entity clientStream, HttpStreamPart
 
     auto response = AddHttpServerResponses(clientStream);
 
-	Type types[] = { TypeOf_Entity, TypeOf_Entity, TypeOf_Entity };
-	const void* values[] = { &server, &requestData->request, &response };
-	FireEventFast(EventOf_HttpServerRequest(), 3, types, values);
+	Variant values[] = { MakeVariant(Entity, server), MakeVariant(Entity, requestData->request), MakeVariant(Entity, response) };
+	FireEventFast(EventOf_HttpServerRequest(), 3, values);
 
 	auto responseData = GetHttpResponseData(response);
     WriteResponse(server, clientStream, requestData->request, response);
@@ -344,7 +343,7 @@ static bool OnData(Entity server, Entity stream, HttpStream *streamData, const c
 
 LocalFunction(OnAppLoopChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
     for_entity(httpServer, httpServerData, HttpServer, {
-        for_children(client, TcpServerClients, httpServer) {
+        for_children(client, TcpServerClients, httpServer, {
 
             auto streamData = GetHttpStreamData(client);
             auto& responseQueue = streamData->partial->responseQueue;
@@ -376,7 +375,7 @@ LocalFunction(OnAppLoopChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame
 					
 				}
 			}
-        }
+        });
     });
 }
 

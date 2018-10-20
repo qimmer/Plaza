@@ -4,6 +4,7 @@
 
 #include <Foundation/Stream.h>
 #include "Texture.h"
+#include <Foundation/Invalidation.h>
 
 struct Texture {
     u32 TextureFlag;
@@ -149,4 +150,8 @@ BeginUnit(Texture)
         RegisterProperty(bool, TextureDynamic)
         RegisterProperty(u8, TextureMipLevels)
     EndComponent()
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureFormat()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureDynamic()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureMipLevels()), Invalidate, 0)
 EndUnit()

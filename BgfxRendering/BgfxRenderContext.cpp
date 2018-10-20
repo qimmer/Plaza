@@ -307,9 +307,9 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
 
         PrimaryContext = entity;
 
-        for_children(extension, Extensions, ModuleOf_BgfxRendering()) {
+        for_children(extension, Extensions, ModuleOf_BgfxRendering(), {
             SetExtensionDisabled(extension, false);
-        }
+        });
 
     } else {
         data->fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
@@ -324,9 +324,9 @@ LocalFunction(OnBgfxRenderContextRemoved, void, Entity component, Entity entity)
     }
 
     if(NumContexts == 1) {
-        for_children(extension, Extensions, ModuleOf_BgfxRendering()) {
+        for_children(extension, Extensions, ModuleOf_BgfxRendering(), {
             SetExtensionDisabled(extension, true);
-        }
+        });
 
         bgfx::shutdown();
 

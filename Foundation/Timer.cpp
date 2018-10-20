@@ -19,10 +19,9 @@ LocalFunction(OnStopWatchElapsedSecondsChanged, void, Entity stopWatch, double o
         if(newTime >= (timer->LastStopWatchTime + timer->TimerInterval)) {
             timer->LastStopWatchTime = newTime;
 
-            const u8 typeIndices[] = {TypeOf_Entity};
-            const void *argumentPtrs[] = {&stopWatch};
+            Variant argument = MakeVariant(Entity, stopWatch);
 
-            FireEventFast(EventOf_TimerTick(), 1, typeIndices, argumentPtrs);
+            FireEventFast(EventOf_TimerTick(), 1, &argument);
 
             if(!timer->TimerRepeat) {
                 SetStopWatchRunning(stopWatch, false);

@@ -8,19 +8,17 @@
 #include <EASTL/unordered_map.h>
 #include <EASTL/string.h>
 
-API_EXPORT bool CallNativeFunction(
+API_EXPORT Variant CallNativeFunction(
         Entity function,
-        void *returnData,
         u32 numArguments,
-        const u8 *argumentTypes,
-        const void **argumentDataPtrs
+        const Variant *arguments
 ) {
     auto data = GetNativeFunctionData(function);
 
-    if(!data->NativeFunctionInvoker) return false;
+    if(!data->NativeFunctionInvoker) return Variant_Empty;
 
     auto invoker = (NativeFunctionInvokerType)data->NativeFunctionInvoker;
-    return invoker(data->NativeFunctionPointer, returnData, argumentDataPtrs);
+    return invoker(data->NativeFunctionPointer, arguments);
 }
 
 static eastl::unordered_map<eastl::string, NativePtr> functionSignatureInvokers;

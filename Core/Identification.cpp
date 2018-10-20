@@ -123,7 +123,8 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
         if(pathSplits[i] == '/') pathSplits[i] = '\0';
     }
 
-    Entity currentEntity = GetModuleRoot();
+    auto root = GetModuleRoot();
+    Variant currentEntity = MakeVariant(Entity, root);
     Entity currentArrayProperty = 0;
 
     char *element = pathSplits;
@@ -133,12 +134,12 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
 
         if(currentArrayProperty != 0) { // Path element is a name of one child element of the current array property
             u32 childCount = 0;
-            auto children = GetArrayPropertyElements(currentArrayProperty, currentEntity, &childCount);
+            auto children = GetArrayPropertyElements(currentArrayProperty, currentEntity.as_Entity, &childCount);
 
             for(auto i = 0; i < childCount; ++i) {
                 if(internedElement == GetName(children[i])) {
                     currentArrayProperty = 0;
-                    currentEntity = children[i];
+                    currentEntity.as_Entity = children[i];
                     break;
                 }
             }
@@ -148,7 +149,7 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
                 auto index = strtol(element, &endptr, 10);
                 if (element != endptr && index < childCount) {
                     currentArrayProperty = 0;
-                    currentEntity = children[index];
+                    currentEntity.as_Entity = children[index];
                 }
             }
 
@@ -165,9 +166,9 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
 
             switch(GetPropertyKind(foundProperty)) {
                 case PropertyKind_Child:
-                    GetPropertyValue(foundProperty, currentEntity, &currentEntity);
-                    if(!IsEntityValid(currentEntity)) {
-                        Log(0, LogSeverity_Warning, "Entity '%s' has no %s.", GetName(currentEntity), element);
+                    currentEntity = GetPropertyValue(foundProperty, currentEntity.as_Entity);
+                    if(!IsEntityValid(currentEntity.as_Entity)) {
+                        Log(0, LogSeverity_Warning, "Entity '%s' has no %s.", GetName(currentEntity.as_Entity), element);
                         return 0;
                     }
                     break;
@@ -185,7 +186,7 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
         return 0;
     }
 
-    return currentEntity;
+    return currentEntity.as_Entity;
 }
 
 
@@ -246,7 +247,7 @@ API_EXPORT void SetName(Entity entity, StringRef name) {
         auto oldName = data->Name;
 
         data->Name = AddStringRef(name);
-        EmitChangedEvent(entity, PropertyOf_Name(), GetPropertyData(PropertyOf_Name()), &oldName, &name);
+        EmitChangedEvent(entity, PropertyOf_Name(), GetPropertyData(PropertyOf_Name()), MakeVariant(StringRef, oldName), MakeVariant(StringRef, name));
 
         ReleaseStringRef(oldName);
 
@@ -297,7 +298,7 @@ API_EXPORT void SetUuid(Entity entity, StringRef value) {
 
         uuidTable[value] = entity;
 
-        EmitChangedEvent(entity, PropertyOf_Uuid(), GetPropertyData(PropertyOf_Uuid()), &data->Uuid, &value);
+        EmitChangedEvent(entity, PropertyOf_Uuid(), GetPropertyData(PropertyOf_Uuid()), MakeVariant(StringRef, data->Uuid), MakeVariant(StringRef, value));
 
         ReleaseStringRef(oldValue);
         data->Uuid = AddStringRef(value);

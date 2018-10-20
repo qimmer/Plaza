@@ -9,7 +9,7 @@
 
 struct MeshBuilderVertex {
     v3f MeshBuilderVertexPosition, MeshBuilderVertexNormal;
-    v2f MeshBuilderVertexTexCoord0;
+    v2f MeshBuilderVertexTexCoord0, MeshBuilderVertexTexCoord1;
     rgba8 MeshBuilderVertexColor0;
 };
 
@@ -25,6 +25,7 @@ Unit(MeshBuilder)
         Property(v3f, MeshBuilderVertexPosition)
         Property(v3f, MeshBuilderVertexNormal)
         Property(v2f, MeshBuilderVertexTexCoord0)
+        Property(v2f, MeshBuilderVertexTexCoord1)
         Property(rgba8, MeshBuilderVertexColor0)
 
     Component(MeshBuilderIndex)

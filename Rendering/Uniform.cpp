@@ -5,14 +5,23 @@
 #include "Uniform.h"
 
 struct Uniform {
-    u8 UniformArrayCount;
-    Type UniformType;
-    char UniformIdentifier[128];
     Entity UniformEntityProperty, UniformElementProperty;
+    StringRef UniformIdentifier;
+    u8 UniformArrayCount, UniformSource;
+    Type UniformType;
 };
 
 BeginUnit(Uniform)
+    BeginEnum(UniformSource, false)
+        RegisterFlag(UniformSource_Unknown)
+        RegisterFlag(UniformSource_Scene)
+        RegisterFlag(UniformSource_Camera)
+        RegisterFlag(UniformSource_Light)
+        RegisterFlag(UniformSource_Material)
+        RegisterFlag(UniformSource_Renderable)
+    EndEnum()
     BeginComponent(Uniform)
+        RegisterPropertyEnum(u8, UniformSource, UniformSource)
         RegisterProperty(u8, UniformArrayCount)
         RegisterProperty(Type, UniformType)
         RegisterProperty(StringRef, UniformIdentifier)

@@ -43,7 +43,7 @@ LocalFunction(OnUniformValidation, void, Entity component) {
 
         }
 
-        auto name = GetName(entity);
+        auto name = GetUniformIdentifier(entity);
         auto arrayCount = Max((u32)1, GetUniformArrayCount(entity));
         SetBgfxResourceHandle(entity, bgfx::createUniform(name, type, arrayCount).idx);
     });

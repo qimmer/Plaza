@@ -75,35 +75,33 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
     }
 }
 
-API_EXPORT bool CallFunction(
+API_EXPORT Variant CallFunction(
         Entity f,
-        void *returnData,
         u32 numArguments,
-        const u8 *argumentTypes,
-        const void **argumentDataPtrs
+        const Variant *arguments
 ) {
     auto data = GetFunctionData(f);
-    if(!data) return false;
+    if(!data) return Variant_Empty;
 
     Verbose(Verbose_Function, "Calling function %s ...", GetName(f));
 
-    const void **finalArgumentPtrs = (const void **)alloca(numArguments * sizeof(void*));
+    Variant *finalArguments = (Variant*)alloca(numArguments * sizeof(Variant));
 
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
     u32 numArgs = 0;
-    auto arguments = GetFunctionArguments(f, &numArgs);
+    GetFunctionArguments(f, &numArgs);
     for(auto i = 0; i < numArgs; ++i) {
         if(i >= numArguments) {
-            finalArgumentPtrs[i] = nullData;
+            finalArguments[i] = Variant_Empty;
         } else {
-            finalArgumentPtrs[i] = argumentDataPtrs[i];
+            finalArguments[i] = arguments[i];
         }
     }
 
     if(numArguments < numArgs) {
         Log(f, LogSeverity_Error, "Insufficient function arguments provided when calling %s", GetDebugName(f));
-        return false;
+        return Variant_Empty;
     }
 
 #ifdef PROFILE
@@ -112,10 +110,8 @@ API_EXPORT bool CallFunction(
     auto caller = (FunctionCallerType)data->FunctionCaller;
     auto result = caller(
             f,
-            returnData,
             numArguments,
-            argumentTypes,
-            argumentDataPtrs
+            arguments
     );
 
 #ifdef PROFILE

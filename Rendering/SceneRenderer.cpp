@@ -111,9 +111,9 @@ LocalFunction(OnSceneNodeSceneChanged, void, Entity sceneNode, Entity oldScene, 
     if(HasComponent(sceneNode, ComponentOf_Renderable())) {
         for_entity(sceneRenderer, data, SceneRenderer, {
             if((oldScene && data->SceneRendererScene == oldScene) || (newScene && data->SceneRendererScene == newScene)) {
-                for_children(commandList, SceneRendererCommandLists, sceneRenderer) {
+                for_children(commandList, SceneRendererCommandLists, sceneRenderer, {
                     SyncBatches(commandList);
-                }
+                });
             }
         });
     }

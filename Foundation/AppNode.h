@@ -13,6 +13,6 @@ Unit(AppNode)
 
     Component(AppNode)
         ReferenceProperty(AppRoot, AppNodeRoot)
-        ArrayProperty(AppNode, AppNodeChildren)
+        ArrayProperty(AppNode, Children)
 
 #endif //PLAZA_SCENE_H

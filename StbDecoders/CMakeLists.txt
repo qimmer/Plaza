@@ -3,13 +3,12 @@ project(StbDecoders)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(StbDecoders StbImagePersistance.cpp StbImagePersistance.h StbDecodersModule.cpp StbDecodersModule.h)
+add_library(StbDecoders StbImagePersistance.h StbImagePersistance.cpp StbTrueTypePersistance.h StbTrueTypePersistance.cpp StbDecodersModule.cpp StbDecodersModule.h)
 
 target_include_directories(StbDecoders PUBLIC "..")
 
-target_link_libraries(StbDecoders Core Foundation Rendering)
+target_link_libraries(StbDecoders Core Foundation Rendering Gui)
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS StbDecoders RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
-
-    endif()
+    install (TARGETS StbDecoders RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
+endif()

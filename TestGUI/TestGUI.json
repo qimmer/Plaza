@@ -1,0 +1,99 @@
+{
+  "Uuid": "Module.TestGui",
+  "$components": [
+    "Component.AppRoot",
+    "Component.Module"
+  ],
+  "Children": [
+    {
+      "Uuid": "TestGui.Context",
+      "RenderContextTitle": "Test - Gui",
+      "RenderTargetSize": [800, 450],
+      "RenderContextLoop": {
+        "AppLoopKeepAlive": "{Not():InputStateValue@TestGui.Context.Keys.Close}"
+      },
+      "RenderContextShowStats": "{InputStateValue@TestGui.Context.Keys.ShowStats}",
+      "RenderContextShowDebug": "{InputStateValue@TestGui.Context.Keys.ShowDebug}",
+      "InputContextStates": [
+        {
+          "Uuid": "TestGui.Context.Keys.Close",
+          "InputStateKey": "KEY_WINDOW_CLOSE"
+        },
+        {
+          "Uuid": "TestGui.Context.Keys.ShowStats",
+          "InputStateKey": "KEY_F8"
+        },
+        {
+          "Uuid": "TestGui.Context.Keys.ShowDebug",
+          "InputStateKey": "KEY_F9"
+        }
+      ]
+    },
+    {
+      "Uuid": "TestGui.Renderer",
+      "SceneRendererPath": "Gui.RenderPath",
+      "SceneRendererViewport": [0.0, 0.0, 1.0, 1.0],
+      "SceneRendererScene": "TestGui.Scene",
+      "SceneRendererTarget": "TestGui.Context",
+      "SceneRendererCamera": "TestGui.Scene.Camera"
+    },
+    {
+      "Uuid": "TestGui.Font",
+      "TrueTypeFontSize": 24.0,
+      "FontGlyphs": [
+        {
+          "GlyphCode": 65
+        },
+        {
+          "GlyphCode": 97
+        }
+      ],
+      "StreamPath": "file://TestGui/Fonts/kongtext.ttf",
+      "PersistancePointLoading": true
+    },
+    {
+      "Uuid": "TestGui.LabelMesh",
+      "TextMeshFont": "TestGui.Font",
+      "TextMeshText": "AaAaA",
+      "MeshSubMeshes": [
+        {
+          "Uuid": "TestGui.LabelMesh.SubMesh0"
+        }
+      ]
+    },
+    {
+      "Uuid": "TestGui.Scene",
+      "$components": ["Component.AppRoot"],
+      "AppRootActive": true,
+      "Children": [
+        {
+          "Uuid": "TestGui.Scene.Camera",
+          "FrustumNearClip": 0.1,
+          "FrustumFarClip": 1000.0,
+          "PerspectiveFrustumFieldOfView": 90.0,
+          "PerspectiveFrustumAspectRatio": "{Ratio():RenderTargetSize@TestGui.Context}",
+          "Position3D": [0, 0, -200]
+        },
+        {
+          "Uuid": "TestGui.Scene.Label",
+          "RenderableMaterial": "Gui.Material",
+          "RenderableSubMesh": "TestGui.LabelMesh.SubMesh0",
+          "Position3D": [0, 0, 0]
+        }
+      ]
+    },
+    {
+      "Uuid": "TestGui.Externals",
+      "Children": [
+        {
+          "StreamPath": "file://TestAssets/TestAssets.json",
+          "PersistancePointLoading": true
+        },
+        {
+          "StreamPath": "file://Gui/Gui.json",
+          "PersistancePointLoading": true
+        }
+      ]
+    }
+  ]
+}

@@ -116,12 +116,10 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     double duration = 0.0, sum = 0.0;
 
     // Find accumulated duration
-    {
-        for_children(frame, AnimationTrackFrames, animationTrack) {
-            auto frameData = GetAnimationFrameData(frame);
-            duration += frameData->AnimationFrameDuration;
-        }
-    }
+    for_children(frame, AnimationTrackFrames, animationTrack, {
+        auto frameData = GetAnimationFrameData(frame);
+        duration += frameData->AnimationFrameDuration;
+    });
 
     if(loop) {
         time = fmod(time, duration);
@@ -130,7 +128,7 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     }
 
     // Find first frame
-    for_children(frame, AnimationTrackFrames, animationTrack) {
+    for_children(frame, AnimationTrackFrames, animationTrack, {
         auto frameData = GetAnimationFrameData(frame);
 
         auto startTime = sum;
@@ -143,7 +141,7 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
             lastTime = sum;
             break;
         }
-    }
+    });
 
     t = (time - firstTime) / (lastTime - firstTime);
 

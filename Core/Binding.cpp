@@ -25,9 +25,7 @@ static void EvaluateBinding(Entity binding) {
     auto entity = GetOwner(binding);
     auto data = GetBindingData(binding);
 
-    Variant value;
-    value.type = GetPropertyType(data->BindingProperty);
-    GetPropertyValue(data->BindingProperty, entity, &value.data);
+    auto value = GetPropertyValue(data->BindingProperty, entity);
 
     u32 numBindingConverters = 0;
     auto bindingConverters = GetBindingConverters(binding, &numBindingConverters);
@@ -37,24 +35,21 @@ static void EvaluateBinding(Entity binding) {
         u32 numArguments = 0;
         auto arguments = GetValueConverterArguments(bindingConverters[i], &numArguments);
 
-        auto argumentTypes = (Type*)alloca(1 + numArguments * sizeof(Type));
-        auto argumentData = (const void**)alloca(1 + numArguments * sizeof(const void*));
+        auto argumentData = (Variant*)alloca((1 + numArguments) * sizeof(Variant));
 
-        argumentTypes[0] = TypeOf_Variant;
-        argumentData[0] = &value;
+        argumentData[0] = value;
 
         for(auto j = 1; j < numArguments; ++j) {
             auto argument = arguments[j-1];
             auto value = GetValueConverterArgumentData(argument);
-            argumentTypes[j] = TypeOf_Variant;
-            argumentData[j] = &value->ValueConverterArgumentValue;
+            argumentData[j] = value->ValueConverterArgumentValue;
         }
 
-        CallFunction(converterData->ValueConverterFunction, &value, 1 + numArguments, argumentTypes, argumentData);
+        value = CallFunction(converterData->ValueConverterFunction, 1 + numArguments, argumentData);
     }
 
     value = Cast(value, GetPropertyType(data->BindingTargetProperty));
-    SetPropertyValue(data->BindingTargetProperty, data->BindingTargetEntity, &value.data);
+    SetPropertyValue(data->BindingTargetProperty, data->BindingTargetEntity, value);
 }
 
 static void ParseValueConverter(Entity binding, char* valueConverterString) {
@@ -162,7 +157,7 @@ API_EXPORT bool Bind(Entity entity, Entity property, StringRef sourceBindingStri
     return true;
 }
 
-static void OnPropertyChanged(Entity property, Entity entity, Type valueType, const void* oldValue, const void* newValue) {
+static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue) {
     u32 numBindings = 0;
     auto bindings = GetBindings(entity, &numBindings);
     if(!bindings) return;

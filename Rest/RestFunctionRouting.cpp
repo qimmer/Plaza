@@ -27,10 +27,9 @@ LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity
         auto method = GetHttpRequestMethod(request);
         auto responseStream = GetHttpResponseContentStream(response);
 
-        Type argumentTypes[] = {TypeOf_Entity, TypeOf_StringRef};
-        const void* argumentData[] = {&responseStream, &relativeUrl};
+        Variant argumentData[] = { MakeVariant(Entity, responseStream), MakeVariant(StringRef, relativeUrl) };
 
-        CallFunction(data->RestFunctionRoutingFunction, &responseCode, 2, argumentTypes, argumentData);
+        responseCode = CallFunction(data->RestFunctionRoutingFunction, 2, argumentData).as_u16;
 
         SetHttpResponseCode(response, FindResponseCode(responseCode));
     }
