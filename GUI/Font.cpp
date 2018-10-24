@@ -73,52 +73,51 @@ static int intFromUtf8(unsigned int *out_char, const char *in_text, const char *
     return 0;
 }
 
-static void GetBakedQuad(const Glyph *b, int pw, int ph, float *xpos, float *ypos, FontVertex *vertices, bool opengl_fillrule) {
-    float d3d_bias = opengl_fillrule ? 0 : -0.5f;
+static void GetBakedQuad(const Glyph *b, int pw, int ph, float *xpos, float *ypos, FontVertex *vertices) {
     float ipw = 1.0f / pw, iph = 1.0f / ph;
-    int round_x = (int) floor((*xpos + b->GlyphOffset.x) + 0.5f);
-    int round_y = (int) floor((*ypos + b->GlyphOffset.y) + 0.5f);
+    int round_x = (int) floor((*xpos + b->GlyphOffset.x));
+    int round_y = (int) floor((*ypos + b->GlyphOffset.y));
 
-    auto x0 = round_x + d3d_bias;
-    auto y0 = round_y + d3d_bias;
-    auto x1 = round_x + (b->GlyphEndUv.x * pw) - (b->GlyphStartUv.x * pw) + d3d_bias;
-    auto y1 = round_y + (b->GlyphEndUv.y * ph) - (b->GlyphStartUv.y * ph) + d3d_bias;
+    auto x0 = (float)round_x;
+    auto y0 = (float)round_y;
+    auto x1 = (float)round_x + (b->GlyphEndUv.x * pw) - (b->GlyphStartUv.x * pw);
+    auto y1 = (float)round_y + (b->GlyphEndUv.y * ph) - (b->GlyphStartUv.y * ph);
 
-    auto s0 = (b->GlyphStartUv.x * pw) * ipw;
-    auto t0 = (b->GlyphStartUv.y * ph) * iph;
-    auto s1 = (b->GlyphEndUv.x * pw) * ipw;
-    auto t1 = (b->GlyphEndUv.y * ph) * iph;
+    auto s0 = b->GlyphStartUv.x;
+    auto t0 = b->GlyphStartUv.y;
+    auto s1 = b->GlyphEndUv.x;
+    auto t1 = b->GlyphEndUv.y;
 
     *xpos += b->GlyphAdvance;
 
     vertices[0] = {
-            {x0, y0},
+            {x0, -y0},
             {s0, t0},
     };
 
     vertices[1] = {
-            {x1, y0},
+            {x1, -y0},
             {s1, t0},
     };
 
     vertices[2] = {
-            {x1, y1},
+            {x1, -y1},
             {s1, t1},
     };
 
 
     vertices[3] = {
-            {x1, y1},
+            {x1, -y1},
             {s1, t1},
     };
 
     vertices[4] = {
-            {x0, y1},
+            {x0, -y1},
             {s0, t1},
     };
 
     vertices[5] = {
-            {x0, y0},
+            {x0, -y0},
             {s0, t0},
     };
 }
@@ -149,7 +148,7 @@ static u32 GetFontGlyphData(Entity font,
         });
 
         if (glyphData) {
-            GetBakedQuad(glyphData, textureSize.x, textureSize.y, &origin.x, &origin.y, vertices, 1);//1=opengl & d3d10+,0=d3d9
+            GetBakedQuad(glyphData, textureSize.x, textureSize.y, &origin.x, &origin.y, vertices);//1=opengl & d3d10+,0=d3d9
 
             numVertices += 6;
             vertices += 6;
@@ -226,6 +225,27 @@ LocalFunction(OnValidateTextures, void, Entity component) {
     });
 }
 
+LocalFunction(AddFontCharacterGlyphs, void, Entity font, StringRef oldCharacters, StringRef newCharacters) {
+    while(*newCharacters) {
+        Glyph *glyphData = NULL;
+        for_children(glyph, FontGlyphs, font, {
+            glyphData = GetGlyphData(glyph);
+            if (glyphData->GlyphCode == *newCharacters) {
+                break;
+            }
+            glyphData = NULL;
+        });
+
+        if (!glyphData) {
+            auto glyph = AddFontGlyphs(font);
+            SetGlyphCode(glyph, *newCharacters);
+            Invalidate(font);
+        }
+
+        newCharacters++;
+    }
+}
+
 BeginUnit(Font)
     BeginComponent(Glyph)
         RegisterProperty(u32, GlyphCode)
@@ -238,6 +258,7 @@ BeginUnit(Font)
     BeginComponent(Font)
         RegisterBase(Texture2D)
         RegisterArrayProperty(Glyph, FontGlyphs)
+        RegisterProperty(StringRef, FontCharacters)
     EndComponent()
 
     BeginComponent(TextMesh)
@@ -246,6 +267,7 @@ BeginUnit(Font)
         RegisterProperty(v2f, TextMeshAlignment)
     EndComponent()
 
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontCharacters()), AddFontCharacterGlyphs, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextMeshFont()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextMeshText()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontGlyphs()), Invalidate, 0)

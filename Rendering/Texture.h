@@ -85,6 +85,16 @@ enum
     TextureFormat_PTC22,        //!< PVRTC2 TextureFormat_RGBA 2BPP
     TextureFormat_PTC24,        //!< PVRTC2 TextureFormat_RGBA 4BPP
 
+    TextureFormat_ATC,          //!< ATC RGB 4BPP
+    TextureFormat_ATCE,         //!< ATCE RGBA 8 BPP explicit alpha
+    TextureFormat_ATCI,         //!< ATCI RGBA 8 BPP interpolated alpha
+    TextureFormat_ASTC4x4,      //!< ASTC 4x4 8.0 BPP
+    TextureFormat_ASTC5x5,      //!< ASTC 5x5 5.12 BPP
+    TextureFormat_ASTC6x6,      //!< ASTC 6x6 3.56 BPP
+    TextureFormat_ASTC8x5,      //!< ASTC 8x5 3.20 BPP
+    TextureFormat_ASTC8x6,      //!< ASTC 8x6 2.67 BPP
+    TextureFormat_ASTC10x5,     //!< ASTC 10x5 2.56 BPP
+
     TextureFormat_Unknown,      // Compressed formats above.
 
     TextureFormat_R1,

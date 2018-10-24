@@ -40,67 +40,31 @@
 struct BgfxCommandList {
 };
 
-static void SetUniformState(Entity uniform, Entity entity) {
-    /*static m4x4f state[256];
+static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encoder) {
+    auto uniformData = GetUniformData(uniform);
+    if(uniformData->UniformType <= TypeOf_void) return;
 
-    auto uniformType = GetPropertyType(uniform);
-    auto typeSize = GetTypeSize(uniformType);
+    auto component = GetOwner(uniformData->UniformEntityProperty);
+    if(!HasComponent(entity, component)) return;
 
-    if(uniformType <= TypeOf_void) return;
+    auto value = GetPropertyValue(uniformData->UniformEntityProperty, entity);
+    value = Cast(value, uniformData->UniformType);
 
-    auto uniformSize = GetTypeSize(uniformType);
-    auto uniformArrayCount = GetUniformArrayCount(uniform);
+    auto uniformHandle = bgfx::UniformHandle{GetBgfxResourceHandle(uniform)};
 
-    auto handle = bgfx::UniformHandle{GetBgfxResourceHandle(uniform)};
-
-    if(uniformType != TypeOf_Entity) {
-        auto ptr = (char*)&state;
-
-        for_children(element, UniformStateElements, uniformState) {
-            memcpy(ptr, GetUniformStateElementData(element), typeSize);
-            ptr += typeSize;
-        }
-
-        bgfx::setUniform(
-                handle,
-                &state,
-                GetNumUniformStateElements(uniformState));
+    if(uniformData->UniformType != TypeOf_Entity) {
+        encoder->setUniform(
+                uniformHandle,
+                &value.data,
+                1);
     } else {
-        for_children(element, UniformStateElements, uniformState) {
-            auto texture = GetUniformStateElementTexture(element);
+        auto texture = value.as_Entity;
 
-            if(IsEntityValid(texture)) {
-                auto uvOffsetScaleUniform = GetBgfxResourceHandle(GetRenderingUvOffsetScaleUniform(ModuleOf_Rendering()));
-                Entity textureParent = 0;
-                if(HasComponent(texture, ComponentOf_SubTexture2D()) && (textureParent = GetSubTexture2DTexture(texture)) && IsEntityValid(textureParent)) {
-                    auto size = GetTextureSize2D(textureParent);
-                    auto uvOffset = GetSubTexture2DOffset(texture);
-                    auto uvSize = GetSubTexture2DSize(texture);
-                    v4f uvOffsetScale = {
-                            (float)uvOffset.x / size.x,
-                            (float)uvOffset.y / size.y,
-                            (float)uvSize.x / size.x,
-                            (float)uvSize.y / size.y
-                    };
-                    bgfx::setUniform(bgfx::UniformHandle{uvOffsetScaleUniform}, &uvOffsetScale.x);
-
-                    texture = textureParent;
-                } else {
-                    v4f uvOffsetScale = {
-                            0.0f,
-                            0.0f,
-                            1.0f,
-                            1.0f
-                    };
-                    bgfx::setUniform(bgfx::UniformHandle{uvOffsetScaleUniform}, &uvOffsetScale.x);
-                }
-
-                if(HasComponent(texture, ComponentOf_BgfxTexture2D())) {
-                    bgfx::setTexture(i, handle, bgfx::TextureHandle{GetBgfxResourceHandle(texture)});
-                }
-            }
+        if(HasComponent(texture, ComponentOf_BgfxTexture2D())) {
+            auto textureHandle = bgfx::TextureHandle{GetBgfxResourceHandle(texture)};
+            encoder->setTexture(uniformData->UniformSamplerIndex, uniformHandle, textureHandle);
         }
-    }*/
+    }
 }
 
 inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity renderState, Entity pass) {
@@ -168,17 +132,18 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
         }
     }
 
-    {
-        for_children(uniform, RenderPassMaterialUniforms, pass, {
-            SetUniformState(uniform, material);
-        });
-    }
 
-    {
-        for_children(uniform, RenderPassRenderableUniforms, pass, {
-            SetUniformState(uniform, renderable);
-        });
-    }
+    for_children(uniform, RenderPassMaterialUniforms, pass, {
+        SetUniformState(uniform, material, encoder);
+    });
+
+    for_children(uniform, RenderPassMeshUniforms, pass, {
+        SetUniformState(uniform, mesh, encoder);
+    });
+
+    for_children(uniform, RenderPassRenderableUniforms, pass, {
+        SetUniformState(uniform, renderable, encoder);
+    });
 
     encoder->submit(viewId, bgfx::ProgramHandle {programHandle});
 }
@@ -270,52 +235,45 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
 
     bgfx::touch(viewId);
 
+    auto primaryEncoder = bgfx::begin();
+    for_children(uniform, RenderPassSceneUniforms, pass, {
+        SetUniformState(uniform, scene, primaryEncoder);
+    });
 
-    {
-        for_children(uniform, RenderPassSceneUniforms, pass, {
-            SetUniformState(uniform, scene);
-        });
-    }
+    for_children(uniform, RenderPassCameraUniforms, pass, {
+        SetUniformState(uniform, camera, primaryEncoder);
+    });
 
-    {
-        for_children(uniform, RenderPassCameraUniforms, pass, {
-            SetUniformState(uniform, camera);
-        });
-    }
+    u32 numBatches = 0;
+    auto batches = GetCommandListBatches(commandList, &numBatches);
 
-    {
-        u32 numBatches = 0;
-        auto batches = GetCommandListBatches(commandList, &numBatches);
+    if(true) {
+        #pragma omp parallel
+        {
+            auto threadnum = omp_get_thread_num();
+            auto numthreads = omp_get_num_threads();
+            auto low = numBatches*threadnum/numthreads;
+            auto high = numBatches*(threadnum+1)/numthreads;
 
-        if(true) {
-            #pragma omp parallel
-            {
-                auto threadnum = omp_get_thread_num();
-                auto numthreads = omp_get_num_threads();
-                auto low = numBatches*threadnum/numthreads;
-                auto high = numBatches*(threadnum+1)/numthreads;
-
-                auto encoder = bgfx::begin();
-
-                for (auto i=low; i<high; i++) {
-                    RenderBatch(viewId, encoder, batches[i], renderState, pass);
-                }
-
-                bgfx::end(encoder);
-            }
-        } else {
             auto encoder = bgfx::begin();
 
-            for (auto i=0; i < numBatches; i++) {
+            for (auto i=low; i<high; i++) {
                 RenderBatch(viewId, encoder, batches[i], renderState, pass);
             }
 
             bgfx::end(encoder);
         }
+    } else {
+        auto encoder = bgfx::begin();
 
+        for (auto i=0; i < numBatches; i++) {
+            RenderBatch(viewId, encoder, batches[i], renderState, pass);
+        }
 
-
+        bgfx::end(encoder);
     }
+
+    bgfx::end(primaryEncoder);
 }
 
 BeginUnit(BgfxCommandList)

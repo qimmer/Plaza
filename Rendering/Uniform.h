@@ -7,13 +7,11 @@
 
 #include <Core/NativeUtils.h>
 
-enum {
-    UniformSource_Unknown,
-    UniformSource_Scene,
-    UniformSource_Camera,
-    UniformSource_Light,
-    UniformSource_Renderable,
-    UniformSource_Material
+struct Uniform {
+    Entity UniformEntityProperty, UniformElementProperty;
+    StringRef UniformIdentifier;
+    u8 UniformArrayCount, UniformSamplerIndex;
+    Type UniformType;
 };
 
 Unit(Uniform)
@@ -21,9 +19,9 @@ Unit(Uniform)
 
     Component(Uniform)
         Property(u8, UniformArrayCount)
+        Property(u8, UniformSamplerIndex)
         Property(Type, UniformType)
         Property(StringRef, UniformIdentifier)
-        Property(u8, UniformSource)
         ReferenceProperty(Property, UniformEntityProperty)
         ReferenceProperty(Property, UniformElementProperty)
 

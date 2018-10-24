@@ -24,41 +24,48 @@ LocalFunction(OnTexture2DRemoved, void, Entity entity) {
     }
 }
 
+static void ValidateTexture(Entity entity, BgfxTexture2D *data) {
+    bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
+
+    if(!StreamOpen(entity, StreamMode_Read)) {
+        return;
+    }
+
+    auto flag = GetTextureFlag(entity);
+    auto dimensions = GetTextureSize2D(entity);
+    auto format = (bgfx::TextureFormat::Enum)GetTextureFormat(entity);
+    auto numMips = GetTextureMipLevels(entity);
+
+    bgfx::TextureInfo info;
+    bgfx::calcTextureSize(info, dimensions.x, dimensions.y, 1, false, numMips > 1, 1, format);
+
+    auto buffer = malloc(info.storageSize);
+    StreamDecompress(entity, 0, info.storageSize, buffer);
+
+    // Eventually free old buffers
+    if((data->flag != flag || data->size != info.storageSize || !GetTextureDynamic(entity)) || !bgfx::isValid(handle)) {
+        OnTexture2DRemoved(entity);
+
+        auto textureHandle = (flag & TextureFlag_READ_BACK || flag & TextureFlag_RT)
+            ? bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag).idx
+            : bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag, bgfx::copy(buffer, info.storageSize)).idx;
+
+
+
+        SetBgfxResourceHandle(entity, textureHandle);
+    } else {
+        bgfx::updateTexture2D(handle, 0, 0, 0, 0, dimensions.x, dimensions.y, bgfx::copy(buffer, info.storageSize));
+    }
+
+    free(buffer);
+    data->size = info.storageSize;
+}
+
 LocalFunction(OnValidation, void, Entity component) {
     for_entity(entity, data, BgfxTexture2D, {
-        bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
-        auto data = GetBgfxTexture2DData(entity);
-
-        if(!StreamOpen(entity, StreamMode_Read)) {
-            return;
+        if(IsDirty(entity)) {
+            ValidateTexture(entity, data);
         }
-
-        auto flag = GetTextureFlag(entity);
-        auto dimensions = GetTextureSize2D(entity);
-        auto format = (bgfx::TextureFormat::Enum)GetTextureFormat(entity);
-        auto numMips = GetTextureMipLevels(entity);
-
-        bgfx::TextureInfo info;
-        bgfx::calcTextureSize(info, dimensions.x, dimensions.y, 1, false, numMips > 1, 1, format);
-
-        auto buffer = malloc(info.storageSize);
-        StreamDecompress(entity, 0, info.storageSize, buffer);
-
-        // Eventually free old buffers
-        if((data->flag != flag || data->size != info.storageSize || !GetTextureDynamic(entity)) || !bgfx::isValid(handle)) {
-            OnTexture2DRemoved(entity);
-
-            if(flag & TextureFlag_READ_BACK || flag & TextureFlag_RT) {
-                SetBgfxResourceHandle(entity, bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag).idx);
-            } else {
-                SetBgfxResourceHandle(entity, bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag, bgfx::copy(buffer, info.storageSize)).idx);
-            }
-        } else {
-            bgfx::updateTexture2D(handle, 0, 0, 0, 0, dimensions.x, dimensions.y, bgfx::copy(buffer, info.storageSize));
-        }
-
-        free(buffer);
-        data->size = info.storageSize;
     });
 }
 

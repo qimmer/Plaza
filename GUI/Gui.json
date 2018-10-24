@@ -5,8 +5,28 @@
       "RenderPathPasses": [
         {
           "RenderPassClearDepth": 1.0,
-          "RenderPassClearColor": [255, 255, 255, 255],
-          "RenderPassClearTargets": "ClearTarget_Depth|ClearTarget_Color"
+          "RenderPassClearColor": [0, 0, 128, 255],
+          "RenderPassClearTargets": "ClearTarget_Depth|ClearTarget_Color",
+          "RenderPassMeshUniforms": [
+            {
+              "Uuid": "Gui.RenderPath.Uniforms.FontTexture",
+              "UniformType": "Entity",
+              "UniformIdentifier": "s_fontAtlas",
+              "UniformSamplerIndex": 0,
+              "UniformEntityProperty": "Property.TextMeshFont"
+            }
+          ],
+          "RenderPassRenderableUniforms": [
+            {
+              "Uuid": "Gui.RenderPath.Uniforms.WidgetSize",
+              "UniformType": "v4f",
+              "UniformIdentifier": "u_widgetSize",
+              "UniformEntityProperty": "Property.WidgetSize"
+            }
+          ],
+          "RenderPassRenderState": {
+            "RenderStateBlendMode": "RenderState_STATE_BLEND_ALPHA"
+          }
         }
       ]
     },
@@ -35,13 +55,6 @@
       "ProgramDeclShaderSource": "Gui.Program.DeclShader"
     },
     {
-      "Uuid": "Gui.Uniforms.WidgetSize",
-      "UniformType": "v4f",
-      "UniformIdentifier": "u_widgetSize",
-      "UniformEntityProperty": "Property.WidgetSize",
-      "UniformSource": "UniformSource_Renderable"
-    },
-    {
       "Uuid": "Gui.VertexDeclaration",
       "VertexDeclarationAttributes": [
         {
@@ -68,7 +81,7 @@
     },
     {
       "Uuid": "Gui.Font.Material",
-      "MaterialProgram": "Gui.Program"
+      "MaterialProgram": "Gui.Font.Program"
     },
     {
       "Uuid": "Gui.Font.Program",
@@ -89,13 +102,6 @@
       "ProgramVertexShaderSource": "Gui.Font.Program.VertexShader",
       "ProgramPixelShaderSource": "Gui.Font.Program.PixelShader",
       "ProgramDeclShaderSource": "Gui.Font.Program.DeclShader"
-    },
-    {
-      "Uuid": "Gui.Font.Uniforms.FontAtlas",
-      "UniformType": "Entity",
-      "UniformIdentifier": "u_fontAtlas",
-      "UniformEntityProperty": "Property.TextMeshFont",
-      "UniformSource": "UniformSource_Mesh"
     },
     {
       "Uuid": "Gui.Font.VertexDeclaration",

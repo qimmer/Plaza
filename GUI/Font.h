@@ -15,6 +15,7 @@ struct Glyph {
 };
 
 struct Font {
+    StringRef FontCharacters;
 };
 
 struct FontVertex {
@@ -36,6 +37,7 @@ Unit(Font)
         Property(float, GlyphAdvance)
 
     Component(Font)
+        Property(StringRef, FontCharacters)
         ArrayProperty(Glyph, FontGlyphs)
 
     Component(TextMesh)

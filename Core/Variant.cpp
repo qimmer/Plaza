@@ -88,6 +88,45 @@ EndUnit()
         break;\
     }
 
+#define CastVec2(T_TO, ELEM_TO) \
+    {\
+        switch(v.type) {\
+            case TypeOf_s8: newVar.as_ ## T_TO = { (ELEM_TO)v.as_s8, (ELEM_TO)v.as_s8 }; return newVar; break;\
+            case TypeOf_s16: newVar.as_ ## T_TO = { (ELEM_TO)v.as_s16, (ELEM_TO)v.as_s16 }; return newVar; break;\
+            case TypeOf_s32: newVar.as_ ## T_TO = { (ELEM_TO)v.as_s32, (ELEM_TO)v.as_s32 }; return newVar; break;\
+            case TypeOf_s64: newVar.as_ ## T_TO = { (ELEM_TO)v.as_s64, (ELEM_TO)v.as_s64 }; return newVar; break;\
+            case TypeOf_u8: newVar.as_ ## T_TO = { (ELEM_TO)v.as_u8, (ELEM_TO)v.as_u8 }; return newVar; break;\
+            case TypeOf_u16: newVar.as_ ## T_TO = { (ELEM_TO)v.as_u16, (ELEM_TO)v.as_u16 }; return newVar; break;\
+            case TypeOf_u32: newVar.as_ ## T_TO = { (ELEM_TO)v.as_u32, (ELEM_TO)v.as_u32 }; return newVar; break;\
+            case TypeOf_u64: newVar.as_ ## T_TO = { (ELEM_TO)v.as_u64, (ELEM_TO)v.as_u64 }; return newVar; break;\
+            case TypeOf_float: newVar.as_ ## T_TO = { (ELEM_TO)v.as_float, (ELEM_TO)v.as_float }; return newVar; break;\
+            case TypeOf_double: newVar.as_ ## T_TO = { (ELEM_TO)v.as_double, (ELEM_TO)v.as_double }; return newVar; break;\
+            case TypeOf_bool: newVar.as_ ## T_TO = { (ELEM_TO)v.as_bool, (ELEM_TO)v.as_bool }; return newVar; break;\
+            case TypeOf_v2i: newVar.as_ ## T_TO = { (ELEM_TO)v.as_v2i.x, (ELEM_TO)v.as_v2i.y }; return newVar; break;\
+            case TypeOf_v2f: newVar.as_ ## T_TO = { (ELEM_TO)v.as_v2f.x, (ELEM_TO)v.as_v2f.y }; return newVar; break;\
+        }\
+        break;\
+    }
+#define CastVec3(T_TO, ELEM_TO) \
+    {\
+        switch(v.type) {\
+            case TypeOf_s8: newVar.as_ ## T_TO = { (ELEM_TO)v.as_s8, (ELEM_TO)v.as_s8, (ELEM_TO)v.as_s8 }; return newVar; break;\
+            case TypeOf_s16: newVar.as_ ## T_TO = { (ELEM_TO)v.as_s16, (ELEM_TO)v.as_s16, (ELEM_TO)v.as_s16 }; return newVar; break;\
+            case TypeOf_s32: newVar.as_ ## T_TO = { (ELEM_TO)v.as_s32, (ELEM_TO)v.as_s32, (ELEM_TO)v.as_s32 }; return newVar; break;\
+            case TypeOf_s64: newVar.as_ ## T_TO = { (ELEM_TO)v.as_s64, (ELEM_TO)v.as_s64, (ELEM_TO)v.as_s64 }; return newVar; break;\
+            case TypeOf_u8: newVar.as_ ## T_TO = { (ELEM_TO)v.as_u8, (ELEM_TO)v.as_u8, (ELEM_TO)v.as_u8 }; return newVar; break;\
+            case TypeOf_u16: newVar.as_ ## T_TO = { (ELEM_TO)v.as_u16, (ELEM_TO)v.as_u16, (ELEM_TO)v.as_u16 }; return newVar; break;\
+            case TypeOf_u32: newVar.as_ ## T_TO = { (ELEM_TO)v.as_u32, (ELEM_TO)v.as_u32, (ELEM_TO)v.as_u32 }; return newVar; break;\
+            case TypeOf_u64: newVar.as_ ## T_TO = { (ELEM_TO)v.as_u64, (ELEM_TO)v.as_u64, (ELEM_TO)v.as_u64 }; return newVar; break;\
+            case TypeOf_float: newVar.as_ ## T_TO = { (ELEM_TO)v.as_float, (ELEM_TO)v.as_float, (ELEM_TO)v.as_float }; return newVar; break;\
+            case TypeOf_double: newVar.as_ ## T_TO = { (ELEM_TO)v.as_double, (ELEM_TO)v.as_double, (ELEM_TO)v.as_double }; return newVar; break;\
+            case TypeOf_bool: newVar.as_ ## T_TO = { (ELEM_TO)v.as_bool, (ELEM_TO)v.as_bool, (ELEM_TO)v.as_bool }; return newVar; break;\
+            case TypeOf_v3i: newVar.as_ ## T_TO = { (ELEM_TO)v.as_v3i.x, (ELEM_TO)v.as_v3i.y, (ELEM_TO)v.as_v3i.z }; return newVar; break;\
+            case TypeOf_v3f: newVar.as_ ## T_TO = { (ELEM_TO)v.as_v3f.x, (ELEM_TO)v.as_v3f.y, (ELEM_TO)v.as_v3f.z }; return newVar; break;\
+        }\
+        break;\
+    }
+
 API_EXPORT Variant Cast(Variant v, Type type) {
     if(type == v.type) return v;
 
@@ -108,6 +147,10 @@ API_EXPORT Variant Cast(Variant v, Type type) {
         case TypeOf_double: CastNumber(double)
         case TypeOf_bool: CastBool()
         case TypeOf_StringRef: CastString()
+        case TypeOf_v2i: CastVec2(v2i, int)
+        case TypeOf_v2f: CastVec2(v2f, float)
+        case TypeOf_v3i: CastVec3(v3i, int)
+        case TypeOf_v3f: CastVec3(v3f, float)
     }
 
     Log(0, LogSeverity_Error, "Cannot cast variant from %s to %s", GetTypeName(v.type), GetTypeName(type));

@@ -40,21 +40,14 @@
     {
       "Uuid": "TestGui.Font",
       "TrueTypeFontSize": 24.0,
-      "FontGlyphs": [
-        {
-          "GlyphCode": 65
-        },
-        {
-          "GlyphCode": 97
-        }
-      ],
+      "FontCharacters": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+-!\"@#$%&/()=?'*\\{[]}.,:;<>| ",
       "StreamPath": "file://TestGui/Fonts/kongtext.ttf",
       "PersistancePointLoading": true
     },
     {
       "Uuid": "TestGui.LabelMesh",
       "TextMeshFont": "TestGui.Font",
-      "TextMeshText": "AaAaA",
+      "TextMeshText": "Loading ...",
       "MeshSubMeshes": [
         {
           "Uuid": "TestGui.LabelMesh.SubMesh0"
@@ -68,17 +61,17 @@
       "Children": [
         {
           "Uuid": "TestGui.Scene.Camera",
-          "FrustumNearClip": 0.1,
-          "FrustumFarClip": 1000.0,
-          "PerspectiveFrustumFieldOfView": 90.0,
-          "PerspectiveFrustumAspectRatio": "{Ratio():RenderTargetSize@TestGui.Context}",
-          "Position3D": [0, 0, -200]
+          "FrustumNearClip": -100.0,
+          "FrustumFarClip": 100.0,
+          "OrthographicFrustumTopLeft": [0, 720],
+          "OrthographicFrustumBottomRight": [1280, 0],
+          "Position3D": [0, 0, 0]
         },
         {
           "Uuid": "TestGui.Scene.Label",
-          "RenderableMaterial": "Gui.Material",
+          "RenderableMaterial": "Gui.Font.Material",
           "RenderableSubMesh": "TestGui.LabelMesh.SubMesh0",
-          "Position3D": [0, 0, 0]
+          "Position3D": [100, 100, 0]
         }
       ]
     },
