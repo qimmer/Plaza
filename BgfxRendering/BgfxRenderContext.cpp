@@ -77,6 +77,8 @@ struct BgfxRenderContext {
 static u32 NumContexts = 0;
 static Entity PrimaryContext = 0;
 
+bgfx::UniformHandle SubTexture2DOffsetSizeUniform;
+
 static void ValidateResources() {
     Validate(ComponentOf_Texture());
     Validate(ComponentOf_OffscreenRenderTarget());
@@ -305,6 +307,8 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
 
         bgfx::reset(size.x, size.y);
 
+        SubTexture2DOffsetSizeUniform = bgfx::createUniform("u_uvOffsetSizePerSampler", bgfx::UniformType::Vec4, 8);
+
         PrimaryContext = entity;
 
         for_children(extension, Extensions, ModuleOf_BgfxRendering(), {
@@ -327,6 +331,8 @@ LocalFunction(OnBgfxRenderContextRemoved, void, Entity component, Entity entity)
         for_children(extension, Extensions, ModuleOf_BgfxRendering(), {
             SetExtensionDisabled(extension, true);
         });
+
+        bgfx::destroy(SubTexture2DOffsetSizeUniform);
 
         bgfx::shutdown();
 

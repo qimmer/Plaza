@@ -9,7 +9,6 @@
 #include <Rendering/Uniform.h>
 #include <Rendering/Mesh.h>
 #include <Rendering/Material.h>
-#include <Rendering/SubTexture2D.h>
 #include <Rendering/Texture2D.h>
 #include <Rendering/ShaderCache.h>
 #include <Rendering/RenderContext.h>
@@ -37,6 +36,8 @@
 #include <Foundation/Invalidation.h>
 #include <omp.h>
 
+extern bgfx::UniformHandle SubTexture2DOffsetSizeUniform;
+
 struct BgfxCommandList {
 };
 
@@ -60,6 +61,19 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
     } else {
         auto texture = value.as_Entity;
 
+        if(HasComponent(texture, ComponentOf_SubTexture2D())) {
+            auto offset = GetSubTexture2DOffset(texture);
+            auto size = GetSubTexture2DSize(texture);
+            texture = GetOwner(texture); // Get actual texture (atlas)
+            auto textureSize = GetTextureSize2D(texture);
+
+            v4f value = {(float)offset.x / textureSize.x, (float)offset.y / textureSize.y, (float)size.x / textureSize.x, (float)size.y / textureSize.y};
+            encoder->setUniform(SubTexture2DOffsetSizeUniform, &value);
+        } else {
+            v4f value = {0.0f, 0.0f, 1.0f, 1.0f};
+            encoder->setUniform(SubTexture2DOffsetSizeUniform, &value);
+        }
+
         if(HasComponent(texture, ComponentOf_BgfxTexture2D())) {
             auto textureHandle = bgfx::TextureHandle{GetBgfxResourceHandle(texture)};
             encoder->setTexture(uniformData->UniformSamplerIndex, uniformHandle, textureHandle);
@@ -78,6 +92,8 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
 
     auto subMesh = GetRenderableSubMesh(renderable);
     auto subMeshData = GetSubMeshData(subMesh);
+
+    if(!subMeshData) return;
 
     auto material = GetRenderableMaterial(renderable);
 

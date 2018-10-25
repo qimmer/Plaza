@@ -11,6 +11,7 @@
 #include <Rendering/Uniform.h>
 #include <Rendering/Material.h>
 #include <Rendering/Texture.h>
+#include <Rendering/Texture2D.h>
 #include "Widget.h"
 
 static void UpdateChildrenLayout(Entity parentWidget) {
@@ -76,9 +77,12 @@ BeginUnit(Widget)
         RegisterProperty(v2i, WidgetMinimumSize)
         RegisterProperty(v2i, WidgetSize)
         RegisterProperty(v2f, WidgetWeight)
-        RegisterProperty(Entity, WidgetTexture)
         RegisterPropertyEnum(u8, WidgetChildLayout, WidgetChildLayout)
         RegisterPropertyEnum(u8, WidgetSizing, WidgetSizing)
+    EndComponent()
+
+    BeginComponent(WidgetMesh)
+        RegisterReferenceProperty(Texture2D, WidgetMeshTexture)
     EndComponent()
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetSize()), OnWidgetSizeChanged, 0)

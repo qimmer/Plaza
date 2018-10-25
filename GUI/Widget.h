@@ -21,7 +21,10 @@ struct Widget {
     v2i WidgetSize, WidgetMinimumSize;
     v2f WidgetWeight;
     u8 WidgetChildLayout, WidgetSizing;
-    Entity WidgetTexture;
+};
+
+struct WidgetMesh {
+    Entity WidgetMeshTexture;
 };
 
 Unit(Widget)
@@ -34,6 +37,8 @@ Unit(Widget)
         Property(u8, WidgetChildLayout)
         Property(u8, WidgetSizing)
         Property(v2i, WidgetSize)
-        Property(Entity, WidgetTexture)
+
+    Component(WidgetMesh)
+        ReferenceProperty(Texture2D, WidgetMeshTexture)
 
 #endif //PLAZA_WIDGET_H

@@ -15,7 +15,6 @@
 #include "Material.h"
 #include "Renderable.h"
 #include "RenderContext.h"
-#include "SubTexture2D.h"
 #include "SceneRenderer.h"
 #include "OffscreenRenderTarget.h"
 #include <Foundation/FoundationModule.h>
@@ -39,7 +38,6 @@ BeginModule(Rendering)
     RegisterUnit(RenderState)
     RegisterUnit(RenderTarget)
     RegisterUnit(ShaderCache)
-    RegisterUnit(SubTexture2D)
     RegisterUnit(Texture)
     RegisterUnit(Texture2D)
     RegisterUnit(Uniform)
