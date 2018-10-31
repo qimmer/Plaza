@@ -26,6 +26,10 @@ glmc_mat3_identity(mat3 mat);
 
 CGLM_EXPORT
 void
+glmc_mat3_identity_array(mat3 * __restrict mat, size_t count);
+
+CGLM_EXPORT
+void
 glmc_mat3_mul(mat3 m1, mat3 m2, mat3 dest);
 
 CGLM_EXPORT
@@ -39,6 +43,10 @@ glmc_mat3_transpose(mat3 m);
 CGLM_EXPORT
 void
 glmc_mat3_mulv(mat3 m, vec3 v, vec3 dest);
+
+CGLM_EXPORT
+void
+glmc_mat3_quat(mat3 m, versor dest);
 
 CGLM_EXPORT
 void

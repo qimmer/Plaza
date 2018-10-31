@@ -45,12 +45,30 @@
       "PersistancePointLoading": true
     },
     {
-      "Uuid": "TestGui.LabelMesh",
-      "TextMeshFont": "TestGui.Font",
-      "TextMeshText": "Loading ...",
-      "MeshSubMeshes": [
+      "Uuid": "TestGui.WindowMesh",
+      "WidgetMeshTexture": "TestGui.Sheets.ExampleSheet.Window1",
+      "WidgetMeshFixedBorderWidth": 50
+    },
+    {
+      "Uuid": "TestGui.ButtonMesh",
+      "WidgetMeshTexture": "TestGui.Sheets.ExampleSheet.Button1",
+      "WidgetMeshFixedBorderWidth": 8
+    },
+    {
+      "Uuid": "TestGui.Sheets.ExampleSheet",
+      "StreamPath": "file://DebugGui/Sheets/uipackSpace_sheet.png",
+      "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT",
+      "PersistancePointLoading": true,
+      "TextureAtlasSubTextures": [
         {
-          "Uuid": "TestGui.LabelMesh.SubMesh0"
+          "Uuid": "TestGui.Sheets.ExampleSheet.Window1",
+          "SubTexture2DOffset": [200, 0],
+          "SubTexture2DSize": [100, 100]
+        },
+        {
+          "Uuid": "TestGui.Sheets.ExampleSheet.Button1",
+          "SubTexture2DOffset": [384, 450],
+          "SubTexture2DSize": [19, 26]
         }
       ]
     },
@@ -61,17 +79,68 @@
       "Children": [
         {
           "Uuid": "TestGui.Scene.Camera",
-          "FrustumNearClip": -100.0,
-          "FrustumFarClip": 100.0,
-          "OrthographicFrustumTopLeft": [0, 720],
-          "OrthographicFrustumBottomRight": [1280, 0],
-          "Position3D": [0, 0, 0]
+          "FrustumNearClip": -1000.0,
+          "FrustumFarClip": 1000.0,
+          "OrthographicFrustumTopLeft": [0, 0],
+          "OrthographicFrustumBottomRight": "{RenderTargetSize@TestGui.Context}",
+          "Position3D": [0, 0, -100]
         },
         {
-          "Uuid": "TestGui.Scene.Label",
-          "RenderableMaterial": "Gui.Font.Material",
-          "RenderableSubMesh": "TestGui.LabelMesh.SubMesh0",
-          "Position3D": [100, 100, 0]
+          "Uuid": "TestGui.Scene.Window",
+          "RenderableMaterial": "Gui.Material",
+          "RenderableSubMesh": "TestGui.WindowMesh.MeshSubMeshes[0]",
+          "Position3D": [50, 50, 0],
+          "WidgetSize": [400, 300],
+          "WidgetChildLayout": "WidgetChildLayout_Vertical",
+          "Children": [
+            {
+              "Uuid": "TestGui.Scene.Window.TitleBar",
+              "WidgetChildLayout": "WidgetChildLayout_Horizontal",
+              "WidgetMinimumSize": [0, 30],
+              "Position3D": [0, 0, 0],
+              "Children": [
+                {
+                  "Uuid": "TestGui.Scene.Window.TitleBar.Label",
+                  "WidgetWeight": [1.0, 0.0],
+                  "RenderableMaterial": "Gui.Font.Material",
+                  "LabelFont": "TestGui.Font",
+                  "LabelText": "Hello",
+                  "LabelAlignment": [0.0, 0.5],
+                  "Position3D": [0, 30, -1]
+                },
+                {
+                  "Uuid": "TestGui.Scene.Window.TitleBar.CloseButton",
+                  "RenderableMaterial": "Gui.Material",
+                  "RenderableSubMesh": "TestGui.ButtonMesh.MeshSubMeshes[0]",
+                  "WidgetMinimumSize": [30, 30],
+                  "WidgetSize": [24, 24],
+                  "Position3D": [3, 3, -100]
+                }
+              ]
+            },
+            {
+              "Uuid": "TestGui.Scene.Window.Content",
+              "WidgetChildLayout": "WidgetChildLayout_Vertical",
+              "WidgetWeight": [1.0, 1.0],
+              "Children": [
+                {
+                  "Uuid": "TestGui.Scene.Window.Content.FpsLabel",
+                  "WidgetWeight": [1.0, 1.0],
+                  "LabelText": "FPS: {0}"
+                },
+                {
+                  "Uuid": "TestGui.Scene.Window.Content.MillisecsLabel",
+                  "WidgetWeight": [1.0, 1.0],
+                  "LabelText": "Frame Time: {0}"
+                },
+                {
+                  "Uuid": "TestGui.Scene.Window.Content.MemoryLabel",
+                  "WidgetWeight": [1.0, 1.0],
+                  "LabelText": "Memory: {0}"
+                }
+              ]
+            }
+          ]
         }
       ]
     },

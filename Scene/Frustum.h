@@ -7,6 +7,11 @@
 
 #include <Core/NativeUtils.h>
 
+struct Frustum {
+    m4x4f FrustumViewMatrix, FrustumInvViewProjectionMatrix, FrustumProjectionMatrix;
+    float FrustumNearClip, FrustumFarClip;
+};
+
 Unit(Frustum)
     Component(Frustum)
         Property(m4x4f, FrustumViewMatrix)

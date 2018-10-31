@@ -15,5 +15,6 @@ Unit(Transform3D)
         Property(v3f, Scale3D)
 
 void Move3D(Entity transform, v3f direction, bool relativeToRotation);
+void LookAt(Entity transform, v3f origin, v3f direction, v3f up = {0.0f, 1.0f, 0.0f});
 
 #endif //PLAZA_TRANSFORM3D_H

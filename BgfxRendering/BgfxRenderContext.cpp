@@ -11,6 +11,7 @@
 #include "BgfxShaderCache.h"
 #include "BgfxOffscreenRenderTarget.h"
 #include "BgfxModule.h"
+#include "BgfxTextureReadBack.h"
 
 #include <Rendering/ShaderCache.h>
 #include <Rendering/Mesh.h>
@@ -59,6 +60,8 @@ Window glfwGetX11Window(GLFWwindow *window);
 #undef Enum
 #include <windows.h>
 #include <Core/Algorithms.h>
+#include <Rendering/TextureReadBack.h>
+#include <Foundation/MemoryStream.h>
 
 #undef CreateService
 #undef CreateEvent
@@ -74,7 +77,7 @@ struct BgfxRenderContext {
     int debugFlags;
 };
 
-static u32 NumContexts = 0;
+static u32 NumContexts = 0, Frame = 0;
 static Entity PrimaryContext = 0;
 
 bgfx::UniformHandle SubTexture2DOffsetSizeUniform;
@@ -89,6 +92,27 @@ static void ValidateResources() {
     Validate(ComponentOf_VertexBuffer());
     Validate(ComponentOf_IndexBuffer());
     Validate(ComponentOf_Transform());
+}
+
+static void UpdateTextureReadBack(Entity readBack, TextureReadBack *data) {
+    auto bgfxData = GetBgfxTextureReadBackData(readBack);
+
+    if(Frame >= bgfxData->ReadyFrame) {
+        auto sourceHandle = GetBgfxResourceHandle(data->TextureReadBackSourceTexture);
+        auto blitHandle = GetBgfxResourceHandle(data->TextureReadBackBlitTexture);
+        auto bufferData = GetMemoryStreamBuffer(data->TextureReadBackBuffer);
+
+        if(HasComponent(GetOwner(data->TextureReadBackSourceTexture), ComponentOf_OffscreenRenderTarget())) {
+            SetTextureSize2D(data->TextureReadBackBlitTexture, GetTextureSize2D(data->TextureReadBackSourceTexture));
+            SetTextureFormat(data->TextureReadBackBlitTexture, GetTextureFormat(data->TextureReadBackSourceTexture));
+            SetTextureFlag(data->TextureReadBackBlitTexture, TextureFlag_BLIT_DST | TextureFlag_READ_BACK);
+
+            bgfx::blit(255, bgfx::TextureHandle {blitHandle}, 0, 0, bgfx::TextureHandle {sourceHandle});
+            bgfxData->ReadyFrame = bgfx::readTexture(bgfx::TextureHandle {blitHandle}, bufferData);
+        } else {
+            bgfxData->ReadyFrame = bgfx::readTexture(bgfx::TextureHandle {sourceHandle}, bufferData);
+        }
+    }
 }
 
 LocalFunction(OnAppUpdate, void, Entity appLoop) {
@@ -142,8 +166,12 @@ LocalFunction(OnAppUpdate, void, Entity appLoop) {
                 viewId++;
             });
 
+            for_entity(entity, data, TextureReadBack, {
+                UpdateTextureReadBack(entity, data);
+            });
+
             bgfx::setDebug(debugFlags);
-            auto frame = bgfx::frame();
+            Frame = bgfx::frame();
         }
     }
 }

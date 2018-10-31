@@ -62,6 +62,22 @@ LocalFunction(OnBgfxIndexBufferRemoved, void, Entity entity) {
     }
 }
 
+static void CalculateAABB(Entity vertexBuffer, const char *vertexData, u32 vertexDataSize) {
+    auto decl = GetVertexBufferDeclaration(vertexBuffer);
+    auto declData = GetBgfxVertexDeclarationData(decl);
+
+    u8 numPositionElements = 0;
+    bgfx::AttribType::Enum positionAttribType;
+    bool normalized = false, asInt = false;
+    declData->decl.decode(bgfx::Attrib::Position, numPositionElements, positionAttribType, normalized, asInt);
+
+    auto stride = declData->decl.getStride();
+    auto numVertices = vertexDataSize / stride;
+    for(auto i = 0; i < numVertices; ++i) {
+
+    }
+}
+
 static void ValidateVertexBuffer(Entity entity) {
     auto data = GetBgfxVertexBufferData(entity);
     auto decl = GetVertexBufferDeclaration(entity);

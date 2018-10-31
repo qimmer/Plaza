@@ -14,6 +14,7 @@
 #include <Core/Algorithms.h>
 #include <Core/Identification.h>
 #include "Font.h"
+#include "Widget.h"
 
 typedef struct {
     float x0, y0, s0, t0; // top-left
@@ -158,15 +159,15 @@ static u32 GetFontGlyphData(Entity font,
     return numVertices;
 }
 
-static void RebuildTextMesh(Entity entity) {
-    if (!HasComponent(entity, ComponentOf_TextMesh())) return;
+static void RebuildLabel(Entity entity) {
+    if (!HasComponent(entity, ComponentOf_Label())) return;
 
-    auto data = GetTextMeshData(entity);
+    auto data = GetLabelData(entity);
 
-    if (IsEntityValid(data->TextMeshFont)) {
-        auto length = strlen(data->TextMeshText);
+    if (IsEntityValid(data->LabelFont)) {
+        auto length = strlen(data->LabelText);
         auto vertices = (FontVertex *) malloc(sizeof(FontVertex) * length * 6);
-        auto numVertices = GetFontGlyphData(data->TextMeshFont, data->TextMeshText, {0.0f, 0.0f}, vertices,
+        auto numVertices = GetFontGlyphData(data->LabelFont, data->LabelText, {0.0f, 0.0f}, vertices,
                                             length * 6);
 
         v2f min = {FLT_MAX, FLT_MAX}, max = {FLT_MIN, FLT_MIN};
@@ -176,6 +177,24 @@ static void RebuildTextMesh(Entity entity) {
 
             max.x = Max(max.x, vertices[i].Position.x);
             max.y = Max(max.y, vertices[i].Position.y);
+        }
+
+        v2f labelSize = {
+            max.x - min.x,
+            max.y - min.y,
+        };
+
+        auto widgetSize = GetWidgetSize(entity);
+        auto alignment = GetLabelAlignment(entity);
+
+        v2f offset = {
+            (widgetSize.x - labelSize.x) * alignment.x - min.x,
+            (widgetSize.y - labelSize.y) * alignment.y - min.y
+        };
+
+        for (auto i = 0; i < numVertices; ++i) {
+            vertices[i].Position.x -= offset.x;
+            vertices[i].Position.y -= offset.y;
         }
 
         auto vertexBuffer = GetMeshVertexBuffer(entity);
@@ -202,13 +221,15 @@ static void RebuildTextMesh(Entity entity) {
         SetSubMeshNumVertices(subMesh, numVertices);
         SetSubMeshPrimitiveType(subMesh, PrimitiveType_TRIANGLELIST);
         free(vertices);
+
+        SetRenderableSubMesh(entity, subMesh);
     }
 }
 
 LocalFunction(OnValidateMeshes, void, Entity component) {
-    for_entity(textMesh, data, TextMesh, {
-        if(IsDirty(textMesh)) {
-            RebuildTextMesh(textMesh);
+    for_entity(label, data, Label, {
+        if(IsDirty(label)) {
+            RebuildLabel(label);
         }
     });
 }
@@ -216,9 +237,9 @@ LocalFunction(OnValidateMeshes, void, Entity component) {
 LocalFunction(OnValidateTextures, void, Entity component) {
     for_entity(font, data, Font, {
         if(IsDirty(font)) {
-            for_entity(textMesh, data, TextMesh, {
-                if(data->TextMeshFont == font) {
-                    RebuildTextMesh(textMesh);
+            for_entity(label, data, Label, {
+                if(data->LabelFont == font) {
+                    RebuildLabel(label);
                 }
             });
         }
@@ -261,15 +282,18 @@ BeginUnit(Font)
         RegisterProperty(StringRef, FontCharacters)
     EndComponent()
 
-    BeginComponent(TextMesh)
-        RegisterProperty(Entity, TextMeshFont)
-        RegisterProperty(StringRef, TextMeshText)
-        RegisterProperty(v2f, TextMeshAlignment)
+    BeginComponent(Label)
+        RegisterBase(Widget)
+        RegisterBase(Mesh)
+        RegisterReferenceProperty(Font, LabelFont)
+        RegisterProperty(StringRef, LabelText)
+        RegisterProperty(v2f, LabelAlignment)
     EndComponent()
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontCharacters()), AddFontCharacterGlyphs, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextMeshFont()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextMeshText()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LabelFont()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LabelText()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LabelAlignment()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontGlyphs()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_GlyphCode()), InvalidateParent, 0)
     RegisterSubscription(EventOf_Validate(), OnValidateMeshes, ComponentOf_Mesh())

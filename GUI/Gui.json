@@ -13,7 +13,14 @@
               "UniformType": "Entity",
               "UniformIdentifier": "s_fontAtlas",
               "UniformSamplerIndex": 0,
-              "UniformEntityProperty": "Property.TextMeshFont"
+              "UniformEntityProperty": "Property.LabelFont"
+            },
+            {
+              "Uuid": "Gui.RenderPath.Uniforms.GuiTexture",
+              "UniformType": "Entity",
+              "UniformIdentifier": "s_widgetMeshTexture",
+              "UniformSamplerIndex": 0,
+              "UniformEntityProperty": "Property.WidgetMeshTexture"
             }
           ],
           "RenderPassRenderableUniforms": [
@@ -25,8 +32,10 @@
             }
           ],
           "RenderPassRenderState": {
-            "RenderStateBlendMode": "RenderState_STATE_BLEND_ALPHA"
-          }
+            "RenderStateBlendMode": "RenderState_STATE_BLEND_ALPHA",
+            "RenderStateDepthTest": "RenderState_STATE_DEPTH_TEST_NONE"
+          },
+          "RenderPassSortMode": "RenderingSortMode_DepthDescending"
         }
       ]
     },
@@ -142,19 +151,19 @@
               "MeshBuilderVertexTexCoord1":[0.0, 0.0]
             },
             {
-              "MeshBuilderVertexPosition":[1.0, 0.0, 0.0],
+              "MeshBuilderVertexPosition":[0.0, 0.0, 0.0],
               "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
               "MeshBuilderVertexTexCoord0":[1.0, 0.0],
               "MeshBuilderVertexTexCoord1":[1.0, 0.0]
             },
             {
-              "MeshBuilderVertexPosition":[0.0, 1.0, 0.0],
+              "MeshBuilderVertexPosition":[0.0, 0.0, 0.0],
               "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
               "MeshBuilderVertexTexCoord0":[0.0, 1.0],
               "MeshBuilderVertexTexCoord1":[0.0, 1.0]
             },
             {
-              "MeshBuilderVertexPosition":[1.0, 1.0, 0.0],
+              "MeshBuilderVertexPosition":[0.0, 0.0, 0.0],
               "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
               "MeshBuilderVertexTexCoord0":[1.0, 1.0],
               "MeshBuilderVertexTexCoord1":[1.0, 1.0]

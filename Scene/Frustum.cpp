@@ -4,12 +4,6 @@
 
 #include <cglm/cglm.h>
 
-struct Frustum {
-    m4x4f FrustumViewMatrix, FrustumInvViewProjectionMatrix, FrustumProjectionMatrix;
-    float FrustumNearClip, FrustumFarClip;
-    u64 padding;
-};
-
 LocalFunction(OnValidateTransforms, void, Entity component) {
     for_entity(frustum, transformData, Frustum, {
         if(!IsDirty(frustum)) continue;

@@ -22,10 +22,10 @@ struct FontVertex {
     v2f Position, Uv;
 };
 
-struct TextMesh {
-    Entity TextMeshFont;
-    StringRef TextMeshText;
-    v2f TextMeshAlignment;
+struct Label {
+    Entity LabelFont;
+    StringRef LabelText;
+    v2f LabelAlignment;
 };
 
 Unit(Font)
@@ -40,9 +40,9 @@ Unit(Font)
         Property(StringRef, FontCharacters)
         ArrayProperty(Glyph, FontGlyphs)
 
-    Component(TextMesh)
-        ReferenceProperty(Font, TextMeshFont)
-        Property(StringRef, TextMeshText)
-        Property(v2f, TextMeshAlignment)
+    Component(Label)
+        ReferenceProperty(Font, LabelFont)
+        Property(StringRef, LabelText)
+        Property(v2f, LabelAlignment)
 
 #endif //PLAZA_FONT_H

@@ -7,10 +7,14 @@
 
 #include <Core/NativeUtils.h>
 
+struct Transform {
+    m4x4f TransformGlobalMatrix, TransformLocalMatrix;
+    s32 TransformHierarchyLevel;
+};
+
 Unit(Transform)
     Component(Transform)
         Property(m4x4f, TransformGlobalMatrix)
         Property(m4x4f, TransformLocalMatrix)
-        ReferenceProperty(Transform, TransformParent)
 
 #endif //PLAZA_TRANSFORM_H

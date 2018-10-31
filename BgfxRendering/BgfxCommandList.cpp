@@ -88,7 +88,8 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     auto renderable = batchData->BatchRenderable;
     auto binaryProgram = batchData->BatchBinaryProgram;
 
-    auto worldMatrix = GetTransformGlobalMatrix(renderable);
+    auto transformData = GetTransformData(renderable);
+    auto worldMatrix = transformData->TransformGlobalMatrix;
 
     auto subMesh = GetRenderableSubMesh(renderable);
     auto subMeshData = GetSubMeshData(subMesh);
@@ -161,7 +162,7 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
         SetUniformState(uniform, renderable, encoder);
     });
 
-    encoder->submit(viewId, bgfx::ProgramHandle {programHandle});
+    encoder->submit(viewId, bgfx::ProgramHandle {programHandle}, transformData->TransformHierarchyLevel);
 }
 
 void RenderCommandList(Entity commandList, unsigned char viewId) {
@@ -248,6 +249,7 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
     );
 
     bgfx::setViewTransform(viewId, &viewMat, &projMat);
+    bgfx::setViewMode(viewId, (bgfx::ViewMode::Enum)GetRenderPassSortMode(pass));
 
     bgfx::touch(viewId);
 

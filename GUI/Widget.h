@@ -8,23 +8,20 @@
 #include <Core/NativeUtils.h>
 
 enum {
+    WidgetChildLayout_Manual,
     WidgetChildLayout_Horizontal,
     WidgetChildLayout_Vertical
-};
-
-enum {
-    WidgetSizing_Weighted,
-    WidgetSizing_Fixed
 };
 
 struct Widget {
     v2i WidgetSize, WidgetMinimumSize;
     v2f WidgetWeight;
-    u8 WidgetChildLayout, WidgetSizing;
+    u8 WidgetChildLayout;
 };
 
 struct WidgetMesh {
     Entity WidgetMeshTexture;
+    u16 WidgetMeshFixedBorderWidth;
 };
 
 Unit(Widget)
@@ -39,6 +36,8 @@ Unit(Widget)
         Property(v2i, WidgetSize)
 
     Component(WidgetMesh)
-        ReferenceProperty(Texture2D, WidgetMeshTexture)
+        ReferenceProperty(SubTexture2D, WidgetMeshTexture)
+        Property(u16, WidgetMeshFixedBorderWidth)
+
 
 #endif //PLAZA_WIDGET_H

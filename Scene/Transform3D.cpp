@@ -40,8 +40,8 @@ LocalFunction(OnRotationEuler3DChanged, void, Entity entity, v3f before, v3f aft
     glm_quat(&qx.x, glm_rad(after.x), 1.0f, 0.0f, 0.0f);
     glm_quat(&qy.x, glm_rad(after.y), 0.0f, 1.0f, 0.0f);
     glm_quat(&qz.x, glm_rad(after.z), 0.0f, 0.0f, 1.0f);
-    glm_quat_mulv(&qy.x, &qx.x, &t.x);
-    glm_quat_mulv(&t.x, &qz.x, &GetTransform3DData(entity)->RotationQuat3D.x);
+    glm_quat_mul(&qy.x, &qx.x, &t.x);
+    glm_quat_mul(&t.x, &qz.x, &GetTransform3DData(entity)->RotationQuat3D.x);
 
     UpdateLocalTransform(entity);
 }
@@ -80,6 +80,17 @@ API_EXPORT void Move3D(Entity transform, v3f direction, bool relativeToRotation)
     position.z += direction.z;
 
     SetPosition3D(transform, position);
+}
+
+API_EXPORT void LookAt(Entity transform, v3f origin, v3f direction, v3f up) {
+    v4f quat, conj;
+    m4x4f m;
+
+    glm_look(&origin.x, &direction.x, &up.x, (vec4*)&m.x);
+    glm_mat4_quat((vec4*)&m.x, &quat.x);
+    glm_quat_conjugate(&quat.x, &conj.x);
+
+    SetRotationQuat3D(transform, conj);
 }
 
 BeginUnit(Transform3D)

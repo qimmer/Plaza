@@ -3,7 +3,7 @@ $output v_texcoord0, v_normal
 
 #include <common.sh>
 
-uniform ivec2 u_widgetSize;
+uniform vec4 u_widgetSize;
 
 void main()
 {
@@ -11,8 +11,7 @@ void main()
     v_normal = a_normal;
 
     vec3 position = a_position;
-    //position.xy += mul(vec2(u_widgetSize), a_texcoord1);
-    position.z = a_position.z;
+    position.xy += vec2(a_texcoord1.x * u_widgetSize.x, a_texcoord1.y * u_widgetSize.y);
 
     gl_Position = mul(u_modelViewProj, vec4(position, 1.0));
 }
