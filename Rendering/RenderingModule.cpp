@@ -67,7 +67,9 @@ BeginUnit(Rendering)
                     { "FileTypeExtension": ".ps", "FileTypeMimeType" : "application/pixel-shader" },
                     { "FileTypeExtension": ".var", "FileTypeMimeType" : "application/decl-shader" },
                     { "FileTypeExtension": ".vsb", "FileTypeMimeType" : "application/binary-vertex-shader" },
-                    { "FileTypeExtension": ".psb", "FileTypeMimeType" : "application/binary-pixel-shader" }
+                    { "FileTypeExtension": ".psb", "FileTypeMimeType" : "application/binary-pixel-shader" },
+                    { "FileTypeExtension": ".vtb", "FileTypeMimeType" : "application/vertex-buffer" },
+                    { "FileTypeExtension": ".idb", "FileTypeMimeType" : "application/index-buffer" }
                 ]
             }
     );

@@ -273,9 +273,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
     auto size = GetRenderTargetSize(entity);
 
     if(NumContexts == 1) {
-        ProfileStart("glfwInit", 150.0);
         glfwInit();
-        ProfileEnd();
 
         SetAppLoopDisabled(GetBgfxRenderingLoop(ModuleOf_BgfxRendering()), false);
     }
@@ -322,7 +320,6 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
         bgfx::init(bgfx::RendererType::Metal);
 #endif
 
-        ProfileStart("bgfx::init", 150.0);
 #ifdef WIN32
         bgfx::init();
 #endif
@@ -330,8 +327,6 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
 #ifdef __linux__
         bgfx::init();
 #endif
-
-        ProfileEnd();
 
         bgfx::reset(size.x, size.y);
 

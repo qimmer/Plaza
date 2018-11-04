@@ -66,7 +66,7 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
 
 BeginUnit(Invocation)
     BeginComponent(Invocation)
-        RegisterProperty(Entity, InvocationFunction)
+        RegisterReferenceProperty(Function, InvocationFunction)
         RegisterProperty(Variant, InvocationResult)
         RegisterArrayProperty(InvocationArgument, InvocationArguments)
     EndComponent()

@@ -12,7 +12,7 @@ Unit(Invocation)
         Property(Variant, InvocationArgumentValue);
 
     Component(Invocation)
-        Property(Entity, InvocationFunction)
+        ReferenceProperty(Function, InvocationFunction)
         Property(Variant, InvocationResult)
         ArrayProperty(InvocationArgument, InvocationArguments)
 

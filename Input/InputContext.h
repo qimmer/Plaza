@@ -9,6 +9,7 @@
 
 Unit(InputContext)
     Component(InputState)
+        ReferenceProperty(InputContext, InputStateContext)
         Property(u16, InputStateKey)
         Property(float, InputStateValue)
 
@@ -16,9 +17,7 @@ Unit(InputContext)
         Property(bool, InputContextGrabMouse)
         Property(v2i, InputContextCursorPosition)
         Property(s8, InputContextLastCharacter)
-        ArrayProperty(KeyState, InputContextStates)
 
-    Function(FindInputState, Entity, Entity context, u16 key)
     Function(SetInputStateValueByKey, void, Entity context, u16 key, float value)
 
 #endif //PLAZA_INPUTCONTEXT_H

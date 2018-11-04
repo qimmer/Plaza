@@ -14505,15 +14505,15 @@
             "Children": [
                 {
                     "StreamPath": "file://TestGame/TestAssets.json",
-                    "PersistancePointLoading": true
+                    "PersistancePointLoaded": true
                 },
                 {
                     "StreamPath": "file://TestGame/SpinningCube.json",
-                    "PersistancePointLoading": true
+                    "PersistancePointLoaded": true
                 },
                 {
                     "StreamPath": "file://Rendering/Primitives.json",
-                    "PersistancePointLoading": true
+                    "PersistancePointLoaded": true
                 }
             ]
         }

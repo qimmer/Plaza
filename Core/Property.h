@@ -32,8 +32,9 @@ Component(Ownership)
 
 StringRef Intern(StringRef sourceString);
 
-void SetPropertyValue(Entity property, Entity entity, Variant valueData);
-Variant GetPropertyValue(Entity property, Entity entity);
+Function(SetPropertyValue, void, Entity property, Entity entity, Variant valueData)
+Function(GetPropertyValue, Variant, Entity property, Entity entity)
+
 Entity *GetArrayPropertyElements(Entity property, Entity entity, u32 *count);
 
 Function(GetArrayPropertyCount, u32, Entity property, Entity entity);

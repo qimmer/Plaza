@@ -11,10 +11,12 @@
 NativeFunctionInvokerVoid0()
 NativeFunctionInvokerVoid1(Entity)
 NativeFunctionInvokerVoid2(Entity, Entity)
+NativeFunctionInvokerVoid3(Entity, Entity, Variant)
 NativeFunctionInvoker1(bool, Entity)
 NativeFunctionInvoker1(bool, u32)
 NativeFunctionInvoker1(Variant, Variant)
 NativeFunctionInvoker2(Variant, Variant, Variant)
+NativeFunctionInvoker2(Variant, Entity, Entity)
 
 #define NoArgInvoker(Type) \
     NativeFunctionInvoker0(Type)

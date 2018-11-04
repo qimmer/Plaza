@@ -8,6 +8,7 @@
 struct InputState {
     float InputStateValue;
     u16 InputStateKey;
+    Entity InputStateContext;
 };
 
 struct InputContext {
@@ -16,20 +17,12 @@ struct InputContext {
     s8 InputContextLastCharacter;
 };
 
-API_EXPORT Entity FindInputState(Entity context, u16 key) {
-    for_children(inputState, InputContextStates, context, {
-        if(GetInputStateKey(inputState) == key) {
-            return inputState;
-        }
-    });
-
-    return 0;
-}
-
 API_EXPORT void SetInputStateValueByKey(Entity context, u16 key, float value) {
-    for_children(inputState, InputContextStates, context, {
-        if(GetInputStateKey(inputState) == key) {
-            SetInputStateValue(inputState, value);
+    for_entity(inputState, data, InputState, {
+        if(!data->InputStateContext || data->InputStateContext == context) {
+            if(data->InputStateKey == key) {
+                SetInputStateValue(inputState, value);
+            }
         }
     });
 }
@@ -38,11 +31,11 @@ BeginUnit(InputContext)
     BeginComponent(InputContext)
         RegisterProperty(bool, InputContextGrabMouse)
         RegisterProperty(v2i, InputContextCursorPosition)
-        RegisterArrayProperty(InputState, InputContextStates)
         RegisterProperty(s8, InputContextLastCharacter)
     EndComponent()
     BeginComponent(InputState)
         RegisterProperty(float, InputStateValue)
         RegisterPropertyEnum(u16, InputStateKey, Key)
+        RegisterReferenceProperty(InputContext, InputStateContext)
     EndComponent()
 EndUnit()

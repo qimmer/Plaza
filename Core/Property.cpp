@@ -629,6 +629,9 @@ BeginUnit(Property)
         RegisterReferenceProperty(Property, OwnerProperty)
     EndComponent()
 
+    RegisterFunction(SetPropertyValue)
+    RegisterFunction(GetPropertyValue)
+
     RegisterSubscription(EventOf_EntityComponentAdded(), OnPropertyAdded, ComponentOf_Property())
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PropertyKind()), OnPropertyKindChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PropertyType()), OnPropertyChanged, 0)

@@ -3,7 +3,7 @@ project(Scene)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Scene Transform.cpp Transform.h Transform2D.h Transform2D.cpp Transform3D.h Transform3D.cpp Camera.cpp Camera.h Model.cpp Model.h SceneModule.cpp SceneModule.h Frustum.h Frustum.cpp Light.h Light.cpp PerspectiveFrustum.cpp PerspectiveFrustum.h OrthographicFrustum.cpp OrthographicFrustum.h Scene.cpp Scene.h Ray.cpp Ray.h)
+add_library(Scene Transform.cpp Transform.h Camera.cpp Camera.h Model.cpp Model.h SceneModule.cpp SceneModule.h Frustum.h Frustum.cpp Light.h Light.cpp PerspectiveFrustum.cpp PerspectiveFrustum.h OrthographicFrustum.cpp OrthographicFrustum.h Scene.cpp Scene.h Ray.cpp Ray.h)
 
 find_package(OpenMP)
 if (OPENMP_FOUND)

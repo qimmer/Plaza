@@ -7,6 +7,8 @@
 BeginUnit(Entity)
     RegisterFunction(IsEntityOccupied)
     RegisterFunction(IsEntityValid)
+    RegisterFunction(CreateEntity)
+    RegisterFunction(DestroyEntity)
 
     RegisterEvent(EntityCreated)
     RegisterEvent(EntityDestroyed)

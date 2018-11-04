@@ -7,10 +7,12 @@
 #include <Rendering/RenderContext.h>
 #include <Rendering/SceneRenderer.h>
 #include <Input/InputContext.h>
+#include <Foundation/AppLoop.h>
 #include "Frustum.h"
 #include "Transform.h"
-#include "Transform3D.h"
 #include <cglm/cglm.h>
+#include <Rendering/RenderTarget.h>
+#include <Foundation/AppNode.h>
 
 struct EvaluatedRay {
     int sign[3];
@@ -121,7 +123,10 @@ static inline bool RayAABBIntersect(EvaluatedRay *r, v3f *bounds) {
     return true;
 }
 
-static inline bool TraceRenderable(Entity renderable, Renderable *renderableData, EvaluatedRay *ray, v3f *hitPoint) {
+static inline bool TraceRenderable(Entity renderable, EvaluatedRay *ray, v3f *hitPoint) {
+    auto renderableData = GetRenderableData(renderable);
+    if(!renderableData) return false;
+
     return HitBoundingBox(
             &renderableData->RenderableAABBMin.x,
             &renderableData->RenderableAABBMax.x,
@@ -148,53 +153,76 @@ static inline Entity RayTrace(Entity ray, TraceRay *data) {
             {rayMatrix.w.x, rayMatrix.w.y, rayMatrix.w.z}
     };
 
-    for_entity(renderable, renderableData, Renderable, {
+    v3f finalHitPoint = {rayMatrix.w.x, rayMatrix.w.y, rayMatrix.w.z};
+    finalHitPoint.x += rayMatrix.z.x;
+    finalHitPoint.y += rayMatrix.z.y;
+    finalHitPoint.z += rayMatrix.z.z;
+
+    auto scene = GetAppNodeRoot(ray);
+    for_entity_dynamic(candidate, data->TraceRayComponent, {
         v3f hitPoint;
 
-        if (TraceRenderable(renderable, renderableData, &evaluatedRay, &hitPoint)) {
+        if(GetAppNodeRoot(candidate) != scene) continue;
+
+        if (TraceRenderable(candidate, &evaluatedRay, &hitPoint)) {
             auto distance = glm_vec_distance(&hitPoint.x, &evaluatedRay.orig.x);
 
             if(distance < minDistance) {
                 minDistance = distance;
-                pickedRenderable = renderable;
+                pickedRenderable = candidate;
+                finalHitPoint = hitPoint;
             }
         }
     });
 
+    SetTraceRayPoint(ray, finalHitPoint);
+
     return pickedRenderable;
+}
+
+static void UpdatePickRay(Entity ray, PickRay *data) {
+    auto sceneRendererData = GetSceneRendererData(data->PickRaySceneRenderer);
+    if(!sceneRendererData) return;
+
+    auto frustumData = GetFrustumData(sceneRendererData->SceneRendererCamera);
+    if(!frustumData) return;
+
+    auto mouseLocation = GetInputContextCursorPosition(sceneRendererData->SceneRendererTarget);
+    auto renderTargetSize = GetRenderTargetSize(sceneRendererData->SceneRendererTarget);
+
+    v3f location;
+    location.x = (float)mouseLocation.x / sceneRendererData->SceneRendererViewport.z;
+    location.y = (float)(renderTargetSize.y - mouseLocation.y) / sceneRendererData->SceneRendererViewport.w;
+
+    v3f worldSpaceNear;
+    v3f worldSpaceFar;
+    v3f rayDirection;
+
+    v4f viewport = {
+        sceneRendererData->SceneRendererViewport.x * renderTargetSize.x,
+        sceneRendererData->SceneRendererViewport.y * renderTargetSize.y,
+        sceneRendererData->SceneRendererViewport.z * renderTargetSize.x,
+        sceneRendererData->SceneRendererViewport.w * renderTargetSize.y,
+    };
+
+    location.z = 0.0f;
+    glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix.x, &viewport.x, &worldSpaceNear.x);
+
+    location.z = 1.0f;
+    glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix.x, &viewport.x, &worldSpaceFar.x);
+
+    glm_vec_sub(&worldSpaceFar.x, &worldSpaceNear.x, &rayDirection.x);
+
+    LookAt(ray, worldSpaceNear, rayDirection);
 }
 
 LocalFunction(OnAppUpdate, void, Entity appLoop) {
     for_entity(ray, data, PickRay, {
-        auto sceneRendererData = GetSceneRendererData(data->PickRaySceneRenderer);
-        if(!sceneRendererData) continue;
-
-        auto frustumData = GetFrustumData(sceneRendererData->SceneRendererCamera);
-        if(!frustumData) continue;
-
-        auto mouseLocation = GetInputContextCursorPosition(sceneRendererData->SceneRendererTarget);
-
-        v3f location;
-        location.x = (float)mouseLocation.x / sceneRendererData->SceneRendererViewport.z;
-        location.y = (float)mouseLocation.y / sceneRendererData->SceneRendererViewport.w;
-
-        v3f worldSpaceNear;
-        v3f worldSpaceFar;
-        v3f rayDirection;
-
-        location.z = 0.0f;
-        glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix.x, &sceneRendererData->SceneRendererViewport.x, &worldSpaceNear.x);
-
-        location.z = 1.0f;
-        glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix.x, &sceneRendererData->SceneRendererViewport.x, &worldSpaceFar.x);
-
-        glm_vec_sub(&worldSpaceFar.x, &worldSpaceNear.x, &rayDirection.x);
-
-        LookAt(ray, worldSpaceNear, rayDirection);
+        UpdatePickRay(ray, data);
     });
 
     for_entity(ray, data, TraceRay, {
-        data->TraceRayRenderable = RayTrace(ray, data);
+        SetTraceRayRenderable(ray, RayTrace(ray, data));
     });
 }
 
@@ -206,6 +234,8 @@ BeginUnit(Ray)
     BeginComponent(TraceRay)
         RegisterBase(Ray)
         RegisterReferenceProperty(Renderable, TraceRayRenderable)
+        RegisterProperty(v3f, TraceRayPoint)
+        RegisterReferenceProperty(Component, TraceRayComponent)
     EndComponent()
 
     BeginComponent(DetailedTraceRay)
@@ -219,4 +249,6 @@ BeginUnit(Ray)
         RegisterBase(Ray)
         RegisterReferenceProperty(SceneRenderer, PickRaySceneRenderer)
     EndComponent()
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppUpdate, 0)
 EndUnit()

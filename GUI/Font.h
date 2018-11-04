@@ -26,6 +26,11 @@ struct Label {
     Entity LabelFont;
     StringRef LabelText;
     v2f LabelAlignment;
+    Entity LabelMesh;
+};
+
+struct LabelArgument {
+    Variant LabelArgumentValue;
 };
 
 Unit(Font)
@@ -40,9 +45,14 @@ Unit(Font)
         Property(StringRef, FontCharacters)
         ArrayProperty(Glyph, FontGlyphs)
 
+    Component(LabelArgument)
+        Property(Variant, LabelArgumentValue)
+
     Component(Label)
         ReferenceProperty(Font, LabelFont)
         Property(StringRef, LabelText)
+        ArrayProperty(LabelArgument, LabelArguments)
         Property(v2f, LabelAlignment)
+        ChildProperty(Mesh, LabelMesh)
 
 #endif //PLAZA_FONT_H

@@ -84,11 +84,14 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
 inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity renderState, Entity pass) {
     auto batchData = GetBatchData(batch);
     auto renderStateData = GetRenderStateData(renderState);
+    if(!batchData) return;
+    if(!renderStateData) return;
 
     auto renderable = batchData->BatchRenderable;
     auto binaryProgram = batchData->BatchBinaryProgram;
 
     auto transformData = GetTransformData(renderable);
+    if(!transformData) return;
     auto worldMatrix = transformData->TransformGlobalMatrix;
 
     auto subMesh = GetRenderableSubMesh(renderable);

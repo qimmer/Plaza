@@ -9,13 +9,6 @@
           "RenderPassClearTargets": "ClearTarget_Depth|ClearTarget_Color",
           "RenderPassMeshUniforms": [
             {
-              "Uuid": "Gui.RenderPath.Uniforms.FontTexture",
-              "UniformType": "Entity",
-              "UniformIdentifier": "s_fontAtlas",
-              "UniformSamplerIndex": 0,
-              "UniformEntityProperty": "Property.LabelFont"
-            },
-            {
               "Uuid": "Gui.RenderPath.Uniforms.GuiTexture",
               "UniformType": "Entity",
               "UniformIdentifier": "s_widgetMeshTexture",
@@ -24,6 +17,13 @@
             }
           ],
           "RenderPassRenderableUniforms": [
+            {
+              "Uuid": "Gui.RenderPath.Uniforms.FontTexture",
+              "UniformType": "Entity",
+              "UniformIdentifier": "s_fontAtlas",
+              "UniformSamplerIndex": 0,
+              "UniformEntityProperty": "Property.LabelFont"
+            },
             {
               "Uuid": "Gui.RenderPath.Uniforms.WidgetSize",
               "UniformType": "v4f",
@@ -35,7 +35,7 @@
             "RenderStateBlendMode": "RenderState_STATE_BLEND_ALPHA",
             "RenderStateDepthTest": "RenderState_STATE_DEPTH_TEST_NONE"
           },
-          "RenderPassSortMode": "RenderingSortMode_DepthDescending"
+          "RenderPassSortMode": "RenderingSortMode_DepthAscending"
         }
       ]
     },

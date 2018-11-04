@@ -77,11 +77,11 @@ LocalFunction(Load, void, Entity persistancePoint) {
 
     auto result = GetSerializerData(serializer)->DeserializeHandler(persistancePoint);
 
-    SetPersistancePointLoading(persistancePoint, false);
-
     if(result) {
         SetPersistancePointLoaded(persistancePoint, true);
     }
+
+    SetPersistancePointLoading(persistancePoint, false);
 
     StreamClose(persistancePoint);
 }
@@ -167,6 +167,10 @@ API_EXPORT bool ResolveReferences() {
         }
 
         auto entity = GetOwner(unresolvedReference);
+        if(!IsEntityValid(entity)) {
+            continue;
+        }
+
         auto value = MakeVariant(Entity, reference);
 
         SetPropertyValue(data->UnresolvedReferenceProperty, entity, value);
@@ -176,6 +180,16 @@ API_EXPORT bool ResolveReferences() {
     });
 
     return areAllResolved;
+}
+
+LocalFunction(OnPersistancePointLoadedChanged, void, Entity entity, bool oldValue, bool newValue) {
+    auto isLoading = GetPersistancePointLoading(entity);
+
+    if(!isLoading && newValue) {
+        SetPersistancePointLoaded(entity, false);
+
+        SetPersistancePointLoading(entity, true);
+    }
 }
 
 BeginUnit(PersistancePoint)
@@ -200,5 +214,6 @@ BeginUnit(PersistancePoint)
     RegisterSubscription(EventOf_StreamContentChanged(), OnStreamContentChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), OnStreamPathChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PersistancePointLoading()), OnPersistancePointLoadingChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PersistancePointLoaded()), OnPersistancePointLoadedChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PersistancePointSaving()), OnPersistancePointSavingChanged, 0)
 EndUnit()

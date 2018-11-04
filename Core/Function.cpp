@@ -90,12 +90,13 @@ API_EXPORT Variant CallFunction(
     static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
     u32 numArgs = 0;
-    GetFunctionArguments(f, &numArgs);
+    auto functionArguments = GetFunctionArguments(f, &numArgs);
     for(auto i = 0; i < numArgs; ++i) {
         if(i >= numArguments) {
             finalArguments[i] = Variant_Empty;
         } else {
-            finalArguments[i] = arguments[i];
+            auto type = GetFunctionArgumentType(functionArguments[i]);
+            finalArguments[i] = (type == TypeOf_Variant) ? arguments[i] : Cast(arguments[i], type);
         }
     }
 
@@ -110,8 +111,8 @@ API_EXPORT Variant CallFunction(
     auto caller = (FunctionCallerType)data->FunctionCaller;
     auto result = caller(
             f,
-            numArguments,
-            arguments
+            numArgs,
+            finalArguments
     );
 
 #ifdef PROFILE
@@ -131,7 +132,7 @@ std::vector<ProfileEntry> profileEntries;
 
 API_EXPORT void ProfileStart(StringRef tag, double thresholdMsecs) {
     ProfileEntry ent;
-    //clock_gettime(CLOCK_MONOTONIC, &ent.start);
+    clock_gettime(CLOCK_MONOTONIC, &ent.start);
     ent.tag = tag;
     ent.threshold = thresholdMsecs;
 
@@ -140,7 +141,7 @@ API_EXPORT void ProfileStart(StringRef tag, double thresholdMsecs) {
 
 API_EXPORT void ProfileEnd() {
     struct timespec ts_end;
-    //clock_gettime(CLOCK_MONOTONIC, &ts_end);
+    clock_gettime(CLOCK_MONOTONIC, &ts_end);
 
     auto entry = profileEntries[profileEntries.size()-1];
     profileEntries.pop_back();

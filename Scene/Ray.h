@@ -11,7 +11,8 @@ struct Ray {
 };
 
 struct TraceRay {
-    Entity TraceRayRenderable;
+    Entity TraceRayRenderable, TraceRayComponent;
+    v3f TraceRayPoint;
 };
 
 struct DetailedTraceRay {
@@ -28,6 +29,8 @@ Unit(Ray)
 
     Component(TraceRay)
         ReferenceProperty(Renderable, TraceRayRenderable)
+        Property(v3f, TraceRayPoint)
+        ReferenceProperty(Component, TraceRayComponent)
 
     Component(DetailedTraceRay)
         Property(v3f, DetailedTraceRayPoint)

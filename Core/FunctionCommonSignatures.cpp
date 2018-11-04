@@ -9,6 +9,8 @@ void RegisterCommonSignatures() {
     RegisterFunctionSignature(NativeFunctionInvoker_Entity, Entity);
     RegisterFunctionSignature(NativeFunctionInvoker_void_Entity, void, Entity);
     RegisterFunctionSignature(NativeFunctionInvoker_void_Entity_Entity, void, Entity, Entity);
+    RegisterFunctionSignature(NativeFunctionInvoker_void_Entity_Entity_Variant, void, Entity, Entity, Variant);
+    RegisterFunctionSignature(NativeFunctionInvoker_Variant_Entity_Entity, Variant, Entity, Entity);
     RegisterFunctionSignature(NativeFunctionInvoker_bool_Entity, bool, Entity);
     RegisterFunctionSignature(NativeFunctionInvoker_bool_u32, bool, u32);
     RegisterFunctionSignature(NativeFunctionInvoker_Variant_Variant, Variant, Variant);

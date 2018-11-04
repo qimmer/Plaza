@@ -114,16 +114,59 @@ const StringRef jsonTypeNames[] = {
         }\
         break;
 
+#define ReadMat3If(TYPE, JSONREADFUNC)\
+    case TypeOf_ ## TYPE:\
+        {\
+        TYPE v;\
+        if(reader.IsArray()) {\
+            v.x.x = reader.GetArray()[0].Get ## JSONREADFUNC ();\
+            v.x.y = reader.GetArray()[1].Get ## JSONREADFUNC ();\
+            v.x.z = reader.GetArray()[2].Get ## JSONREADFUNC ();\
+            v.y.x = reader.GetArray()[3].Get ## JSONREADFUNC ();\
+            v.y.y = reader.GetArray()[4].Get ## JSONREADFUNC ();\
+            v.y.z = reader.GetArray()[5].Get ## JSONREADFUNC ();\
+            v.z.x = reader.GetArray()[6].Get ## JSONREADFUNC ();\
+            v.z.y = reader.GetArray()[7].Get ## JSONREADFUNC ();\
+            v.z.z = reader.GetArray()[8].Get ## JSONREADFUNC ();\
+        }\
+        *(TYPE*)&value.data = v;\
+        }\
+        break;
+
+#define ReadMat4If(TYPE, JSONREADFUNC)\
+    case TypeOf_ ## TYPE:\
+        {\
+        TYPE v;\
+        if(reader.IsArray()) {\
+            v.x.x = reader.GetArray()[0].Get ## JSONREADFUNC ();\
+            v.x.y = reader.GetArray()[1].Get ## JSONREADFUNC ();\
+            v.x.z = reader.GetArray()[2].Get ## JSONREADFUNC ();\
+            v.x.w = reader.GetArray()[3].Get ## JSONREADFUNC ();\
+            v.y.x = reader.GetArray()[4].Get ## JSONREADFUNC ();\
+            v.y.y = reader.GetArray()[5].Get ## JSONREADFUNC ();\
+            v.y.z = reader.GetArray()[6].Get ## JSONREADFUNC ();\
+            v.y.w = reader.GetArray()[7].Get ## JSONREADFUNC ();\
+            v.z.x = reader.GetArray()[8].Get ## JSONREADFUNC ();\
+            v.z.y = reader.GetArray()[9].Get ## JSONREADFUNC ();\
+            v.z.z = reader.GetArray()[10].Get ## JSONREADFUNC ();\
+            v.z.w = reader.GetArray()[11].Get ## JSONREADFUNC ();\
+            v.w.x = reader.GetArray()[12].Get ## JSONREADFUNC ();\
+            v.w.y = reader.GetArray()[13].Get ## JSONREADFUNC ();\
+            v.w.z = reader.GetArray()[14].Get ## JSONREADFUNC ();\
+            v.w.w = reader.GetArray()[15].Get ## JSONREADFUNC ();\
+        }\
+        *(TYPE*)&value.data = v;\
+        }\
+        break;
+
 #define WriteVec2If(TYPE, JSONWRITEFUNC)\
     case TypeOf_ ## TYPE:\
         {\
             auto v2 = *(TYPE*)&value.data;\
-            writer.StartObject();\
-            writer.String("x");\
+            writer.StartArray();\
             writer.JSONWRITEFUNC(v2.x);\
-            writer.String("y");\
             writer.JSONWRITEFUNC(v2.y);\
-            writer.EndObject();\
+            writer.EndArray();\
         }\
         break;
 
@@ -131,14 +174,11 @@ const StringRef jsonTypeNames[] = {
     case TypeOf_ ## TYPE:\
 {\
         auto v3 = *(TYPE*)&value.data;\
-        writer.StartObject();\
-        writer.String("x");\
+        writer.StartArray();\
         writer.JSONWRITEFUNC(v3.x);\
-        writer.String("y");\
         writer.JSONWRITEFUNC(v3.y);\
-        writer.String("z");\
         writer.JSONWRITEFUNC(v3.z);\
-        writer.EndObject();\
+        writer.EndArray();\
         }\
         break;
 
@@ -146,16 +186,55 @@ const StringRef jsonTypeNames[] = {
     case TypeOf_ ## TYPE:\
 {\
         auto v4 = *(TYPE*)&value.data;\
-        writer.StartObject();\
-        writer.String("x");\
+        writer.StartArray();\
         writer.JSONWRITEFUNC(v4.x);\
-        writer.String("y");\
         writer.JSONWRITEFUNC(v4.y);\
-        writer.String("z");\
         writer.JSONWRITEFUNC(v4.z);\
-        writer.String("w");\
         writer.JSONWRITEFUNC(v4.w);\
-        writer.EndObject();\
+        writer.EndArray();\
+        }\
+        break;
+
+#define WriteMat3If(TYPE, JSONWRITEFUNC)\
+    case TypeOf_ ## TYPE:\
+{\
+        auto v3 = *(TYPE*)&value.data;\
+        writer.StartArray();\
+        writer.JSONWRITEFUNC(v3.x.x);\
+        writer.JSONWRITEFUNC(v3.x.y);\
+        writer.JSONWRITEFUNC(v3.x.z);\
+        writer.JSONWRITEFUNC(v3.y.x);\
+        writer.JSONWRITEFUNC(v3.y.y);\
+        writer.JSONWRITEFUNC(v3.y.z);\
+        writer.JSONWRITEFUNC(v3.z.x);\
+        writer.JSONWRITEFUNC(v3.z.y);\
+        writer.JSONWRITEFUNC(v3.z.z);\
+        writer.EndArray();\
+        }\
+        break;
+
+#define WriteMat4If(TYPE, JSONWRITEFUNC)\
+    case TypeOf_ ## TYPE:\
+{\
+        auto v4 = *(TYPE*)&value.data;\
+        writer.StartArray();\
+        writer.JSONWRITEFUNC(v4.x.x);\
+        writer.JSONWRITEFUNC(v4.x.y);\
+        writer.JSONWRITEFUNC(v4.x.z);\
+        writer.JSONWRITEFUNC(v4.x.w);\
+        writer.JSONWRITEFUNC(v4.y.x);\
+        writer.JSONWRITEFUNC(v4.y.y);\
+        writer.JSONWRITEFUNC(v4.y.z);\
+        writer.JSONWRITEFUNC(v4.y.w);\
+        writer.JSONWRITEFUNC(v4.z.x);\
+        writer.JSONWRITEFUNC(v4.z.y);\
+        writer.JSONWRITEFUNC(v4.z.z);\
+        writer.JSONWRITEFUNC(v4.z.w);\
+        writer.JSONWRITEFUNC(v4.w.x);\
+        writer.JSONWRITEFUNC(v4.w.y);\
+        writer.JSONWRITEFUNC(v4.w.z);\
+        writer.JSONWRITEFUNC(v4.w.w);\
+        writer.EndArray();\
         }\
         break;
 
@@ -186,6 +265,8 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, rapidjso
         WriteVec2If(v2i, Int)
         WriteVec3If(v3i, Int)
         WriteVec4If(v4i, Int)
+        WriteMat3If(m3x3f, Double)
+        WriteMat4If(m4x4f, Double)
         WriteVec4If(rgba8, Int)
         case TypeOf_Type:
             writer.String(GetTypeName(value.as_Type));
@@ -713,6 +794,8 @@ static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& e
         ReadVec3If(v3i, Int)
         ReadVec4If(v4i, Int)
         ReadVec4If(rgba8, Int)
+        ReadMat3If(m3x3f, Double)
+        ReadMat4If(m4x4f, Double)
         case TypeOf_Type:
             if(!reader.IsString()) {
                 Log(parent, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's type name.", GetUuid(property));
@@ -742,6 +825,7 @@ static bool DeserializeValue(Entity parent, Entity property, rapidjson::Value& e
             if(!IsEntityValid(entity)) {
                 // If not found, mark it as unresolved and set it when the referenced entity is loaded
                 auto unresolvedReference = AddUnresolvedReferences(parent);
+                Assert(parent, IsEntityValid(parent));
                 SetUnresolvedReferenceProperty(unresolvedReference, property);
                 SetUnresolvedReferenceUuid(unresolvedReference, id);
             }

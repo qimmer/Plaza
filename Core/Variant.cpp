@@ -6,6 +6,7 @@
 #include <Core/Types.h>
 #include <Core/Entity.h>
 #include <Core/Debug.h>
+#include <Core/Identification.h>
 #include <cstring>
 #include "Variant.h"
 #include <Core/Algorithms.h>
@@ -199,6 +200,16 @@ API_EXPORT Variant Cast(Variant v, Type type_to) {
 
     auto input = (const void*)&v.data;
     auto output = (void*)&newVar.data;
+
+    if(type_to == TypeOf_Entity && type_from == TypeOf_StringRef) {
+        auto result = FindEntityByUuid(v.as_StringRef);
+        return MakeVariant(Entity, result);
+    }
+
+    if(type_to == TypeOf_StringRef && type_from == TypeOf_Entity) {
+        auto result = GetUuid(v.as_Entity);
+        return MakeVariant(StringRef, result);
+    }
 
     switch(type_to) {
         Cast_Outer(u8)
