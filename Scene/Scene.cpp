@@ -3,6 +3,7 @@
 //
 
 #include "Scene.h"
+#include <Foundation/AppNode.h>
 
 struct Scene {
 };
@@ -12,20 +13,29 @@ struct SceneNode {
 };
 
 static Entity FindScene(Entity entity) {
-    if (!IsEntityValid(entity)) {
+    if(!IsEntityValid(entity)) {
         return 0;
     }
 
-    if (HasComponent(entity, ComponentOf_Scene())) {
+    if(HasComponent(entity, ComponentOf_Scene())) {
         return entity;
     }
 
     return FindScene(GetOwner(entity));
 }
 
+static void SetSceneNodeSceneRecursive(Entity entity) {
+    SetSceneNodeScene(entity, FindScene(entity));
+    for_entity(child, data, SceneNode, {
+        if(GetOwner(child) == entity) {
+            SetSceneNodeSceneRecursive(child);
+        }
+    });
+}
+
 LocalFunction(OnOwnerChanged, void, Entity entity) {
-    if (HasComponent(entity, ComponentOf_SceneNode())) {
-        SetSceneNodeScene(entity, FindScene(entity));
+    if(HasComponent(entity, ComponentOf_SceneNode())) {
+        SetSceneNodeSceneRecursive(entity);
     }
 }
 
@@ -33,8 +43,13 @@ LocalFunction(OnSceneNodeAdded, void, Entity component, Entity entity) {
     SetSceneNodeScene(entity, FindScene(entity));
 }
 
+LocalFunction(OnSceneAdded, void, Entity component, Entity entity) {
+    SetSceneNodeSceneRecursive(entity);
+}
+
 BeginUnit(Scene)
     BeginComponent(SceneNode)
+        RegisterBase(AppNode)
         RegisterReferencePropertyReadOnly(Scene, SceneNodeScene)
     EndComponent()
     BeginComponent(Scene)
@@ -43,4 +58,5 @@ BeginUnit(Scene)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
     RegisterSubscription(EventOf_EntityComponentAdded(), OnSceneNodeAdded, ComponentOf_SceneNode())
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnSceneAdded, ComponentOf_Scene())
 EndUnit()

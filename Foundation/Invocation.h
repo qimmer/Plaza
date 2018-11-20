@@ -7,6 +7,19 @@
 
 #include <Core/NativeUtils.h>
 
+struct Invocation {
+    Entity InvocationFunction;
+    Variant InvocationResult;
+};
+
+struct InvocationArgument {
+    Variant InvocationArgumentValue;
+};
+
+struct InvocationToggle {
+    bool InvocationToggleState;
+};
+
 Unit(Invocation)
     Component(InvocationArgument)
         Property(Variant, InvocationArgumentValue);
@@ -15,6 +28,9 @@ Unit(Invocation)
         ReferenceProperty(Function, InvocationFunction)
         Property(Variant, InvocationResult)
         ArrayProperty(InvocationArgument, InvocationArguments)
+
+    Component(InvocationToggle)
+        Property(bool, InvocationToggleState)
 
 Function(Invoke, bool, Entity invocation);
 

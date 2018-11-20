@@ -1,0 +1,13 @@
+# Target labels
+ ex_bgfx
+# Source files and their labels
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/CMakeFiles/ex_bgfx
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/CMakeFiles/ex_bgfx.rule
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/CMakeFiles/ex_bgfx-complete.rule
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-install.rule
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-mkdir.rule
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-download.rule
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-update.rule
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-patch.rule
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-configure.rule
+C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-build.rule

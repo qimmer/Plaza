@@ -1,0 +1,757 @@
+[
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Entity.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Entity.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Entity.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Debug.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Debug.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Debug.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Property.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Property.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Property.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Vector.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Vector.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Vector.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Module.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Module.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Module.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\CoreModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\CoreModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/CoreModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Function.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Function.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Function.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Base64.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Base64.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Base64.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Enum.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Enum.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Enum.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Hashing.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Hashing.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Hashing.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Event.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Event.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Event.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Variant.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Variant.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Variant.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Component.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Component.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Component.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\NativeUtils.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\NativeUtils.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/NativeUtils.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Types.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Types.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Types.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Identification.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Identification.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Identification.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Std.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Std.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Std.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Date.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Date.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Date.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Strings.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Strings.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Strings.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Instance.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Instance.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Instance.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\Binding.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\Binding.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/Binding.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\NativeFunction.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\NativeFunction.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/NativeFunction.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DCore_EXPORTS -I..\\Core\\libffi\\src\\x86 -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoCore\\CMakeFiles\\Core.dir\\FunctionCommonSignatures.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Core\\FunctionCommonSignatures.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Core/FunctionCommonSignatures.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\CommandLine.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\CommandLine.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/CommandLine.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\AppLoop.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\AppLoop.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/AppLoop.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\Visibility.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\Visibility.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/Visibility.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\FoundationModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\FoundationModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/FoundationModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\Stream.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\Stream.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/Stream.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\MemoryStream.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\MemoryStream.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/MemoryStream.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\PersistancePoint.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\PersistancePoint.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/PersistancePoint.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\VirtualPath.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\VirtualPath.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/VirtualPath.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\Task.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\Task.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/Task.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\ValueConverter.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\ValueConverter.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/ValueConverter.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\Invocation.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\Invocation.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/Invocation.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\Timer.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\Timer.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/Timer.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\StopWatch.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\StopWatch.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/StopWatch.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\Invalidation.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\Invalidation.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/Invalidation.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\StdStream.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\StdStream.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/StdStream.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\AppNode.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\AppNode.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/AppNode.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFoundation_EXPORTS -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFoundation\\CMakeFiles\\Foundation.dir\\BasicValueConverters.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Foundation\\BasicValueConverters.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Foundation/BasicValueConverters.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFile_EXPORTS -I..\\File\\.. -I..\\File\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFile\\CMakeFiles\\File.dir\\FileStream.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\File\\FileStream.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/File/FileStream.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFile_EXPORTS -I..\\File\\.. -I..\\File\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFile\\CMakeFiles\\File.dir\\Folder.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\File\\Folder.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/File/Folder.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFile_EXPORTS -I..\\File\\.. -I..\\File\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFile\\CMakeFiles\\File.dir\\FileModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\File\\FileModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/File/FileModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFile_EXPORTS -I..\\File\\.. -I..\\File\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFile\\CMakeFiles\\File.dir\\FileWatcher\\FileWatcher.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\File\\FileWatcher\\FileWatcher.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/File/FileWatcher/FileWatcher.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFile_EXPORTS -I..\\File\\.. -I..\\File\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFile\\CMakeFiles\\File.dir\\FileWatcher\\FileWatcherWin32.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\File\\FileWatcher\\FileWatcherWin32.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/File/FileWatcher/FileWatcherWin32.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFile_EXPORTS -I..\\File\\.. -I..\\File\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFile\\CMakeFiles\\File.dir\\FileWatcher\\FileWatcherOSX.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\File\\FileWatcher\\FileWatcherOSX.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/File/FileWatcher/FileWatcherOSX.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DFile_EXPORTS -I..\\File\\.. -I..\\File\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoFile\\CMakeFiles\\File.dir\\FileWatcher\\FileWatcherLinux.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\File\\FileWatcher\\FileWatcherLinux.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/File/FileWatcher/FileWatcherLinux.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DNetworking_EXPORTS -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoNetworking\\CMakeFiles\\Networking.dir\\NetworkingModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Networking\\NetworkingModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Networking/NetworkingModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DNetworking_EXPORTS -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoNetworking\\CMakeFiles\\Networking.dir\\Server.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Networking\\Server.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Networking/Server.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DNetworking_EXPORTS -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoNetworking\\CMakeFiles\\Networking.dir\\HttpServer.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Networking\\HttpServer.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Networking/HttpServer.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DNetworking_EXPORTS -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoNetworking\\CMakeFiles\\Networking.dir\\HttpRequest.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Networking\\HttpRequest.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Networking/HttpRequest.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DNetworking_EXPORTS -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoNetworking\\CMakeFiles\\Networking.dir\\TcpStream.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Networking\\TcpStream.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Networking/TcpStream.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DNetworking_EXPORTS -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoNetworking\\CMakeFiles\\Networking.dir\\Replication.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Networking\\Replication.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Networking/Replication.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRest_EXPORTS -I..\\Rest\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRest\\CMakeFiles\\Rest.dir\\RestModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rest\\RestModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rest/RestModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRest_EXPORTS -I..\\Rest\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRest\\CMakeFiles\\Rest.dir\\RestEntityRouting.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rest\\RestEntityRouting.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rest/RestEntityRouting.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRest_EXPORTS -I..\\Rest\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRest\\CMakeFiles\\Rest.dir\\RestResourceRouting.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rest\\RestResourceRouting.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rest/RestResourceRouting.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRest_EXPORTS -I..\\Rest\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRest\\CMakeFiles\\Rest.dir\\RestRouting.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rest\\RestRouting.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rest/RestRouting.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRest_EXPORTS -I..\\Rest\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRest\\CMakeFiles\\Rest.dir\\RestServer.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rest\\RestServer.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rest/RestServer.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRest_EXPORTS -I..\\Rest\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Json\\.. -I..\\Json\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRest\\CMakeFiles\\Rest.dir\\RestFunctionRouting.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rest\\RestFunctionRouting.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rest/RestFunctionRouting.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DTest_EXPORTS -I..\\Test\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoTest\\CMakeFiles\\Test.dir\\Test.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Test\\Test.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Test/Test.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DTest_EXPORTS -I..\\Test\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoTest\\CMakeFiles\\Test.dir\\TestModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Test\\TestModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Test/TestModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP  -I..\\Test\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoTest\\CMakeFiles\\TestRunner.dir\\TestRunner.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Test\\TestRunner.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Test/TestRunner.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DInput_EXPORTS -I..\\Input\\.. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoInput\\CMakeFiles\\Input.dir\\InputModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Input\\InputModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Input/InputModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DInput_EXPORTS -I..\\Input\\.. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoInput\\CMakeFiles\\Input.dir\\Key.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Input\\Key.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Input/Key.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DInput_EXPORTS -I..\\Input\\.. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoInput\\CMakeFiles\\Input.dir\\InputContext.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Input\\InputContext.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Input/InputContext.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DAnimation_EXPORTS -I..\\Animation\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoAnimation\\CMakeFiles\\Animation.dir\\Animation.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Animation\\Animation.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Animation/Animation.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DAnimation_EXPORTS -I..\\Animation\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoAnimation\\CMakeFiles\\Animation.dir\\AnimationPlayer.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Animation\\AnimationPlayer.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Animation/AnimationPlayer.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DAnimation_EXPORTS -I..\\Animation\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoAnimation\\CMakeFiles\\Animation.dir\\AnimationSet.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Animation\\AnimationSet.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Animation/AnimationSet.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DAnimation_EXPORTS -I..\\Animation\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoAnimation\\CMakeFiles\\Animation.dir\\Animator.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Animation\\Animator.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Animation/Animator.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DAnimation_EXPORTS -I..\\Animation\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoAnimation\\CMakeFiles\\Animation.dir\\AnimationModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Animation\\AnimationModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Animation/AnimationModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\RenderingModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\RenderingModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/RenderingModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\Program.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\Program.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/Program.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\Texture.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\Texture.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/Texture.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\Texture2D.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\Texture2D.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/Texture2D.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\Uniform.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\Uniform.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/Uniform.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\RenderTarget.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\RenderTarget.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/RenderTarget.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\RenderContext.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\RenderContext.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/RenderContext.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\Mesh.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\Mesh.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/Mesh.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\Material.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\Material.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/Material.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\OffscreenRenderTarget.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\OffscreenRenderTarget.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/OffscreenRenderTarget.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\ShaderCache.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\ShaderCache.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/ShaderCache.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\RenderState.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\RenderState.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/RenderState.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\Renderable.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\Renderable.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/Renderable.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\SceneRenderer.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\SceneRenderer.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/SceneRenderer.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\MeshBuilder.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\MeshBuilder.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/MeshBuilder.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DRendering_EXPORTS -I..\\Rendering\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoRendering\\CMakeFiles\\Rendering.dir\\TextureReadBack.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Rendering\\TextureReadBack.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Rendering/TextureReadBack.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\Transform.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\Transform.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/Transform.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\Camera.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\Camera.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/Camera.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\Model.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\Model.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/Model.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\SceneModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\SceneModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/SceneModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\Frustum.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\Frustum.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/Frustum.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\Light.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\Light.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/Light.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\PerspectiveFrustum.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\PerspectiveFrustum.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/PerspectiveFrustum.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\OrthographicFrustum.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\OrthographicFrustum.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/OrthographicFrustum.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\Scene.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\Scene.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/Scene.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DScene_EXPORTS -I..\\Scene\\.. -I..\\Scene\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -openmp -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoScene\\CMakeFiles\\Scene.dir\\Ray.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Scene\\Ray.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Scene/Ray.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGui_EXPORTS -I..\\Gui\\.. -I..\\Gui\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoGui\\CMakeFiles\\Gui.dir\\GuiModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Gui\\GuiModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Gui/GuiModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGui_EXPORTS -I..\\Gui\\.. -I..\\Gui\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoGui\\CMakeFiles\\Gui.dir\\Widget.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Gui\\Widget.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Gui/Widget.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGui_EXPORTS -I..\\Gui\\.. -I..\\Gui\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoGui\\CMakeFiles\\Gui.dir\\Font.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Gui\\Font.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Gui/Font.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGui_EXPORTS -I..\\Gui\\.. -I..\\Gui\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoGui\\CMakeFiles\\Gui.dir\\GuiPickRay.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Gui\\GuiPickRay.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Gui/GuiPickRay.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGui_EXPORTS -I..\\Gui\\.. -I..\\Gui\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoGui\\CMakeFiles\\Gui.dir\\DragHandle.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Gui\\DragHandle.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Gui/DragHandle.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGui_EXPORTS -I..\\Gui\\.. -I..\\Gui\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoGui\\CMakeFiles\\Gui.dir\\Button.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Gui\\Button.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Gui/Button.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DSprite_EXPORTS -I..\\Sprite\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoSprite\\CMakeFiles\\Sprite.dir\\SpriteModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Sprite\\SpriteModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Sprite/SpriteModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DSprite_EXPORTS -I..\\Sprite\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoSprite\\CMakeFiles\\Sprite.dir\\Tilemap.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Sprite\\Tilemap.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Sprite/Tilemap.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJson_EXPORTS -I..\\Json\\.. -I..\\Json\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoJson\\CMakeFiles\\Json.dir\\JsonPersistance.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Json\\JsonPersistance.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Json/JsonPersistance.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DJson_EXPORTS -I..\\Json\\.. -I..\\Json\\. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoJson\\CMakeFiles\\Json.dir\\JsonModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Json\\JsonModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Json/JsonModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DIni_EXPORTS -I..\\Ini\\.. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoIni\\CMakeFiles\\Ini.dir\\IniPersistance.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Ini\\IniPersistance.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Ini/IniPersistance.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DIni_EXPORTS -I..\\Ini\\.. -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Json\\.. -I..\\Json\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoIni\\CMakeFiles\\Ini.dir\\IniModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Ini\\IniModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Ini/IniModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DStbDecoders_EXPORTS -I..\\StbDecoders\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\Gui\\.. -I..\\Gui\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoStbDecoders\\CMakeFiles\\StbDecoders.dir\\StbImagePersistance.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\StbDecoders\\StbImagePersistance.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/StbDecoders/StbImagePersistance.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DStbDecoders_EXPORTS -I..\\StbDecoders\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\Gui\\.. -I..\\Gui\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoStbDecoders\\CMakeFiles\\StbDecoders.dir\\StbTrueTypePersistance.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\StbDecoders\\StbTrueTypePersistance.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/StbDecoders/StbTrueTypePersistance.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DStbDecoders_EXPORTS -I..\\StbDecoders\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\Gui\\.. -I..\\Gui\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoStbDecoders\\CMakeFiles\\StbDecoders.dir\\StbDecodersModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\StbDecoders\\StbDecodersModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/StbDecoders/StbDecodersModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DDebug_EXPORTS -I..\\Debug\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Json\\.. -I..\\Json\\. -I..\\File\\.. -I..\\File\\. -I..\\Rest\\..  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoDebug\\CMakeFiles\\Debug.dir\\DebugModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Debug\\DebugModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Debug/DebugModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DDebug_EXPORTS -I..\\Debug\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Json\\.. -I..\\Json\\. -I..\\File\\.. -I..\\File\\. -I..\\Rest\\..  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoDebug\\CMakeFiles\\Debug.dir\\EntityTracker.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Debug\\EntityTracker.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Debug/EntityTracker.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DDebug_EXPORTS -I..\\Debug\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Json\\.. -I..\\Json\\. -I..\\File\\.. -I..\\File\\. -I..\\Rest\\..  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoDebug\\CMakeFiles\\Debug.dir\\FlowNode.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Debug\\FlowNode.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Debug/FlowNode.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP  -I..\\Debug\\.. -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Networking\\.. -I..\\Networking\\asio\\include -I..\\Json\\.. -I..\\Json\\. -I..\\Rest\\.. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoDebug\\CMakeFiles\\Debugger.dir\\Debugger.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\Debug\\Debugger.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/Debug/Debugger.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxModule.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxModule.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxModule.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxRenderContext.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxRenderContext.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxRenderContext.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxCommandList.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxCommandList.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxCommandList.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxShaderCache.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxShaderCache.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxShaderCache.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxUniform.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxUniform.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxUniform.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxTexture2D.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxTexture2D.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxTexture2D.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxMesh.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxMesh.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxMesh.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxOffscreenRenderTarget.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxOffscreenRenderTarget.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxOffscreenRenderTarget.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxResource.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxResource.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxResource.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxTextureReadBack.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxTextureReadBack.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxTextureReadBack.cpp"
+},
+
+{
+  "directory": "c:/Users/Kim/Documents/Plaza/build",
+  "command": "C:\\PROGRA~2\\MICROS~1\\2017\\COMMUN~1\\VC\\Tools\\MSVC\\1415~1.267\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DBGFXRENDERING_WITH_SHADER_COMPILER -DBgfxRendering_EXPORTS -I..\\BgfxRendering\\.. -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bgfx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bx\\include -IBgfxRendering\\ex_bgfx-prefix\\src\\ex_bgfx\\bimg\\include -IBgfxRendering\\ex_glfw-prefix\\src\\ex_glfw\\include -I..\\Core\\.. -I..\\Core\\cglm\\include -ICore\\ex_intern-prefix\\src\\ex_intern\\.. -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include -ICore\\ex_eastl-prefix\\src\\ex_eastl\\include\\..\\test\\packages\\EABase\\include\\Common -I..\\Core -I\\..\\src\\x86 -I..\\Foundation\\.. -I..\\Foundation\\. -I..\\Rendering\\.. -I..\\Input\\.. -I..\\Json\\.. -I..\\Json\\. -I..\\Scene\\.. -I..\\Scene\\. -I..\\File\\.. -I..\\File\\.  /DWIN32 /D_WINDOWS /W3 /GR /EHsc -fopenmp /MDd /Zi /Ob0 /Od /RTC1   -fno-rtti -fno-exceptions -std=c++14 -std:c++14 /FoBgfxRendering\\CMakeFiles\\BgfxRendering.dir\\BgfxShaderCompiler.cpp.obj /FdTARGET_COMPILE_PDB /FS -c C:\\Users\\Kim\\Documents\\Plaza\\BgfxRendering\\BgfxShaderCompiler.cpp",
+  "file": "C:/Users/Kim/Documents/Plaza/BgfxRendering/BgfxShaderCompiler.cpp"
+}
+]

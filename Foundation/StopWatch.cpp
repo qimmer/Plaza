@@ -85,8 +85,6 @@ LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 new
 }
 
 LocalFunction(OnStopWatchRunningChanged, void, Entity stopWatch, bool oldValue, bool newValue) {
-    SetAppLoopDisabled(GetStopWatchUpdateLoop(stopWatch), !newValue);
-
     if(newValue) {
         auto data = GetStopWatchData(stopWatch);
 
@@ -112,19 +110,15 @@ LocalFunction(OnStopWatchElapsedSecondsChanged, void, Entity stopWatch, double o
 #endif
 }
 
-LocalFunction(OnStopWatchAdded, void, Entity component, Entity stopWatch) {
-    SetAppLoopDisabled(GetStopWatchUpdateLoop(stopWatch), true);
-}
-
 BeginUnit(StopWatch)
     BeginComponent(StopWatch)
-        RegisterChildProperty(AppLoop, StopWatchUpdateLoop)
         RegisterProperty(bool, StopWatchRunning)
         RegisterProperty(double, StopWatchElapsedSeconds)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopFrameChanged, 0)
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnStopWatchAdded, ComponentOf_StopWatch())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopFrameChanged, AppLoopOf_StopWatchUpdate())
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StopWatchRunning()), OnStopWatchRunningChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StopWatchElapsedSeconds()), OnStopWatchElapsedSecondsChanged, 0)
+
+    SetAppLoopOrder(AppLoopOf_StopWatchUpdate(), AppLoopOrder_Input);
 EndUnit()

@@ -1,0 +1,130 @@
+{
+  "Children": [
+    {
+      "Uuid": "Sprite.RenderPath",
+      "RenderPathPasses": [
+        {
+          "RenderPassClearDepth": 1.0,
+          "RenderPassClearColor": [92, 128, 255, 255],
+          "RenderPassClearTargets": "ClearTarget_Depth|ClearTarget_Color",
+          "RenderPassMeshUniforms": [],
+          "RenderPassRenderableUniforms": [
+            {
+              "Uuid": "Sprite.RenderPath.Uniforms.SpriteTexture",
+              "UniformIdentifier": "s_spriteAtlas",
+              "UniformSamplerIndex": 0,
+              "UniformEntityProperty": "Property.SpriteTexture"
+            },
+            {
+              "Uuid": "Sprite.RenderPath.Uniforms.SpriteTint",
+              "UniformIdentifier": "u_spriteTint",
+              "UniformEntityProperty": "Property.SpriteTint"
+            }
+          ],
+          "RenderPassRenderState": {
+            "RenderStateBlendMode": "RenderState_STATE_BLEND_ALPHA",
+            "RenderStateDepthTest": "RenderState_STATE_DEPTH_TEST_NONE"
+          },
+          "RenderPassSortMode": "RenderingSortMode_DepthAscending"
+        }
+      ]
+    },
+    {
+      "Uuid": "Sprite.Material",
+      "MaterialProgram": "Sprite.Program"
+    },
+    {
+      "Uuid": "Sprite.Program",
+      "Children": [
+        {
+          "Uuid": "Sprite.Program.VertexShader",
+          "StreamPath": "file://Sprite/SpriteProgram.vs"
+        },
+        {
+          "Uuid": "Sprite.Program.PixelShader",
+          "StreamPath": "file://Sprite/SpriteProgram.ps"
+        },
+        {
+          "Uuid": "Sprite.Program.DeclShader",
+          "StreamPath": "file://Sprite/SpriteProgram.var"
+        }
+      ],
+      "ProgramVertexShaderSource": "Sprite.Program.VertexShader",
+      "ProgramPixelShaderSource": "Sprite.Program.PixelShader",
+      "ProgramDeclShaderSource": "Sprite.Program.DeclShader"
+    },
+    {
+      "Uuid": "Sprite.VertexDeclaration",
+      "VertexDeclarationAttributes": [
+        {
+          "Uuid": "Sprite.VertexDeclaration.Position",
+          "VertexAttributeType": "v3f",
+          "VertexAttributeUsage": "VertexAttributeUsage_Position"
+        },
+        {
+          "Uuid": "Sprite.VertexDeclaration.Normal",
+          "VertexAttributeType": "v3f",
+          "VertexAttributeUsage": "VertexAttributeUsage_Normal"
+        },
+        {
+          "Uuid": "Sprite.VertexDeclaration.TexCoord0",
+          "VertexAttributeType": "v2f",
+          "VertexAttributeUsage": "VertexAttributeUsage_TexCoord0"
+        }
+      ]
+    },
+    {
+      "Uuid": "Sprite.Meshes",
+      "Children":[
+        {
+          "Uuid": "Sprite.Meshes.Rect",
+          "MeshSubMeshes":[
+            {
+              "Uuid": "Sprite.Meshes.Rect.SubMesh0",
+              "SubMeshNumVertices": 4,
+              "SubMeshNumIndices": 6,
+              "SubMeshPrimitiveType": "PrimitiveType_TRIANGLELIST"
+            }
+          ],
+          "MeshVertexBuffer": {
+            "VertexBufferDeclaration": "Sprite.VertexDeclaration"
+          },
+          "MeshBuilderVertices":[
+            {
+              "MeshBuilderVertexPosition":[-0.5, -0.5, 0.0],
+              "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
+              "MeshBuilderVertexTexCoord0":[0.0, 1.0],
+              "MeshBuilderVertexTexCoord1":[0.0, 0.0]
+            },
+            {
+              "MeshBuilderVertexPosition":[0.5, -0.5, 0.0],
+              "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
+              "MeshBuilderVertexTexCoord0":[1.0, 1.0],
+              "MeshBuilderVertexTexCoord1":[1.0, 0.0]
+            },
+            {
+              "MeshBuilderVertexPosition":[-0.5, 0.5, 0.0],
+              "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
+              "MeshBuilderVertexTexCoord0":[0.0, 0.0],
+              "MeshBuilderVertexTexCoord1":[0.0, 1.0]
+            },
+            {
+              "MeshBuilderVertexPosition":[0.5, 0.5, 0.0],
+              "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
+              "MeshBuilderVertexTexCoord0":[1.0, 0.0],
+              "MeshBuilderVertexTexCoord1":[1.0, 1.0]
+            }
+          ],
+          "MeshBuilderIndices":[
+            { "MeshBuilderIndexVertexIndex": 0 },
+            { "MeshBuilderIndexVertexIndex": 1 },
+            { "MeshBuilderIndexVertexIndex": 2 },
+            { "MeshBuilderIndexVertexIndex": 2 },
+            { "MeshBuilderIndexVertexIndex": 1 },
+            { "MeshBuilderIndexVertexIndex": 3 }
+          ]
+        }
+      ]
+    }
+  ]
+}

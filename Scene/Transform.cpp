@@ -6,6 +6,7 @@
 #include <Foundation/Invalidation.h>
 #include <Foundation/AppNode.h>
 #include "Transform.h"
+#include "Scene.h"
 
 API_EXPORT v3f TransformPoint(Entity sourceSpace, Entity destinationSpace, v3f sourcePoint) {
     v4f sourcePoint4 = {
@@ -238,6 +239,7 @@ LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOw
 
 BeginUnit(Transform)
     BeginComponent(Transform)
+        RegisterBase(SceneNode)
         RegisterProperty(m4x4f, TransformLocalMatrix)
         RegisterPropertyReadOnly(m4x4f, TransformGlobalMatrix)
         RegisterPropertyReadOnly(s32, TransformHierarchyLevel)

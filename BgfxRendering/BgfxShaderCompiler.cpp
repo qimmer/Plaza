@@ -166,6 +166,8 @@ int Compile(StringRef compilerPath,
         return -1;
     }
 
+    Info(0, "Compiling shader %s into %s using profile %s ...", sourcePath, binaryPath, profile);
+
     while (fread(&c, sizeof c, 1, fpipe))
     {
         if(c) {
@@ -181,8 +183,9 @@ int Compile(StringRef compilerPath,
     }
 
     auto str = ss.str();
-
-    Log(0, severity, "%s", str.c_str());
+    if(str.length()) {
+        Log(0, severity, "%s", str.c_str());
+    }
 	
 	return 0;
 }

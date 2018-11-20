@@ -23,6 +23,17 @@ struct FileStream {
 
 static FW::FileWatcher fileWatcher;
 
+static void OnHandleFileChanged(Entity fileStream, StringRef path, u32 pathLength, FW::WatchID watchid) {
+    auto data = GetFileStreamData(fileStream);
+    auto streamData = GetStreamData(fileStream);
+    auto resolvedPathLength = strlen(streamData->StreamResolvedPath);
+
+    if(data->watchID == watchid && resolvedPathLength == pathLength && !stricmp(path, streamData->StreamResolvedPath)) {
+        auto value = MakeVariant(Entity, fileStream);
+        FireEventFast(EventOf_StreamContentChanged(), 1, &value);
+    }
+}
+
 class UpdateListener : public FW::FileWatchListener
 {
 public:
@@ -31,13 +42,12 @@ public:
                           FW::Action action)
     {
         if(action == FW::Actions::Modified) {
+            auto pathLength = dir.length() + filename.length() + strlen("file://") + 1;
+            char *path = (char*)alloca(pathLength + 1);
+            sprintf(path, "file://%s/%s", dir.c_str(), filename.c_str());
+
             for_entity(fileStream, data, FileStream, {
-                auto data = GetFileStreamData(fileStream);
-                if(data->watchID == watchid) {
-                    auto value = MakeVariant(Entity, fileStream);
-					FireEventFast(EventOf_StreamContentChanged(), 1, &value);
-                    break;
-                }
+                OnHandleFileChanged(fileStream, path, pathLength, watchid);
             });
         }
     }
@@ -186,8 +196,9 @@ BeginUnit(FileStream)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), OnStreamPathChanged, 0)
     RegisterSubscription(EventOf_EntityComponentAdded(), OnFileStreamAdded, ComponentOf_FileStream())
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnFileStreamRemoved, ComponentOf_FileStream())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnFileWatcherUpdate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnFileWatcherUpdate, AppLoopOf_FileChangesPoll())
 
     RegisterStreamProtocol(FileStream, "file")
 
+    SetAppLoopOrder(AppLoopOf_FileChangesPoll(), AppLoopOrder_Input);
 EndComponent()

@@ -8,10 +8,7 @@
     {
       "Uuid": "TestGui.Context",
       "RenderContextTitle": "Test - Gui",
-      "RenderTargetSize": [800, 450],
-      "RenderContextLoop": {
-        "AppLoopKeepAlive": "{Not():InputStateValue@TestGui.Context.Keys.Close}"
-      },
+      "RenderTargetSize": [800, 600],
       "RenderContextShowStats": "{InputStateValue@TestGui.Context.Keys.ShowStats}",
       "RenderContextShowDebug": "{InputStateValue@TestGui.Context.Keys.ShowDebug}",
       "Children": [
@@ -31,6 +28,11 @@
           "InputStateContext": "TestGui.Context"
         }
       ]
+    },
+    {
+      "Uuid": "TestGui.QuitAction",
+      "InvocationFunction": "Function.Quit",
+      "InvocationToggleState": "{InputStateValue@TestGui.Context.Keys.Close}"
     },
     {
       "Uuid": "TestGui.Renderer",
@@ -135,7 +137,7 @@
                   "WidgetWeight": [1.0, 0.0],
                   "RenderableMaterial": "Gui.Font.Material",
                   "LabelFont": "TestGui.Font",
-                  "LabelText": "Hello",
+                  "LabelText": "Hello World 4",
                   "LabelAlignment": [0.5, 0.5],
                   "DragHandleTarget": "TestGui.Scene.Window"
                 },

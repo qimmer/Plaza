@@ -6,13 +6,15 @@
 #include "Frustum.h"
 #include "Renderable.h"
 #include "Material.h"
+#include "Scene.h"
+#include "RenderingModule.h"
 #include <Rendering/ShaderCache.h>
 #include <Rendering/Uniform.h>
 #include <Rendering/RenderTarget.h>
 #include <Rendering/RenderState.h>
 #include <Scene/Camera.h>
 #include <Scene/Scene.h>
-#include <Foundation/AppNode.h>
+#include <Foundation/AppLoop.h>
 
 static void SyncBatches(Entity commandList) {
     auto sceneRenderer = GetOwner(commandList);
@@ -23,7 +25,7 @@ static void SyncBatches(Entity commandList) {
     u32 numBatches = 0;
     {
         for_entity(renderable, data, Renderable, {
-            if(GetAppNodeRoot(renderable) != scene) continue;
+            if(GetSceneNodeScene(renderable) != scene) continue;
 
             numBatches++;
         });
@@ -35,7 +37,7 @@ static void SyncBatches(Entity commandList) {
     {
         auto i = 0;
         for_entity(renderable, data, Renderable, {
-            if(GetAppNodeRoot(renderable) != scene) continue;
+            if(GetSceneNodeScene(renderable) != scene) continue;
 
             SetBatchRenderable(batches[i], renderable);
 
@@ -120,7 +122,7 @@ LocalFunction(OnSceneNodeSceneChanged, void, Entity sceneNode, Entity oldScene, 
 }
 
 LocalFunction(OnRenderableAdded, void, Entity component, Entity renderable) {
-    OnSceneNodeSceneChanged(renderable, GetAppNodeRoot(renderable), GetAppNodeRoot(renderable));
+    OnSceneNodeSceneChanged(renderable, GetSceneNodeScene(renderable), GetSceneNodeScene(renderable));
 }
 
 BeginUnit(SceneRenderer)
@@ -179,10 +181,12 @@ BeginUnit(SceneRenderer)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneRendererPath()), OnSceneRendererPathChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneRendererScene()), OnSceneRendererSceneChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppNodeRoot()), OnSceneNodeSceneChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneNodeScene()), OnSceneNodeSceneChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderPathPasses()), OnRenderPathPassesChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BatchRenderable()), OnBatchRenderableChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderableMaterial()), OnRenderableMaterialChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MaterialProgram()), OnMaterialProgramChanged, 0)
     RegisterSubscription(EventOf_EntityComponentAdded(), OnRenderableAdded, ComponentOf_Renderable())
+
+    SetAppLoopOrder(AppLoopOf_BatchSubmission(), AppLoopOrder_BatchSubmission);
 EndUnit()

@@ -11,7 +11,6 @@ struct Uniform {
     Entity UniformEntityProperty, UniformElementProperty;
     StringRef UniformIdentifier;
     u8 UniformArrayCount, UniformSamplerIndex;
-    Type UniformType;
 };
 
 Unit(Uniform)
@@ -20,7 +19,6 @@ Unit(Uniform)
     Component(Uniform)
         Property(u8, UniformArrayCount)
         Property(u8, UniformSamplerIndex)
-        Property(Type, UniformType)
         Property(StringRef, UniformIdentifier)
         ReferenceProperty(Property, UniformEntityProperty)
         ReferenceProperty(Property, UniformElementProperty)

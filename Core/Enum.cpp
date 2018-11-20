@@ -26,6 +26,17 @@ API_EXPORT StringRef GetEnumName(Entity e, u64 value) {
     return "";
 }
 
+API_EXPORT u64 GetEnumValue(Entity e, StringRef name) {
+    name = Intern(name);
+    for_children(flag, EnumFlags, e, {
+        if(GetName(flag) == name) {
+            return GetEnumFlagValue(flag);
+        }
+    });
+
+    return 0;
+}
+
 BeginUnit(Enum)
     BeginComponent(Enum)
         RegisterProperty(bool, EnumCombinable)

@@ -35,8 +35,14 @@ API_EXPORT void Validate(Entity component) {
     FireEventFast(EventOf_Validate(), 1, &argument);
 
     Entity entity = 0;
+
     for_entity_abstract(entity, data, component, {
-        entityDirtyFlags[GetEntityIndex(entity)] = false;
+        auto entityIndex = GetEntityIndex(entity);
+        if(entityDirtyFlags.size() <= entityIndex) {
+            entityDirtyFlags.resize(entityIndex + 1, false);
+        }
+
+        entityDirtyFlags[entityIndex] = false;
     });
 }
 

@@ -84,4 +84,5 @@ Unit(SceneRenderer)
         Property(v4f, SceneRendererViewport)
         ArrayProperty(CommandList, SceneRendererCommandLists)
 
+    Declare(AppLoop, BatchSubmission)
 #endif //PLAZA_SCENERENDERER_H

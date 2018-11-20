@@ -26,6 +26,7 @@
 #include "HttpRequest.h"
 #include "Server.h"
 #include "TcpStream.h"
+#include "NetworkingModule.h"
 
 #ifndef WIN32
 #define stricmp strcasecmp
@@ -399,7 +400,7 @@ BeginUnit(HttpServer)
     EndComponent()
 
     RegisterEvent(HttpServerRequest)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopChanged, AppLoopOf_Networking())
     RegisterSubscription(EventOf_EntityComponentAdded(), OnHttpStreamAdded, ComponentOf_HttpStream())
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnHttpStreamRemoved, ComponentOf_HttpStream())
     RegisterSubscription(EventOf_TcpClientConnected(), OnTcpClientConnected, 0)

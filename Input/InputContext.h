@@ -18,6 +18,8 @@ Unit(InputContext)
         Property(v2i, InputContextCursorPosition)
         Property(s8, InputContextLastCharacter)
 
+    Declare(AppLoop, InputPoll)
+
     Function(SetInputStateValueByKey, void, Entity context, u16 key, float value)
 
 #endif //PLAZA_INPUTCONTEXT_H

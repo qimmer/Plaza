@@ -32,15 +32,39 @@ LocalFunction(OnUniformValidation, void, Entity component) {
         // Create or update unifom
         bgfx::UniformType::Enum type;
 
-        if(GetUniformType(entity) == TypeOf_v4f) {
-            type = bgfx::UniformType::Vec4;
-        } else if(GetUniformType(entity) == TypeOf_m4x4f) {
-            type = bgfx::UniformType::Mat4;
-        } else if(GetUniformType(entity) == TypeOf_Entity) {
-            type = bgfx::UniformType::Int1;
-        } else {
-            Log(entity, LogSeverity_Error, "Unsupported uniform type: %s", GetTypeName(GetUniformType(entity)));
-
+        auto property = GetUniformEntityProperty(entity);
+        auto propertyType = GetPropertyType(property);
+        switch (propertyType) {
+            case TypeOf_s8:
+            case TypeOf_u8:
+            case TypeOf_s16:
+            case TypeOf_u16:
+            case TypeOf_s32:
+            case TypeOf_u32:
+            case TypeOf_double:
+            case TypeOf_float:
+            case TypeOf_v2f:
+            case TypeOf_v3f:
+            case TypeOf_v4f:
+            case TypeOf_v2i:
+            case TypeOf_v3i:
+            case TypeOf_v4i:
+            case TypeOf_rgb8:
+            case TypeOf_rgba8:
+            case TypeOf_rgb32:
+            case TypeOf_rgba32:
+                type = bgfx::UniformType::Vec4;
+                break;
+            case TypeOf_m3x3f:
+            case TypeOf_m4x4f:
+                type = bgfx::UniformType::Mat4;
+                break;
+            case TypeOf_Entity:
+                type = bgfx::UniformType::Int1;
+                break;
+            default:
+                Log(entity, LogSeverity_Error, "Unsupported uniform property type: %s (property %s)", GetTypeName(propertyType), GetUuid(property));
+                break;
         }
 
         auto name = GetUniformIdentifier(entity);
@@ -56,6 +80,8 @@ BeginUnit(BgfxUniform)
 
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnUniformRemoved, ComponentOf_BgfxUniform())
     RegisterSubscription(EventOf_Validate(), OnUniformValidation, ComponentOf_Uniform())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformType()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformEntityProperty()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformIdentifier()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformArrayCount()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformElementProperty()), Invalidate, 0)
 EndUnit()

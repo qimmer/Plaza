@@ -8,12 +8,10 @@
 
 struct Server {
     u16 ServerPort;
-    Entity ServerLoop;
 };
 
 BeginUnit(Server)
     BeginComponent(Server)
         RegisterProperty(u16, ServerPort)
-        RegisterChildProperty(AppLoop, ServerLoop)
      EndComponent()
 EndUnit()

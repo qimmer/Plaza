@@ -5,6 +5,7 @@
 #include <Core/Algorithms.h>
 
 #include <Foundation/Visibility.h>
+#include <Foundation/AppLoop.h>
 
 #include <Rendering/Uniform.h>
 #include <Rendering/Mesh.h>
@@ -35,6 +36,8 @@
 #include <Rendering/RenderTarget.h>
 #include <Foundation/Invalidation.h>
 #include <omp.h>
+#include <Rendering/Texture.h>
+#include <Core/Debug.h>
 
 extern bgfx::UniformHandle SubTexture2DOffsetSizeUniform;
 
@@ -43,17 +46,51 @@ struct BgfxCommandList {
 
 static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encoder) {
     auto uniformData = GetUniformData(uniform);
-    if(uniformData->UniformType <= TypeOf_void) return;
 
     auto component = GetOwner(uniformData->UniformEntityProperty);
     if(!HasComponent(entity, component)) return;
 
     auto value = GetPropertyValue(uniformData->UniformEntityProperty, entity);
-    value = Cast(value, uniformData->UniformType);
+    auto propertyType = GetPropertyType(uniformData->UniformEntityProperty);
+
+    if(!propertyType) return;
+
+    switch (propertyType) {
+        case TypeOf_s8:
+        case TypeOf_u8:
+        case TypeOf_s16:
+        case TypeOf_u16:
+        case TypeOf_s32:
+        case TypeOf_u32:
+        case TypeOf_double:
+        case TypeOf_float:
+        case TypeOf_v2f:
+        case TypeOf_v3f:
+        case TypeOf_v4f:
+        case TypeOf_v2i:
+        case TypeOf_v3i:
+        case TypeOf_v4i:
+        case TypeOf_rgb8:
+        case TypeOf_rgba8:
+        case TypeOf_rgb32:
+        case TypeOf_rgba32:
+            value = Cast(value, TypeOf_v4f);
+            break;
+        case TypeOf_m3x3f:
+        case TypeOf_m4x4f:
+            value = Cast(value, TypeOf_m4x4f);
+            break;
+        case TypeOf_Entity:
+            value = Cast(value, TypeOf_Entity);
+            break;
+        default:
+            return;
+            break;
+    }
 
     auto uniformHandle = bgfx::UniformHandle{GetBgfxResourceHandle(uniform)};
 
-    if(uniformData->UniformType != TypeOf_Entity) {
+    if(value.type != TypeOf_Entity) {
         encoder->setUniform(
                 uniformHandle,
                 &value.data,
@@ -74,10 +111,12 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
             encoder->setUniform(SubTexture2DOffsetSizeUniform, &value);
         }
 
-        if(HasComponent(texture, ComponentOf_BgfxTexture2D())) {
-            auto textureHandle = bgfx::TextureHandle{GetBgfxResourceHandle(texture)};
-            encoder->setTexture(uniformData->UniformSamplerIndex, uniformHandle, textureHandle);
+        if(!HasComponent(texture, ComponentOf_Texture())) {
+            texture = TextureOf_White();
         }
+
+        auto textureHandle = bgfx::TextureHandle{GetBgfxResourceHandle(texture)};
+        encoder->setTexture(uniformData->UniformSamplerIndex, uniformHandle, textureHandle);
     }
 }
 
@@ -268,36 +307,44 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
     u32 numBatches = 0;
     auto batches = GetCommandListBatches(commandList, &numBatches);
 
-    if(true) {
-        #pragma omp parallel
-        {
-            auto threadnum = omp_get_thread_num();
-            auto numthreads = omp_get_num_threads();
-            auto low = numBatches*threadnum/numthreads;
-            auto high = numBatches*(threadnum+1)/numthreads;
+    if(numBatches > 0) {
+        if(true) {
+            #pragma omp parallel
+            {
+                auto threadnum = omp_get_thread_num();
+                auto numthreads = omp_get_num_threads();
+                auto low = numBatches*threadnum/numthreads;
+                auto high = numBatches*(threadnum+1)/numthreads;
 
-            auto encoder = bgfx::begin();
+                auto encoder = bgfx::begin();
 
-            for (auto i=low; i<high; i++) {
-                RenderBatch(viewId, encoder, batches[i], renderState, pass);
+                for (auto i=low; i<high; i++) {
+                    RenderBatch(viewId, encoder, batches[i], renderState, pass);
+                }
+
+                bgfx::end(encoder);
             }
-
-            bgfx::end(encoder);
+        } else {
+            for (auto i=0; i < numBatches; i++) {
+                RenderBatch(viewId, primaryEncoder, batches[i], renderState, pass);
+            }
         }
-    } else {
-        auto encoder = bgfx::begin();
-
-        for (auto i=0; i < numBatches; i++) {
-            RenderBatch(viewId, encoder, batches[i], renderState, pass);
-        }
-
-        bgfx::end(encoder);
     }
 
     bgfx::end(primaryEncoder);
 }
 
+LocalFunction(OnSubmitCommandLists, void, Entity appLoop) {
+    auto i = 0;
+    for_entity(commandList, data, CommandList, {
+        RenderCommandList(commandList, i);
+        ++i;
+    });
+}
+
 BeginUnit(BgfxCommandList)
     BeginComponent(BgfxCommandList)
     EndComponent()
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnSubmitCommandLists, AppLoopOf_BatchSubmission())
 EndUnit()

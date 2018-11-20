@@ -1,0 +1,55 @@
+{
+  "Uuid": "Graph",
+  "Children": [
+    {
+      "Uuid": "Graph.Fonts",
+      "Children": [
+        {
+          "Uuid": "Graph.Fonts.Title",
+          "TrueTypeFontSize": 10.0,
+          "FontCharacters": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+-!\"@#$%&/()=?'*\\{[]}.,:;<>| ",
+          "StreamPath": "file://TestGui/Fonts/OpenSans-Regular.ttf",
+          "PersistancePointLoaded": true
+        }
+      ]
+    },
+    {
+      "Uuid": "Graph.StyleSheets",
+      "Children": [
+        {
+          "Uuid": "Graph.StyleSheets.Default",
+          "StreamPath": "file://DebugGui/Sheets/uipackSpace_sheet.png",
+          "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT",
+          "PersistancePointLoaded": true,
+          "TextureAtlasSubTextures": [
+            {
+              "Uuid": "Graph.Styles.Frame",
+              "SubTexture2DOffset": [200, 0],
+              "SubTexture2DSize": [100, 100]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Uuid": "Graph.Meshes",
+      "Children": [
+        {
+          "Uuid": "Graph.Meshes.Frame",
+          "WidgetMeshTexture": "Graoh.Styles.Frame",
+          "WidgetMeshFixedBorderWidth": 50
+        }
+      ]
+    },
+    {
+      "Uuid": "Graph.Widgets",
+      "Children": [
+        {
+          "Uuid": "Graph.Widgets.EntityNode",
+
+        }
+      ]
+    }
+  ]
+}
+

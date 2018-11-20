@@ -5,12 +5,10 @@
       "RenderPathPasses": [
         {
           "RenderPassClearDepth": 1.0,
-          "RenderPassClearColor": [0, 0, 128, 255],
-          "RenderPassClearTargets": "ClearTarget_Depth|ClearTarget_Color",
+          "RenderPassClearTargets": "ClearTarget_Depth",
           "RenderPassMeshUniforms": [
             {
               "Uuid": "Gui.RenderPath.Uniforms.GuiTexture",
-              "UniformType": "Entity",
               "UniformIdentifier": "s_widgetMeshTexture",
               "UniformSamplerIndex": 0,
               "UniformEntityProperty": "Property.WidgetMeshTexture"
@@ -19,14 +17,12 @@
           "RenderPassRenderableUniforms": [
             {
               "Uuid": "Gui.RenderPath.Uniforms.FontTexture",
-              "UniformType": "Entity",
               "UniformIdentifier": "s_fontAtlas",
               "UniformSamplerIndex": 0,
               "UniformEntityProperty": "Property.LabelFont"
             },
             {
               "Uuid": "Gui.RenderPath.Uniforms.WidgetSize",
-              "UniformType": "v4f",
               "UniformIdentifier": "u_widgetSize",
               "UniformEntityProperty": "Property.WidgetSize"
             }

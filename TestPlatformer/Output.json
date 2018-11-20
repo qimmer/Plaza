@@ -1,0 +1,25 @@
+{
+  "Uuid": "Platformer.Output",
+  "Children": [
+    {
+      "Uuid": "Platformer.Output.Context",
+      "RenderContextTitle": "Platformer Example"
+    },
+    {
+      "Uuid": "Platformer.Output.GuiRenderer",
+      "SceneRendererPath": "Gui.RenderPath",
+      "SceneRendererViewport": [0.0, 0.0, 1.0, 1.0],
+      "SceneRendererTarget": "Platformer.Output.Context",
+      "SceneRendererScene": "Platformer.CurrentLevel.Gui",
+      "SceneRendererCamera": "Platformer.CurrentLevel.Gui.Camera"
+    },
+    {
+      "Uuid": "Platformer.Output.SceneRenderer",
+      "SceneRendererPath": "Sprite.RenderPath",
+      "SceneRendererViewport": [0.0, 0.0, 1.0, 1.0],
+      "SceneRendererTarget": "Platformer.Output.Context",
+      "SceneRendererScene": "Platformer.CurrentLevel.Scene",
+      "SceneRendererCamera": "Platformer.CurrentLevel.Scene.Camera"
+    }
+  ]
+}

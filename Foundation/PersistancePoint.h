@@ -11,14 +11,6 @@ Unit(PersistancePoint)
         Property(bool, PersistancePointLoaded)
         Property(bool, PersistancePointSaving)
 
-    Component(UnresolvedReference)
-        ReferenceProperty(Property, UnresolvedReferenceProperty)
-        Property(StringRef, UnresolvedReferenceUuid)
-
-    Component(UnresolvedEntity)
-        ArrayProperty(UnresolvedReference, UnresolvedReferences)
-
     Function(LoadEntityPath, bool, StringRef pathToEnsureLoaded)
-    Function(ResolveReferences, bool)
 
 #endif //PersistancePoint_H

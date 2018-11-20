@@ -1,0 +1,16 @@
+{
+  "Uuid": "Component.Character",
+  "Name": "Character",
+  "Properties": [
+    {
+      "Uuid": "Property.Health",
+      "Name": "Health",
+      "PropertyType": "u8"
+    },
+    {
+      "Uuid": "Property.Damage",
+      "Name": "Damage",
+      "PropertyType": "u8"
+    }
+  ]
+}

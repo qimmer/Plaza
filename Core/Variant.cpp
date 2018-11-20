@@ -30,12 +30,20 @@ EndUnit()
 #define CastNumberToString(T_FROM) \
     static inline void Cast_ ## T_FROM ## _StringRef (const void *input, void *output) {\
         char buffer[128];\
+        if(TypeOf_ ## T_FROM == TypeOf_bool) {\
+            *(StringRef*)output = (*(const bool*)input) ? "true" : "false";\
+            return;\
+        }\
         sprintf(buffer, T_FROM ## _sprintf, *(T_FROM*)input);\
         *(StringRef*)output = Intern(buffer);\
     }
 
 #define CastStringToNumber(T_TO) \
     static inline void Cast_StringRef_ ## T_TO (const void *input, void *output) {\
+        if(TypeOf_ ## T_TO == TypeOf_bool) {\
+            *(bool*)output = (*(StringRef*)input)[0]=='t';\
+            return;\
+        }\
         sscanf(*(StringRef*)input, T_TO ## _sprintf, output);\
     }
 
@@ -60,12 +68,16 @@ static inline void Cast_StringRef_StringRef(const void *input, void *output) {}
         }\
     }
 
-#define CastVectorString(VT) \
+#define CastVectorString(VT, SCALART, FORMAT) \
     static inline void Cast_ ## VT ## _StringRef(const void *input, void *output) {\
-        \
+        auto scalars = (const SCALART*)input;\
+        char buffer[256];\
+        sprintf(buffer, FORMAT, scalars[0], scalars[1], scalars[2], scalars[3]);\
+        *(StringRef*)output = Intern(buffer);\
     }\
     static inline void Cast_StringRef_ ## VT (const void *input, void *output) {\
-        \
+        auto scalars = (SCALART*)output;\
+        sscanf(*(StringRef*)input, FORMAT, &scalars[0], &scalars[1], &scalars[2], &scalars[3]);\
     }
 #define CastNumber(T_FROM) \
     CastNumberToNumber(T_FROM, u8)\
@@ -87,12 +99,14 @@ static inline void Cast_StringRef_StringRef(const void *input, void *output) {}
     CastVector(T_FROM, v2f, T_FROM, float, 1, 2)\
     CastVector(T_FROM, v3f, T_FROM, float, 1, 3)\
     CastVector(T_FROM, v4f, T_FROM, float, 1, 4)\
+    CastVector(T_FROM, rgba8, T_FROM, u8, 1, 4)\
     CastVector(v2i, T_FROM, s32, T_FROM, 2, 1)\
     CastVector(v3i, T_FROM, s32, T_FROM, 3, 1)\
     CastVector(v4i, T_FROM, s32, T_FROM, 4, 1)\
     CastVector(v2f, T_FROM, float, T_FROM, 2, 1)\
     CastVector(v3f, T_FROM, float, T_FROM, 3, 1)\
-    CastVector(v4f, T_FROM, float, T_FROM, 4, 1)
+    CastVector(v4f, T_FROM, float, T_FROM, 4, 1)\
+    CastVector(rgba8, T_FROM, float, T_FROM, 4, 1)
 
 CastNumber(u8)
 CastNumber(u16)
@@ -112,16 +126,20 @@ CastSame(v4i)
 CastSame(v2f)
 CastSame(v3f)
 CastSame(v4f)
+CastSame(rgba8)
 
 CastVector(v2f, v2i, float, s32, 2, 2)
 CastVector(v2f, v3i, float, s32, 2, 3)
 CastVector(v2f, v4i, float, s32, 2, 4)
+CastVector(v2f, rgba8, float, u8, 2, 4)
 CastVector(v3f, v2i, float, s32, 3, 2)
 CastVector(v3f, v3i, float, s32, 3, 3)
 CastVector(v3f, v4i, float, s32, 3, 4)
+CastVector(v3f, rgba8, float, u8, 3, 4)
 CastVector(v4f, v2i, float, s32, 4, 2)
 CastVector(v4f, v3i, float, s32, 4, 3)
 CastVector(v4f, v4i, float, s32, 4, 4)
+CastVector(v4f, rgba8, float, u8, 4, 4)
 
 CastVector(v2i, v2f, s32, float, 2, 2)
 CastVector(v2i, v3f, s32, float, 2, 3)
@@ -135,10 +153,16 @@ CastVector(v4i, v4f, s32, float, 4, 4)
 
 CastVector(v2i, v3i, s32, s32, 2, 3)
 CastVector(v2i, v4i, s32, s32, 2, 4)
+CastVector(v2i, rgba8, s32, u8, 2, 4)
 CastVector(v3i, v2i, s32, s32, 3, 2)
 CastVector(v3i, v4i, s32, s32, 3, 4)
+CastVector(v3i, rgba8, s32, u8, 3, 4)
 CastVector(v4i, v2i, s32, s32, 4, 2)
 CastVector(v4i, v3i, s32, s32, 4, 3)
+CastVector(v4i, rgba8, s32, u8, 4, 4)
+CastVector(rgba8, v2i, u8, s32, 4, 2)
+CastVector(rgba8, v3i, u8, s32, 4, 3)
+CastVector(rgba8, v4i, u8, s32, 4, 4)
 
 CastVector(v2f, v3f, float, float, 2, 3)
 CastVector(v2f, v4f, float, float, 2, 4)
@@ -146,14 +170,19 @@ CastVector(v3f, v2f, float, float, 3, 2)
 CastVector(v3f, v4f, float, float, 3, 4)
 CastVector(v4f, v2f, float, float, 4, 2)
 CastVector(v4f, v3f, float, float, 4, 3)
+CastVector(rgba8, v2f, u8, float, 4, 2)
+CastVector(rgba8, v3f, u8, float, 4, 3)
+CastVector(rgba8, v4f, u8, float, 4, 4)
 
-CastVectorString(v2i)
-CastVectorString(v3i)
-CastVectorString(v4i)
+CastVectorString(v2i, s32, "[%d,%d]")
+CastVectorString(v3i, s32, "[%d,%d,%d]")
+CastVectorString(v4i, s32, "[%d,%d,%d,%d]")
 
-CastVectorString(v2f)
-CastVectorString(v3f)
-CastVectorString(v4f)
+CastVectorString(v2f, float, "[%f,%f]")
+CastVectorString(v3f, float, "[%f,%f,%f]")
+CastVectorString(v4f, float, "[%f,%f,%f,%f]")
+
+CastVectorString(rgba8, u8, "#%02hhX%02hhX%02hhX%02hhX")
 
 #define Cast_Case(FROM_T, TO_T) case TO_T: Cast_ ## FROM_T ## _ ## TO_T (input, output); break;
 
@@ -182,6 +211,7 @@ CastVectorString(v4f)
                 Cast_Inner(v2f, TO_T)\
                 Cast_Inner(v3f, TO_T)\
                 Cast_Inner(v4f, TO_T)\
+                Cast_Inner(rgba8, TO_T)\
                 default:\
                     Log(0, LogSeverity_Error, "Cannot cast variant from %s to %s", GetTypeName(type_from), GetTypeName(type_to));\
                     return Variant_Empty;\
@@ -193,6 +223,9 @@ CastVectorString(v4f)
 API_EXPORT Variant Cast(Variant v, Type type_to) {
     auto type_from = v.type;
     if(type_from == type_to) return v;
+    if(type_to == TypeOf_unknown) {
+        return Variant_Empty;
+    }
 
     Variant newVar;
     memset(&newVar.data, 0, sizeof(m4x4f));
@@ -230,6 +263,7 @@ API_EXPORT Variant Cast(Variant v, Type type_to) {
         Cast_Outer(v2f)
         Cast_Outer(v3f)
         Cast_Outer(v4f)
+        Cast_Outer(rgba8)
         default:
             Log(0, LogSeverity_Error, "Cannot cast variant from %s to %s", GetTypeName(type_from), GetTypeName(type_to));
             return Variant_Empty;

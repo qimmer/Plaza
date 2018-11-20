@@ -1,0 +1,11 @@
+{
+  "Uuid": "Component.Platformer",
+  "Name": "Platformer",
+  "Properties": [
+    {
+      "Uuid": "Property.PlatformerState",
+      "Name": "PlatformerState",
+      "PropertyType": "Entity"
+    }
+  ]
+}

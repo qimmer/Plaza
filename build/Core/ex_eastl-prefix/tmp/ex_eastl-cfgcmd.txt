@@ -1,0 +1,1 @@
+cmd='C:/Program Files/CMake/bin/cmake.exe;-DCMAKE_BUILD_TYPE=Debug;-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true;-GNinja;<SOURCE_DIR><SOURCE_SUBDIR>'

@@ -2,23 +2,45 @@
 // Created by Kim on 27-09-2018.
 //
 
-#include <Foundation/NativeUtils.h>
 #include "Instance.h"
 #include "Identification.h"
 #include "Debug.h"
 
 #define Verbose_Instance "instance"
 
-struct Template {};
+API_EXPORT bool ResolveReferences(Entity root) {
+    bool areAllResolved = true;
+    Entity unresolvedReference = 0;
 
-struct Instance {
-    bool InstanceIgnoreChanges;
-    Entity InstanceTemplate;
-};
+    for_children(unresolvedReference, UnresolvedReferences, root, {
+        auto data = GetUnresolvedReferenceData(unresolvedReference);
 
-struct InstanceOverride {
-    Entity InstanceOverrideProperty;
-};
+        auto entity = data->UnresolvedReferenceEntity;
+        if(IsEntityValid(entity)) {
+            auto reference = FindEntityByUuid(data->UnresolvedReferenceUuid);
+            if(!IsEntityValid(reference)) {
+                Error(root, "Property '%s' of entity '%s' has an unresolved uuid '%s'.",
+                    GetUuid(data->UnresolvedReferenceProperty),
+                    GetUuid(data->UnresolvedReferenceEntity),
+                    data->UnresolvedReferenceUuid);
+
+                areAllResolved = false;
+                continue;
+            }
+
+            auto value = MakeVariant(Entity, reference);
+
+            SetPropertyValue(data->UnresolvedReferenceProperty, entity, value);
+        }
+    });
+
+    RemoveComponent(root, ComponentOf_UnresolvedEntity());
+
+    return areAllResolved;
+}
+
+
+static void Instantiate(Entity templateEntity, Entity destinationEntity, Entity templateRoot, Entity destinationRoot);
 
 static bool IsInstanceOverriding(Entity instance, Entity property) {
     for_children(override, InstanceOverrides, instance, {
@@ -55,9 +77,67 @@ Entity GetInstanceReference(Entity templateEntity, Entity instanceEntity, Entity
     return FindEntityByPath(instanceReferencePath); // Return the instance tree's copy of the reference
 }
 
-API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
-    Variant source, destination;
+static inline void InstantiateProperty(Entity templateEntity, Entity destinationEntity, Entity templateRoot, Entity instanceRoot, StringRef templateRootUuid, StringRef instanceRootUuid, StringRef templateUuid, StringRef instanceUuid, Entity property) {
+    Variant value, source, destination;
 
+    switch (GetPropertyKind(property)) {
+        case PropertyKind_Value:
+            value = GetPropertyValue(property, templateEntity);
+            if(GetPropertyType(property) == TypeOf_Entity && IsEntityValid(value.as_Entity)) {
+
+                auto templateReferenceUuid = GetUuid(value.as_Entity);
+                auto location = strstr(templateReferenceUuid, templateRootUuid);
+                if(location) {
+                    // Template child Uuid contains parent uuid. Replace parent template Uuid part with instance parent uuid and use new uuid instead
+                    auto relativeUuid = templateReferenceUuid + strlen(templateRootUuid);
+
+                    char newChildUuid[1024];
+                    snprintf(newChildUuid, 1024, "%s%s", instanceRootUuid, relativeUuid);
+
+                    templateReferenceUuid = Intern(newChildUuid);
+                }
+
+                auto ref = AddUnresolvedReferences(instanceRoot);
+                SetUnresolvedReferenceUuid(ref, templateReferenceUuid);
+                SetUnresolvedReferenceProperty(ref, property);
+                SetUnresolvedReferenceEntity(ref, destinationEntity);
+            } else {
+                SetPropertyValue(property, destinationEntity, value);
+            }
+
+            break;
+        case PropertyKind_Child:
+            source = GetPropertyValue(property, templateEntity);
+            destination = GetPropertyValue(property, destinationEntity);
+            if(IsEntityValid(source.as_Entity) && IsEntityValid(destination.as_Entity)) {
+                Instantiate(source.as_Entity, destination.as_Entity, templateRoot, instanceRoot);
+            }
+            break;
+        case PropertyKind_Array:
+            SetArrayPropertyCount(property, destinationEntity, GetArrayPropertyCount(property, templateEntity));
+
+            u32 sourceCount = 0;
+            u32 destinationCount = 0;
+            auto sourceElements = GetArrayPropertyElements(property, templateEntity, &sourceCount);
+            auto destinationElements = GetArrayPropertyElements(property, destinationEntity, &destinationCount);
+            for(auto i = 0; i < sourceCount; ++i) {
+                auto templateChildUuid = GetUuid(sourceElements[i]);
+                auto templateUuidInChildUuid = strstr(templateChildUuid, templateUuid);
+                if(templateUuidInChildUuid) {
+                    // Template child Uuid contains parent uuid. Replace parent template Uuid part with instance parent uuid and use new uuid instead
+                    auto relativeUuid = templateChildUuid + strlen(templateUuid);
+
+                    char newChildUuid[1024];
+                    snprintf(newChildUuid, 1024, "%s%s", instanceUuid, relativeUuid);
+
+                    SetUuid(destinationElements[i], newChildUuid);
+                }
+                Instantiate(sourceElements[i], destinationElements[i], templateRoot, instanceRoot);
+            }
+    }
+}
+
+static void Instantiate(Entity templateEntity, Entity destinationEntity, Entity templateRoot, Entity instanceRoot) {
     if(!IsEntityValid(templateEntity)) {
         Log(0, LogSeverity_Error, "Cannot copy from invalid entity", GetDebugName(templateEntity));
         return;
@@ -74,8 +154,16 @@ API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
 
     SetInstanceTemplate(destinationEntity, templateEntity);
 
+    auto templateUuid = GetUuid(templateEntity);
+    auto instanceUuid = GetUuid(destinationEntity);
+    auto templateRootUuid = GetUuid(templateRoot);
+    auto instanceRootUuid = GetUuid(instanceRoot);
+
     for_entity(component, data, Component, {
-        if (component != ComponentOf_Ownership() && component != ComponentOf_Template() && component != ComponentOf_Instance() && HasComponent(templateEntity, component)) {
+        if (component != ComponentOf_Ownership()
+        && component != ComponentOf_Template()
+        && component != ComponentOf_Instance()
+        && HasComponent(templateEntity, component)) {
             AddComponent(destinationEntity, component);
 
             for_children(property, Properties, component, {
@@ -83,40 +171,17 @@ API_EXPORT void Instantiate(Entity templateEntity, Entity destinationEntity) {
 
                 if(IsInstanceOverriding(destinationEntity, property)) continue;
 
-                Variant value;
-                switch (GetPropertyKind(property)) {
-                    case PropertyKind_Value:
-                        value = GetPropertyValue(property, templateEntity);
-                        if(GetPropertyType(property) == TypeOf_Entity) {
-                            // If the reference points to an entity inside the template tree, translate the reference
-                            // to point into the equilivant entity in the instance tree
-                            value.as_Entity = GetInstanceReference(templateEntity, destinationEntity, value.as_Entity);
-                        }
-                        SetPropertyValue(property, destinationEntity, value);
-                        break;
-                    case PropertyKind_Child:
-                        source = GetPropertyValue(property, templateEntity);
-                        destination = GetPropertyValue(property, destinationEntity);
-                        if(IsEntityValid(source.as_Entity) && IsEntityValid(destination.as_Entity)) {
-                            Instantiate(source.as_Entity, destination.as_Entity);
-                        }
-                        break;
-                    case PropertyKind_Array:
-                        SetArrayPropertyCount(property, destinationEntity, GetArrayPropertyCount(property, templateEntity));
-
-                        u32 sourceCount = 0;
-                        u32 destinationCount = 0;
-                        auto sourceElements = GetArrayPropertyElements(property, templateEntity, &sourceCount);
-                        auto destinationElements = GetArrayPropertyElements(property, destinationEntity, &destinationCount);
-                        for(auto i = 0; i < sourceCount; ++i) {
-                            Instantiate(sourceElements[i], destinationElements[i]);
-                        }
-                }
+                InstantiateProperty(templateEntity, destinationEntity, templateRoot, instanceRoot, templateRootUuid, instanceRootUuid, templateUuid, instanceUuid, property);
             });
         }
     });
 
     SetInstanceIgnoreChanges(destinationEntity, false);
+
+    // If we finished recursive instantiation, resolve all pending references
+    if(templateEntity == templateRoot) {
+        ResolveReferences(destinationEntity);
+    }
 }
 
 LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate, Entity newTemplate) {
@@ -124,9 +189,9 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
         return;
     }
 
-    Verbose(Verbose_Instance, "Instantiationg template %s onto instance %s", GetUuid(newTemplate), GetUuid(entity));
+    Verbose(Verbose_Instance, "Instantiating template %s onto instance %s", GetUuid(newTemplate), GetUuid(entity));
 
-    Instantiate(newTemplate, entity);
+    Instantiate(newTemplate, entity, newTemplate, entity);
 }
 
 LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOwner) {
@@ -141,7 +206,9 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
         if(component == ComponentOf_Ownership()
            || property == PropertyOf_Uuid()
            || component == ComponentOf_Template()
-           || component == ComponentOf_Instance()) return;
+           || component == ComponentOf_Instance()
+           || component == ComponentOf_UnresolvedEntity()
+           || component == ComponentOf_UnresolvedReference()) return;
 
         char instanceValue[128];
         auto size = GetPropertySize(property);
@@ -198,13 +265,32 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
     }
 }
 
+LocalFunction(OnTemplateComponentAdded, void, Entity component, Entity entity) {
+    if(HasComponent(entity, ComponentOf_Template())) {
+        for_entity(instance, instanceData, Instance, {
+            if(instanceData->InstanceTemplate == entity) {
+                AddComponent(instance, component);
+            }
+        });
+    }
+}
+
+LocalFunction(OnTemplateComponentRemoved, void, Entity component, Entity entity) {
+    if(HasComponent(entity, ComponentOf_Template())) {
+        for_entity(instance, instanceData, Instance, {
+            if(instanceData->InstanceTemplate == entity) {
+                RemoveComponent(instance, component);
+            }
+        });
+    }
+}
+
 BeginUnit(Instance)
     BeginComponent(Instance)
         RegisterReferenceProperty(Template, InstanceTemplate)
         RegisterArrayProperty(InstanceOverride, InstanceOverrides)
         RegisterProperty(bool, InstanceIgnoreChanges)
     EndComponent()
-
 
     BeginComponent(InstanceOverride)
         RegisterReferenceProperty(Property, InstanceOverrideProperty)
@@ -213,7 +299,19 @@ BeginUnit(Instance)
     BeginComponent(Template)
     EndComponent()
 
+    BeginComponent(UnresolvedReference)
+        RegisterReferenceProperty(Property, UnresolvedReferenceProperty)
+        RegisterProperty(Entity, UnresolvedReferenceEntity)
+        RegisterProperty(StringRef, UnresolvedReferenceUuid)
+    EndComponent()
+
+    BeginComponent(UnresolvedEntity)
+        RegisterArrayProperty(UnresolvedReference, UnresolvedReferences)
+    EndComponent()
+
     RegisterGenericPropertyChangedListener(OnPropertyChanged);
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnTemplateComponentAdded, 0)
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnTemplateComponentRemoved, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_InstanceTemplate()), OnInstanceTemplateChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
 EndUnit()

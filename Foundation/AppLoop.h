@@ -7,13 +7,21 @@
 
 #include <Core/Event.h>
 
+struct AppLoop {
+    u64 AppLoopFrame;
+    float AppLoopOrder;
+};
+
 Unit(AppLoop)
     Component(AppLoop)
         Property(u64, AppLoopFrame)
-        Property(bool, AppLoopDisabled)
-        Property(bool, AppLoopKeepAlive)
+        Property(float, AppLoopOrder)
 
     Function(RunAppLoops, void)
+    Function(Quit, void)
 
+#define AppLoopOrder_Rendering 10.0f
+#define AppLoopOrder_Update 1.0f
+#define AppLoopOrder_Input 0.1f
 
 #endif //PLAZA_APPLOOP_H

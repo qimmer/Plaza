@@ -16,14 +16,6 @@ struct PersistancePoint {
     bool PersistancePointLoading, PersistancePointSaving, PersistancePointAsync, PersistancePointLoaded;
 };
 
-struct UnresolvedReference {
-    Entity UnresolvedReferenceProperty;
-    StringRef UnresolvedReferenceUuid;
-};
-
-struct UnresolvedEntity {
-};
-
 LocalFunction(OnStreamContentChanged, void, Entity persistancePoint) {
     // If serialized content has changed, re-deserialize (load) it!
     if(HasComponent(persistancePoint, ComponentOf_PersistancePoint()) && !GetPersistancePointLoading(persistancePoint) && !GetPersistancePointSaving(persistancePoint) && GetPersistancePointLoaded(persistancePoint)) {
@@ -154,34 +146,6 @@ API_EXPORT bool LoadEntityPath(StringRef entityPath) {
     return false;
 }
 
-API_EXPORT bool ResolveReferences() {
-    bool areAllResolved = true;
-    Entity unresolvedReference = 0;
-    UnresolvedReference *data = NULL;
-
-    for_entity(unresolvedReference, data, UnresolvedReference, {
-        auto reference = FindEntityByUuid(data->UnresolvedReferenceUuid);
-        if(!IsEntityValid(reference)) {
-            areAllResolved = false;
-            continue;
-        }
-
-        auto entity = GetOwner(unresolvedReference);
-        if(!IsEntityValid(entity)) {
-            continue;
-        }
-
-        auto value = MakeVariant(Entity, reference);
-
-        SetPropertyValue(data->UnresolvedReferenceProperty, entity, value);
-
-        auto index = GetUnresolvedReferencesIndex(entity, unresolvedReference);
-        RemoveUnresolvedReferences(entity, index);
-    });
-
-    return areAllResolved;
-}
-
 LocalFunction(OnPersistancePointLoadedChanged, void, Entity entity, bool oldValue, bool newValue) {
     auto isLoading = GetPersistancePointLoading(entity);
 
@@ -200,15 +164,6 @@ BeginUnit(PersistancePoint)
         RegisterProperty(bool, PersistancePointSaving)
 
         RegisterBase(Stream)
-    EndComponent()
-
-    BeginComponent(UnresolvedReference)
-        RegisterReferenceProperty(Property, UnresolvedReferenceProperty)
-        RegisterProperty(StringRef, UnresolvedReferenceUuid)
-    EndComponent()
-
-    BeginComponent(UnresolvedEntity)
-        RegisterArrayProperty(UnresolvedReference, UnresolvedReferences)
     EndComponent()
 
     RegisterSubscription(EventOf_StreamContentChanged(), OnStreamContentChanged, 0)

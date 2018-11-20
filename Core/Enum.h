@@ -16,5 +16,6 @@ Unit(Enum)
         Property(u64, EnumFlagValue)
 
     Function(GetEnumName, StringRef, Entity e, u64 value)
+    Function(GetEnumValue, u64, Entity e, StringRef name)
 
 #endif //PLAZA_ENUM_H

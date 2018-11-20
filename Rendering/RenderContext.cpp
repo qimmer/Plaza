@@ -8,6 +8,7 @@
 
 #include "RenderContext.h"
 #include "RenderTarget.h"
+#include "RenderingModule.h"
 
 #include <cfloat>
 #include <Algorithms.h>
@@ -21,6 +22,9 @@ BeginUnit(RenderContext)
         RegisterProperty(bool, RenderContextVsync)
         RegisterProperty(bool, RenderContextShowDebug)
         RegisterProperty(bool, RenderContextShowStats)
-        RegisterChildProperty(AppLoop, RenderContextLoop)
     EndComponent()
+
+    SetAppLoopOrder(AppLoopOf_ResourceSubmission(), AppLoopOrder_ResourceSubmission);
+    SetAppLoopOrder(AppLoopOf_ResourceDownload(), AppLoopOrder_ResourceDownload);
+    SetAppLoopOrder(AppLoopOf_Present(), AppLoopOrder_Present);
 EndUnit()

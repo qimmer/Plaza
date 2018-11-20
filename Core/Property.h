@@ -11,6 +11,18 @@
 #define PropertyKind_Child 1
 #define PropertyKind_Array 2
 
+struct Ownership {
+    Entity Owner, OwnerProperty;
+};
+
+struct Property {
+    Entity PropertyEnum, PropertyChangedEvent, PropertyChildComponent;
+    u32 PropertyOffset, PropertySize, PropertyFlags;
+    Type PropertyType;
+    u8 PropertyKind;
+    bool PropertyReadOnly;
+};
+
 Unit(Property)
 
 Enum(PropertyKind)

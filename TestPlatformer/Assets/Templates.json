@@ -1,0 +1,69 @@
+{
+  "Children": [
+    {
+      "Uuid": "Platformer.Templates.Level",
+      "Children": [
+        {
+          "Uuid": "Platformer.Templates.Level.Scene",
+          "$components": ["Component.Scene"],
+          "Children": [
+            {
+              "Uuid": "Platformer.Templates.Level.Scene.Camera",
+              "FrustumNearClip": -100.0,
+              "FrustumFarClip": 100.0,
+              "OrthographicFrustumTopLeft": [
+                -16,
+                10
+              ],
+              "OrthographicFrustumBottomRight": [
+                16,
+                -10
+              ],
+              "Position3D": [
+                15,
+                12,
+                -1
+              ]
+            },
+            {
+              "Uuid": "Platformer.Templates.Level.Scene.LevelGrid",
+              "TileGridSpacing": [
+                1.0,
+                1.0
+              ],
+              "TileGridSet": "Platformer.TileSets.Mario",
+              "TileGridMap": "Platformer.Templates.Level.TileMap"
+            }
+          ]
+        },
+        {
+          "Uuid": "Platformer.Templates.Level.TileMap"
+        },
+        {
+          "Uuid": "Platformer.Templates.Level.Gui",
+          "$components": ["Component.Scene"],
+          "Children": [
+            {
+              "Uuid": "Platformer.Templates.Level.Gui.Camera",
+              "FrustumNearClip": -1000.0,
+              "FrustumFarClip": 1000.0,
+              "OrthographicFrustumTopLeft": [
+                0,
+                0
+              ],
+              "OrthographicFrustumBottomRight": [
+                320,
+                240
+              ],
+              "Position3D": [
+                0,
+                0,
+                -100
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

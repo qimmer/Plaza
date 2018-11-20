@@ -1,0 +1,51 @@
+{
+    "Children": [
+        {
+            "Uuid": "Platformer.TileAtlases.MarioTiles",
+            "StreamPath": "asset://Assets/Tilemaps/MarioTiles.png",
+            "PersistancePointLoaded": true,
+            "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT",
+            "TileAtlasDimensions": [
+                33,
+                28
+            ],
+            "TextureAtlasSubTextures": [
+                {
+                    "Uuid": "Platformer.TileAtlases.MarioTiles.Ground",
+                    "TileFrameOffset": [
+                        0,
+                        0
+                    ]
+                },
+                {
+                    "Uuid": "Platformer.TileAtlases.MarioTiles.Question[0]",
+                    "TileFrameOffset": [
+                        24,
+                        0
+                    ]
+                },
+                {
+                    "Uuid": "Platformer.TileAtlases.MarioTiles.Question[1]",
+                    "TileFrameOffset": [
+                        24,
+                        0
+                    ]
+                },
+                {
+                    "Uuid": "Platformer.TileAtlases.MarioTiles.Question[2]",
+                    "TileFrameOffset": [
+                        25,
+                        0
+                    ]
+                },
+                {
+                    "Uuid": "Platformer.TileAtlases.MarioTiles.Question[3]",
+                    "TileFrameOffset": [
+                        26,
+                        0
+                    ]
+                }
+            ]
+        }
+    ]
+}

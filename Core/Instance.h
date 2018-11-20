@@ -7,7 +7,35 @@
 
 #include <Core/NativeUtils.h>
 
+struct UnresolvedReference {
+    Entity UnresolvedReferenceEntity;
+    Entity UnresolvedReferenceProperty;
+    StringRef UnresolvedReferenceUuid;
+};
+
+struct UnresolvedEntity {
+};
+
+struct Template {};
+
+struct Instance {
+    bool InstanceIgnoreChanges;
+    Entity InstanceTemplate;
+};
+
+struct InstanceOverride {
+    Entity InstanceOverrideProperty;
+};
+
 Unit(Instance)
+    Component(UnresolvedReference)
+        ReferenceProperty(Property, UnresolvedReferenceProperty)
+        Property(Entity, UnresolvedReferenceEntity)
+        Property(StringRef, UnresolvedReferenceUuid)
+
+    Component(UnresolvedEntity)
+        ArrayProperty(UnresolvedReference, UnresolvedReferences)
+
     Component(Template)
 
     Component(InstanceOverride)
@@ -18,6 +46,6 @@ Unit(Instance)
         ArrayProperty(InstanceOverride, InstanceOverrides)
         Property(bool, InstanceIgnoreChanges)
 
-Function(Instantiate, void, Entity templateEntity, Entity destinationEntity)
+    Function(ResolveReferences, bool, Entity root)
 
 #endif //PLAZA_INSTANCE_H

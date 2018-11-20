@@ -71,3 +71,39 @@ API_EXPORT StringRef Intern(StringRef sourceString) {
 
     return it->first.c_str();
 }
+
+#define FORMAT_CASE(TYPE) case TypeOf_ ## TYPE: return StringFormatV(format, argument.as_ ## TYPE); break;
+
+API_EXPORT StringRef Format(StringRef format, Variant argument) {
+    switch(argument.type) {
+        FORMAT_CASE(s8)
+        FORMAT_CASE(s16)
+        FORMAT_CASE(s32)
+        FORMAT_CASE(s64)
+        FORMAT_CASE(u8)
+        FORMAT_CASE(u16)
+        FORMAT_CASE(u32)
+        FORMAT_CASE(u64)
+        FORMAT_CASE(StringRef)
+        FORMAT_CASE(bool)
+        FORMAT_CASE(float)
+        FORMAT_CASE(double)
+        FORMAT_CASE(Entity)
+        default:
+            return format;
+    }
+}
+
+API_EXPORT StringRef StringFormatV(StringRef format, ...) {
+    char buffer[4096];
+    auto numWritten = 0;
+
+    va_list arg;
+    va_start(arg, format);
+    numWritten += vsnprintf(buffer + numWritten, 4095, format, arg);
+    va_end(arg);
+
+    buffer[numWritten] = '\0';
+
+    return Intern(buffer);
+}

@@ -1,0 +1,10 @@
+{
+    "Children": [
+        { "Uuid": "Platformer.Levels.Level_1_1" },
+        { "Uuid": "Platformer.Levels.Level_1_2" },
+        { "Uuid": "Platformer.Levels.Level_1_3" },
+        { "Uuid": "Platformer.Levels.Level_1_4" },
+        { "Uuid": "Platformer.Levels.Level_1_5" },
+        { "Uuid": "Platformer.Levels.Config", "StreamPath": "asset://Assets/Levels.ini", "PersistancePointLoaded": true }
+    ]
+}

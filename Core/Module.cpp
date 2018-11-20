@@ -38,8 +38,8 @@ API_EXPORT Entity GetModuleRoot() {
     if(root == 0) {
         root = CreateEntity();
         AddComponent(root, ComponentOf_ModuleRoot());
-        SetName(root, "ModuleRoot");
         SetUuid(root, "ModuleRoot");
+        SetName(root, "ModuleRoot");
     }
     return root;
 }

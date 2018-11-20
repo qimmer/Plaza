@@ -244,7 +244,7 @@ BeginUnit(TcpStream)
 
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnTcpStreamRemoved, ComponentOf_TcpStream())
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ServerPort()), OnTcpServerPortChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopFrameChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopFrameChanged, AppLoopOf_Networking())
 
     RegisterStreamProtocol(TcpStream, "tcp")
 EndComponent()

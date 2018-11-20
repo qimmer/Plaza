@@ -4,6 +4,7 @@
 
 #include "InputContext.h"
 #include "Key.h"
+#include "AppLoop.h"
 
 struct InputState {
     float InputStateValue;
@@ -38,4 +39,6 @@ BeginUnit(InputContext)
         RegisterPropertyEnum(u16, InputStateKey, Key)
         RegisterReferenceProperty(InputContext, InputStateContext)
     EndComponent()
+
+    SetAppLoopOrder(AppLoopOf_InputPoll(), AppLoopOrder_Input);
 EndUnit()

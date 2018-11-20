@@ -24,14 +24,27 @@ static Entity FindAppRoot(Entity entity) {
     return FindAppRoot(GetOwner(entity));
 }
 
+static void SetAppNodeRootRecursive(Entity entity) {
+    SetAppNodeRoot(entity, FindAppRoot(entity));
+    for_entity(child, data, AppNode, {
+        if(GetOwner(child) == entity) {
+            SetAppNodeRootRecursive(child);
+        }
+    });
+}
+
 LocalFunction(OnOwnerChanged, void, Entity entity) {
     if(HasComponent(entity, ComponentOf_AppNode())) {
-        SetAppNodeRoot(entity, FindAppRoot(entity));
+        SetAppNodeRootRecursive(entity);
     }
 }
 
 LocalFunction(OnAppNodeAdded, void, Entity component, Entity entity) {
     SetAppNodeRoot(entity, FindAppRoot(entity));
+}
+
+LocalFunction(OnAppRootAdded, void, Entity component, Entity entity) {
+    SetAppNodeRootRecursive(entity);
 }
 
 BeginUnit(AppNode)
@@ -46,4 +59,5 @@ BeginUnit(AppNode)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
     RegisterSubscription(EventOf_EntityComponentAdded(), OnAppNodeAdded, ComponentOf_AppNode())
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnAppRootAdded, ComponentOf_AppRoot())
 EndUnit()

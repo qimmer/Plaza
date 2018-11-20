@@ -22,6 +22,8 @@
 #include <Core/NativeUtils.h>
 #include <Json/NativeUtils.h>
 #include <Scene/SceneModule.h>
+#include <Foundation/AppNode.h>
+#include <Foundation/Stream.h>
 
 BeginModule(Rendering)
     RegisterDependency(Foundation)
@@ -33,7 +35,6 @@ BeginModule(Rendering)
     RegisterUnit(OffscreenRenderTarget)
     RegisterUnit(Program)
     RegisterUnit(RenderContext)
-    RegisterUnit(Rendering)
     RegisterUnit(Renderable)
     RegisterUnit(RenderState)
     RegisterUnit(RenderTarget)
@@ -43,6 +44,7 @@ BeginModule(Rendering)
     RegisterUnit(Uniform)
     RegisterUnit(SceneRenderer)
     RegisterUnit(MeshBuilder)
+    RegisterUnit(Rendering)
 
     ModuleData({
         "RenderingUvOffsetScaleUniform": {
@@ -73,4 +75,17 @@ BeginUnit(Rendering)
                 ]
             }
     );
+
+    auto whiteTexture = TextureOf_White();
+    SetTextureSize2D(whiteTexture, {1, 1});
+    SetTextureFormat(whiteTexture, TextureFormat_RGBA8);
+    SetStreamPath(whiteTexture, "memory://Rendering/WhiteTexture.bin");
+
+    if(StreamOpen(whiteTexture, StreamMode_Write)) {
+        rgba8 white;
+        white.rgba = 0xffffffff;
+
+        StreamWrite(whiteTexture, 4, &white.rgba);
+        StreamClose(whiteTexture);
+    }
 EndUnit()

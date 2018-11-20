@@ -6,7 +6,7 @@
 #include "Debug.h"
 
 static StringRef typeNames[] = {
-        "",
+        "Unknown",
 
         "void",
         "u8",

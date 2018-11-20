@@ -22,6 +22,9 @@ Unit(Texture)
         ChildProperty(Texture, TextureReaderBlitTexture)
         ChildProperty(Stream, TextureReaderTarget)
 
+Function(GetTextureFormatChannelType, Type, u16 format);
+Function(GetTextureFormatNumChannels, u8, u16 format);
+
 #define TextureFlag_NONE                UINT32_C(0x00000000) //!<
 
 #define TextureFlag_U_MIRROR            UINT32_C(0x00000001) //!< Wrap U mode: Mirror

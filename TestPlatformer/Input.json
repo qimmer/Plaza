@@ -1,0 +1,35 @@
+{
+  "Uuid": "Platformer.Input",
+  "Children": [
+    {
+      "Uuid": "Platformer.Input.Quit",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_WINDOW_CLOSE"
+    },
+    {
+      "Uuid": "Platformer.Input.Jump",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_SPACE"
+    },
+    {
+      "Uuid": "Platformer.Input.Left",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_LEFT"
+    },
+    {
+      "Uuid": "Platformer.Input.Right",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_RIGHT"
+    },
+    {
+      "Uuid": "Platformer.Input.Run",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_LEFT_CONTROL"
+    },
+    {
+      "Uuid": "Platformer.Input.QuitAction",
+      "InvocationFunction": "Function.Quit",
+      "InvocationToggleState": "{InputStateValue@Platformer.Input.Quit}"
+    }
+  ]
+}

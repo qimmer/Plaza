@@ -250,5 +250,7 @@ BeginUnit(Ray)
         RegisterReferenceProperty(SceneRenderer, PickRaySceneRenderer)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppUpdate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppUpdate, AppLoopOf_RayPicking())
+
+    SetAppLoopOrder(AppLoopOf_RayPicking(), AppLoopOrder_Update * 1.5f);
 EndUnit()

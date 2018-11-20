@@ -43,54 +43,51 @@ BeginModule(BgfxRendering)
 #endif
 
     ModuleData({
-        "BgfxRenderingLoop": {
-            "AppLoopDisabled": true
-        },
         "Extensions": [
            {
                 "ExtensionDisabled": true,
-                "ExtensionComponent": "/Modules/Rendering/Components/CommandList",
-                "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxCommandList"
+                "ExtensionComponent": "Component.CommandList",
+                "ExtensionExtenderComponent": "Component.BgfxCommandList"
            },
            {
                "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/VertexDeclaration",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxVertexDeclaration"
+               "ExtensionComponent": "Component.VertexDeclaration",
+               "ExtensionExtenderComponent": "Component.BgfxVertexDeclaration"
            },
            {
                "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/VertexBuffer",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxVertexBuffer"
+               "ExtensionComponent": "Component.VertexBuffer",
+               "ExtensionExtenderComponent": "Component.BgfxVertexBuffer"
            },
            {
                "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/IndexBuffer",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxIndexBuffer"
+               "ExtensionComponent": "Component.IndexBuffer",
+               "ExtensionExtenderComponent": "Component.BgfxIndexBuffer"
            },
            {
                "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/OffscreenRenderTarget",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxOffscreenRenderTarget"
+               "ExtensionComponent": "Component.OffscreenRenderTarget",
+               "ExtensionExtenderComponent": "Component.BgfxOffscreenRenderTarget"
            },
            {
                "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/BinaryProgram",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxBinaryProgram"
+               "ExtensionComponent": "Component.BinaryProgram",
+               "ExtensionExtenderComponent": "Component.BgfxBinaryProgram"
            },
            {
                "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/Texture2D",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxTexture2D"
+               "ExtensionComponent": "Component.Texture2D",
+               "ExtensionExtenderComponent": "Component.BgfxTexture2D"
            },
            {
                "ExtensionDisabled": true,
-               "ExtensionComponent": "/Modules/Rendering/Components/Uniform",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxUniform"
+               "ExtensionComponent": "Component.Uniform",
+               "ExtensionExtenderComponent": "Component.BgfxUniform"
            },
            {
                "ExtensionDisabled": false,
-               "ExtensionComponent": "/Modules/Rendering/Components/RenderContext",
-               "ExtensionExtenderComponent": "/Modules/BgfxRendering/Components/BgfxRenderContext"
+               "ExtensionComponent": "Component.RenderContext",
+               "ExtensionExtenderComponent": "Component.BgfxRenderContext"
            }
         ]
     })

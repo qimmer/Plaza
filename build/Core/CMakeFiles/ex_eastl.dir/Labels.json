@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/CMakeFiles/ex_eastl"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/CMakeFiles/ex_eastl.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/CMakeFiles/ex_eastl-complete.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-install.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-download.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-update.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-patch.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-configure.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ex_eastl"
+		],
+		"name" : "ex_eastl"
+	}
+}

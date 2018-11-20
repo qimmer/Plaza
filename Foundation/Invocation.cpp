@@ -11,15 +11,6 @@
 
 #define ARGUMENT_DATA_MAX 4096
 
-struct Invocation {
-    Entity InvocationFunction;
-    Variant InvocationResult;
-};
-
-struct InvocationArgument {
-    Variant InvocationArgumentValue;
-};
-
 API_EXPORT bool Invoke(Entity invocationEntity) {
     Variant result;
 
@@ -27,7 +18,7 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
     auto invocationArguments = GetInvocationArguments(invocationEntity, &count);
     auto invocation = GetInvocationData(invocationEntity);
 
-    if(!invocationArguments) return false;
+    if(!invocation) return false;
 
     auto arguments = (Variant*)alloca(sizeof(Variant) * count);
     for(int i = 0; i < count; ++i) {
@@ -43,7 +34,9 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
                 arguments
         );
 
-        SetInvocationResult(invocationEntity, result);
+        if(IsEntityValid(invocationEntity)) {
+            SetInvocationResult(invocationEntity, result);
+        }
 
         return true;
     } else if (HasComponent(invocation->InvocationFunction, ComponentOf_Event())) {
@@ -64,6 +57,12 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
     return false;
 }
 
+LocalFunction(OnInvocationToggled, void, Entity invocation, bool oldState, bool newState) {
+    if(newState) {
+        Invoke(invocation);
+    }
+}
+
 BeginUnit(Invocation)
     BeginComponent(Invocation)
         RegisterReferenceProperty(Function, InvocationFunction)
@@ -73,4 +72,9 @@ BeginUnit(Invocation)
     BeginComponent(InvocationArgument)
         RegisterProperty(Variant, InvocationArgumentValue)
     EndComponent()
+    BeginComponent(InvocationToggle)
+        RegisterProperty(bool, InvocationToggleState)
+    EndComponent()
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_InvocationToggleState()), OnInvocationToggled, 0)
 EndUnit()
