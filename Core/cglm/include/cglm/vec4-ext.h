@@ -28,7 +28,7 @@
 #include "common.h"
 #include "vec3-ext.h"
 #include <stdbool.h>
-#include <math.h>
+#include <MathOperation.h>
 #include <float.h>
 
 /*!

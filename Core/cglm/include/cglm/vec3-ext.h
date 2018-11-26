@@ -28,7 +28,7 @@
 #include "common.h"
 #include "util.h"
 #include <stdbool.h>
-#include <math.h>
+#include <MathOperation.h>
 #include <float.h>
 
 /*!

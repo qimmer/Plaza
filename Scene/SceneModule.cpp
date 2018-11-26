@@ -13,6 +13,7 @@
 #include "Transform.h"
 #include "Scene.h"
 #include "Ray.h"
+#include "Velocity.h"
 
 BeginModule(Scene)
     RegisterUnit(Transform)
@@ -24,4 +25,5 @@ BeginModule(Scene)
     RegisterUnit(Model)
     RegisterUnit(Scene)
     RegisterUnit(Ray)
+    RegisterUnit(Velocity)
 EndModule()

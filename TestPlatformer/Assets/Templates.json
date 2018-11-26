@@ -13,11 +13,11 @@
               "FrustumFarClip": 100.0,
               "OrthographicFrustumTopLeft": [
                 -16,
-                10
+                12
               ],
               "OrthographicFrustumBottomRight": [
                 16,
-                -10
+                -12
               ],
               "Position3D": [
                 15,

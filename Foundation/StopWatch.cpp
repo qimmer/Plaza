@@ -57,31 +57,34 @@ static timespec diff(timespec start, timespec end)
 
 #endif
 
-LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    auto stopWatch = GetOwner(appLoop);
-    auto data = GetStopWatchData(stopWatch);
-
-    if(data) {
-        if(!data->StopWatchRunning) return;
+static void UpdateStopWatch(Entity stopWatch, StopWatch *data) {
+    if(!data->StopWatchRunning) return;
 
 #ifdef WIN32
-        LARGE_INTEGER currentTime;
-        auto freq = GetFrequency();
-        QueryPerformanceCounter(&currentTime);
+    LARGE_INTEGER currentTime;
+    auto freq = GetFrequency();
+    QueryPerformanceCounter(&currentTime);
 
-        double deltaTime = (double)(currentTime.QuadPart - data->lastTime.QuadPart) / freq.QuadPart;
+    double deltaTime = (double)(currentTime.QuadPart - data->lastTime.QuadPart) / freq.QuadPart;
 
-        data->lastTime = currentTime;
+    data->lastTime = currentTime;
 #else
-        timespec now;
+    timespec now;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now);
 
         auto delta = diff(data->lastTime, now);
         double deltaTime = (double)delta.tv_sec + ((double)delta.tv_nsec / 1000000000.0);
 #endif
 
-        SetStopWatchElapsedSeconds(stopWatch, data->StopWatchElapsedSeconds + deltaTime);
-    }
+    SetStopWatchElapsedSeconds(stopWatch, data->StopWatchElapsedSeconds + deltaTime);
+}
+
+LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
+    for_entity(stopWatch, data, StopWatch, {
+        if(data) {
+            UpdateStopWatch(stopWatch, data);
+        }
+    });
 }
 
 LocalFunction(OnStopWatchRunningChanged, void, Entity stopWatch, bool oldValue, bool newValue) {

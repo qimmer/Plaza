@@ -15,7 +15,7 @@
 #include <cmocka.h>
 #include <time.h>
 #include <stdlib.h>
-#include <math.h>
+#include <MathOperation.h>
 #include <float.h>
 #include <stdbool.h>
 

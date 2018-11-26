@@ -146,6 +146,53 @@ LocalFunction(OnInputPoll, void, Entity appLoop) {
         if(!glfwGetWindowAttrib(contextData->window, GLFW_VISIBLE)) {
             glfwShowWindow(contextData->window);
         }
+
+        auto deadZone = GetInputContextDeadZone(context);
+
+        for(auto i = 0; i < GLFW_JOYSTICK_LAST; ++i) {
+            if(!glfwJoystickPresent(i)) {
+                SetInputStateValueByKey(context, GAMEPAD_CONNECTED + i * GAMEPAD_MULTIPLIER, 0.0f);
+                continue;
+            }
+
+            SetInputStateValueByKey(context, GAMEPAD_CONNECTED + i * GAMEPAD_MULTIPLIER, 1.0f);
+
+            s32 numAxises;
+            s32 numButtons;
+            s32 numHats;
+            const float* axisValues = glfwGetJoystickAxes(i, &numAxises);
+            auto *filteredAxisValues = (float*)alloca(numAxises * sizeof(float));
+            memcpy(filteredAxisValues, axisValues, numAxises * sizeof(float));
+            const unsigned char* buttonStates = glfwGetJoystickButtons(i, &numButtons);
+            const unsigned char* hatStates = glfwGetJoystickHats(i, &numHats);
+
+            for(auto j = 0; j < numAxises; ++j) {
+                if(fabsf(filteredAxisValues[j]) < deadZone) {
+                    filteredAxisValues[j] = 0.0f;
+                }
+            }
+
+            for(auto j = 0; j < numButtons; ++j) {
+                SetInputStateValueByKey(context, GAMEPAD_A + j + (GAMEPAD_MULTIPLIER * i), buttonStates[j] ? 1.0f : 0.0f);
+            }
+
+            for(auto j = 0; j < Min(numAxises, 4); ++j) {
+                SetInputStateValueByKey(context, GAMEPAD_LS_LEFT + (j*2+0) + (GAMEPAD_MULTIPLIER * i), Max(-filteredAxisValues[j], 0.0f));
+                SetInputStateValueByKey(context, GAMEPAD_LS_LEFT + (j*2+1) + (GAMEPAD_MULTIPLIER * i), Max(filteredAxisValues[j], 0.0f));
+            }
+
+            if(numAxises > 5) {
+                SetInputStateValueByKey(context, GAMEPAD_LT + (GAMEPAD_MULTIPLIER * i), filteredAxisValues[4]);
+                SetInputStateValueByKey(context, GAMEPAD_RT + (GAMEPAD_MULTIPLIER * i), filteredAxisValues[5]);
+            }
+
+            if(numHats) {
+                SetInputStateValueByKey(context, GAMEPAD_DPAD_LEFT + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_LEFT) ? 1.0f : 0.0f);
+                SetInputStateValueByKey(context, GAMEPAD_DPAD_RIGHT + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_RIGHT) ? 1.0f : 0.0f);
+                SetInputStateValueByKey(context, GAMEPAD_DPAD_UP+ (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_UP) ? 1.0f : 0.0f);
+                SetInputStateValueByKey(context, GAMEPAD_DPAD_DOWN + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_DOWN) ? 1.0f : 0.0f);
+            }
+        }
     });
 
     if(numContexts) {

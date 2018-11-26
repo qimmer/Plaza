@@ -63,8 +63,18 @@ static inline void Cast_StringRef_StringRef(const void *input, void *output) {}
     static inline void Cast_ ## T_FROM ## _ ## T_TO (const void *input, void *output) {\
         auto src_elems = (TE_FROM*)input;\
         auto dst_elems = (TE_TO*)output;\
-        for(auto i = 0; i < Min(V_FROM_CNT, V_TO_CNT); ++i) {\
-            Cast_ ## TE_FROM ## _ ## TE_TO (&src_elems[i], &dst_elems[i]);\
+        for(auto i = 0; i < V_TO_CNT; ++i) {\
+            if(i < V_FROM_CNT) {\
+                Cast_ ## TE_FROM ## _ ## TE_TO (&src_elems[i], &dst_elems[i]);\
+            } else {\
+                if(V_FROM_CNT == 1) {\
+                    dst_elems[i] = src_elems[0];\
+                } else if (i == 3) {\
+                    dst_elems[i] = 1;\
+                } else {\
+                    dst_elems[i] = 0;\
+                }\
+            }\    
         }\
     }
 
@@ -222,7 +232,7 @@ CastVectorString(rgba8, u8, "#%02hhX%02hhX%02hhX%02hhX")
 
 API_EXPORT Variant Cast(Variant v, Type type_to) {
     auto type_from = v.type;
-    if(type_from == type_to) return v;
+    if(type_from == type_to || type_to == TypeOf_Variant) return v;
     if(type_to == TypeOf_unknown) {
         return Variant_Empty;
     }

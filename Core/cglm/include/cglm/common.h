@@ -11,7 +11,7 @@
 #define _USE_MATH_DEFINES /* for windows */
 
 #include <stdint.h>
-#include <math.h>
+#include <MathOperation.h>
 #include <float.h>
 
 #if defined(_MSC_VER)

@@ -209,7 +209,7 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newVal
     auto propertyData = (Property*) GetComponentBytes(componentOfProperty, propertyIndex);
 
     if(!propertyData) {
-        Log(context, LogSeverity_Error, "Property has not been registered.");
+        Log(context, LogSeverity_Error, "Property %s has not been registered.", GetUuid(property));
         return;
     }
 

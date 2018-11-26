@@ -83,13 +83,8 @@ static Variant Interpolate(Variant left, Variant right, float t) {
         INTERP_NUM(s16)
         INTERP_NUM(s32)
         INTERP_NUM(s64)
-        case TypeOf_bool:
-        {
-            auto result = (t < 0.5f ? left.as_bool : right.as_bool);
-            return MakeVariant(bool, result);
-            break;
-        }
         default:
+            return left;
             break;
     }
 

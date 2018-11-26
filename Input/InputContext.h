@@ -17,6 +17,7 @@ Unit(InputContext)
         Property(bool, InputContextGrabMouse)
         Property(v2i, InputContextCursorPosition)
         Property(s8, InputContextLastCharacter)
+        Property(float, InputContextDeadZone)
 
     Declare(AppLoop, InputPoll)
 

@@ -16,6 +16,7 @@ struct InputContext {
     v2i InputContextCursorPosition;
     bool InputContextGrabMouse;
     s8 InputContextLastCharacter;
+    float InputContextDeadZone;
 };
 
 API_EXPORT void SetInputStateValueByKey(Entity context, u16 key, float value) {
@@ -33,6 +34,7 @@ BeginUnit(InputContext)
         RegisterProperty(bool, InputContextGrabMouse)
         RegisterProperty(v2i, InputContextCursorPosition)
         RegisterProperty(s8, InputContextLastCharacter)
+        RegisterProperty(float, InputContextDeadZone)
     EndComponent()
     BeginComponent(InputState)
         RegisterProperty(float, InputStateValue)

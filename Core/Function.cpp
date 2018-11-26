@@ -80,8 +80,21 @@ API_EXPORT Variant CallFunction(
         u32 numArguments,
         const Variant *arguments
 ) {
+    thread_local u32 callStackCount = 0;
+    static const u32 callStackMax = 128;
+
     auto data = GetFunctionData(f);
     if(!data) return Variant_Empty;
+
+    if(callStackCount > callStackMax) {
+        Error(f, "Infinite recursive call. Refusing to call function %s to prevent stack overflow.", GetUuid(f));
+
+        Variant defaultValue;
+        memset(&defaultValue.data, 0, sizeof(defaultValue.data));
+        defaultValue.type = data->FunctionReturnType;
+
+        return defaultValue;
+    }
 
     Verbose(Verbose_Function, "Calling function %s ...", GetName(f));
 
@@ -109,11 +122,14 @@ API_EXPORT Variant CallFunction(
     ProfileStart(GetName(f), 100.0);
 #endif
     auto caller = (FunctionCallerType)data->FunctionCaller;
+
+    callStackCount++;
     auto result = caller(
             f,
             numArgs,
             finalArguments
     );
+    callStackCount--;
 
 #ifdef PROFILE
     ProfileEnd(); // Warning if function call exceeds 100.0ms

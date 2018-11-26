@@ -53,10 +53,10 @@ inline Variant __MakeVariant(const void *data, Type type) {
     }
 
     Variant v;
+    memset(&v.data, 0, sizeof(m4x4f));
+
     if(data) {
         memcpy(&v.data, data, GetTypeSize(type));
-    } else {
-        memset(&v.data, 0, sizeof(m4x4f));
     }
     v.type = type;
     return v;
