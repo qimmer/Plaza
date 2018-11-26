@@ -143,8 +143,8 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
                 auto propertyData = GetPropertyData(property);
                 if(GetPropertyKind(property) != PropertyKind_Child) continue;
 
-                auto child = CreateEntity();
                 auto parentUuid = GetUuid(entity);
+                auto child = CreateEntity();
                 auto propertyName = GetName(property);
                 char *buffer = (char*)alloca(strlen(parentUuid) + strlen(propertyName) + 2);
                 sprintf(buffer, "%s.%s", parentUuid, propertyName);
@@ -225,9 +225,9 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
                         RemoveArrayPropertyElement(property, entity, 0);
                     }
                 } else {
-                    static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-
-                    SetPropertyValue(property, entity, Variant_Empty); // Reset value to default before removal
+                    auto empty = Variant_Empty;
+                    empty.type = GetPropertyType(property);
+                    SetPropertyValue(property, entity, empty); // Reset value to default before removal
                 }
             }
 
@@ -317,35 +317,27 @@ LocalFunction(OnEntityDestroyed, void, Entity entity) {
 }
 
 static void RemoveExtensions(Entity component, Entity extensionComponent) {
-    Entity entity = 0;
-    void *data = 0;
-    for(u32 i = GetNextComponent(component, InvalidIndex, &data, &entity);
-        i != InvalidIndex;
-        i = GetNextComponent(component, i, &data, &entity)) {
+    for_entity_dynamic(entity, component, {
         RemoveComponent(entity, extensionComponent);
-    }
+    });
 }
 
 static void AddExtensions(Entity component, Entity extensionComponent) {
-    Entity entity = 0;
-    void *data = 0;
-    for(u32 i = GetNextComponent(component, InvalidIndex, &data, &entity);
-        i != InvalidIndex;
-        i = GetNextComponent(component, i, &data, &entity)) {
+    for_entity_dynamic(entity, component, {
         AddComponent(entity, extensionComponent);
-    }
+    });
 }
 
 LocalFunction(OnExtensionDisabledChanged,
         void,
         Entity extension,
-        bool oldValue,
-        bool newValue) {
-    if(newValue) {
+        bool oldDisabled,
+        bool newDisabled) {
+    if(!newDisabled) {
         AddExtensions(GetExtensionComponent(extension), GetExtensionExtenderComponent(extension));
     }
 
-    if(!newValue) {
+    if(newDisabled) {
         RemoveExtensions(GetExtensionComponent(extension), GetExtensionExtenderComponent(extension));
     }
 }

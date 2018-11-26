@@ -5,8 +5,33 @@
       "RenderPathPasses": [
         {
           "RenderPassClearDepth": 1.0,
-          "RenderPassClearColor": [255, 255, 255, 255],
-          "RenderPassClearTargets": "ClearTarget_Depth|ClearTarget_Color"
+          "RenderPassClearTargets": "ClearTarget_Depth",
+          "RenderPassMeshUniforms": [
+            {
+              "Uuid": "Gui.RenderPath.Uniforms.GuiTexture",
+              "UniformIdentifier": "s_widgetMeshTexture",
+              "UniformSamplerIndex": 0,
+              "UniformEntityProperty": "Property.WidgetMeshTexture"
+            }
+          ],
+          "RenderPassRenderableUniforms": [
+            {
+              "Uuid": "Gui.RenderPath.Uniforms.FontTexture",
+              "UniformIdentifier": "s_fontAtlas",
+              "UniformSamplerIndex": 0,
+              "UniformEntityProperty": "Property.LabelFont"
+            },
+            {
+              "Uuid": "Gui.RenderPath.Uniforms.WidgetSize",
+              "UniformIdentifier": "u_widgetSize",
+              "UniformEntityProperty": "Property.WidgetSize"
+            }
+          ],
+          "RenderPassRenderState": {
+            "RenderStateBlendMode": "RenderState_STATE_BLEND_ALPHA",
+            "RenderStateDepthTest": "RenderState_STATE_DEPTH_TEST_NONE"
+          },
+          "RenderPassSortMode": "RenderingSortMode_DepthAscending"
         }
       ]
     },
@@ -35,13 +60,6 @@
       "ProgramDeclShaderSource": "Gui.Program.DeclShader"
     },
     {
-      "Uuid": "Gui.Uniforms.WidgetSize",
-      "UniformType": "v4f",
-      "UniformIdentifier": "u_widgetSize",
-      "UniformEntityProperty": "Property.WidgetSize",
-      "UniformSource": "UniformSource_Renderable"
-    },
-    {
       "Uuid": "Gui.VertexDeclaration",
       "VertexDeclarationAttributes": [
         {
@@ -68,7 +86,7 @@
     },
     {
       "Uuid": "Gui.Font.Material",
-      "MaterialProgram": "Gui.Program"
+      "MaterialProgram": "Gui.Font.Program"
     },
     {
       "Uuid": "Gui.Font.Program",
@@ -89,13 +107,6 @@
       "ProgramVertexShaderSource": "Gui.Font.Program.VertexShader",
       "ProgramPixelShaderSource": "Gui.Font.Program.PixelShader",
       "ProgramDeclShaderSource": "Gui.Font.Program.DeclShader"
-    },
-    {
-      "Uuid": "Gui.Font.Uniforms.FontAtlas",
-      "UniformType": "Entity",
-      "UniformIdentifier": "u_fontAtlas",
-      "UniformEntityProperty": "Property.TextMeshFont",
-      "UniformSource": "UniformSource_Mesh"
     },
     {
       "Uuid": "Gui.Font.VertexDeclaration",
@@ -136,19 +147,19 @@
               "MeshBuilderVertexTexCoord1":[0.0, 0.0]
             },
             {
-              "MeshBuilderVertexPosition":[1.0, 0.0, 0.0],
+              "MeshBuilderVertexPosition":[0.0, 0.0, 0.0],
               "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
               "MeshBuilderVertexTexCoord0":[1.0, 0.0],
               "MeshBuilderVertexTexCoord1":[1.0, 0.0]
             },
             {
-              "MeshBuilderVertexPosition":[0.0, 1.0, 0.0],
+              "MeshBuilderVertexPosition":[0.0, 0.0, 0.0],
               "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
               "MeshBuilderVertexTexCoord0":[0.0, 1.0],
               "MeshBuilderVertexTexCoord1":[0.0, 1.0]
             },
             {
-              "MeshBuilderVertexPosition":[1.0, 1.0, 0.0],
+              "MeshBuilderVertexPosition":[0.0, 0.0, 0.0],
               "MeshBuilderVertexNormal":[0.0, 0.0, -1.0],
               "MeshBuilderVertexTexCoord0":[1.0, 1.0],
               "MeshBuilderVertexTexCoord1":[1.0, 1.0]

@@ -15,7 +15,6 @@
 #include "Material.h"
 #include "Renderable.h"
 #include "RenderContext.h"
-#include "SubTexture2D.h"
 #include "SceneRenderer.h"
 #include "OffscreenRenderTarget.h"
 #include <Foundation/FoundationModule.h>
@@ -23,6 +22,8 @@
 #include <Core/NativeUtils.h>
 #include <Json/NativeUtils.h>
 #include <Scene/SceneModule.h>
+#include <Foundation/AppNode.h>
+#include <Foundation/Stream.h>
 
 BeginModule(Rendering)
     RegisterDependency(Foundation)
@@ -34,17 +35,16 @@ BeginModule(Rendering)
     RegisterUnit(OffscreenRenderTarget)
     RegisterUnit(Program)
     RegisterUnit(RenderContext)
-    RegisterUnit(Rendering)
     RegisterUnit(Renderable)
     RegisterUnit(RenderState)
     RegisterUnit(RenderTarget)
     RegisterUnit(ShaderCache)
-    RegisterUnit(SubTexture2D)
     RegisterUnit(Texture)
     RegisterUnit(Texture2D)
     RegisterUnit(Uniform)
     RegisterUnit(SceneRenderer)
     RegisterUnit(MeshBuilder)
+    RegisterUnit(Rendering)
 
     ModuleData({
         "RenderingUvOffsetScaleUniform": {
@@ -69,8 +69,23 @@ BeginUnit(Rendering)
                     { "FileTypeExtension": ".ps", "FileTypeMimeType" : "application/pixel-shader" },
                     { "FileTypeExtension": ".var", "FileTypeMimeType" : "application/decl-shader" },
                     { "FileTypeExtension": ".vsb", "FileTypeMimeType" : "application/binary-vertex-shader" },
-                    { "FileTypeExtension": ".psb", "FileTypeMimeType" : "application/binary-pixel-shader" }
+                    { "FileTypeExtension": ".psb", "FileTypeMimeType" : "application/binary-pixel-shader" },
+                    { "FileTypeExtension": ".vtb", "FileTypeMimeType" : "application/vertex-buffer" },
+                    { "FileTypeExtension": ".idb", "FileTypeMimeType" : "application/index-buffer" }
                 ]
             }
     );
+
+    auto whiteTexture = TextureOf_White();
+    SetTextureSize2D(whiteTexture, {1, 1});
+    SetTextureFormat(whiteTexture, TextureFormat_RGBA8);
+    SetStreamPath(whiteTexture, "memory://Rendering/WhiteTexture.bin");
+
+    if(StreamOpen(whiteTexture, StreamMode_Write)) {
+        rgba8 white;
+        white.rgba = 0xffffffff;
+
+        StreamWrite(whiteTexture, 4, &white.rgba);
+        StreamClose(whiteTexture);
+    }
 EndUnit()

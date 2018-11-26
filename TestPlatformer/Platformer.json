@@ -1,0 +1,69 @@
+{
+  "Uuid": "Platformer",
+  "Children": [
+    {
+      "Uuid": "Platformer.Paths",
+      "Children": [
+        {
+          "VirtualPathTrigger": "asset://",
+          "VirtualPathDestination": "file://TestPlatformer/"
+        },
+        {
+          "VirtualPathTrigger": "userdata://",
+          "VirtualPathDestination": "file://.user/"
+        }
+      ]
+    },
+    {
+      "Uuid": "Platformer.Dependencies",
+      "Children": [
+        {
+          "StreamPath": "asset://../Gui/Gui.json",
+          "PersistancePointLoaded": true
+        },
+        {
+          "StreamPath": "asset://../Sprite/Sprite.json",
+          "PersistancePointLoaded": true
+        }
+      ]
+    },
+    {
+      "Uuid": "Platformer.Components",
+      "Children": [
+        {
+          "Uuid": "Component.Platformer",
+          "StreamPath": "asset://Components/Components.json"
+        }
+      ]
+    },
+    {
+      "Uuid": "Platformer.Assets",
+      "StreamPath": "asset://Assets.json",
+      "PersistancePointLoaded": true
+    },
+    {
+      "Uuid": "Platformer.CurrentLevel",
+      "InstanceTemplate": "Platformer.Levels.Level_1_1"
+    },
+    {
+      "Uuid": "Platformer.Output",
+      "StreamPath": "asset://Output.json",
+      "PersistancePointLoaded": true
+    },
+    {
+      "Uuid": "Platformer.Input",
+      "StreamPath": "asset://Input.json",
+      "PersistancePointLoaded": true
+    },
+    {
+      "Uuid": "Platformer.Control",
+      "StreamPath": "asset://Control.json",
+      "PersistancePointLoaded": true
+    },
+    {
+      "Uuid": "Platformer.UserSettings",
+      "StreamPath": "userdata://settings.ini",
+      "PersistancePointLoaded": true
+    }
+  ]
+}

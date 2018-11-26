@@ -1,0 +1,34 @@
+{
+  "Children": [
+    {
+      "Uuid": "Platformer.TileAtlases",
+      "StreamPath": "asset://Assets/TileAtlases.json",
+      "PersistancePointLoaded": true
+    },
+    {
+      "Uuid": "Platformer.Tilesets",
+      "StreamPath": "asset://Assets/Tilesets.json",
+      "PersistancePointLoaded": true
+    },
+    {
+      "Uuid": "Platformer.Difficulties",
+      "StreamPath": "asset://Assets/Difficulties.json",
+      "PersistancePointLoaded": true
+    },
+    {
+      "Uuid": "Platformer.Templates",
+      "StreamPath": "asset://Assets/Templates.json",
+      "PersistancePointLoaded": true
+    },
+    {
+      "Uuid": "Platformer.Levels",
+      "StreamPath": "asset://Assets/Levels.json",
+      "PersistancePointLoaded": true
+    },
+    {
+      "Uuid": "Platformer.UserSettings",
+      "StreamPath": "userdata://settings.ini",
+      "PersistancePointLoaded": true
+    }
+  ]
+}

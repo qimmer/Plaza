@@ -37,20 +37,6 @@ struct EntityVectorStruct {
 	Entity StaBuf[1];
 };
 
-struct Ownership {
-    Ownership() : Owner(0), OwnerProperty(0) {}
-
-    Entity Owner, OwnerProperty;
-};
-
-struct Property {
-    Entity PropertyEnum, PropertyChangedEvent, PropertyChildComponent;
-    u32 PropertyOffset, PropertySize, PropertyFlags;
-    Type PropertyType;
-    u8 PropertyKind;
-    bool PropertyReadOnly;
-};
-
 struct EntityChildren {
     EntityChildren() : StartIndex(0), Count(0) {}
 
@@ -210,6 +196,11 @@ API_EXPORT void EmitChangedEvent(Entity entity, Entity property, Property *prope
 }
 
 API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newValueData) {
+    if(!IsEntityValid(context)) {
+        Log(context, LogSeverity_Error, "Invalid entity when trying to set property %s.", GetUuid(property));
+        return;
+    }
+
     auto component = GetOwner(property);
 
     static auto componentOfProperty = ComponentOf_Property();
@@ -218,7 +209,7 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newVal
     auto propertyData = (Property*) GetComponentBytes(componentOfProperty, propertyIndex);
 
     if(!propertyData) {
-        Log(context, LogSeverity_Error, "Property has not been registered.");
+        Log(context, LogSeverity_Error, "Property %s has not been registered.", GetUuid(property));
         return;
     }
 
@@ -229,18 +220,26 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newVal
 
     auto componentIndex = GetComponentIndex(component, context);
     auto componentData = GetComponentBytes(component, componentIndex);
-    Assert(property, componentData);
+
+    if(!componentData) {
+        return;
+    }
 
     auto valueData = componentData + offset;
 
     StringRef internedString = 0;
+
     if(propertyData->PropertyType == TypeOf_StringRef) {
         if(!memcmp(valueData, "\0\0\0\0\0\0\0\0", sizeof(StringRef))) {
             *(StringRef*)valueData = nullStr;
         }
+    }
 
+    if(propertyData->PropertyType == TypeOf_StringRef || (propertyData->PropertyType == TypeOf_Variant && ((Variant*)valueData)->type == TypeOf_StringRef)) {
         ReleaseStringRef(*(StringRef*)valueData);
+    }
 
+    if(propertyData->PropertyType == TypeOf_StringRef || (propertyData->PropertyType == TypeOf_Variant && newValueData.type == TypeOf_StringRef)) {
         internedString = AddStringRef(newValueData.as_StringRef);
         newValueData.as_StringRef = internedString;
     }
@@ -415,14 +414,14 @@ API_EXPORT bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 i
 
     auto child = children[index];
 
+    // Destroy removed entity if it is owned by the array carrier
+    if(GetOwner(child) == entity) {
+        DestroyEntity(child);
+    }
+
     EmitChangedEvent(entity, property, GetPropertyData(property), MakeVariant(Entity, child), MakeVariant(Entity, nullEntity));
 
     RemoveChild(property, entity, index);
-
-    // Destroy removed entity if it is owned by the array carrier
-    if(GetOwner(child) == entity) {
-        DestroyEntity(entity);
-    }
 
     return true;
 }
@@ -628,6 +627,9 @@ BeginUnit(Property)
         RegisterProperty(Entity, Owner)
         RegisterReferenceProperty(Property, OwnerProperty)
     EndComponent()
+
+    RegisterFunction(SetPropertyValue)
+    RegisterFunction(GetPropertyValue)
 
     RegisterSubscription(EventOf_EntityComponentAdded(), OnPropertyAdded, ComponentOf_Property())
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PropertyKind()), OnPropertyKindChanged, 0)

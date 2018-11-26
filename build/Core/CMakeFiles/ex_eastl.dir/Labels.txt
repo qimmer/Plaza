@@ -1,0 +1,13 @@
+# Target labels
+ ex_eastl
+# Source files and their labels
+C:/Users/Kim/Documents/Plaza/build/Core/CMakeFiles/ex_eastl
+C:/Users/Kim/Documents/Plaza/build/Core/CMakeFiles/ex_eastl.rule
+C:/Users/Kim/Documents/Plaza/build/Core/CMakeFiles/ex_eastl-complete.rule
+C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-install.rule
+C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-mkdir.rule
+C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-download.rule
+C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-update.rule
+C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-patch.rule
+C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-configure.rule
+C:/Users/Kim/Documents/Plaza/build/Core/ex_eastl-prefix/src/ex_eastl-stamp/ex_eastl-build.rule

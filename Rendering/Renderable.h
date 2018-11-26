@@ -9,6 +9,7 @@
 
 struct Renderable {
     Entity RenderableMaterial, RenderableSubMesh;
+    v3f RenderableAABBMin, RenderableAABBMax;
 };
 
 Unit(Renderable)
@@ -16,5 +17,7 @@ Unit(Renderable)
 Component(Renderable)
     ReferenceProperty(Material, RenderableMaterial)
     ReferenceProperty(SubMesh, RenderableSubMesh)
+    Property(v3f, RenderableAABBMin)
+    Property(v3f, RenderableAABBMax)
 
 #endif //PLAZA_RENDERABLE_H

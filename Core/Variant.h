@@ -48,11 +48,15 @@ struct ALIGN(16) Variant {
 #define MakeVariant(TYPE, VALUE) __MakeVariant(&(VALUE), TypeOf_ ## TYPE)
 
 inline Variant __MakeVariant(const void *data, Type type) {
+    if(type == TypeOf_Variant) {
+        return *(const Variant*)data;
+    }
+
     Variant v;
+    memset(&v.data, 0, sizeof(m4x4f));
+
     if(data) {
         memcpy(&v.data, data, GetTypeSize(type));
-    } else {
-        memset(&v.data, 0, sizeof(m4x4f));
     }
     v.type = type;
     return v;

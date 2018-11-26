@@ -14,7 +14,7 @@ struct Replication {
 static void Replicate(Entity context) {
     auto data = GetReplicationData(context);
 
-    data->ReplicationLastChangeFrame = GetAppLoopFrame(GetReplicationAppLoop(ModuleOf_Networking()));
+    data->ReplicationLastChangeFrame = GetAppLoopFrame(AppLoopOf_Networking());
 
     for_entity(property, propertyData, Property, {
         auto component = GetOwner(property);
@@ -55,7 +55,7 @@ LocalFunction(OnComponentAdded, void, Entity component, Entity context) {
 
     auto data = GetReplicationData(context);
     if(data) {
-        data->ReplicationLastChangeFrame = GetAppLoopFrame(GetReplicationAppLoop(ModuleOf_Networking()));
+        data->ReplicationLastChangeFrame = GetAppLoopFrame(AppLoopOf_Networking());
     }
 }
 
@@ -64,14 +64,14 @@ LocalFunction(OnComponentRemoved, void, Entity component, Entity context) {
 
     auto data = GetReplicationData(context);
     if(data) {
-        data->ReplicationLastChangeFrame = GetAppLoopFrame(GetReplicationAppLoop(ModuleOf_Networking()));
+        data->ReplicationLastChangeFrame = GetAppLoopFrame(AppLoopOf_Networking());
     }
 }
 
 static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue) {
     auto data = GetReplicationData(entity);
     if(data) {
-        data->ReplicationLastChangeFrame = GetAppLoopFrame(GetReplicationAppLoop(ModuleOf_Networking()));
+        data->ReplicationLastChangeFrame = GetAppLoopFrame(AppLoopOf_Networking());
     }
 }
 

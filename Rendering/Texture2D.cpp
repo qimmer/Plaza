@@ -6,13 +6,19 @@
 #include "Texture.h"
 #include <Foundation/Invalidation.h>
 
-struct Texture2D {
-    v2i TextureSize2D;
-};
-
 BeginUnit(Texture2D)
     BeginComponent(Texture2D)
         RegisterProperty(v2i, TextureSize2D)
+    EndComponent()
+
+    BeginComponent(SubTexture2D)
+        RegisterProperty(v2i, SubTexture2DOffset)
+        RegisterProperty(v2i, SubTexture2DSize)
+    EndComponent()
+
+    BeginComponent(TextureAtlas)
+        RegisterBase(Texture2D)
+        RegisterArrayProperty(SubTexture2D, TextureAtlasSubTextures)
     EndComponent()
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureSize2D()), Invalidate, 0)

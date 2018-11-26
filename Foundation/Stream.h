@@ -13,9 +13,27 @@ struct Serializer {
     bool(*DeserializeHandler)(Entity entity);
 };
 
+struct Stream {
+    StringRef StreamPath;
+    StringRef StreamResolvedPath;
+
+    Entity StreamProtocol, StreamCompressor, StreamFileType;
+
+    int StreamMode;
+
+    bool InvalidationPending;
+};
+
+struct FileType {
+    Entity FileTypeComponent;
+    StringRef FileTypeExtension;
+    StringRef FileTypeMimeType;
+};
+
 Unit(Stream)
     Component(Stream)
         Property(StringRef, StreamPath)
+        Property(StringRef, StreamResolvedPath)
         ReferenceProperty(Entity, StreamProtocol)
         ReferenceProperty(Entity, StreamCompressor)
         ReferenceProperty(Entity, StreamFileType)
@@ -40,6 +58,8 @@ Unit(Stream)
         ArrayProperty(StreamCompressor, ModuleStreamCompressors)
         ArrayProperty(FileType, ModuleFileTypes)
         ArrayProperty(Serializer, ModuleSerializers)
+
+    Declare(FileType, Bin)
 
 
 Event(StreamContentChanged)
@@ -81,8 +101,6 @@ struct StreamCompressor {
 #define StreamMode_Read 1
 #define StreamMode_Write 2
 
-StringRef GetStreamResolvedPath(Entity entity);
-
 bool StreamCopy(Entity source, Entity destination);
 
 bool StreamDelete(Entity entity);
@@ -110,6 +128,8 @@ void CleanupPath(char* messyPath);
 StringRef GetCurrentWorkingDirectory();
 
 bool SetStreamData(Entity stream, u32 offset, u32 numBytes, const char *data);
+
+void ResolveStreamPath(Entity stream);
 
 #define StreamSeek_End -1
 

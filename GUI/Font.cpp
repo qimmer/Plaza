@@ -14,6 +14,7 @@
 #include <Core/Algorithms.h>
 #include <Core/Identification.h>
 #include "Font.h"
+#include "Widget.h"
 
 typedef struct {
     float x0, y0, s0, t0; // top-left
@@ -73,52 +74,51 @@ static int intFromUtf8(unsigned int *out_char, const char *in_text, const char *
     return 0;
 }
 
-static void GetBakedQuad(const Glyph *b, int pw, int ph, float *xpos, float *ypos, FontVertex *vertices, bool opengl_fillrule) {
-    float d3d_bias = opengl_fillrule ? 0 : -0.5f;
+static void GetBakedQuad(const Glyph *b, int pw, int ph, float *xpos, float *ypos, FontVertex *vertices) {
     float ipw = 1.0f / pw, iph = 1.0f / ph;
-    int round_x = (int) floor((*xpos + b->GlyphOffset.x) + 0.5f);
-    int round_y = (int) floor((*ypos + b->GlyphOffset.y) + 0.5f);
+    int round_x = (int) floor((*xpos + b->GlyphOffset.x));
+    int round_y = (int) floor((*ypos + b->GlyphOffset.y));
 
-    auto x0 = round_x + d3d_bias;
-    auto y0 = round_y + d3d_bias;
-    auto x1 = round_x + (b->GlyphEndUv.x * pw) - (b->GlyphStartUv.x * pw) + d3d_bias;
-    auto y1 = round_y + (b->GlyphEndUv.y * ph) - (b->GlyphStartUv.y * ph) + d3d_bias;
+    auto x0 = (float)round_x;
+    auto y0 = (float)round_y;
+    auto x1 = (float)round_x + (b->GlyphEndUv.x * pw) - (b->GlyphStartUv.x * pw);
+    auto y1 = (float)round_y + (b->GlyphEndUv.y * ph) - (b->GlyphStartUv.y * ph);
 
-    auto s0 = (b->GlyphStartUv.x * pw) * ipw;
-    auto t0 = (b->GlyphStartUv.y * ph) * iph;
-    auto s1 = (b->GlyphEndUv.x * pw) * ipw;
-    auto t1 = (b->GlyphEndUv.y * ph) * iph;
+    auto s0 = b->GlyphStartUv.x;
+    auto t0 = b->GlyphStartUv.y;
+    auto s1 = b->GlyphEndUv.x;
+    auto t1 = b->GlyphEndUv.y;
 
     *xpos += b->GlyphAdvance;
 
     vertices[0] = {
-            {x0, y0},
+            {x0, -y0},
             {s0, t0},
     };
 
     vertices[1] = {
-            {x1, y0},
+            {x1, -y0},
             {s1, t0},
     };
 
     vertices[2] = {
-            {x1, y1},
+            {x1, -y1},
             {s1, t1},
     };
 
 
     vertices[3] = {
-            {x1, y1},
+            {x1, -y1},
             {s1, t1},
     };
 
     vertices[4] = {
-            {x0, y1},
+            {x0, -y1},
             {s0, t1},
     };
 
     vertices[5] = {
-            {x0, y0},
+            {x0, -y0},
             {s0, t0},
     };
 }
@@ -149,7 +149,7 @@ static u32 GetFontGlyphData(Entity font,
         });
 
         if (glyphData) {
-            GetBakedQuad(glyphData, textureSize.x, textureSize.y, &origin.x, &origin.y, vertices, 1);//1=opengl & d3d10+,0=d3d9
+            GetBakedQuad(glyphData, textureSize.x, textureSize.y, &origin.x, &origin.y, vertices);//1=opengl & d3d10+,0=d3d9
 
             numVertices += 6;
             vertices += 6;
@@ -159,15 +159,51 @@ static u32 GetFontGlyphData(Entity font,
     return numVertices;
 }
 
-static void RebuildTextMesh(Entity entity) {
-    if (!HasComponent(entity, ComponentOf_TextMesh())) return;
+static void RebuildLabel(Entity entity) {
+    if (!HasComponent(entity, ComponentOf_Label())) return;
 
-    auto data = GetTextMeshData(entity);
+    auto data = GetLabelData(entity);
 
-    if (IsEntityValid(data->TextMeshFont)) {
-        auto length = strlen(data->TextMeshText);
+    // Parse formatted text and replace argument braces with values
+    static std::vector<char> formattedText;
+    formattedText.clear();
+
+    StringRef textStart = data->LabelText;
+    auto length = strlen(data->LabelText);
+
+    while(textStart && *textStart) {
+        StringRef textEnd = strchr(textStart, '{');
+        if(!textEnd) textEnd = data->LabelText + length;
+
+        formattedText.insert(formattedText.end(), textStart, textEnd);
+
+        char* closeBrace = strchr(textEnd, '}');
+
+        if(*textEnd == '{' && closeBrace) {
+            char argIndexString[32];
+            auto argIndexStringLen = closeBrace - textEnd - 2;
+            memcpy(argIndexString, textEnd + 1, argIndexStringLen);
+            argIndexString[argIndexStringLen] = '\0';
+            auto argIndex = strtoul(argIndexString, NULL, 10);
+            u32 argCount = 0;
+            auto arguments = GetLabelArguments(entity, &argCount);
+            if(argIndex < argCount) {
+                auto argumentValue = GetLabelArgumentValue(arguments[argIndex]);
+                argumentValue = Cast(argumentValue, TypeOf_StringRef);
+                formattedText.insert(formattedText.end(), argumentValue.as_StringRef, argumentValue.as_StringRef + strlen(argumentValue.as_StringRef));
+            }
+
+            textStart = closeBrace + 1;
+        } else {
+            textStart = data->LabelText + length;
+        }
+    }
+
+    formattedText.push_back('\0');
+
+    if (IsEntityValid(data->LabelFont)) {
         auto vertices = (FontVertex *) malloc(sizeof(FontVertex) * length * 6);
-        auto numVertices = GetFontGlyphData(data->TextMeshFont, data->TextMeshText, {0.0f, 0.0f}, vertices,
+        auto numVertices = GetFontGlyphData(data->LabelFont, formattedText.data(), {0.0f, 0.0f}, vertices,
                                             length * 6);
 
         v2f min = {FLT_MAX, FLT_MAX}, max = {FLT_MIN, FLT_MIN};
@@ -179,13 +215,34 @@ static void RebuildTextMesh(Entity entity) {
             max.y = Max(max.y, vertices[i].Position.y);
         }
 
-        auto vertexBuffer = GetMeshVertexBuffer(entity);
+        v2f labelSize = {
+            max.x - min.x,
+            max.y - min.y,
+        };
+
+        auto widgetSize = GetWidgetSize(entity);
+        auto alignment = GetLabelAlignment(entity);
+
+        v2f offset = {
+            (widgetSize.x - labelSize.x) * alignment.x - min.x,
+            (widgetSize.y - labelSize.y) * alignment.y - min.y
+        };
+
+        for (auto i = 0; i < numVertices; ++i) {
+            vertices[i].Position.y = widgetSize.y - vertices[i].Position.y;
+
+            vertices[i].Position.x += offset.x;
+            vertices[i].Position.y -= offset.y;
+        }
+
+        auto labelMesh = GetLabelMesh(entity);
+        auto vertexBuffer = GetMeshVertexBuffer(labelMesh);
         SetVertexBufferDeclaration(vertexBuffer, FindEntityByUuid("Gui.Font.VertexDeclaration"));
 
         auto currentPath = GetStreamPath(vertexBuffer);
         if(!currentPath || !strlen(currentPath)) {
             char path[1024];
-            snprintf(path, sizeof(path), "memory://%s", GetUuid(vertexBuffer));
+            snprintf(path, sizeof(path), "memory://%s.vtb", GetUuid(vertexBuffer));
             SetStreamPath(vertexBuffer, path);
         }
 
@@ -197,19 +254,21 @@ static void RebuildTextMesh(Entity entity) {
         StreamWrite(vertexBuffer, numVertices * sizeof(FontVertex), vertices);
         StreamClose(vertexBuffer);
 
-        SetNumMeshSubMeshes(entity, 1);
-        auto subMesh = *GetMeshSubMeshes(entity, NULL);
+        SetNumMeshSubMeshes(labelMesh, 1);
+        auto subMesh = *GetMeshSubMeshes(labelMesh, NULL);
 
         SetSubMeshNumVertices(subMesh, numVertices);
         SetSubMeshPrimitiveType(subMesh, PrimitiveType_TRIANGLELIST);
         free(vertices);
+
+        SetRenderableSubMesh(entity, subMesh);
     }
 }
 
 LocalFunction(OnValidateMeshes, void, Entity component) {
-    for_entity(textMesh, data, TextMesh, {
-        if(IsDirty(textMesh)) {
-            RebuildTextMesh(textMesh);
+    for_entity(label, data, Label, {
+        if(IsDirty(label)) {
+            RebuildLabel(label);
         }
     });
 }
@@ -217,13 +276,34 @@ LocalFunction(OnValidateMeshes, void, Entity component) {
 LocalFunction(OnValidateTextures, void, Entity component) {
     for_entity(font, data, Font, {
         if(IsDirty(font)) {
-            for_entity(textMesh, data, TextMesh, {
-                if(data->TextMeshFont == font) {
-                    RebuildTextMesh(textMesh);
+            for_entity(label, data, Label, {
+                if(data->LabelFont == font) {
+                    RebuildLabel(label);
                 }
             });
         }
     });
+}
+
+LocalFunction(AddFontCharacterGlyphs, void, Entity font, StringRef oldCharacters, StringRef newCharacters) {
+    while(*newCharacters) {
+        Glyph *glyphData = NULL;
+        for_children(glyph, FontGlyphs, font, {
+            glyphData = GetGlyphData(glyph);
+            if (glyphData->GlyphCode == *newCharacters) {
+                break;
+            }
+            glyphData = NULL;
+        });
+
+        if (!glyphData) {
+            auto glyph = AddFontGlyphs(font);
+            SetGlyphCode(glyph, *newCharacters);
+            Invalidate(font);
+        }
+
+        newCharacters++;
+    }
 }
 
 BeginUnit(Font)
@@ -238,16 +318,28 @@ BeginUnit(Font)
     BeginComponent(Font)
         RegisterBase(Texture2D)
         RegisterArrayProperty(Glyph, FontGlyphs)
+        RegisterProperty(StringRef, FontCharacters)
     EndComponent()
 
-    BeginComponent(TextMesh)
-        RegisterProperty(Entity, TextMeshFont)
-        RegisterProperty(StringRef, TextMeshText)
-        RegisterProperty(v2f, TextMeshAlignment)
+    BeginComponent(LabelArgument)
+        RegisterProperty(Variant, LabelArgumentValue)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextMeshFont()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextMeshText()), Invalidate, 0)
+    BeginComponent(Label)
+        RegisterBase(Widget)
+        RegisterReferenceProperty(Font, LabelFont)
+        RegisterProperty(StringRef, LabelText)
+        RegisterArrayProperty(LabelArgument, LabelArguments)
+        RegisterProperty(v2f, LabelAlignment)
+        RegisterChildProperty(Mesh, LabelMesh)
+    EndComponent()
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontCharacters()), AddFontCharacterGlyphs, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LabelFont()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LabelText()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LabelArguments()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LabelArgumentValue()), InvalidateParent, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LabelAlignment()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontGlyphs()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_GlyphCode()), InvalidateParent, 0)
     RegisterSubscription(EventOf_Validate(), OnValidateMeshes, ComponentOf_Mesh())

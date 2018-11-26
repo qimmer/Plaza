@@ -72,7 +72,7 @@ static void BuildVertexBuffer(Entity mesh) {
     auto currentPath = GetStreamPath(vb);
     if(!currentPath || !strlen(currentPath)) {
         char path[1024];
-        snprintf(path, sizeof(path), "memory://%s", GetUuid(vb));
+        snprintf(path, sizeof(path), "memory://%s.vtb", GetUuid(vb));
         SetStreamPath(vb, path);
     }
 
@@ -114,7 +114,7 @@ static void BuildIndexBuffer(Entity mesh) {
     auto currentPath = GetStreamPath(ib);
     if(!currentPath || !strlen(currentPath)) {
         char path[1024];
-        snprintf(path, sizeof(path), "memory://%s", GetUuid(ib));
+        snprintf(path, sizeof(path), "memory://%s.idb", GetUuid(ib));
         SetStreamPath(ib, path);
     }
 

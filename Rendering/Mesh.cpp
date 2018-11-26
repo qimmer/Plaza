@@ -92,6 +92,8 @@ BeginUnit(Mesh)
         RegisterChildProperty(VertexBuffer, MeshVertexBuffer)
         RegisterChildProperty(IndexBuffer, MeshIndexBuffer)
         RegisterArrayProperty(SubMesh, MeshSubMeshes)
+        RegisterProperty(v3f, MeshAABBMin)
+        RegisterProperty(v3f, MeshAABBMax)
     EndComponent()
 
     BeginComponent(SubMesh)

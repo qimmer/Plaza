@@ -39,3 +39,7 @@ obj/
 cmake-build-*/
 \.install/
 node_modules/
+
+\.shadercache/
+
+\.user/

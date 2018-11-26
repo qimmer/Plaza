@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="draft.svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.66245342"
+     inkscape:cx="-17.237948"
+     inkscape:cy="606.79595"
+     inkscape:document-units="mm"
+     inkscape:current-layer="g4593"
+     showgrid="false"
+     showguides="false"
+     objecttolerance="20"
+     inkscape:window-width="1858"
+     inkscape:window-height="1177"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1">
+    <sodipodi:guide
+       position="0,0"
+       orientation="0,793.70079"
+       id="guide4534"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="210,0"
+       orientation="-1122.5197,0"
+       id="guide4536"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="210,297"
+       orientation="0,-793.70079"
+       id="guide4538"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="0,297"
+       orientation="1122.5197,0"
+       id="guide4540"
+       inkscape:locked="false" />
+    <inkscape:grid
+       type="xygrid"
+       id="grid4542" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g4593"
+       transform="translate(30.274674,19.091258)">
+      <g
+         id="g4546"
+         transform="translate(3.7041668,-6.3500003)"
+         inkscape:export-xdpi="82.699997"
+         inkscape:export-ydpi="82.699997">
+        <rect
+           id="rect3713"
+           width="50"
+           height="50"
+           x="-52.532482"
+           y="106.87869"
+           style="fill:none;stroke:#8c2b00;stroke-width:14;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           transform="matrix(0.71144659,-0.70274017,0.71144659,0.70274017,0,0)"
+           inkscape:export-xdpi="610.72729"
+           inkscape:export-ydpi="610.72729" />
+        <path
+           style="fill:none;stroke:#8c2b00;stroke-width:14;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 67.20417,67 v 90"
+           id="path4520"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="cc"
+           inkscape:export-xdpi="610.72729"
+           inkscape:export-ydpi="610.72729" />
+      </g>
+      <g
+         id="g4553"
+         transform="translate(3.1750001,-4.2333335)"
+         inkscape:export-xdpi="82.699997"
+         inkscape:export-ydpi="82.699997">
+        <path
+           style="fill:none;stroke:#000000;stroke-width:6.3499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 15.142583,191.51711 0.350441,-29.47213 22.260046,0.0245 -12.292831,18.6042"
+           id="path4544"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="cccc" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:6.3499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 46.990608,158.84926 -0.06648,29.3001 10.565812,-0.15769"
+           id="path4546"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="ccc" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:6.3499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 82.42736,162.0625 h 19.54062 L 87.652443,188.52084 H 106.1733"
+           id="path4550"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="cccc" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:6.3499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 54.844109,189.57917 15.699779,-24.52391 14.46272,25.05308"
+           id="path4567"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="ccc" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:6.3499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 103.52746,190.10834 16.22903,-25.40702 14.99191,25.40702"
+           id="path4567-2"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="ccc" />
+      </g>
+      <flowRoot
+         xml:space="preserve"
+         id="flowRoot4529"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:26px;line-height:1.25;font-family:'Copperplate Gothic Bold';-inkscape-font-specification:'Copperplate Gothic Bold, ';letter-spacing:30px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+         transform="matrix(0.26458333,0,0,0.26458333,-30.564496,-23.314498)"
+         inkscape:export-xdpi="82.699997"
+         inkscape:export-ydpi="82.699997"><flowRegion
+           id="flowRegion4531"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:96px;font-family:'Copperplate Gothic Bold';-inkscape-font-specification:'Copperplate Gothic Bold, '"><rect
+             id="rect4533"
+             width="525.75177"
+             height="146.88432"
+             x="171.65578"
+             y="796.00012"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:96px;font-family:'Copperplate Gothic Bold';-inkscape-font-specification:'Copperplate Gothic Bold, '" /></flowRegion><flowPara
+           id="flowPara4535">Interactive</flowPara></flowRoot>      <rect
+         style="fill:none;stroke:#8c2b00;stroke-width:6.3499999;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect4555"
+         width="190.114"
+         height="236.04489"
+         x="-20.180117"
+         y="10.461274"
+         inkscape:export-xdpi="82.699997"
+         inkscape:export-ydpi="82.699997" />
+    </g>
+  </g>
+</svg>

@@ -11,13 +11,11 @@
 #include "OrthographicFrustum.h"
 #include "PerspectiveFrustum.h"
 #include "Transform.h"
-#include "Transform2D.h"
-#include "Transform3D.h"
 #include "Scene.h"
+#include "Ray.h"
+#include "Velocity.h"
 
 BeginModule(Scene)
-    RegisterUnit(Transform2D)
-    RegisterUnit(Transform3D)
     RegisterUnit(Transform)
     RegisterUnit(Camera)
     RegisterUnit(OrthographicFrustum)
@@ -26,4 +24,6 @@ BeginModule(Scene)
     RegisterUnit(Light)
     RegisterUnit(Model)
     RegisterUnit(Scene)
+    RegisterUnit(Ray)
+    RegisterUnit(Velocity)
 EndModule()

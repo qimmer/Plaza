@@ -1,0 +1,24 @@
+{
+    "Uuid": "Platformer.Control",
+    "Children": [
+        {
+            "Uuid": "Platformer.Control.Camera",
+            "Children": [
+                {
+                    "Uuid": "Platformer.Control.Camera.VelocitySplit",
+                    "VectorSplitX": "{MathResult@Platformer.Input.CameraHorizontal}",
+                    "VectorSplitY": "{MathResult@Platformer.Input.CameraVertical}",
+                    "VectorSplitZ": 0.0
+                },
+                {
+                    "Uuid": "Platformer.Control.Camera.SpeedMultiplier",
+                    "MathOperation": "MathOperation_Mul",
+                    "MathA": "{VectorSplitValue@Platformer.Control.Camera.VelocitySplit}",
+                    "MathB": 40.0
+                }
+            ],
+            "MovementVelocity": "{MathResult@Platformer.Control.Camera.SpeedMultiplier}",
+            "MovementTransform": "Platformer.CurrentLevel.Scene.Camera"
+        }
+    ]
+}

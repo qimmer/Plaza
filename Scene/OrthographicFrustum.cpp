@@ -20,10 +20,10 @@ LocalFunction(UpdateProjectionMatrix, void, Entity entity) {
     glm_ortho(
         data->OrthographicFrustumTopLeft.x,
         data->OrthographicFrustumBottomRight.x,
-        data->OrthographicFrustumTopLeft.y,
         data->OrthographicFrustumBottomRight.y,
+        data->OrthographicFrustumTopLeft.y,
         GetFrustumNearClip(entity),
-        GetFrustumNearClip(entity),
+        GetFrustumFarClip(entity),
         (vec4*)&projection);
 
     vec3 scale = {1.0f, 1.0f, -1.0f};

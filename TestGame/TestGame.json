@@ -9,12 +9,9 @@
             "Uuid": "TestGame.Context",
             "RenderContextTitle": "Test Game",
             "RenderTargetSize": [800, 450],
-            "RenderContextLoop": {
-                "AppLoopKeepAlive": "{Not():InputStateValue@TestGame.Context.Keys.Close}"
-            },
             "RenderContextShowStats": "{InputStateValue@TestGame.Context.Keys.ShowStats}",
             "RenderContextShowDebug": "{InputStateValue@TestGame.Context.Keys.ShowDebug}",
-            "InputContextStates": [
+            "Children": [
                 {
                     "Uuid": "TestGame.Context.Keys.Close",
                     "InputStateKey": "KEY_WINDOW_CLOSE"
@@ -28,6 +25,11 @@
                     "InputStateKey": "KEY_F9"
                 }
             ]
+        },
+        {
+            "Uuid": "TestGame.QuitAction",
+            "InvocationFunction": "Function.Quit",
+            "InvocationToggleState": "InputStateValue@TestGame.Context.Keys.Close"
         },
         {
             "Uuid": "TestGame.Renderer",
@@ -14505,15 +14507,15 @@
             "Children": [
                 {
                     "StreamPath": "file://TestGame/TestAssets.json",
-                    "PersistancePointLoading": true
+                    "PersistancePointLoaded": true
                 },
                 {
                     "StreamPath": "file://TestGame/SpinningCube.json",
-                    "PersistancePointLoading": true
+                    "PersistancePointLoaded": true
                 },
                 {
                     "StreamPath": "file://Rendering/Primitives.json",
-                    "PersistancePointLoading": true
+                    "PersistancePointLoaded": true
                 }
             ]
         }

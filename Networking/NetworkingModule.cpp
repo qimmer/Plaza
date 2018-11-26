@@ -34,9 +34,6 @@ BeginModule(Networking)
 
     ModuleData(
         {
-            "ReplicationAppLoop": {
-
-            },
             "TcpWaitOnNoWork": false,
             "HttpResponseCodes": [
                 { "HttpResponseCodeNumber": 200, "HttpResponseCodeMessage": "OK" },
@@ -91,6 +88,7 @@ BeginUnit(Networking)
         RegisterArrayProperty(HttpHeaderType, HttpHeaderTypes)
         RegisterArrayProperty(HttpResponseCode, HttpResponseCodes)
         RegisterProperty(bool, TcpWaitOnNoWork)
-        RegisterChildProperty(AppLoop, ReplicationAppLoop)
     EndComponent()
+
+    SetAppLoopOrder(AppLoopOf_Networking(), AppLoopOrder_Input);
 EndUnit()

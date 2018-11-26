@@ -1,0 +1,131 @@
+{
+  "Children": [
+    {
+      "Uuid": "Platformer.UI.Font",
+      "StreamPath": "asset://Assets/Tiles/MarioFont.png",
+      "FontGlyphs": [
+        {
+          "GlyphCode": 49,
+          "GlyphStartUv": [0.0, 0.0],
+          "GlyphEndUv": [0.1, 0.1],
+          "GlyphAdvance": 1.0
+        },
+        {
+          "GlyphCode": 50,
+          "GlyphStartUv": [0.1, 0.0],
+          "GlyphEndUv": [0.2, 0.1],
+          "GlyphAdvance": 1.0
+        },
+        {
+          "GlyphCode": 51,
+          "GlyphStartUv": [0.2, 0.0],
+          "GlyphEndUv": [0.3, 0.1],
+          "GlyphAdvance": 1.0
+        },
+        {
+          "GlyphCode": 52,
+          "GlyphStartUv": [0.3, 0.0],
+          "GlyphEndUv": [0.4, 0.1],
+          "GlyphAdvance": 1.0
+        },
+        {
+          "GlyphCode": 53,
+          "GlyphStartUv": [0.4, 0.0],
+          "GlyphEndUv": [0.5, 0.1],
+          "GlyphAdvance": 1.0
+        },
+        {
+          "GlyphCode": 54,
+          "GlyphStartUv": [0.5, 0.0],
+          "GlyphEndUv": [0.6, 0.1],
+          "GlyphAdvance": 1.0
+        },
+        {
+          "GlyphCode": 55,
+          "GlyphStartUv": [0.6, 0.0],
+          "GlyphEndUv": [0.7, 0.1],
+          "GlyphAdvance": 1.0
+        },
+        {
+          "GlyphCode": 56,
+          "GlyphStartUv": [0.7, 0.0],
+          "GlyphEndUv": [0.8, 0.1],
+          "GlyphAdvance": 1.0
+        },
+        {
+          "GlyphCode": 57,
+          "GlyphStartUv": [0.8, 0.0],
+          "GlyphEndUv": [0.9, 0.1],
+          "GlyphAdvance": 1.0
+        },
+        {
+          "GlyphCode": 48,
+          "GlyphStartUv": [0.9, 0.0],
+          "GlyphEndUv": [1.0, 0.1],
+          "GlyphAdvance": 1.0
+        }
+      ]
+    },
+    {
+      "Uuid": "Platformer.UI.InGame",
+      "RenderableMaterial": "Gui.Material",
+      "WidgetChildLayout": "WidgetChildLayout_Vertical",
+      "WidgetPadding": [8, 8, 8, 8],
+      "Children": [
+        {
+          "WidgetChildLayout": "WidgetChildLayout_Horizontal",
+          "WidgetMinimumSize": [0, 8],
+          "Children": [
+            {
+              "RenderableMaterial": "Gui.Material",
+              "WidgetMinimumSize": [64, 8],
+              "RenderableMaterial": "Gui.Font.Material",
+              "LabelFont": "Platformer.UI.Font",
+              "LabelText": "x64",
+              "LabelAlignment": [0.0, 0.5]
+            },
+            {
+              "WidgetWeight": [1.0, 0.0]
+            },
+            {
+              "RenderableMaterial": "Gui.Material",
+              "WidgetMinimumSize": [64, 8],
+              "RenderableMaterial": "Gui.Font.Material",
+              "LabelFont": "Platformer.UI.Font",
+              "LabelText": "x32",
+              "LabelAlignment": [1.0, 0.5]
+            }
+          ]
+        },
+        {
+          "WidgetWeight": [1.0, 1.0]
+        },
+        {
+          "WidgetChildLayout": "WidgetChildLayout_Horizontal",
+          "WidgetMinimumSize": [0, 8],
+          "Children": [
+            {
+              "RenderableMaterial": "Gui.Material",
+              "WidgetMinimumSize": [64, 8],
+              "RenderableMaterial": "Gui.Font.Material",
+              "LabelFont": "Platformer.UI.Font",
+              "LabelText": "x16",
+              "LabelAlignment": [0.0, 0.5]
+            },
+            {
+              "WidgetWeight": [1.0, 0.0]
+            },
+            {
+              "RenderableMaterial": "Gui.Material",
+              "WidgetMinimumSize": [64, 8],
+              "RenderableMaterial": "Gui.Font.Material",
+              "LabelFont": "Platformer.UI.Font",
+              "LabelText": "x8",
+              "LabelAlignment": [1.0, 0.5]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

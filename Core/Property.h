@@ -11,6 +11,18 @@
 #define PropertyKind_Child 1
 #define PropertyKind_Array 2
 
+struct Ownership {
+    Entity Owner, OwnerProperty;
+};
+
+struct Property {
+    Entity PropertyEnum, PropertyChangedEvent, PropertyChildComponent;
+    u32 PropertyOffset, PropertySize, PropertyFlags;
+    Type PropertyType;
+    u8 PropertyKind;
+    bool PropertyReadOnly;
+};
+
 Unit(Property)
 
 Enum(PropertyKind)
@@ -32,8 +44,9 @@ Component(Ownership)
 
 StringRef Intern(StringRef sourceString);
 
-void SetPropertyValue(Entity property, Entity entity, Variant valueData);
-Variant GetPropertyValue(Entity property, Entity entity);
+Function(SetPropertyValue, void, Entity property, Entity entity, Variant valueData)
+Function(GetPropertyValue, Variant, Entity property, Entity entity)
+
 Entity *GetArrayPropertyElements(Entity property, Entity entity, u32 *count);
 
 Function(GetArrayPropertyCount, u32, Entity property, Entity entity);

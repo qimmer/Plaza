@@ -11,9 +11,10 @@
 #define _USE_MATH_DEFINES /* for windows */
 
 #include <stdint.h>
-#include <math.h>
+#include <MathOperation.h>
+#include <float.h>
 
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 #  ifdef CGLM_DLL
 #    define CGLM_EXPORT __declspec(dllexport)
 #  else

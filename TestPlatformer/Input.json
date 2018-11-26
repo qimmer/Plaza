@@ -1,0 +1,67 @@
+{
+  "Uuid": "Platformer.Input",
+  "Children": [
+    {
+      "Uuid": "Platformer.Input.Quit",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_WINDOW_CLOSE"
+    },
+    {
+      "Uuid": "Platformer.Input.Jump",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_SPACE"
+    },
+    {
+      "Uuid": "Platformer.Input.Left",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_LEFT"
+    },
+    {
+      "Uuid": "Platformer.Input.Right",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_RIGHT"
+    },
+    {
+      "Uuid": "Platformer.Input.Run",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_LEFT_CONTROL"
+    },
+    {
+      "Uuid": "Platformer.Input.CameraRight",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "GAMEPAD_RS_RIGHT"
+    },
+    {
+      "Uuid": "Platformer.Input.CameraLeft",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "GAMEPAD_RS_LEFT"
+    },
+    {
+      "Uuid": "Platformer.Input.CameraUp",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "GAMEPAD_RS_UP"
+    },
+    {
+      "Uuid": "Platformer.Input.CameraDown",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "GAMEPAD_RS_DOWN"
+    },
+    {
+      "Uuid": "Platformer.Input.CameraHorizontal",
+      "MathOperation": "MathOperation_Sub",
+      "MathA": "{InputStateValue@Platformer.Input.CameraRight}",
+      "MathB": "{InputStateValue@Platformer.Input.CameraLeft}"
+    },
+    {
+      "Uuid": "Platformer.Input.CameraVertical",
+      "MathOperation": "MathOperation_Sub",
+      "MathA": "{InputStateValue@Platformer.Input.CameraUp}",
+      "MathB": "{InputStateValue@Platformer.Input.CameraDown}"
+    },
+    {
+      "Uuid": "Platformer.Input.QuitAction",
+      "InvocationFunction": "Function.Quit",
+      "InvocationToggleState": "{InputStateValue@Platformer.Input.Quit}"
+    }
+  ]
+}

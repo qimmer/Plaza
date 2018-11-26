@@ -11,6 +11,7 @@
 #include <Core/Property.h>
 #include <Core/Algorithms.h>
 #include "Identification.h"
+#include "Strings.h"
 
 #include <stdarg.h>
 #include <EASTL/fixed_vector.h>
@@ -213,9 +214,13 @@ API_EXPORT void SetSubscriptionSender(Entity entity, Entity value)  {
 }
 
 API_EXPORT void SetEventArgsByDecl(Entity event, StringRef arguments) {
+    Assert(event, IsEntityValid(event));
+
     auto len = strlen(arguments);
     auto offset = 0;
     auto byteOffset = 0;
+
+    auto eventUuid = GetUuid(event);
 
     char argumentSplits[PathMax];
     strcpy(argumentSplits, arguments);
@@ -244,7 +249,7 @@ API_EXPORT void SetEventArgsByDecl(Entity event, StringRef arguments) {
 
         auto argumentEntity = AddEventArguments(event);
 
-        SetName(argumentEntity, name);
+        SetUuid(argumentEntity, StringFormatV("%s.Arguments.%s", eventUuid, name));
 
         auto type = 0;
         for(auto i = 0; i < TypeOf_MAX; ++i) {

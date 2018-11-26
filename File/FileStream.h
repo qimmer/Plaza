@@ -12,4 +12,6 @@ Unit(FileStream)
 
 Function(GetNativePath, StringRef, StringRef resourcePath);
 
+Declare(AppLoop, FileChangesPoll)
+
 #endif //PLAZA_FILESTREAM_H

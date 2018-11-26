@@ -10,5 +10,5 @@ void main()
 {
 	float a = texture2D(s_fontAtlas, v_texcoord0).a;
 
-	gl_FragColor = vec4(u_tint.r, u_tint.g, u_tint.b, a);
+	gl_FragColor = vec4(1, 1, 1, a);
 }

@@ -1,0 +1,25 @@
+{
+    "Children": [
+        {
+            "Uuid": "Platformer.TileSets.Mario",
+            "TileSetTiles": [
+                {
+                    "TileColor": [127, 0, 0, 255],
+                    "TileTemplate": {
+                        "SpriteTexture": "Platformer.TileAtlases.MarioTiles.Ground",
+                        "RenderableMaterial": "Sprite.Material",
+                        "RenderableSubMesh": "Sprite.Meshes.Rect.SubMesh0"
+                    }
+                },
+                {
+                    "TileColor": [255, 216, 0, 255],
+                    "TileTemplate": {
+                        "SpriteTexture": "Platformer.TileAtlases.MarioTiles.Question[0]",
+                        "RenderableMaterial": "Sprite.Material",
+                        "RenderableSubMesh": "Sprite.Meshes.Rect.SubMesh0"
+                    }
+                }
+            ]
+        }
+    ]
+}

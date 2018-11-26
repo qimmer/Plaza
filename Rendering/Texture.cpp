@@ -14,6 +14,64 @@ struct Texture {
     Entity TextureReadbackTarget;
 };
 
+API_EXPORT Type GetTextureFormatChannelType(u16 format) {
+    return 0;
+}
+
+API_EXPORT u8 GetTextureFormatNumChannels(u16 format) {
+    switch(format) {
+        case TextureFormat_R1:
+        case TextureFormat_A8:
+        case TextureFormat_R8:
+        case TextureFormat_R8I:
+        case TextureFormat_R8U:
+        case TextureFormat_R8S:
+        case TextureFormat_R16:
+        case TextureFormat_R16I:
+        case TextureFormat_R16U:
+        case TextureFormat_R16F:
+        case TextureFormat_R16S:
+        case TextureFormat_R32I:
+        case TextureFormat_R32U:
+        case TextureFormat_R32F:
+            return 1;
+        case TextureFormat_RG8:
+        case TextureFormat_RG8I:
+        case TextureFormat_RG8U:
+        case TextureFormat_RG8S:
+        case TextureFormat_RG16:
+        case TextureFormat_RG16I:
+        case TextureFormat_RG16U:
+        case TextureFormat_RG16F:
+        case TextureFormat_RG16S:
+        case TextureFormat_RG32I:
+        case TextureFormat_RG32U:
+        case TextureFormat_RG32F:
+            return 2;
+        case TextureFormat_RGB8:
+        case TextureFormat_RGB8I:
+        case TextureFormat_RGB8U:
+        case TextureFormat_RGB8S:
+            return 3;
+        case TextureFormat_BGRA8:
+        case TextureFormat_RGBA8:
+        case TextureFormat_RGBA8I:
+        case TextureFormat_RGBA8U:
+        case TextureFormat_RGBA8S:
+        case TextureFormat_RGBA16:
+        case TextureFormat_RGBA16I:
+        case TextureFormat_RGBA16U:
+        case TextureFormat_RGBA16F:
+        case TextureFormat_RGBA16S:
+        case TextureFormat_RGBA32I:
+        case TextureFormat_RGBA32U:
+        case TextureFormat_RGBA32F:
+            return 4;
+        default:
+            return 0;
+    }
+}
+
 BeginUnit(Texture)
     BeginEnum(TextureFormat, false)
         RegisterFlag(TextureFormat_BC1)          //!< DXT1

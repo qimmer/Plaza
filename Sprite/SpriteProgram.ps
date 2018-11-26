@@ -1,0 +1,16 @@
+$input v_texcoord0, v_normal
+
+#include <common.sh>
+
+uniform vec4 u_uvOffsetSizePerSampler[8];
+uniform vec4 u_spriteTint;
+SAMPLER2D(s_spriteAtlas, 0);
+
+void main()
+{
+    vec4 albedo = texture2D(s_spriteAtlas, v_texcoord0 * u_uvOffsetSizePerSampler[0].zw + u_uvOffsetSizePerSampler[0].xy);
+    vec4 color = albedo;// * u_spriteTint;
+    if(color.a == 0.0) discard;
+
+    gl_FragColor = color;
+}

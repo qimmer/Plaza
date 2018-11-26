@@ -69,6 +69,7 @@ void SetPropertyChildComponent(Entity entity, Entity component);
 void SetPropertyKind(Entity property, u8 kind);
 Entity GetOwner(Entity entity);
 StringRef GetDebugName(Entity entity);
+StringRef StringFormatV(StringRef format, ...);
 void Log(Entity context, int severity, StringRef format, ...);
 void Info(Entity context, StringRef format, ...);
 void Warning(Entity context, StringRef format, ...);
@@ -518,6 +519,7 @@ StringRef GetUniqueEntityName(Entity entity);
     SetPropertySize(property, sizeof(ComponentType::PROPERTYNAME));\
     SetPropertyKind(property, PropertyKind_Value);\
     event = GetPropertyChangedEvent(property);\
+    if(!event) { event = GetPropertyData(property)->PropertyChangedEvent = CreateEntity(); SetUuid(event, StringFormatV("%s.PropertyChangedEvent", GetUuid(property))); SetOwner(event, property, PropertyOf_PropertyChangedEvent()); }\
     SetEventArgsByDecl(event, "Entity entity, " #PROPERTYTYPE " oldValue, " #PROPERTYTYPE " newValue");
 
 #define RegisterPropertyEnum(PROPERTYTYPE, PROPERTYNAME, ENUM) \
@@ -538,6 +540,7 @@ StringRef GetUniqueEntityName(Entity entity);
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
     SetPropertyKind(property, PropertyKind_Array);\
     event = GetPropertyChangedEvent(property);\
+    if(!event) { event = GetPropertyData(property)->PropertyChangedEvent = CreateEntity(); SetUuid(event, StringFormatV("%s.PropertyChangedEvent", GetUuid(property))); SetOwner(event, property, PropertyOf_PropertyChangedEvent()); }\
     SetEventArgsByDecl(event, "Entity entity, Entity oldValue, Entity newValue");
 
 #define RegisterChildProperty(COMPONENTTYPE, PROPERTYNAME)\
@@ -561,6 +564,7 @@ StringRef GetUniqueEntityName(Entity entity);
     SetPropertyChildComponent(property, ComponentOf_ ## COMPONENTTYPE());\
     SetPropertyKind(property, PropertyKind_Value);\
     event = GetPropertyChangedEvent(property);\
+    if(!event) { event = GetPropertyData(property)->PropertyChangedEvent = CreateEntity(); SetUuid(event, StringFormatV("%s.PropertyChangedEvent", GetUuid(property))); SetOwner(event, property, PropertyOf_PropertyChangedEvent()); }\
     SetEventArgsByDecl(event, "Entity entity, Entity oldValue, Entity newValue");
 
 #define RegisterReferencePropertyReadOnly(COMPONENTTYPE, PROPERTYNAME)\
@@ -575,15 +579,16 @@ StringRef GetUniqueEntityName(Entity entity);
 #define RegisterBase(BASECOMPONENT) \
     {\
         auto base = AddBases(component);\
-        SetName(base, #BASECOMPONENT);\
         snprintf(buffer, 1024, "%s.Bases.%s", GetUuid(component), #BASECOMPONENT);\
         SetUuid(base, buffer);\
+        SetName(base, #BASECOMPONENT);\
         SetBaseComponent(base, ComponentOf_ ## BASECOMPONENT ());\
     }
 
 #define RegisterExtension(BASECOMPONENT, EXTENSIONCOMPONENT) \
     extension = GetArrayPropertyElement(PropertyOf_Extensions(), module, AddArrayPropertyElement(PropertyOf_Extensions(), module));\
     snprintf(buffer, 1024, "%s.Extensions.%s", GetUuid(module), #EXTENSIONCOMPONENT);\
+    SetUuid(extension, buffer);\
     SetName(extension, #BASECOMPONENT "_" #EXTENSIONCOMPONENT);\
     SetExtensionComponent(extension, ComponentOf_ ## BASECOMPONENT ());\
     SetExtensionExtenderComponent(extension, ComponentOf_ ## EXTENSIONCOMPONENT ());

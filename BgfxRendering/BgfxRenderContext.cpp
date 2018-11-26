@@ -11,6 +11,7 @@
 #include "BgfxShaderCache.h"
 #include "BgfxOffscreenRenderTarget.h"
 #include "BgfxModule.h"
+#include "BgfxTextureReadBack.h"
 
 #include <Rendering/ShaderCache.h>
 #include <Rendering/Mesh.h>
@@ -59,6 +60,8 @@ Window glfwGetX11Window(GLFWwindow *window);
 #undef Enum
 #include <windows.h>
 #include <Core/Algorithms.h>
+#include <Rendering/TextureReadBack.h>
+#include <Foundation/MemoryStream.h>
 
 #undef CreateService
 #undef CreateEvent
@@ -74,10 +77,33 @@ struct BgfxRenderContext {
     int debugFlags;
 };
 
-static u32 NumContexts = 0;
+static u32 NumContexts = 0, Frame = 0;
 static Entity PrimaryContext = 0;
 
-static void ValidateResources() {
+bgfx::UniformHandle SubTexture2DOffsetSizeUniform;
+
+static void UpdateTextureReadBack(Entity readBack, TextureReadBack *data) {
+    auto bgfxData = GetBgfxTextureReadBackData(readBack);
+
+    if(Frame >= bgfxData->ReadyFrame) {
+        auto sourceHandle = GetBgfxResourceHandle(data->TextureReadBackSourceTexture);
+        auto blitHandle = GetBgfxResourceHandle(data->TextureReadBackBlitTexture);
+        auto bufferData = GetMemoryStreamBuffer(data->TextureReadBackBuffer);
+
+        if(HasComponent(GetOwner(data->TextureReadBackSourceTexture), ComponentOf_OffscreenRenderTarget())) {
+            SetTextureSize2D(data->TextureReadBackBlitTexture, GetTextureSize2D(data->TextureReadBackSourceTexture));
+            SetTextureFormat(data->TextureReadBackBlitTexture, GetTextureFormat(data->TextureReadBackSourceTexture));
+            SetTextureFlag(data->TextureReadBackBlitTexture, TextureFlag_BLIT_DST | TextureFlag_READ_BACK);
+
+            bgfx::blit(255, bgfx::TextureHandle {blitHandle}, 0, 0, bgfx::TextureHandle {sourceHandle});
+            bgfxData->ReadyFrame = bgfx::readTexture(bgfx::TextureHandle {blitHandle}, bufferData);
+        } else {
+            bgfxData->ReadyFrame = bgfx::readTexture(bgfx::TextureHandle {sourceHandle}, bufferData);
+        }
+    }
+}
+
+LocalFunction(OnResourceSubmission, void, Entity appLoop) {
     Validate(ComponentOf_Texture());
     Validate(ComponentOf_OffscreenRenderTarget());
     Validate(ComponentOf_BinaryProgram());
@@ -89,60 +115,111 @@ static void ValidateResources() {
     Validate(ComponentOf_Transform());
 }
 
-LocalFunction(OnAppUpdate, void, Entity appLoop) {
-    auto owner = GetOwner(appLoop);
-    auto moduleData = GetBgfxRenderingData(owner);
+LocalFunction(OnTextureReadBack, void, Entity appLoop) {
+    for_entity(readBack, data, TextureReadBack, {
+        UpdateTextureReadBack(readBack, data);
+    });
+}
 
-    if(moduleData) {
-        auto numContexts = 0;
-        auto debugFlags = 0;
+LocalFunction(OnInputPoll, void, Entity appLoop) {
+    auto numContexts = 0;
 
-        for_entity(context, contextData, BgfxRenderContext, {
-            numContexts++;
+    for_entity(context, contextData, BgfxRenderContext, {
+        numContexts++;
 
-            if(GetRenderContextShowDebug(context)) {
-                debugFlags |= BGFX_DEBUG_IFH | BGFX_DEBUG_STATS;
-            }
-            if(GetRenderContextShowStats(context)) {
-                debugFlags |= BGFX_DEBUG_STATS;
-            }
+        SetInputStateValueByKey(context, MOUSE_SCROLL_DOWN, 0.0f);
+        SetInputStateValueByKey(context, MOUSE_SCROLL_UP, 0.0f);
+        SetInputStateValueByKey(context, MOUSE_SCROLL_LEFT, 0.0f);
+        SetInputStateValueByKey(context, MOUSE_SCROLL_RIGHT, 0.0f);
+        SetInputStateValueByKey(context, MOUSE_DOWN, 0.0f);
+        SetInputStateValueByKey(context, MOUSE_UP, 0.0f);
+        SetInputStateValueByKey(context, MOUSE_LEFT, 0.0f);
+        SetInputStateValueByKey(context, MOUSE_RIGHT, 0.0f);
 
-            SetInputStateValueByKey(context, MOUSE_SCROLL_DOWN, 0.0f);
-            SetInputStateValueByKey(context, MOUSE_SCROLL_UP, 0.0f);
-            SetInputStateValueByKey(context, MOUSE_SCROLL_LEFT, 0.0f);
-            SetInputStateValueByKey(context, MOUSE_SCROLL_RIGHT, 0.0f);
-            SetInputStateValueByKey(context, MOUSE_DOWN, 0.0f);
-            SetInputStateValueByKey(context, MOUSE_UP, 0.0f);
-            SetInputStateValueByKey(context, MOUSE_LEFT, 0.0f);
-            SetInputStateValueByKey(context, MOUSE_RIGHT, 0.0f);
-
-            if(glfwWindowShouldClose(contextData->window)) {
-                glfwSetWindowShouldClose(contextData->window, false);
-                SetInputStateValueByKey(context, KEY_WINDOW_CLOSE, 1.0f);
-            } else {
-                SetInputStateValueByKey(context, KEY_WINDOW_CLOSE, 0.0f);
-            }
-
-            if(!glfwGetWindowAttrib(contextData->window, GLFW_VISIBLE)) {
-                glfwShowWindow(contextData->window);
-            }
-        });
-
-        if(numContexts) {
-            glfwPollEvents();
-
-            auto viewId = 0;
-
-            ValidateResources();
-
-            for_entity(commandList, commandListData, BgfxCommandList, {
-                RenderCommandList(commandList, viewId);
-                viewId++;
-            });
-
-            bgfx::setDebug(debugFlags);
-            auto frame = bgfx::frame();
+        if(glfwWindowShouldClose(contextData->window)) {
+            glfwSetWindowShouldClose(contextData->window, false);
+            SetInputStateValueByKey(context, KEY_WINDOW_CLOSE, 1.0f);
+        } else {
+            SetInputStateValueByKey(context, KEY_WINDOW_CLOSE, 0.0f);
         }
+
+        if(!glfwGetWindowAttrib(contextData->window, GLFW_VISIBLE)) {
+            glfwShowWindow(contextData->window);
+        }
+
+        auto deadZone = GetInputContextDeadZone(context);
+
+        for(auto i = 0; i < GLFW_JOYSTICK_LAST; ++i) {
+            if(!glfwJoystickPresent(i)) {
+                SetInputStateValueByKey(context, GAMEPAD_CONNECTED + i * GAMEPAD_MULTIPLIER, 0.0f);
+                continue;
+            }
+
+            SetInputStateValueByKey(context, GAMEPAD_CONNECTED + i * GAMEPAD_MULTIPLIER, 1.0f);
+
+            s32 numAxises;
+            s32 numButtons;
+            s32 numHats;
+            const float* axisValues = glfwGetJoystickAxes(i, &numAxises);
+            auto *filteredAxisValues = (float*)alloca(numAxises * sizeof(float));
+            memcpy(filteredAxisValues, axisValues, numAxises * sizeof(float));
+            const unsigned char* buttonStates = glfwGetJoystickButtons(i, &numButtons);
+            const unsigned char* hatStates = glfwGetJoystickHats(i, &numHats);
+
+            for(auto j = 0; j < numAxises; ++j) {
+                if(fabsf(filteredAxisValues[j]) < deadZone) {
+                    filteredAxisValues[j] = 0.0f;
+                }
+            }
+
+            for(auto j = 0; j < numButtons; ++j) {
+                SetInputStateValueByKey(context, GAMEPAD_A + j + (GAMEPAD_MULTIPLIER * i), buttonStates[j] ? 1.0f : 0.0f);
+            }
+
+            for(auto j = 0; j < Min(numAxises, 4); ++j) {
+                SetInputStateValueByKey(context, GAMEPAD_LS_LEFT + (j*2+0) + (GAMEPAD_MULTIPLIER * i), Max(-filteredAxisValues[j], 0.0f));
+                SetInputStateValueByKey(context, GAMEPAD_LS_LEFT + (j*2+1) + (GAMEPAD_MULTIPLIER * i), Max(filteredAxisValues[j], 0.0f));
+            }
+
+            if(numAxises > 5) {
+                SetInputStateValueByKey(context, GAMEPAD_LT + (GAMEPAD_MULTIPLIER * i), filteredAxisValues[4]);
+                SetInputStateValueByKey(context, GAMEPAD_RT + (GAMEPAD_MULTIPLIER * i), filteredAxisValues[5]);
+            }
+
+            if(numHats) {
+                SetInputStateValueByKey(context, GAMEPAD_DPAD_LEFT + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_LEFT) ? 1.0f : 0.0f);
+                SetInputStateValueByKey(context, GAMEPAD_DPAD_RIGHT + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_RIGHT) ? 1.0f : 0.0f);
+                SetInputStateValueByKey(context, GAMEPAD_DPAD_UP+ (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_UP) ? 1.0f : 0.0f);
+                SetInputStateValueByKey(context, GAMEPAD_DPAD_DOWN + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_DOWN) ? 1.0f : 0.0f);
+            }
+        }
+    });
+
+    if(numContexts) {
+        glfwPollEvents();
+    }
+}
+
+LocalFunction(OnPresent, void, Entity appLoop) {
+    auto numContexts = 0;
+    auto debugFlags = 0;
+
+    for_entity(context, contextData, BgfxRenderContext, {
+        numContexts++;
+
+        if(GetRenderContextShowDebug(context)) {
+            debugFlags |= BGFX_DEBUG_IFH | BGFX_DEBUG_STATS;
+        }
+        if(GetRenderContextShowStats(context)) {
+            debugFlags |= BGFX_DEBUG_STATS;
+        }
+    });
+
+    if(numContexts) {
+        auto viewId = 0;
+
+        bgfx::setDebug(debugFlags);
+        Frame = bgfx::frame();
     }
 }
 
@@ -243,11 +320,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
     auto size = GetRenderTargetSize(entity);
 
     if(NumContexts == 1) {
-        ProfileStart("glfwInit", 150.0);
         glfwInit();
-        ProfileEnd();
-
-        SetAppLoopDisabled(GetBgfxRenderingLoop(ModuleOf_BgfxRendering()), false);
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -288,22 +361,24 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
         pd.backBufferDS = NULL;
         pd.session = NULL;
         bgfx::setPlatformData(pd);
+
+        bgfx::Init init;
+
 #ifdef __APPLE__
-        bgfx::init(bgfx::RendererType::Metal);
+        bgfx::init(init);
 #endif
 
-        ProfileStart("bgfx::init", 150.0);
 #ifdef WIN32
-        bgfx::init();
+        bgfx::init(init);
 #endif
 
 #ifdef __linux__
         bgfx::init();
 #endif
 
-        ProfileEnd();
-
         bgfx::reset(size.x, size.y);
+
+        SubTexture2DOffsetSizeUniform = bgfx::createUniform("u_uvOffsetSizePerSampler", bgfx::UniformType::Vec4, 8);
 
         PrimaryContext = entity;
 
@@ -328,9 +403,9 @@ LocalFunction(OnBgfxRenderContextRemoved, void, Entity component, Entity entity)
             SetExtensionDisabled(extension, true);
         });
 
-        bgfx::shutdown();
+        bgfx::destroy(SubTexture2DOffsetSizeUniform);
 
-        SetAppLoopDisabled(GetBgfxRenderingLoop(ModuleOf_BgfxRendering()), true);
+        bgfx::shutdown();
     }
 
     glfwDestroyWindow(data->window);
@@ -369,7 +444,10 @@ BeginUnit(BgfxRenderContext)
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnContextRemoved, ComponentOf_RenderContext())
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxRenderContextRemoved, ComponentOf_BgfxRenderContext())
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppUpdate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnInputPoll, AppLoopOf_InputPoll())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnResourceSubmission, AppLoopOf_ResourceSubmission())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnTextureReadBack, AppLoopOf_ResourceDownload())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnPresent, AppLoopOf_Present())
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderTargetSize()), OnContextResized, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextTitle()), OnContextTitleChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextVsync()), OnContextFlagChanged, 0)

@@ -1,0 +1,16 @@
+{
+  "Children": [
+    {
+      "Uuid": "Platformer.Difficulties.Easy",
+      "StreamPath": "asset://Difficulties/Easy.ini"
+    },
+    {
+      "Uuid": "Platformer.Difficulties.Medium",
+      "StreamPath": "asset://Difficulties/Medium.ini"
+    },
+    {
+      "Uuid": "Platformer.Difficulties.Hard",
+      "StreamPath": "asset://Difficulties/Hard.ini"
+    }
+  ]
+}

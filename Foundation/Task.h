@@ -14,6 +14,8 @@ Unit(Task)
     Component(TaskQueue)
         ArrayProperty(Task, QueuedTasks)
 
+    Declare(AppLoop, AsyncTasksUpdate)
+
 void TaskSchedule(Entity task);
 void TaskWait(Entity task);
 bool GetTaskRunning(Entity task);

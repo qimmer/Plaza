@@ -266,7 +266,12 @@ API_EXPORT StringRef GetUuid(Entity entity)  {
         if(uniqueName) {
             SetUuid(entity, uniqueName);
         } else {
-            SetUuid(entity, CreateGuid());
+            auto owner = GetOwner(entity);
+            if(IsEntityValid(owner)) {
+                SetUuid(entity, StringFormatV("%s.%s", GetUuid(owner), CreateGuid()));
+            } else {
+                SetUuid(entity, CreateGuid());
+            }
         }
 
         data = GetIdentificationData(entity);

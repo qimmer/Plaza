@@ -11,7 +11,6 @@
 struct RenderContext {
     StringRef RenderContextTitle;
     bool RenderContextFullscreen, RenderContextVsync, RenderContextShowDebug, RenderContextShowStats;
-    Entity RenderContextLoop;
 };
 
 Unit(RenderContext)
@@ -21,6 +20,9 @@ Unit(RenderContext)
         Property(bool, RenderContextVsync)
         Property(bool, RenderContextShowDebug)
         Property(bool, RenderContextShowStats)
-        ChildProperty(AppLoop, RenderContextLoop)
+
+    Declare(AppLoop, ResourceSubmission)
+    Declare(AppLoop, ResourceDownload)
+    Declare(AppLoop, Present)
 
 #endif //PLAZA_RENDERCONTEXT_H

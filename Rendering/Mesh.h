@@ -59,6 +59,7 @@ struct IndexBuffer {
 
 struct Mesh {
     Entity MeshVertexBuffer, MeshIndexBuffer;
+    v3f MeshAABBMin, MeshAABBMax;
 };
 
 struct SubMesh {
@@ -92,6 +93,8 @@ Unit(Mesh)
         ChildProperty(VertexBuffer, MeshVertexBuffer)
         ChildProperty(IndexBuffer, MeshIndexBuffer)
         ArrayProperty(SubMesh, MeshSubMeshes)
+        Property(v3f, MeshAABBMin)
+        Property(v3f, MeshAABBMax)
 
     Component(SubMesh)
         Property(u32, SubMeshStartVertex)

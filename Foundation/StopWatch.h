@@ -6,11 +6,13 @@
 #define PLAZA_STOPWATCH_H
 
 #include <Core/NativeUtils.h>
+#include <Foundation/AppLoop.h>
 
 Unit(StopWatch)
     Component(StopWatch)
-        ChildProperty(AppLoop, StopWatchUpdateLoop)
         Property(bool, StopWatchRunning)
         Property(double, StopWatchElapsedSeconds)
+
+    Declare(AppLoop, StopWatchUpdate)
 
 #endif //PLAZA_STOPWATCH_H

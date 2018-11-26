@@ -10,6 +10,4 @@
 Unit(BgfxCommandList)
     Component(BgfxCommandList)
 
-void RenderCommandList(Entity commandList, unsigned char viewId);
-
 #endif //PLAZA_BGFXCOMMANDLIST_H

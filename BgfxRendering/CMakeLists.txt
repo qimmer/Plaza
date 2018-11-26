@@ -9,7 +9,7 @@ ExternalProject_Add(ex_bgfx
         GIT_REPOSITORY "https://github.com/JoshuaBrookover/bgfx.cmake.git"
         GIT_TAG "master"
         UPDATE_COMMAND ""
-        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_USE_DEBUG_SUFFIX=OFF;-DBGFX_BUILD_EXAMPLES=OFF;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE};-DBGFX_CONFIG_DEBUG=OFF;-DBGFX_CONFIG_MULTITHREADED=On;-DBUILD_SHARED_LIBS=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true")
+        CMAKE_ARGS "${CMAKE_ARGS};-DBGFX_INSTALL=ON;-DBGFX_USE_DEBUG_SUFFIX=OFF;-DBGFX_BUILD_EXAMPLES=OFF;-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX};-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE};-DBGFX_CONFIG_DEBUG=ON;-DBGFX_CONFIG_MULTITHREADED=On;-DBUILD_SHARED_LIBS=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true")
 
 ExternalProject_Get_Property(ex_bgfx BINARY_DIR)
 ExternalProject_Get_Property(ex_bgfx SOURCE_DIR)
@@ -40,7 +40,7 @@ SET(ex_glfw_inc_dir "${SOURCE_DIR}/include")
 ADD_LIBRARY(glfw STATIC IMPORTED)
 SET_PROPERTY(TARGET glfw PROPERTY IMPORTED_LOCATION "${ex_glfw_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}glfw3${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
-add_library(BgfxRendering BgfxModule.cpp BgfxModule.h BgfxModule.cpp BgfxModule.h BgfxRenderContext.cpp BgfxRenderContext.h BgfxCommandList.cpp BgfxCommandList.h BgfxShaderCache.cpp BgfxShaderCache.h BgfxUniform.cpp BgfxUniform.h BgfxTexture2D.cpp BgfxTexture2D.h BgfxMesh.cpp BgfxMesh.h BgfxOffscreenRenderTarget.cpp BgfxOffscreenRenderTarget.h BgfxMesh.cpp BgfxMesh.h BgfxResource.cpp BgfxResource.h)
+add_library(BgfxRendering BgfxModule.cpp BgfxModule.h BgfxModule.cpp BgfxModule.h BgfxRenderContext.cpp BgfxRenderContext.h BgfxCommandList.cpp BgfxCommandList.h BgfxShaderCache.cpp BgfxShaderCache.h BgfxUniform.cpp BgfxUniform.h BgfxTexture2D.cpp BgfxTexture2D.h BgfxMesh.cpp BgfxMesh.h BgfxOffscreenRenderTarget.cpp BgfxOffscreenRenderTarget.h BgfxMesh.cpp BgfxMesh.h BgfxResource.cpp BgfxResource.h BgfxTextureReadBack.cpp BgfxTextureReadBack.h)
 add_dependencies(BgfxRendering ex_bgfx ex_glfw)
 
 target_include_directories(BgfxRendering PUBLIC ".." ${ex_bgfx_inc_dir} ${ex_glfw_inc_dir})

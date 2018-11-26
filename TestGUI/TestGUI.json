@@ -8,26 +8,31 @@
     {
       "Uuid": "TestGui.Context",
       "RenderContextTitle": "Test - Gui",
-      "RenderTargetSize": [800, 450],
-      "RenderContextLoop": {
-        "AppLoopKeepAlive": "{Not():InputStateValue@TestGui.Context.Keys.Close}"
-      },
+      "RenderTargetSize": [800, 600],
       "RenderContextShowStats": "{InputStateValue@TestGui.Context.Keys.ShowStats}",
       "RenderContextShowDebug": "{InputStateValue@TestGui.Context.Keys.ShowDebug}",
-      "InputContextStates": [
+      "Children": [
         {
           "Uuid": "TestGui.Context.Keys.Close",
-          "InputStateKey": "KEY_WINDOW_CLOSE"
+          "InputStateKey": "KEY_WINDOW_CLOSE",
+          "InputStateContext": "TestGui.Context"
         },
         {
           "Uuid": "TestGui.Context.Keys.ShowStats",
-          "InputStateKey": "KEY_F8"
+          "InputStateKey": "KEY_F8",
+          "InputStateContext": "TestGui.Context"
         },
         {
           "Uuid": "TestGui.Context.Keys.ShowDebug",
-          "InputStateKey": "KEY_F9"
+          "InputStateKey": "KEY_F9",
+          "InputStateContext": "TestGui.Context"
         }
       ]
+    },
+    {
+      "Uuid": "TestGui.QuitAction",
+      "InvocationFunction": "Function.Quit",
+      "InvocationToggleState": "{InputStateValue@TestGui.Context.Keys.Close}"
     },
     {
       "Uuid": "TestGui.Renderer",
@@ -39,25 +44,56 @@
     },
     {
       "Uuid": "TestGui.Font",
-      "TrueTypeFontSize": 24.0,
-      "FontGlyphs": [
-        {
-          "GlyphCode": 65
-        },
-        {
-          "GlyphCode": 97
-        }
-      ],
+      "TrueTypeFontSize": 11.0,
+      "FontCharacters": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+-!\"@#$%&/()=?'*\\{[]}.,:;<>| ",
       "StreamPath": "file://TestGui/Fonts/kongtext.ttf",
-      "PersistancePointLoading": true
+      "PersistancePointLoaded": true
     },
     {
-      "Uuid": "TestGui.LabelMesh",
-      "TextMeshFont": "TestGui.Font",
-      "TextMeshText": "AaAaA",
-      "MeshSubMeshes": [
+      "Uuid": "TestGui.WindowMesh",
+      "WidgetMeshTexture": "TestGui.Sheets.ExampleSheet.Window1",
+      "WidgetMeshFixedBorderWidth": 50
+    },
+    {
+      "Uuid": "TestGui.ButtonMesh.Enabled",
+      "WidgetMeshTexture": "TestGui.Sheets.ExampleSheet.Button1.Enabled",
+      "WidgetMeshFixedBorderWidth": 8
+    },
+    {
+      "Uuid": "TestGui.ButtonMesh.Hovered",
+      "WidgetMeshTexture": "TestGui.Sheets.ExampleSheet.Button1.Hovered",
+      "WidgetMeshFixedBorderWidth": 8
+    },
+    {
+      "Uuid": "TestGui.ButtonMesh.Clicked",
+      "WidgetMeshTexture": "TestGui.Sheets.ExampleSheet.Button1.Clicked",
+      "WidgetMeshFixedBorderWidth": 8
+    },
+    {
+      "Uuid": "TestGui.Sheets.ExampleSheet",
+      "StreamPath": "file://DebugGui/Sheets/uipackSpace_sheet.png",
+      "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT",
+      "PersistancePointLoaded": true,
+      "TextureAtlasSubTextures": [
         {
-          "Uuid": "TestGui.LabelMesh.SubMesh0"
+          "Uuid": "TestGui.Sheets.ExampleSheet.Window1",
+          "SubTexture2DOffset": [200, 0],
+          "SubTexture2DSize": [100, 100]
+        },
+        {
+          "Uuid": "TestGui.Sheets.ExampleSheet.Button1.Enabled",
+          "SubTexture2DOffset": [384, 450],
+          "SubTexture2DSize": [19, 26]
+        },
+        {
+          "Uuid": "TestGui.Sheets.ExampleSheet.Button1.Hovered",
+          "SubTexture2DOffset": [384, 476],
+          "SubTexture2DSize": [19, 26]
+        },
+        {
+          "Uuid": "TestGui.Sheets.ExampleSheet.Button1.Clicked",
+          "SubTexture2DOffset": [384, 476],
+          "SubTexture2DSize": [19, 28]
         }
       ]
     },
@@ -67,18 +103,111 @@
       "AppRootActive": true,
       "Children": [
         {
-          "Uuid": "TestGui.Scene.Camera",
-          "FrustumNearClip": 0.1,
-          "FrustumFarClip": 1000.0,
-          "PerspectiveFrustumFieldOfView": 90.0,
-          "PerspectiveFrustumAspectRatio": "{Ratio():RenderTargetSize@TestGui.Context}",
-          "Position3D": [0, 0, -200]
+          "Uuid": "TestGui.Scene.Picker",
+          "PickRaySceneRenderer": "TestGui.Renderer",
+          "GuiPickRayClickState": {
+            "InputStateContext": "TestGui.Context",
+            "InputStateKey": "MOUSEBUTTON_0"
+          }
         },
         {
-          "Uuid": "TestGui.Scene.Label",
+          "Uuid": "TestGui.Scene.Camera",
+          "FrustumNearClip": -1000.0,
+          "FrustumFarClip": 1000.0,
+          "OrthographicFrustumTopLeft": [0, 0],
+          "OrthographicFrustumBottomRight": "{RenderTargetSize@TestGui.Context}",
+          "Position3D": [0, 0, -100]
+        },
+        {
+          "Uuid": "TestGui.Scene.Window",
           "RenderableMaterial": "Gui.Material",
-          "RenderableSubMesh": "TestGui.LabelMesh.SubMesh0",
-          "Position3D": [0, 0, 0]
+          "WidgetEnabledSubMesh": "TestGui.WindowMesh.MeshSubMeshes[0]",
+          "Position3D": [50, 50, 0],
+          "WidgetSize": [400, 300],
+          "WidgetChildLayout": "WidgetChildLayout_Vertical",
+          "WidgetPadding": [5, 5, 5, 5],
+          "Children": [
+            {
+              "Uuid": "TestGui.Scene.Window.TitleBar",
+              "WidgetChildLayout": "WidgetChildLayout_Horizontal",
+              "WidgetMinimumSize": [0, 22],
+              "Children": [
+                {
+                  "Uuid": "TestGui.Scene.Window.TitleBar.Label",
+                  "WidgetWeight": [1.0, 0.0],
+                  "RenderableMaterial": "Gui.Font.Material",
+                  "LabelFont": "TestGui.Font",
+                  "LabelText": "Hello World 4",
+                  "LabelAlignment": [0.5, 0.5],
+                  "DragHandleTarget": "TestGui.Scene.Window"
+                },
+                {
+                  "Uuid": "TestGui.Scene.Window.TitleBar.CloseButton",
+                  "RenderableMaterial": "Gui.Material",
+                  "WidgetEnabledSubMesh": "TestGui.ButtonMesh.Enabled.MeshSubMeshes[0]",
+                  "WidgetHoveredSubMesh": "TestGui.ButtonMesh.Hovered.MeshSubMeshes[0]",
+                  "WidgetClickedSubMesh": "TestGui.ButtonMesh.Clicked.MeshSubMeshes[0]",
+                  "WidgetMinimumSize": [22, 22],
+                  "ButtonAction": {
+                    "InvocationFunction": "Function.DestroyEntity",
+                    "InvocationArguments": [
+                      {
+                        "InvocationArgumentValue": "TestGui.Scene.Window"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "Uuid": "TestGui.Scene.Window.Content",
+              "WidgetChildLayout": "WidgetChildLayout_Vertical",
+              "WidgetWeight": [1.0, 1.0],
+              "Children": [
+                {
+                  "Uuid": "TestGui.Scene.Window.Content.FpsLabel",
+                  "WidgetWeight": [1.0, 1.0],
+                  "LabelText": "FPS: {0}"
+                },
+                {
+                  "Uuid": "TestGui.Scene.Window.Content.MillisecsLabel",
+                  "WidgetWeight": [1.0, 1.0],
+                  "LabelText": "Frame Time: {0}"
+                },
+                {
+                  "Uuid": "TestGui.Scene.Window.Content.MemoryLabel",
+                  "WidgetWeight": [1.0, 1.0],
+                  "LabelText": "Memory: {0}"
+                }
+              ]
+            },
+            {
+              "Uuid": "TestGui.Scene.Window.ButtonFooter",
+              "WidgetChildLayout": "WidgetChildLayout_Horizontal",
+              "WidgetMinimumSize": [0, 36],
+              "Children": [
+                {
+                  "Uuid": "TestGui.Scene.Window.ButtonFooter.CloseButton",
+                  "RenderableMaterial": "Gui.Material",
+                  "WidgetEnabledSubMesh": "TestGui.ButtonMesh.Enabled.MeshSubMeshes[0]",
+                  "WidgetHoveredSubMesh": "TestGui.ButtonMesh.Hovered.MeshSubMeshes[0]",
+                  "WidgetClickedSubMesh": "TestGui.ButtonMesh.Clicked.MeshSubMeshes[0]",
+                  "WidgetMinimumSize": [100, 36],
+                  "WidgetChildLayout": "WidgetChildLayout_Horizontal",
+                  "Children": [
+                    {
+                      "Uuid": "TestGui.Scene.Window.ButtonFooter.CloseButton.Label",
+                      "WidgetWeight": [1.0, 1.0],
+                      "RenderableMaterial": "Gui.Font.Material",
+                      "LabelFont": "TestGui.Font",
+                      "LabelText": "Close",
+                      "LabelAlignment": [0.5, 0.5]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -87,11 +216,11 @@
       "Children": [
         {
           "StreamPath": "file://TestAssets/TestAssets.json",
-          "PersistancePointLoading": true
+          "PersistancePointLoaded": true
         },
         {
           "StreamPath": "file://Gui/Gui.json",
-          "PersistancePointLoading": true
+          "PersistancePointLoaded": true
         }
       ]
     }

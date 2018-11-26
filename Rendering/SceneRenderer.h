@@ -12,12 +12,19 @@
 #define ClearTarget_Depth 2
 #define ClearTarget_Stencil 4
 
+enum {
+    RenderingSortMode_Default,
+    RenderingSortMode_Sequental,
+    RenderingSortMode_DepthAscending,
+    RenderingSortMode_DepthDescending
+};
+
 struct RenderPass {
     Entity RenderPassShaderCache;
     Entity RenderPassRenderState;
     float RenderPassClearDepth;
     rgba8 RenderPassClearColor;
-    u8 RenderPassClearStencil, RenderPassClearTargets;
+    u8 RenderPassClearStencil, RenderPassClearTargets, RenderPassSortMode;
     bool RenderPassForceOrder;
 };
 
@@ -40,6 +47,7 @@ struct SceneRenderer {
 
 Unit(SceneRenderer)
     Enum(ClearTarget)
+    Enum(RenderingSortMode)
 
     Component(RenderPass)
         ChildProperty(ShaderCache, RenderPassShaderCache)
@@ -48,11 +56,13 @@ Unit(SceneRenderer)
         Property(rgba8, RenderPassClearColor)
         Property(u8, RenderPassClearStencil)
         Property(u8, RenderPassClearTargets)
+        Property(u8, RenderPassSortMode)
         Property(bool, RenderPassForceOrder)
         ArrayProperty(Uniform, RenderPassSceneUniforms)
         ArrayProperty(Uniform, RenderPassCameraUniforms)
-        ArrayProperty(Uniform, RenderPassMaterialUniforms)
         ArrayProperty(Uniform, RenderPassRenderableUniforms)
+        ArrayProperty(Uniform, RenderPassMaterialUniforms)
+        ArrayProperty(Uniform, RenderPassMeshUniforms)
 
     Component(RenderPath)
         ArrayProperty(RenderPathPass, RenderPathPasses)
@@ -74,4 +84,5 @@ Unit(SceneRenderer)
         Property(v4f, SceneRendererViewport)
         ArrayProperty(CommandList, SceneRendererCommandLists)
 
+    Declare(AppLoop, BatchSubmission)
 #endif //PLAZA_SCENERENDERER_H

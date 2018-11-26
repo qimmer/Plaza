@@ -14,6 +14,7 @@ Unit(Networking)
         ArrayProperty(HttpHeaderType, HttpHeaderTypes)
         ArrayProperty(HttpResponseCode, HttpResponseCodes)
         Property(bool, TcpWaitOnNoWork)
-        ChildProperty(Entity, ReplicationAppLoop)
+
+    Declare(AppLoop, Networking)
 
 #endif //PLAZA_NETWORKINGMODULE_H

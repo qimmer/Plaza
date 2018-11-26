@@ -120,5 +120,7 @@ BeginUnit(Task)
         RegisterArrayProperty(Task, QueuedTasks)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopFrameChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopFrameChanged, AppLoopOf_AsyncTasksUpdate())
+
+    SetAppLoopOrder(AppLoopOf_AsyncTasksUpdate(), AppLoopOrder_Update * 0.5f);
 EndUnit()

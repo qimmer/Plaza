@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/CMakeFiles/ex_bgfx"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/CMakeFiles/ex_bgfx.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/CMakeFiles/ex_bgfx-complete.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-install.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-download.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-update.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-patch.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-configure.rule"
+		},
+		{
+			"file" : "C:/Users/Kim/Documents/Plaza/build/BgfxRendering/ex_bgfx-prefix/src/ex_bgfx-stamp/ex_bgfx-build.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ex_bgfx"
+		],
+		"name" : "ex_bgfx"
+	}
+}

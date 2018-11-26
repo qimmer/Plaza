@@ -73,6 +73,23 @@ void __PreInitialize();
         }\
     } do {}while(false)
 
+#define for_entity_dynamic(ENTITYVAR, COMPONENTTYPE, CONTENTS) \
+    {\
+        auto __component ## ENTITYVAR = COMPONENTTYPE;\
+        auto __numPages ## ENTITYVAR = GetNumComponentPages(__component ## ENTITYVAR);\
+        for(auto __pageIndex ## ENTITYVAR = 0; __pageIndex ## ENTITYVAR < __numPages ## ENTITYVAR; ++__pageIndex ## ENTITYVAR) {\
+            u32 __elementStride ## ENTITYVAR;\
+            auto __pageData ## ENTITYVAR = GetComponentPage(__component ## ENTITYVAR, __pageIndex ## ENTITYVAR, &__elementStride ## ENTITYVAR);\
+            for(auto __elementIndex ## ENTITYVAR = 0; __elementIndex ## ENTITYVAR < PoolPageElements; ++__elementIndex ## ENTITYVAR) {\
+                auto __element ## ENTITYVAR = &__pageData ## ENTITYVAR [__elementIndex ## ENTITYVAR * __elementStride ## ENTITYVAR];\
+                Entity ENTITYVAR = *(Entity*)__element ## ENTITYVAR;\
+                if(!IsEntityValid(ENTITYVAR)) continue;\
+                __element ## ENTITYVAR += sizeof(Entity) * 2;\
+                CONTENTS\
+            }\
+        }\
+    } do {}while(false)
+
 #define for_entity_parallel(ENTITYVAR, DATAVAR, COMPONENTTYPE, CONTENTS) \
     {\
         auto __component ## ENTITYVAR = ComponentOf_ ## COMPONENTTYPE ();\

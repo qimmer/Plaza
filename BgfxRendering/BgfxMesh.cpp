@@ -28,37 +28,54 @@ struct BgfxIndexBuffer {
 };
 
 LocalFunction(OnBgfxVertexBufferRemoved, void, Entity entity) {
-    bgfx::DynamicVertexBufferHandle dynHandle = { GetBgfxResourceHandle(entity) };
-    bgfx::VertexBufferHandle staHandle = { dynHandle.idx };
-
     auto data = GetBgfxVertexBufferData(entity);
+    if(data) {
+        bgfx::DynamicVertexBufferHandle dynHandle = { GetBgfxResourceHandle(entity) };
+        bgfx::VertexBufferHandle staHandle = { dynHandle.idx };
 
-    if(data->dynamic) {
-        if(bgfx::isValid(dynHandle)) {
-            bgfx::destroy(dynHandle);
-        }
-    } else {
-        if(bgfx::isValid(staHandle)) {
-            bgfx::destroy(staHandle);
+        if(data->dynamic) {
+            if(bgfx::isValid(dynHandle)) {
+                bgfx::destroy(dynHandle);
+            }
+        } else {
+            if(bgfx::isValid(staHandle)) {
+                bgfx::destroy(staHandle);
+            }
         }
     }
-
 }
 
 LocalFunction(OnBgfxIndexBufferRemoved, void, Entity entity) {
-    bgfx::DynamicIndexBufferHandle dynHandle = { GetBgfxResourceHandle(entity) };
-    bgfx::IndexBufferHandle staHandle = { dynHandle.idx };
-
     auto data = GetBgfxIndexBufferData(entity);
+    if(data) {
+        bgfx::DynamicIndexBufferHandle dynHandle = { GetBgfxResourceHandle(entity) };
+        bgfx::IndexBufferHandle staHandle = { dynHandle.idx };
 
-    if(data->dynamic) {
-        if(bgfx::isValid(dynHandle)) {
-            bgfx::destroy(dynHandle);
+        if(data->dynamic) {
+            if(bgfx::isValid(dynHandle)) {
+                bgfx::destroy(dynHandle);
+            }
+        } else {
+            if(bgfx::isValid(staHandle)) {
+                bgfx::destroy(staHandle);
+            }
         }
-    } else {
-        if(bgfx::isValid(staHandle)) {
-            bgfx::destroy(staHandle);
-        }
+    }
+}
+
+static void CalculateAABB(Entity vertexBuffer, const char *vertexData, u32 vertexDataSize) {
+    auto decl = GetVertexBufferDeclaration(vertexBuffer);
+    auto declData = GetBgfxVertexDeclarationData(decl);
+
+    u8 numPositionElements = 0;
+    bgfx::AttribType::Enum positionAttribType;
+    bool normalized = false, asInt = false;
+    declData->decl.decode(bgfx::Attrib::Position, numPositionElements, positionAttribType, normalized, asInt);
+
+    auto stride = declData->decl.getStride();
+    auto numVertices = vertexDataSize / stride;
+    for(auto i = 0; i < numVertices; ++i) {
+
     }
 }
 
@@ -212,21 +229,21 @@ static void ValidateVertexDeclaration(Entity entity) {
 }
 
 LocalFunction(OnVertexDeclarationValidation, void, Entity component) {
-    for_entity(entity, data, BgfxVertexDeclaration, {
+    for_entity(entity, data, VertexDeclaration, {
         if(!IsDirty(entity)) continue;
         ValidateVertexDeclaration(entity);
     });
 }
 
 LocalFunction(OnVertexBufferValidation, void, Entity component) {
-    for_entity(entity, data, BgfxVertexBuffer, {
+    for_entity(entity, data, VertexBuffer, {
         if(!IsDirty(entity)) continue;
         ValidateVertexBuffer(entity);
     });
 }
 
 LocalFunction(OnIndexBufferValidation, void, Entity component) {
-    for_entity(entity, data, BgfxIndexBuffer, {
+    for_entity(entity, data, IndexBuffer, {
         if(!IsDirty(entity)) continue;
         ValidateIndexBuffer(entity);
     });

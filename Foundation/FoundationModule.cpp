@@ -18,7 +18,7 @@
 #include <Foundation/Visibility.h>
 #include <Foundation/Invalidation.h>
 #include <Foundation/AppNode.h>
-#include <Foundation/BasicValueConverters.h>
+#include <Foundation/MathOperation.h>
 #include "FoundationModule.h"
 
 struct FoundationModule {
@@ -53,5 +53,5 @@ BeginModule(Foundation)
     RegisterUnit(Visibility)
     RegisterUnit(Invalidation)
     RegisterUnit(AppNode)
-    RegisterUnit(BasicValueConverters)
+    RegisterUnit(MathOperation)
 EndModule()

@@ -29,23 +29,6 @@ using namespace eastl;
 struct StreamExtensionModule {
 };
 
-struct Stream {
-    StringRef StreamPath;
-    StringRef StreamResolvedPath;
-
-    Entity StreamProtocol, StreamCompressor, StreamFileType;
-
-    int StreamMode;
-
-    bool InvalidationPending;
-};
-
-struct FileType {
-    Entity FileTypeComponent;
-    StringRef FileTypeExtension;
-    StringRef FileTypeMimeType;
-};
-
 API_EXPORT bool StreamSeek(Entity entity, s32 offset){
     auto streamData = GetStreamData(entity);
     if(!streamData) return false;
@@ -200,12 +183,6 @@ API_EXPORT void StreamWriteAsync(Entity entity, u64 size, const void *data, Stre
     free(buffer);
 }
 
-API_EXPORT StringRef GetStreamResolvedPath(Entity entity) {
-    if(!HasComponent(entity, ComponentOf_Stream())) return NULL;
-
-    return GetStreamData(entity)->StreamResolvedPath;
-}
-
 API_EXPORT int GetStreamMode(Entity entity) {
     if(!HasComponent(entity, ComponentOf_Stream())) return StreamMode_Closed;
     return GetStreamData(entity)->StreamMode;
@@ -215,7 +192,10 @@ API_EXPORT u64 StreamDecompress(Entity entity, u64 uncompressedOffset, u64 uncom
     auto data = GetStreamData(entity);
 
     auto compressorData = GetStreamCompressorData(data->StreamCompressor);
-    if(!compressorData) return false;
+    if(!compressorData) {
+        Error(entity, "Could not decompress data in stream. No compatible decompressor found for file type.");
+        return false;
+    }
 
     if(compressorData->DecompressHandler) {
         if(!compressorData->DecompressHandler(entity, uncompressedOffset, uncompressedSize, uncompressedData)) {
@@ -233,7 +213,9 @@ API_EXPORT u64 StreamDecompress(Entity entity, u64 uncompressedOffset, u64 uncom
 API_EXPORT u64 StreamCompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, const void *uncompressedData) {
     auto data = GetStreamData(entity);
     auto compressorData = GetStreamCompressorData(data->StreamCompressor);
-    if(!compressorData) return false;
+    if(!compressorData) {
+        Error(entity, "Could not compress data in stream. No compatible compressor found for file type.");
+    }
 
     if(compressorData->CompressHandler) {
         if(!compressorData->CompressHandler(entity, uncompressedOffset, uncompressedSize, uncompressedData)) {
@@ -423,8 +405,6 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     char resolvedPath[PathMax];
     ResolveVirtualPath(newValue, PathMax, resolvedPath);
 
-    data->StreamResolvedPath = Intern(resolvedPath);
-
     char protocolIdentifier[32];
     auto colonLocation = strstr(resolvedPath, "://");
 
@@ -438,8 +418,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     protocolIdentifier[len] = 0;
     auto protocolIdentifierInterned = Intern(protocolIdentifier);
 
-	auto path = GetStreamResolvedPath(entity);
-    auto extension = GetFileExtension(path);
+    auto extension = GetFileExtension(resolvedPath);
 
     StringRef mimeType = Intern("application/octet-stream");
     auto oldProtocol = data->StreamProtocol;
@@ -504,8 +483,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
         }
     });
 
-    auto value = MakeVariant(Entity, entity);
-	FireEventFast(EventOf_StreamContentChanged(), 1, &value);
+    SetStreamResolvedPath(entity, Intern(resolvedPath));
 }
 
 LocalFunction(OnProtocolChanged, void, Entity protocol) {
@@ -532,9 +510,40 @@ LocalFunction(OnCompressorChanged, void, Entity compressor) {
     });
 }
 
+LocalFunction(OnReresolvePaths, void) {
+    for_entity(stream, data, Stream, {
+        char resolvedPath[PathMax];
+        auto streamData = GetStreamData(stream);
+        ResolveVirtualPath(GetStreamPath(stream), PathMax, resolvedPath);
+
+        SetStreamResolvedPath(stream, Intern(resolvedPath));
+    });
+}
+
+LocalFunction(OnResolvedPathChanged, void, Entity stream) {
+    auto value = MakeVariant(Entity, stream);
+    FireEventFast(EventOf_StreamContentChanged(), 1, &value);
+}
+
+
+static bool Compress(Entity entity, u64 offset, u64 size, const void *pixels) {
+    return StreamWrite(entity, size, (char*)pixels + offset);
+}
+
+static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
+    if(!StreamOpen(entity, StreamMode_Read)) return false;
+
+    StreamSeek(entity, offset);
+    auto success = StreamRead(entity, size, pixels) == size;
+    StreamClose(entity);
+
+    return success;
+}
+
 BeginUnit(Stream)
     BeginComponent(Stream)
         RegisterProperty(StringRef, StreamPath)
+        RegisterPropertyReadOnly(StringRef, StreamResolvedPath)
         RegisterReferencePropertyReadOnly(StreamProtocol, StreamProtocol)
         RegisterReferencePropertyReadOnly(StreamCompressor, StreamCompressor)
         RegisterReferencePropertyReadOnly(FileType, StreamFileType)
@@ -567,6 +576,10 @@ BeginUnit(Stream)
         RegisterArrayProperty(Serializer, ModuleSerializers)
     EndComponent()
 
+    RegisterStreamCompressor(Binary, "application/bin")
+    SetFileTypeMimeType(FileTypeOf_Bin(), "application/bin");
+    SetFileTypeExtension(FileTypeOf_Bin(), ".bin");
+
     RegisterEvent(StreamContentChanged)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), OnStreamPathChanged, 0)
@@ -576,6 +589,10 @@ BeginUnit(Stream)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FileTypeMimeType()), OnFileTypeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamCompressorMimeType()), OnCompressorChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamFileType()), OnStreamFileTypeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VirtualPathTrigger()), OnReresolvePaths, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VirtualPathDestination()), OnReresolvePaths, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamResolvedPath()), OnResolvedPathChanged, 0)
 EndUnit()
+
 
 

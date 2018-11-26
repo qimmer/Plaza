@@ -63,14 +63,16 @@ static bool Compress(Entity entity, u64 offset, u64 size, const void *pixels) {
 static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
     if(!StreamOpen(entity, StreamMode_Read)) return false;
 
+    StreamSeek(entity, StreamSeek_End);
+    auto fileSize = StreamTell(entity);
     StreamSeek(entity, 0);
 
-    auto buffer = (stbi_uc*)malloc(size);
-    StreamRead(entity, size, buffer);
+    auto buffer = (stbi_uc*)malloc(fileSize);
+    StreamRead(entity, fileSize, buffer);
     StreamClose(entity);
 
     int width, height, channels;
-    auto pixelData = stbi_load_from_memory(buffer, size, &width, &height, &channels, 0);
+    auto pixelData = stbi_load_from_memory(buffer, fileSize, &width, &height, &channels, 0);
     if(pixelData) {
         Assert(entity, size <= (width * height * channels));
         memcpy(pixels, &pixelData[offset], size);

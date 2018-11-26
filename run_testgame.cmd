@@ -1,1 +1,1 @@
-cmake-build-relwithdebinfo\Debugger.exe libBgfxRendering.dll Game/Game.json TestGame/TestGame.json
+cmake-build-release\Debugger.exe libBgfxRendering.dll libStbDecoders.dll libIni.dll libAnimation.dll TestPlatformer/Platformer.json
