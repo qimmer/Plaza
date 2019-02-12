@@ -1,3 +1,0 @@
-repository='https://github.com/chriso/intern'
-module=''
-tag=''

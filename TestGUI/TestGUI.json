@@ -99,7 +99,7 @@
     },
     {
       "Uuid": "TestGui.Scene",
-      "$components": ["Component.AppRoot"],
+      "$components": ["Component.AppRoot", "Component.Scene"],
       "AppRootActive": true,
       "Children": [
         {
@@ -123,7 +123,7 @@
           "RenderableMaterial": "Gui.Material",
           "WidgetEnabledSubMesh": "TestGui.WindowMesh.MeshSubMeshes[0]",
           "Position3D": [50, 50, 0],
-          "WidgetSize": [400, 300],
+          "Size2D": [400, 300],
           "WidgetChildLayout": "WidgetChildLayout_Vertical",
           "WidgetPadding": [5, 5, 5, 5],
           "Children": [
@@ -161,25 +161,8 @@
             },
             {
               "Uuid": "TestGui.Scene.Window.Content",
-              "WidgetChildLayout": "WidgetChildLayout_Vertical",
-              "WidgetWeight": [1.0, 1.0],
-              "Children": [
-                {
-                  "Uuid": "TestGui.Scene.Window.Content.FpsLabel",
-                  "WidgetWeight": [1.0, 1.0],
-                  "LabelText": "FPS: {0}"
-                },
-                {
-                  "Uuid": "TestGui.Scene.Window.Content.MillisecsLabel",
-                  "WidgetWeight": [1.0, 1.0],
-                  "LabelText": "Frame Time: {0}"
-                },
-                {
-                  "Uuid": "TestGui.Scene.Window.Content.MemoryLabel",
-                  "WidgetWeight": [1.0, 1.0],
-                  "LabelText": "Memory: {0}"
-                }
-              ]
+              "InstanceTemplate": "Template.Widget.EntityDescriptionWidget",
+              "WidgetModel": "TestGui.Context"
             },
             {
               "Uuid": "TestGui.Scene.Window.ButtonFooter",
@@ -220,6 +203,11 @@
         },
         {
           "StreamPath": "file://Gui/Gui.json",
+          "PersistancePointLoaded": true
+        },
+        {
+          "Uuid": "Template.Widget.EntityDescriptionWidget",
+          "StreamPath": "file://TestGui/EntityDescriptionWidget.json",
           "PersistancePointLoaded": true
         }
       ]

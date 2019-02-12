@@ -33,7 +33,8 @@ Component(Module)
     ArrayProperty(Subscription, Subscriptions)
     ArrayProperty(Dependency, Dependencies)
 
-Event(ModuleInitialized)
+Event(ModuleLoadStarted)
+Event(ModuleLoadFinished)
 
 Function(GetModuleRoot, Entity)
 Function(LoadPlazaModule, bool, StringRef libraryPath)

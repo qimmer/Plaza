@@ -5,6 +5,9 @@
 #include "Invocation.h"
 #include "FoundationModule.h"
 
+#include <Core/Binding.h>
+#include <Core/Instance.h>
+
 #include <EASTL/unordered_map.h>
 #include <EASTL/string.h>
 #include <Core/Debug.h>
@@ -75,6 +78,22 @@ LocalFunction(Load, void, Entity persistancePoint) {
 
     SetPersistancePointLoading(persistancePoint, false);
 
+    u32 numLoading = 0;
+    for_entity(persistancePoint, data, PersistancePoint, {
+        if(data->PersistancePointLoading) {
+            numLoading++;
+        }
+    });
+
+    if(numLoading == 0) {
+        for_entity(unresolvedReference, data, UnresolvedReference, {
+            Error(unresolvedReference, "Property '%s' of entity '%s' has an unresolved uuid '%s'.",
+                  GetUuid(data->UnresolvedReferenceProperty),
+                  GetUuid(GetOwner(unresolvedReference)),
+                  data->UnresolvedReferenceUuid);
+        });
+    }
+
     StreamClose(persistancePoint);
 }
 
@@ -119,7 +138,7 @@ LocalFunction(OnPersistancePointSavingChanged, void, Entity persistancePoint, bo
         });
 
         if(!IsEntityValid(serializer)) {
-            Log(persistancePoint, LogSeverity_Error, "Save failed. No compatible serialiser for mime type '%s' found when serializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
+            Log(persistancePoint, LogSeverity_Error, "Save failed. No compatible serializer for mime type '%s' found when serializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
             SetPersistancePointSaving(persistancePoint, false);
             return;
         }
@@ -162,6 +181,8 @@ BeginUnit(PersistancePoint)
         RegisterProperty(bool, PersistancePointLoading)
         RegisterProperty(bool, PersistancePointLoaded)
         RegisterProperty(bool, PersistancePointSaving)
+
+        SetIgnoreInstantiation(component, true);
 
         RegisterBase(Stream)
     EndComponent()

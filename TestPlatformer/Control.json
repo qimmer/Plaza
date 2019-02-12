@@ -19,6 +19,17 @@
             ],
             "MovementVelocity": "{MathResult@Platformer.Control.Camera.SpeedMultiplier}",
             "MovementTransform": "Platformer.CurrentLevel.Scene.Camera"
+        },
+        {
+            "Uuid": "Platformer.Control.Player",
+            "Children": [
+                {
+                    "Uuid": "Platformer.Control.Player.VelocitySplit",
+                    "VectorSplitX": "{MathResult@Platformer.Input.PlayerHorizontal}",
+                    "VectorSplitY": 0.0,
+                    "VectorSplitZ": 0.0
+                }
+            ]
         }
     ]
 }

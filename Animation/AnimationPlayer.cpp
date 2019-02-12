@@ -18,27 +18,33 @@ struct AnimationPlayerLayer {
 struct AnimationPlayer {
 };
 
-LocalFunction(OnElapsedChanged, void, Entity stopWatch, double oldElapsed, double newElapsed) {
-    auto deltaTime = newElapsed - oldElapsed;
+static inline void EvaluateLayer(Entity animationPlayer, Entity layer, AnimationPlayerLayer *layerData, double deltaTime) {
+    auto newTime = layerData->AnimationPlayerLayerTime;
+    newTime += deltaTime * layerData->AnimationPlayerLayerSpeed;
+    SetAnimationPlayerLayerTime(layer, newTime);
+
+    for_children(track, AnimationTracks, GetAnimationPlayerLayerAnimation(layer), {
+        auto value = EvaluateAnimationFrame(track, newTime, layerData->AnimationPlayerLayerLooping);
+        if(!value.type) continue;
+
+        auto property = GetAnimationTrackProperty(track);
+        value = Cast(value, GetPropertyType(property));
+        SetPropertyValue(property, animationPlayer, value);
+    });
+}
+
+LocalFunction(OnUpdateAnimation, void) {
+    auto deltaTime = GetStopWatchElapsedSeconds(StopWatchOf_Animation());
+    SetStopWatchElapsedSeconds(StopWatchOf_Animation(), 0.0);
 
     #pragma omp parallel
     for_entity_parallel(animationPlayer, playerData, AnimationPlayer, {
-        if(!GetAppRootActive(GetAppNodeRoot(animationPlayer))) continue;
+        if(!IsEntityValid(GetAppNodeRoot(animationPlayer))) continue;
 
         for_children(layer, AnimationPlayerLayers, animationPlayer, {
             auto layerData = GetAnimationPlayerLayerData(layer);
             if(layerData->AnimationPlayerLayerSpeed != 0.0f) {
-                auto newTime = layerData->AnimationPlayerLayerTime;
-                newTime += deltaTime * layerData->AnimationPlayerLayerSpeed;
-                SetAnimationPlayerLayerTime(layer, newTime);
-
-                for_children(track, AnimationTracks, GetAnimationPlayerLayerAnimation(layer), {
-                    auto value = EvaluateAnimationFrame(track, newTime, layerData->AnimationPlayerLayerLooping);
-
-                    auto property = GetAnimationTrackProperty(track);
-                    value = Cast(value, GetPropertyType(property));
-                    SetPropertyValue(property, animationPlayer, value);
-                });
+                EvaluateLayer(animationPlayer, layer, layerData, deltaTime);
             }
         });
     });
@@ -58,5 +64,8 @@ BeginUnit(AnimationPlayer)
         RegisterArrayProperty(AnimationPlayerLayer, AnimationPlayerLayers)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StopWatchElapsedSeconds()), OnElapsedChanged, GetAnimationStopWatch(module))
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnUpdateAnimation, AppLoopOf_Animation())
+
+    SetAppLoopOrder(AppLoopOf_Animation(), AppLoopOrder_Update);
+    SetStopWatchRunning(StopWatchOf_Animation(), true);
 EndUnit()

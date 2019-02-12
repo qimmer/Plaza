@@ -3,7 +3,7 @@ project(File)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Animation Animation.cpp Animation.h AnimationPlayer.cpp AnimationPlayer.h AnimationModule.cpp AnimationModule.h)
+add_library(Animation Animation.cpp Animation.h AnimationPlayer.cpp AnimationPlayer.h AnimationModule.cpp AnimationModule.h Transition.cpp Transition.h)
 
 target_include_directories(Animation PUBLIC "..")
 target_link_libraries(Animation Core Foundation)

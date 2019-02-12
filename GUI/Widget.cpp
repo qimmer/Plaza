@@ -14,95 +14,21 @@
 #include <Rendering/Texture2D.h>
 #include <Core/Identification.h>
 #include <Foundation/Invalidation.h>
+#include <Animation/Transition.h>
+#include <Json/NativeUtils.h>
+#include <Scene/Scene.h>
+
 #include "Widget.h"
 #include "Font.h"
 
 #include <cglm/cglm.h>
 
-struct WidgetVertex {
-    v3f Position, Normal;
-    v2f TexCoord, Alignment;
-};
-
-static void UpdateChildrenLayout(Entity parentWidget) {
-    auto parentData = GetWidgetData(parentWidget);
-
-    if(parentData->WidgetChildLayout == WidgetChildLayout_Manual) return;
-
-    u32 numChildWidgets = 0;
-    auto childWidgets = GetChildren(parentWidget, &numChildWidgets);
-
-    v2f weightSum = {0.0f, 0.0f};
-    v2i fixedSum = {0, 0};
-    for(auto i = 0; i < numChildWidgets; ++i) {
-        auto childWidget = childWidgets[i];
-        if(!HasComponent(childWidget, ComponentOf_Widget())) continue;
-
-        auto childData = GetWidgetData(childWidget);
-
-        if(childData->WidgetWeight.x != 0.0f) {
-            weightSum.x += childData->WidgetWeight.x;
-        } else {
-            fixedSum.x += childData->WidgetMinimumSize.x;
-        }
-
-        if(childData->WidgetWeight.y != 0.0f) {
-            weightSum.y += childData->WidgetWeight.y;
-        } else {
-            fixedSum.y += childData->WidgetMinimumSize.y;
-        }
-    }
-
-    v2i weightedSize = {
-        parentData->WidgetSize.x - (parentData->WidgetPadding.x*2) - fixedSum.x,
-        parentData->WidgetSize.y - (parentData->WidgetPadding.y*2) - fixedSum.y
-    };
-    v2i position = {parentData->WidgetPadding.x, parentData->WidgetPadding.y};
-
-    for(auto i = 0; i < numChildWidgets; ++i) {
-        auto childWidget = childWidgets[i];
-
-        if(!HasComponent(childWidget, ComponentOf_Widget())) continue;
-
-        auto childData = GetWidgetData(childWidget);
-
-        SetPosition2D(childWidget, {
-            (float)position.x,
-            (float)position.y
-        });
-        SetDistance2D(childWidget, -1.0f);
-
-        v2i newSize;
-        if(childData->WidgetWeight.x == 0.0f) {
-            newSize.x = childData->WidgetMinimumSize.x;
-        } else {
-            newSize.x = s32(weightedSize.x * (childData->WidgetWeight.x / weightSum.x));
-        }
-
-        if(childData->WidgetWeight.y == 0.0f) {
-            newSize.y = childData->WidgetMinimumSize.y;
-        } else {
-            newSize.y = s32(weightedSize.y * (childData->WidgetWeight.y / weightSum.y));
-        }
-
-        if(parentData->WidgetChildLayout == WidgetChildLayout_Horizontal) {
-            position.x += newSize.x;
-            newSize.y = parentData->WidgetSize.y - (parentData->WidgetPadding.y*2);
-        } else {
-            position.y += newSize.y;
-            newSize.x = parentData->WidgetSize.x - (parentData->WidgetPadding.x*2);
-        }
-
-        SetWidgetSize(childWidget, newSize);
-    }
-}
-
 static void UpdateWidgetBounds(Entity widget) {
-    auto widgetSize = GetWidgetSize(widget);
+    auto widgetSize = GetSize2D(widget);
     auto globalMat = GetTransformGlobalMatrix(widget);
 
     v4f localMin = { 0.0f, 0.0f, 0.0f, 1.0f };
-    v4f localMax = { (float)widgetSize.x, (float)widgetSize.y, 0.0f, 1.0f };
+    v4f localMax = { widgetSize.x, widgetSize.y, 0.0f, 1.0f };
 
     v4f globalMin, globalMax;
 
@@ -113,21 +39,9 @@ static void UpdateWidgetBounds(Entity widget) {
     SetRenderableAABBMax(widget, {globalMax.x, globalMax.y, globalMax.z});
 }
 
-LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOwner) {
-    if(HasComponent(newOwner, ComponentOf_Widget())) {
-        UpdateChildrenLayout(newOwner);
-    }
-}
+LocalFunction(OnSize2DChanged, void, Entity widget, v2i oldSize, v2i newSize) {
+    if(!HasComponent(widget, ComponentOf_Widget())) return;
 
-LocalFunction(OnChildSizeChanged, void, Entity entity) {
-    auto owner = GetOwner(entity);
-    if(HasComponent(owner, ComponentOf_Widget())) {
-        UpdateChildrenLayout(owner);
-    }
-}
-
-LocalFunction(OnWidgetSizeChanged, void, Entity widget, v2i oldSize, v2i newSize) {
-    UpdateChildrenLayout(widget);
     UpdateWidgetBounds(widget);
 }
 
@@ -139,7 +53,7 @@ LocalFunction(OnTransformGlobalChanged, void, Entity widget) {
 
 LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
     auto borderWidth = GetWidgetMeshFixedBorderWidth(mesh);
-    auto texture = GetWidgetMeshTexture(mesh);
+    auto texture = GetWidgetMeshEnabledTexture(mesh);
     auto textureSize = GetSubTexture2DSize(texture);
 
     v2i borderSize = {borderWidth, borderWidth};
@@ -232,7 +146,7 @@ LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
     SetSubMeshNumVertices(subMesh, 4*4);
 }
 
-LocalFunction(OnValidate, void, Entity component) {
+LocalFunction(OnValidateMeshes, void, Entity component) {
     for_entity(mesh, meshData, WidgetMesh, {
         if(IsDirty(mesh)) {
             RebuildWidgetMesh(mesh);
@@ -242,97 +156,93 @@ LocalFunction(OnValidate, void, Entity component) {
 
 LocalFunction(OnWidgetMeshAdded, void, Entity component, Entity entity) {
     SetNumMeshSubMeshes(entity, 1);
-    auto name = GetUuid(GetMeshSubMeshes(entity, NULL)[0]);
     Invalidate(entity);
 }
 
-LocalFunction(OnWidgetStateChanged, void, Entity widget) {
-    auto data = GetInteractableWidgetData(widget);
+LocalFunction(OnStateChanged, void, Entity entity) {
+    auto data = GetWidgetData(entity);
 
-    auto subMesh = data->WidgetEnabledSubMesh;
+    v2f newState = {
+        data->WidgetDisabled ? 1.0f : 0.0f,
+        data->WidgetSelected ? 1.0f : 0.0f
+    };
 
-    if(data->WidgetFocused && IsEntityValid(data->WidgetFocusedSubMesh)) {
-        subMesh = data->WidgetFocusedSubMesh;
-    }
+    Transition(entity, PropertyOf_WidgetState(), MakeVariant(v2f, newState), GetWidgetStateTransitionDuration(entity));
+}
 
-    if(data->WidgetHovered && IsEntityValid(data->WidgetHoveredSubMesh)) {
-        subMesh = data->WidgetHoveredSubMesh;
-    }
+LocalFunction(OnInteractableStateChanged, void, Entity entity) {
+    auto data = GetInteractableWidgetData(entity);
 
-    if(data->WidgetClicked && IsEntityValid(data->WidgetClickedSubMesh)) {
-        subMesh = data->WidgetClickedSubMesh;
-    }
+    v3f newState = {
+        data->WidgetHovered ? 1.0f : 0.0f,
+        data->WidgetFocused ? 1.0f : 0.0f,
+        data->WidgetClicked ? 1.0f : 0.0f,
+    };
 
-    if(data->WidgetDisabled && IsEntityValid(data->WidgetDisabledSubMesh)) {
-        subMesh = data->WidgetDisabledSubMesh;
-    }
-
-    if(IsEntityValid(subMesh)) {
-        SetRenderableSubMesh(widget, subMesh);
-    }
+    Transition(entity, PropertyOf_WidgetInteractionState(), MakeVariant(v3f, newState), GetWidgetStateTransitionDuration(entity));
 }
 
 BeginUnit(Widget)
-    BeginEnum(WidgetChildLayout, false)
-        RegisterFlag(WidgetChildLayout_Manual)
-        RegisterFlag(WidgetChildLayout_Horizontal)
-        RegisterFlag(WidgetChildLayout_Vertical)
-    EndEnum()
+    BeginComponent(Rect2D)
+        RegisterBase(Transform)
+        RegisterProperty(v2f, Size2D)
+    EndComponent()
 
     BeginComponent(Widget)
+        RegisterBase(Rect2D)
         RegisterBase(Renderable)
-        RegisterProperty(v2i, WidgetMinimumSize)
-        RegisterProperty(v2i, WidgetSize)
-        RegisterProperty(v2f, WidgetWeight)
-        RegisterPropertyEnum(u8, WidgetChildLayout, WidgetChildLayout)
-        RegisterProperty(v2i, WidgetPadding)
-        RegisterProperty(v2i, WidgetSpacing)
+        RegisterProperty(Entity, WidgetModel)
+        RegisterProperty(float, WidgetStateTransitionDuration)
+        RegisterProperty(v2f, WidgetState)
+        RegisterProperty(bool, WidgetDisabled)
+        RegisterProperty(bool, WidgetSelected)
+
+        ComponentTemplate({
+            "RenderableMaterial": "Gui.Material"
+        })
     EndComponent()
 
     BeginComponent(InteractableWidget)
         RegisterBase(Widget)
+        RegisterProperty(v3f, WidgetInteractionState)
         RegisterProperty(v2i, WidgetInteractionPoint)
         RegisterProperty(bool, WidgetHovered)
         RegisterProperty(bool, WidgetFocused)
         RegisterProperty(bool, WidgetClicked)
-        RegisterProperty(bool, WidgetDisabled)
-        RegisterReferenceProperty(SubMesh, WidgetHoveredSubMesh)
-        RegisterReferenceProperty(SubMesh, WidgetFocusedSubMesh)
-        RegisterReferenceProperty(SubMesh, WidgetClickedSubMesh)
-        RegisterReferenceProperty(SubMesh, WidgetDisabledSubMesh)
-        RegisterReferenceProperty(SubMesh, WidgetEnabledSubMesh)
     EndComponent()
 
     BeginComponent(WidgetMesh)
         RegisterBase(MeshBuilder)
-        RegisterReferenceProperty(SubTexture2D, WidgetMeshTexture)
+        RegisterReferenceProperty(SubTexture2D, WidgetMeshEnabledTexture)
+        RegisterReferenceProperty(SubTexture2D, WidgetMeshDisabledTexture)
+        RegisterReferenceProperty(SubTexture2D, WidgetMeshSelectedTexture)
         RegisterProperty(u16, WidgetMeshFixedBorderWidth)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMinimumSize()), OnChildSizeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetWeight()), OnChildSizeChanged, 0)
+    BeginComponent(InteractableWidgetMesh)
+        RegisterBase(WidgetMesh)
+        RegisterReferenceProperty(SubTexture2D, WidgetMeshHoveredTexture)
+        RegisterReferenceProperty(SubTexture2D, WidgetMeshFocusedTexture)
+        RegisterReferenceProperty(SubTexture2D, WidgetMeshClickedTexture)
+    EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetSize()), OnWidgetSizeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetPadding()), OnWidgetSizeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetSpacing()), OnWidgetSizeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetChildLayout()), OnWidgetSizeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
-
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Size2D()), OnSize2DChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TransformGlobalMatrix()), OnTransformGlobalChanged, 0)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshFixedBorderWidth()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshTexture()), Invalidate, 0)
-    RegisterSubscription(EventOf_Validate(), OnValidate, ComponentOf_Mesh())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshEnabledTexture()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshDisabledTexture()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshSelectedTexture()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshHoveredTexture()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshFocusedTexture()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshClickedTexture()), Invalidate, 0)
 
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetDisabled()), OnStateChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetSelected()), OnStateChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetHovered()), OnInteractableStateChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetFocused()), OnInteractableStateChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClicked()), OnInteractableStateChanged, 0)
+
+    RegisterSubscription(EventOf_Validate(), OnValidateMeshes, ComponentOf_Mesh())
     RegisterSubscription(EventOf_EntityComponentAdded(), OnWidgetMeshAdded, ComponentOf_WidgetMesh())
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetHovered()), OnWidgetStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetFocused()), OnWidgetStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClicked()), OnWidgetStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetDisabled()), OnWidgetStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetHoveredSubMesh()), OnWidgetStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetFocusedSubMesh()), OnWidgetStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClickedSubMesh()), OnWidgetStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetDisabledSubMesh()), OnWidgetStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetEnabledSubMesh()), OnWidgetStateChanged, 0)
 EndUnit()

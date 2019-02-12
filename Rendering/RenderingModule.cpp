@@ -65,13 +65,13 @@ BeginUnit(Rendering)
     ModuleData(
             {
                 "FileTypes": [
-                    { "FileTypeExtension": ".vs", "FileTypeMimeType" : "application/vertex-shader" },
-                    { "FileTypeExtension": ".ps", "FileTypeMimeType" : "application/pixel-shader" },
-                    { "FileTypeExtension": ".var", "FileTypeMimeType" : "application/decl-shader" },
-                    { "FileTypeExtension": ".vsb", "FileTypeMimeType" : "application/binary-vertex-shader" },
-                    { "FileTypeExtension": ".psb", "FileTypeMimeType" : "application/binary-pixel-shader" },
-                    { "FileTypeExtension": ".vtb", "FileTypeMimeType" : "application/vertex-buffer" },
-                    { "FileTypeExtension": ".idb", "FileTypeMimeType" : "application/index-buffer" }
+                    { "Uuid": "FileType.VertexShader", "FileTypeExtension": ".vs", "FileTypeMimeType" : "application/vertex-shader" },
+                    { "Uuid": "FileType.PixelShader", "FileTypeExtension": ".ps", "FileTypeMimeType" : "application/pixel-shader" },
+                    { "Uuid": "FileType.DeclShader", "FileTypeExtension": ".var", "FileTypeMimeType" : "application/decl-shader" },
+                    { "Uuid": "FileType.BinaryVertexShader", "FileTypeExtension": ".vsb", "FileTypeMimeType" : "application/binary-vertex-shader" },
+                    { "Uuid": "FileType.BinaryPixelShader", "FileTypeExtension": ".psb", "FileTypeMimeType" : "application/binary-pixel-shader" },
+                    { "Uuid": "FileType.VertexBuffer", "FileTypeExtension": ".vtb", "FileTypeMimeType" : "application/vertex-buffer" },
+                    { "Uuid": "FileType.IndexBuffer", "FileTypeExtension": ".idb", "FileTypeMimeType" : "application/index-buffer" }
                 ]
             }
     );

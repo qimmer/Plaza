@@ -6,6 +6,7 @@
         {
           "Uuid": "Platformer.Templates.Level.Scene",
           "$components": ["Component.Scene"],
+          "CollisionSceneGravity": [0.0, -10.0, 0.0],
           "Children": [
             {
               "Uuid": "Platformer.Templates.Level.Scene.Camera",

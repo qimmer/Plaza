@@ -14,6 +14,7 @@
 #include "Strings.h"
 #include "Algorithms.h"
 #include "Property.h"
+#include "Instance.h"
 
 
 #include <malloc.h>

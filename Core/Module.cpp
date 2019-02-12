@@ -188,7 +188,8 @@ BeginUnit(Module)
     RegisterFunction(GetModuleRoot)
     RegisterFunction(LoadPlazaModule)
 
-    RegisterEvent(ModuleInitialized)
+    RegisterEvent(ModuleLoadStarted)
+    RegisterEvent(ModuleLoadFinished)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ModuleLoaderLibraryPath()), OnModuleLoaderLibraryPathChanged, 0)
 EndUnit()

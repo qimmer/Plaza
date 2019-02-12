@@ -4,7 +4,7 @@
             "Uuid": "Platformer.TileAtlases.MarioTiles",
             "StreamPath": "asset://Assets/Tilemaps/MarioTiles.png",
             "PersistancePointLoaded": true,
-            "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT",
+            "TextureFlag": "TextureFlag_MAG_POINT",
             "TileAtlasDimensions": [
                 33,
                 28
@@ -27,22 +27,41 @@
                 {
                     "Uuid": "Platformer.TileAtlases.MarioTiles.Question[1]",
                     "TileFrameOffset": [
-                        24,
+                        25,
                         0
                     ]
                 },
                 {
                     "Uuid": "Platformer.TileAtlases.MarioTiles.Question[2]",
                     "TileFrameOffset": [
-                        25,
+                        26,
                         0
                     ]
                 },
                 {
                     "Uuid": "Platformer.TileAtlases.MarioTiles.Question[3]",
                     "TileFrameOffset": [
-                        26,
+                        27,
                         0
+                    ]
+                }
+            ]
+        },
+        {
+            "Uuid": "Platformer.TileAtlases.Mario",
+            "StreamPath": "asset://Assets/Tilemaps/Mario.png",
+            "PersistancePointLoaded": true,
+            "TextureFlag": "TextureFlag_MAG_POINT",
+            "TextureAtlasSubTextures": [
+                {
+                    "Uuid": "Platformer.TileAtlases.Mario.Idle",
+                    "SubTexture2DOffset": [
+                        80,
+                        34
+                    ],
+                    "SubTexture2DSize": [
+                        16,
+                        16
                     ]
                 }
             ]

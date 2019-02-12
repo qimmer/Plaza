@@ -22,16 +22,11 @@ struct FontVertex {
     v2f Position, Uv;
 };
 
-struct Label {
-    Entity LabelFont;
-    StringRef LabelText;
-    v2f LabelAlignment;
-    Entity LabelMesh;
-};
-
-struct LabelArgument {
-    Variant LabelArgumentValue;
-};
+u32 GetFontGlyphData(Entity font,
+                     StringRef text,
+                     v2f origin,
+                     FontVertex *vertices,
+                     u32 maxVertices);
 
 Unit(Font)
     Component(Glyph)
@@ -44,15 +39,5 @@ Unit(Font)
     Component(Font)
         Property(StringRef, FontCharacters)
         ArrayProperty(Glyph, FontGlyphs)
-
-    Component(LabelArgument)
-        Property(Variant, LabelArgumentValue)
-
-    Component(Label)
-        ReferenceProperty(Font, LabelFont)
-        Property(StringRef, LabelText)
-        ArrayProperty(LabelArgument, LabelArguments)
-        Property(v2f, LabelAlignment)
-        ChildProperty(Mesh, LabelMesh)
 
 #endif //PLAZA_FONT_H

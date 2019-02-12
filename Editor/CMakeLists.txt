@@ -3,15 +3,15 @@ project(Editor)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Editor MainMenu.cpp MainMenu.h EditorModule.cpp EditorModule.h Editors/CodeEditor.cpp Editors/CodeEditor.h ToolWindows/EntityExplorer.cpp ToolWindows/EntityExplorer.h Selection.cpp Selection.h ToolWindows/PropertyEditor.cpp ToolWindows/PropertyEditor.h EditorStyle.cpp EditorStyle.h Editors/SceneEditor.cpp Editors/SceneEditor.h Tools/FirstPersonCameraTool.cpp Tools/FirstPersonCameraTool.h EditorStandardCommands.cpp EditorStandardCommands.h Editors/Texture2DViewer.cpp Editors/Texture2DViewer.h EditorContext.cpp EditorContext.h EditorView.cpp EditorView.h MenuItem.cpp MenuItem.h)
+add_library(Editor Editor.cpp Editor.h)
 
-target_include_directories(Editor PUBLIC "..")
+target_include_directories(Editor PUBLIC ".." ".")
+target_link_libraries(Editor Foundation Core Gui Rendering Widgets)
 
-target_link_libraries(Editor Core Foundation Rendering ImGui Scene Scene3D)
-
-INSTALL(DIRECTORY Assets DESTINATION bin)
+if(MSVC)
+    target_sources(Editor PRIVATE Editor.def)
+endif()
 
 if(BUILD_SHARED_LIBS)
-install (TARGETS Editor RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
-
-    endif()
+    install (TARGETS Editor RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
+endif()

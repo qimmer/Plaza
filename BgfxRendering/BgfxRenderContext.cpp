@@ -80,7 +80,7 @@ struct BgfxRenderContext {
 static u32 NumContexts = 0, Frame = 0;
 static Entity PrimaryContext = 0;
 
-bgfx::UniformHandle SubTexture2DOffsetSizeUniform;
+bgfx::UniformHandle u_uvOffsetSizePerSampler;
 
 static void UpdateTextureReadBack(Entity readBack, TextureReadBack *data) {
     auto bgfxData = GetBgfxTextureReadBackData(readBack);
@@ -241,7 +241,10 @@ static void ResetContext(Entity entity) {
         if(entity == PrimaryContext) {
             bgfx::reset(size.x, size.y, (vsync ? BGFX_RESET_VSYNC : 0) + (fullscreen ? BGFX_RESET_FULLSCREEN : 0));
         } else {
-            bgfx::destroy(data->fb);
+            if(bgfx::isValid(data->fb)) {
+                bgfx::destroy(data->fb);
+            }
+
             data->fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
         }
     }
@@ -264,17 +267,18 @@ LocalFunction(OnContextTitleChanged, void, Entity entity, StringRef before, Stri
 }
 
 LocalFunction(OnGlfwWindowResized, void, GLFWwindow *window, int w, int h) {
-    SetRenderTargetSize(*(Entity*)glfwGetWindowUserPointer(window), {w, h});
+    auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
+    SetRenderTargetSize(entity, {w, h});
 }
 
 LocalFunction(OnCharPressed, void, GLFWwindow *window, unsigned int c) {
-    auto entity = *(Entity*)glfwGetWindowUserPointer(window);
+    auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
 
     SetInputContextLastCharacter(entity, c);
 }
 
 LocalFunction(OnKey, void, GLFWwindow *window, int key, int scanCode, int action, int mods) {
-    auto context = *(Entity*)glfwGetWindowUserPointer(window);
+    auto context = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
 
     if(action == GLFW_PRESS) {
         SetInputStateValueByKey(context, key, 1.0f);
@@ -286,32 +290,38 @@ LocalFunction(OnKey, void, GLFWwindow *window, int key, int scanCode, int action
 }
 
 LocalFunction(OnMouseScroll, void, GLFWwindow *window, double x, double y) {
-    SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSE_SCROLL_DOWN, fmaxf(-y, 0.0f));
-    SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSE_SCROLL_UP, fmaxf(y, 0.0f));
-    SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSE_SCROLL_LEFT, fmaxf(-x, 0.0f));
-    SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSE_SCROLL_RIGHT, fmaxf(x, 0.0f));
+    auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
+    
+    SetInputStateValueByKey(entity, MOUSE_SCROLL_DOWN, fmaxf(-y, 0.0f));
+    SetInputStateValueByKey(entity, MOUSE_SCROLL_UP, fmaxf(y, 0.0f));
+    SetInputStateValueByKey(entity, MOUSE_SCROLL_LEFT, fmaxf(-x, 0.0f));
+    SetInputStateValueByKey(entity, MOUSE_SCROLL_RIGHT, fmaxf(x, 0.0f));
 }
 
 LocalFunction(OnMouseMove, void, GLFWwindow *window, double x, double y) {
-    auto cp = GetInputContextCursorPosition(*(Entity*)glfwGetWindowUserPointer(window));
+    auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
+
+    auto cp = GetInputContextCursorPosition(entity);
     auto dx = x - cp.x;
     auto dy = y - cp.y;
 
-    SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSE_DOWN, fmaxf(dy, 0.0f));
-    SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSE_UP, fmaxf(-dy, 0.0f));
-    SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSE_LEFT, fmaxf(-dx, 0.0f));
-    SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSE_RIGHT, fmaxf(dx, 0.0f));
+    SetInputStateValueByKey(entity, MOUSE_DOWN, fmaxf(dy, 0.0f));
+    SetInputStateValueByKey(entity, MOUSE_UP, fmaxf(-dy, 0.0f));
+    SetInputStateValueByKey(entity, MOUSE_LEFT, fmaxf(-dx, 0.0f));
+    SetInputStateValueByKey(entity, MOUSE_RIGHT, fmaxf(dx, 0.0f));
 
-    SetInputContextCursorPosition(*(Entity*)glfwGetWindowUserPointer(window), {(int)x, (int)y});
+    SetInputContextCursorPosition(entity, {(int)x, (int)y});
 }
 
 LocalFunction(OnMouseButton, void, GLFWwindow *window, int button, int action, int mods) {
+    auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
+
     if(action == GLFW_PRESS) {
-        SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSEBUTTON_0 + button, 1.0f);
+        SetInputStateValueByKey(entity, MOUSEBUTTON_0 + button, 1.0f);
     }
 
     if(action == GLFW_RELEASE) {
-        SetInputStateValueByKey(*(Entity*)glfwGetWindowUserPointer(window), MOUSEBUTTON_0 + button, 0.0f);
+        SetInputStateValueByKey(entity, MOUSEBUTTON_0 + button, 0.0f);
     }
 }
 
@@ -330,7 +340,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
     auto window = glfwCreateWindow(Max(size.x, 32), Max(size.y, 32), title ? title : "", NULL, NULL);
     auto monitor = glfwGetPrimaryMonitor();
     glfwSetWindowSizeCallback(window, OnGlfwWindowResized);
-    glfwSetWindowUserPointer(window, (void*)&(((Entity*)data)[-2]));
+    glfwSetWindowUserPointer(window, (void*)(size_t)GetEntityIndex(entity));
     glfwSetCharCallback(window, OnCharPressed);
     glfwSetKeyCallback(window, OnKey);
     glfwSetScrollCallback(window, OnMouseScroll);
@@ -359,7 +369,6 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
         pd.context = NULL;
         pd.backBuffer = NULL;
         pd.backBufferDS = NULL;
-        pd.session = NULL;
         bgfx::setPlatformData(pd);
 
         bgfx::Init init;
@@ -378,7 +387,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
 
         bgfx::reset(size.x, size.y);
 
-        SubTexture2DOffsetSizeUniform = bgfx::createUniform("u_uvOffsetSizePerSampler", bgfx::UniformType::Vec4, 8);
+        u_uvOffsetSizePerSampler = bgfx::createUniform("u_uvOffsetSizePerSampler", bgfx::UniformType::Vec4, 8);
 
         PrimaryContext = entity;
 
@@ -403,7 +412,7 @@ LocalFunction(OnBgfxRenderContextRemoved, void, Entity component, Entity entity)
             SetExtensionDisabled(extension, true);
         });
 
-        bgfx::destroy(SubTexture2DOffsetSizeUniform);
+        bgfx::destroy(u_uvOffsetSizePerSampler);
 
         bgfx::shutdown();
     }

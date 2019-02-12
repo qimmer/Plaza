@@ -31,7 +31,7 @@
     },
     {
       "Uuid": "DebuGui.MainFrame",
-      "WidgetSize": [800, 600],
+      "Size2D": [800, 600],
       "WidgetLayout": "WidgetLayout_Vertical",
       "Children": [
         {

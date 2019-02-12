@@ -7,23 +7,39 @@
 
 #include <Core/NativeUtils.h>
 
+struct Bindable {};
+
+struct BindingListener {
+    Entity BindingListenerEntity, BindingListenerProperty, BindingListenerIndirection;
+};
+
+struct Binding {
+    Entity BindingTargetProperty, BindingSourceEntity;
+};
+
+struct BindingIndirection {
+    Entity BindingIndirectionProperty;
+};
+
 Unit(Binding)
+    Component(BindingListener)
+        ReferenceProperty(Property, BindingListenerProperty)
+        Property(Entity, BindingListenerEntity)
+        ReferenceProperty(BindingIndirection, BindingListenerIndirection)
+
+    Component(BindingIndirection)
+        ReferenceProperty(Property, BindingIndirectionProperty)
+
     Component(Binding)
-        Property(Entity, BindingProperty)
-        Property(Entity, BindingTargetEntity)
-        Property(Entity, BindingTargetProperty)
-        ArrayProperty(ValueConverter, BindingConverters)
-
-    Component(ValueConverterArgument)
-        Property(Variant, ValueConverterArgumentValue)
-
-    Component(ValueConverter)
-        ReferenceProperty(Function, ValueConverterFunction)
-        ArrayProperty(ValueConverterArgument, ValueConverterArguments)
+        ArrayProperty(BindingListener, BindingListeners) // Last source contains source with final value, others are sub-entities/path elements
+        ReferenceProperty(Property, BindingTargetProperty)
+        Property(Entity, BindingSourceEntity)
+        ArrayProperty(BindingIndirection, BindingIndirections)
 
     Component(Bindable)
         ArrayProperty(Binding, Bindings)
 
     Function(Bind, bool, Entity entity, Entity property, StringRef sourceBindingString)
+    Function(GetBinding, Entity, Entity entity, Entity property)
 
 #endif //PLAZA_BINDING_H

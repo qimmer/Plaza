@@ -191,7 +191,7 @@ API_EXPORT Entity FindEntityByPath(StringRef path) {
 
 
 API_EXPORT Entity FindEntityByUuid(StringRef uuid) {
-    if(strlen(uuid) == 0) {
+    if(!uuid || strlen(uuid) == 0) {
         return 0;
     }
 
@@ -286,11 +286,6 @@ API_EXPORT void SetUuid(Entity entity, StringRef value) {
     value = Intern(value);
 
     auto data = GetIdentificationData(entity);
-
-    if(!value || !strlen(value)) {
-        Log(entity, LogSeverity_Error, "Uuid '%s' is invalid. Uuid has not changed.", value);
-        return;
-    }
 
     if(data->Uuid != value) {
         auto newUuidIt = uuidTable.find(value);

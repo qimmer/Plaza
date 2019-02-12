@@ -23,8 +23,11 @@ static Entity handleGet(StringRef uuid, Entity request, Entity response, u8 dept
     auto requestedEntity = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(requestedEntity)) {
-        Verbose(Verbose_Rest, "GET: Entity not found: %s", uuid);
-		return FindResponseCode(404);
+        requestedEntity = strtoull(uuid, NULL, 10);
+	    if(!IsEntityValid(requestedEntity)) {
+            Verbose(Verbose_Rest, "GET: Entity not found: %s", uuid);
+            return FindResponseCode(404);
+	    }
 	}
 
     SetStreamPath(responseStream, "memory://response.json");
@@ -44,8 +47,11 @@ static Entity handlePut(StringRef uuid, Entity request, Entity response) {
     auto requestedEntity = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(requestedEntity)) {
-		Verbose(Verbose_Rest, "PUT: Entity not found: %s", uuid);
-		return FindResponseCode(404);
+        requestedEntity = strtoull(uuid, NULL, 10);
+        if(!IsEntityValid(requestedEntity)) {
+            Verbose(Verbose_Rest, "PUT: Entity not found: %s", uuid);
+            return FindResponseCode(404);
+        }
 	}
 
     if(!DeserializeJson(requestStream, requestedEntity)) {
@@ -60,8 +66,11 @@ static Entity handlePost(StringRef uuid, StringRef propertyName, Entity request,
     auto parent = FindEntityByUuid(uuid);
 
     if(!IsEntityValid(parent)) {
-        Verbose(Verbose_Rest, "POST: Entity not found: %s", uuid);
-        return FindResponseCode(404);
+        parent = strtoull(uuid, NULL, 10);
+        if(!IsEntityValid(parent)) {
+            Verbose(Verbose_Rest, "POST: Entity not found: %s", uuid);
+            return FindResponseCode(404);
+        }
     }
 
     auto property = FindEntityByName(ComponentOf_Property(), propertyName);
@@ -97,8 +106,11 @@ static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
     auto existing = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(existing)) {
-        Verbose(Verbose_Rest, "DELETE: Entity not found: %s", uuid);
-		return FindResponseCode(404);
+        existing = strtoull(uuid, NULL, 10);
+        if(!IsEntityValid(existing)) {
+            Verbose(Verbose_Rest, "DELETE: Entity not found: %s", uuid);
+            return FindResponseCode(404);
+        }
 	}
 
 	auto parent = GetOwner(existing);
