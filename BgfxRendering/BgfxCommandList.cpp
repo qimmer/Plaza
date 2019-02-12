@@ -39,7 +39,9 @@
 #include <Rendering/Texture.h>
 #include <Core/Debug.h>
 
-extern bgfx::UniformHandle SubTexture2DOffsetSizeUniform;
+extern bgfx::UniformHandle u_uvOffsetSizePerSampler;
+
+static v4f uvOffsetSizePerSampler[8];
 
 struct BgfxCommandList {
 };
@@ -104,11 +106,9 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
             texture = GetOwner(texture); // Get actual texture (atlas)
             auto textureSize = GetTextureSize2D(texture);
 
-            v4f value = {(float)offset.x / textureSize.x, (float)offset.y / textureSize.y, (float)size.x / textureSize.x, (float)size.y / textureSize.y};
-            encoder->setUniform(SubTexture2DOffsetSizeUniform, &value);
+            uvOffsetSizePerSampler[uniformData->UniformSamplerIndex] = {(float)offset.x / textureSize.x, (float)offset.y / textureSize.y, (float)size.x / textureSize.x, (float)size.y / textureSize.y};
         } else {
-            v4f value = {0.0f, 0.0f, 1.0f, 1.0f};
-            encoder->setUniform(SubTexture2DOffsetSizeUniform, &value);
+            uvOffsetSizePerSampler[uniformData->UniformSamplerIndex] = {0.0f, 0.0f, 1.0f, 1.0f};
         }
 
         if(!HasComponent(texture, ComponentOf_Texture())) {
@@ -134,6 +134,16 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     auto worldMatrix = transformData->TransformGlobalMatrix;
 
     auto subMesh = GetRenderableSubMesh(renderable);
+
+    // Support setting submesh to a mesh and then use first submesh, just for convenience
+    if(HasComponent(subMesh, ComponentOf_Mesh())) {
+        u32 numSubMeshes = 0;
+        auto subMeshes = GetMeshSubMeshes(subMesh, &numSubMeshes);
+        if(numSubMeshes < 1) return;
+
+        subMesh = subMeshes[0];
+    }
+
     auto subMeshData = GetSubMeshData(subMesh);
 
     if(!subMeshData) return;
@@ -152,12 +162,12 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     auto indexBufferHandle = GetBgfxResourceHandle(indexBuffer);
 
     if(vertexBufferHandle == bgfx::kInvalidHandle) {
-        Error(batch, "Invalid Vertex Buffer for renderable %s", GetUuid(renderable));
+        //Error(batch, "Invalid Vertex Buffer for renderable %s", GetUuid(renderable));
         return;
     }
 
     if(subMeshData->SubMeshNumIndices && indexBufferHandle == bgfx::kInvalidHandle) {
-        Error(batch, "Invalid Index Buffer for renderable %s", GetUuid(renderable));
+        //Error(batch, "Invalid Index Buffer for renderable %s", GetUuid(renderable));
         return;
     }
 
@@ -203,6 +213,8 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     for_children(uniform, RenderPassRenderableUniforms, pass, {
         SetUniformState(uniform, renderable, encoder);
     });
+
+    encoder->setUniform(u_uvOffsetSizePerSampler, &uvOffsetSizePerSampler);
 
     encoder->submit(viewId, bgfx::ProgramHandle {programHandle}, transformData->TransformHierarchyLevel);
 }
@@ -308,7 +320,7 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
     auto batches = GetCommandListBatches(commandList, &numBatches);
 
     if(numBatches > 0) {
-        if(true) {
+        if(false) {
             #pragma omp parallel
             {
                 auto threadnum = omp_get_thread_num();

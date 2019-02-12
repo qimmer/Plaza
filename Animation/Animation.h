@@ -20,5 +20,6 @@ Unit(Animation)
         ArrayProperty(AnimationTrack, AnimationTracks)
 
     Function(EvaluateAnimationFrame, Variant, Entity animationTrack, double time, bool loop)
+    Function(Interpolate, Variant, Variant left, Variant right, float t)
 
 #endif //PLAZA_ANIMATION_H

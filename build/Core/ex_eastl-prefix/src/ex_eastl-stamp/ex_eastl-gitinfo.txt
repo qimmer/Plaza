@@ -1,3 +1,0 @@
-repository='https://github.com/electronicarts/EASTL.git'
-module=''
-tag=''

@@ -43,3 +43,9 @@ node_modules/
 \.shadercache/
 
 \.user/
+
+build/
+
+*.user
+
+CMakeSettings\.json

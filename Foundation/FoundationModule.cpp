@@ -8,6 +8,7 @@
 #include <Foundation/CommandLine.h>
 #include <Foundation/Invocation.h>
 #include <Foundation/Stream.h>
+#include <Foundation/Constant.h>
 #include <Foundation/MemoryStream.h>
 #include <Foundation/PersistancePoint.h>
 #include <Foundation/StopWatch.h>
@@ -43,6 +44,7 @@ BeginModule(Foundation)
     RegisterUnit(CommandLineArgument)
     RegisterUnit(Invocation)
     RegisterUnit(Stream)
+    RegisterUnit(Constant)
     RegisterUnit(MemoryStream)
     RegisterUnit(PersistancePoint)
     RegisterUnit(StopWatch)

@@ -18,4 +18,7 @@ Unit(AnimationPlayer)
     Component(AnimationPlayer)
         ArrayProperty(AnimationPlayerLayer, AnimationPlayerLayers)
 
+    Declare(AppLoop, Animation)
+    Declare(StopWatch, Animation)
+
 #endif //PLAZA_ANIMATIONPLAYER_H

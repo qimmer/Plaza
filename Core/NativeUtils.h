@@ -236,6 +236,11 @@ StringRef GetUniqueEntityName(Entity entity);
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         RemoveArrayPropertyElement(prop, entity, index);\
     }\
+    inline void Remove ## PROPERTYNAME ## ByValue(Entity entity, Entity value) {\
+        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
+        auto index = GetArrayPropertyIndex(prop, entity, value);\
+        RemoveArrayPropertyElement(prop, entity, index);\
+    }\
     inline u32 Get ## PROPERTYNAME ## Index(Entity entity, Entity element) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         return GetArrayPropertyIndex(prop, entity, element);\
@@ -387,69 +392,6 @@ StringRef GetUniqueEntityName(Entity entity);
     static R NAME(__VA_ARGS__)
 
 
-#define ReferenceTracker(TRACKEDPROPERTY, REFERENCEPROPERTY, REFERENCECOMPONENT, VECTORNAME) \
-    LocalFunction(On ## TRACKEDPROPERTY ## Changed, void, Entity context, Entity oldValue, Entity newValue) { \
-        auto reference = Get ## REFERENCEPROPERTY (context); \
-     \
-        if(IsEntityValid(reference)) { \
-            AddComponent(reference, ComponentOf_ ## REFERENCECOMPONENT ());\
-            auto data = Get ## REFERENCECOMPONENT (reference); \
-     \
-            for(auto i = 0; i < data->Num ## VECTORNAME; ++i) { \
-                if(data-> VECTORNAME [i] == oldValue) { \
-                    VectorRemove(data, VECTORNAME, i); \
-                    break; \
-                } \
-            } \
-     \
-            if(IsEntityValid(newValue)) { \
-                VectorAdd(data, VECTORNAME, newValue); \
-            } \
-        } \
-    } \
-     \
-    LocalFunction(On ## REFERENCEPROPERTY ## Changed, void, Entity context, Entity oldValue, Entity newValue) { \
-        auto tracked = Get ## TRACKEDPROPERTY(context); \
-     \
-        if(IsEntityValid(oldValue)) { \
-            AddComponent(oldValue, ComponentOf_ ## REFERENCECOMPONENT ());\
-            auto data = Get ## REFERENCECOMPONENT (oldValue); \
-     \
-            for(auto i = 0; i < data->Num ## VECTORNAME; ++i) { \
-                if(data-> VECTORNAME [i] == tracked) { \
-                    VectorRemove(data, VECTORNAME, i); \
-                    break; \
-                } \
-            } \
-        } \
-     \
-        if(IsEntityValid(newValue) && IsEntityValid(tracked)) { \
-            auto data = GetEvent(newValue); \
-            VectorAdd(data, VECTORNAME, newValue); \
-        } \
-    }
-
-// Definition Macros
-
-// |
-// |-+ Module
-//   |
-// === Unit 1 ===
-//   |
-//   |-+ Component 1
-//     |-- Property 1
-//     |-- Property 2
-//   |
-//   |-+ Event 1
-//     |-- Argument 1
-//     |-- Argument 2
-//   |
-//   |-- Function 1
-//   |
-// === Unit 2 ===
-//   |
-//   |-- Subscription 1
-
 #define BeginModule(NAME) \
     void __InitModule_ ## NAME(Entity module);\
     API_EXPORT Entity ModuleOf_ ## NAME () {\
@@ -463,8 +405,10 @@ StringRef GetUniqueEntityName(Entity entity);
                 SetModuleVersion(module, __DATE__ " " __TIME__);\
                 SetName(module, #NAME);\
                 AddChild(PropertyOf_Modules(), GetModuleRoot(), module, true);\
+                auto moduleVar = MakeVariant(Entity, module);\
+                FireEventFast(EventOf_ModuleLoadStarted(), 1, &moduleVar);\
                 __InitModule_ ## NAME(module);\
-                Info(module, "Loaded Module: %s", GetUuid(module));\
+                FireEventFast(EventOf_ModuleLoadFinished(), 1, &moduleVar);\
             }\
         }\
         return module;\
@@ -478,8 +422,6 @@ StringRef GetUniqueEntityName(Entity entity);
         ModuleOf_ ## MODULE (); // Reference and call module initializer
 
 #define EndModule() \
-		auto argument = MakeVariant(Entity, module);\
-        FireEventFast(EventOf_ModuleInitialized(), 1, &argument);\
     }
 
 #define BeginUnit(NAME) \
@@ -598,10 +540,6 @@ StringRef GetUniqueEntityName(Entity entity);
     SetName(function, #FUNCTION);\
     AddChild(PropertyOf_Functions(), module, function, true);
 
-#define RegisterTest(TEST) \
-    RegisterFunction(TEST)\
-    AddComponent(function, ComponentOf_Test());
-
 #define RegisterSubscription(EVENT, FUNCTION, SENDER) \
     snprintf(buffer, 1024, "%s.%s.Subscriptions.%s.%s", GetUuid(module), unitName, #EVENT, #FUNCTION);\
     subscription = AddSubscriptions(module);\
@@ -629,16 +567,6 @@ StringRef GetUniqueEntityName(Entity entity);
 
 #define EndEnum()
 
-#define RegisterReferenceTracker(TRACKEDPROPERTY, REFERENCEPROPERTY) \
-    RegisterFunction(On ## TRACKEDPROPERTY ## Changed)\
-    RegisterFunction(On ## REFERENCEPROPERTY ## Changed)\
-    RegisterSubscription(TRACKEDPROPERTY ## Changed, On ## TRACKEDPROPERTY ## Changed) \
-    RegisterSubscription(REFERENCEPROPERTY ## Changed, On ## REFERENCEPROPERTY ## Changed)
-
-#define RegisterChildCache(CHILDCOMPONENT) \
-    RegisterFunction(On ## CHILDCOMPONENT ## ParentChanged)\
-    RegisterSubscription(ParentChanged, On ## CHILDCOMPONENT ## ParentChanged, 0)
-
 #define EndUnit() \
     }
 
@@ -652,7 +580,6 @@ StringRef GetUniqueEntityName(Entity entity);
             CONTENTS\
         }\
     }
-
 
 #include <Core/Module.h>
 #include <Core/Property.h>

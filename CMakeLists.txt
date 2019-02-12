@@ -33,6 +33,7 @@ add_compiler_flags("-fopenmp")
 # Plaza Libraries
 add_subdirectory(Core)
 add_subdirectory(Foundation)
+add_subdirectory(Preprocessor)
 add_subdirectory(File)
 add_subdirectory(Networking)
 add_subdirectory(Rest)
@@ -42,10 +43,13 @@ add_subdirectory(Animation)
 add_subdirectory(Rendering)
 add_subdirectory(Scene)
 add_subdirectory(Gui)
+add_subdirectory(Widgets)
 add_subdirectory(Sprite)
+add_subdirectory(Collision)
 add_subdirectory(Json)
 add_subdirectory(Ini)
 add_subdirectory(StbDecoders)
+add_subdirectory(JavaScript)
 
 add_subdirectory(Debug)
 
@@ -53,14 +57,13 @@ add_subdirectory(Debug)
 #add_subdirectory(ImGui)
 #add_subdirectory(UI)
 #add_subdirectory(Player)
-#add_subdirectory(Editor)
+add_subdirectory(Editor)
 
 #add_subdirectory(DataModel)
 #add_subdirectory(Procedural)
 #add_subdirectory(Zip)
 #add_subdirectory(SQL)
 #add_subdirectory(Lua)
-#add_subdirectory(JavaScript)
 #add_subdirectory(Xml)
 
 #add_subdirectory(Excel)
@@ -69,5 +72,6 @@ add_subdirectory(Debug)
 
 # Plaza Plugins
 add_subdirectory(BgfxRendering)
+add_subdirectory(Box2DCollision)
 
 # Projects

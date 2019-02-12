@@ -9,8 +9,8 @@
 #include <cglm/cglm.h>
 
 struct AnimationFrame {
-    double AnimationFrameDuration;
     Variant AnimationFrameValue;
+    double AnimationFrameDuration;
 };
 
 struct AnimationTrack {
@@ -56,7 +56,7 @@ struct Animation {
         return MakeVariant(TYPE, TYPE ## value);\
         break;
 
-static Variant Interpolate(Variant left, Variant right, float t) {
+API_EXPORT Variant Interpolate(Variant left, Variant right, float t) {
     if(left.type != right.type) {
         Log(0, LogSeverity_Error, "Interpolation values have different types.");
         return Variant_Empty;
@@ -113,7 +113,11 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     // Find accumulated duration
     for_children(frame, AnimationTrackFrames, animationTrack, {
         auto frameData = GetAnimationFrameData(frame);
+        if(!frameData) continue;
+
         duration += frameData->AnimationFrameDuration;
+
+        lastFrame = frame;
     });
 
     if(loop) {
@@ -125,6 +129,7 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     // Find first frame
     for_children(frame, AnimationTrackFrames, animationTrack, {
         auto frameData = GetAnimationFrameData(frame);
+        if(!frameData) continue;
 
         auto startTime = sum;
         sum += frameData->AnimationFrameDuration;
@@ -137,6 +142,8 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
             break;
         }
     });
+
+    if(!firstFrame || !lastFrame) return Variant_Empty;
 
     t = (time - firstTime) / (lastTime - firstTime);
 

@@ -1,4 +1,21 @@
+let core = require("Core");
 
-function OnNativeMessage(text) {
-    Core.FireEvent(JavaScriptTest.Events.ScriptMessage, 0, "Hello from JavaScript!");
+let states = [
+    {
+
+    }
+];
+
+function OnTestStart(entity) {
+    SetState(entity, states[0])
+
 }
+
+function OnTestUpdate(entity) {
+
+}
+
+function OnTestEnd(entity) {
+
+}
+

@@ -28,21 +28,13 @@
       ]
     },
     {
-      "Uuid": "Platformer.Components",
-      "Children": [
-        {
-          "Uuid": "Component.Platformer",
-          "StreamPath": "asset://Components/Components.json"
-        }
-      ]
-    },
-    {
       "Uuid": "Platformer.Assets",
       "StreamPath": "asset://Assets.json",
       "PersistancePointLoaded": true
     },
     {
       "Uuid": "Platformer.CurrentLevel",
+      "$components": ["Component.AppRoot"],
       "InstanceTemplate": "Platformer.Levels.Level_1_1"
     },
     {

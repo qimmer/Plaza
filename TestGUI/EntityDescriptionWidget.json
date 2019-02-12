@@ -1,0 +1,47 @@
+{
+    "Uuid": "Template.Widget.EntityDescriptionWidget",
+    "WidgetChildLayout": "WidgetChildLayout_Vertical",
+    "WidgetWeight": [1.0, 1.0],
+    "Children": [
+        {
+            "WidgetChildLayout": "WidgetChildLayout_Horizontal",
+            "WidgetWeight": [0.5, 1.0],
+            "Children": [
+                {
+                    "WidgetWeight": [0.2, 1.0],
+                    "RenderableMaterial": "Gui.Font.Material",
+                    "LabelFont": "TestGui.Font",
+                    "LabelText": "Name:",
+                    "LabelAlignment": [1.0, 0.5]
+                },
+                {
+                    "WidgetWeight": [0.8, 1.0],
+                    "RenderableMaterial": "Gui.Font.Material",
+                    "LabelFont": "TestGui.Font",
+                    "LabelText": "Owner.Owner.WidgetModel.Name}",
+                    "LabelAlignment": [0.0, 0.5]
+                }
+            ]
+        },
+        {
+            "WidgetChildLayout": "WidgetChildLayout_Horizontal",
+            "WidgetWeight": [0.5, 1.0],
+            "Children": [
+                {
+                    "WidgetWeight": [0.2, 1.0],
+                    "RenderableMaterial": "Gui.Font.Material",
+                    "LabelFont": "TestGui.Font",
+                    "LabelText": "Size:",
+                    "LabelAlignment": [1.0, 0.5]
+                },
+                {
+                    "WidgetWeight": [0.8, 1.0],
+                    "RenderableMaterial": "Gui.Font.Material",
+                    "LabelFont": "TestGui.Font",
+                    "LabelText": "{Owner.Owner.WidgetModel.RenderTargetSize}",
+                    "LabelAlignment": [0.0, 0.5]
+                }
+            ]
+        }
+    ]
+}

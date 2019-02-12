@@ -12,8 +12,11 @@
 
 #include <EASTL/unordered_set.h>
 #include <EASTL/string.h>
+#include <Core/Identification.h>
 
 #define duk_push_entity(CONTEXT, ENTITY) duk_push_number(CONTEXT, *(double*)&ENTITY)
+
+#define Verbose_JS "js"
 
 inline Entity duk_to_entity(duk_context *ctx, u8 index) {
     auto number = duk_to_number(ctx, index);
@@ -24,43 +27,58 @@ struct JavaScriptContext {
     duk_context *ctx;
 };
 
+struct JavaScriptFunction {
+    NativePtr JavaScriptFunctionHandle, JavaScriptFunctionContext;
+};
+
+struct JavaScript {
+};
+
 #define HandleArgument(TYPE, DUKTYPE, DUKTYPELOWERCASE) \
     case TypeOf_ ## TYPE :\
         if(duk_get_type(ctx, i) != DUK_TYPE_ ## DUKTYPE) {\
-            Log(0, LogSeverity_Error, "Error in function call arguments. Argument %d in function %s is %s, but %s was expected.", i, GetName(GetComponentEntity(ComponentOf_Function(), functionIndex)), #DUKTYPELOWERCASE, #TYPE);\
+            Log(0, LogSeverity_Error, "Error in function call arguments. Argument %d in function %s is %s, but %s was expected.", i, GetUuid(GetComponentEntity(ComponentOf_Function(), functionIndex)), #DUKTYPELOWERCASE, #TYPE);\
             return -1;\
         }\
-        *(TYPE*)argumentPtr = duk_to_ ## DUKTYPELOWERCASE (ctx, i);\
-        argumentPtrs[i] = argumentPtr;\
-        argumentPtr += sizeof(TYPE);\
+        finalArguments[i].as_ ## TYPE = duk_to_ ## DUKTYPELOWERCASE (ctx, i);\
         break;
 
 #define HandleReturnType(TYPE, DUKTYPE, DUKTYPELOWERCASE) \
     case TypeOf_ ## TYPE :\
-        duk_push_ ## DUKTYPELOWERCASE (ctx, *(TYPE*)returnBuffer);\
-        return 1;
+        duk_push_ ## DUKTYPELOWERCASE (ctx, returnValue.as_ ## TYPE);\
+        break;
 
 static duk_ret_t CallFunc(duk_context *ctx) {
     s16 magic = duk_get_current_magic(ctx);
     auto functionIndex = (u32)(*(u16*)&magic);
-
-    char returnBuffer[64];
-    char argumentBuffer[256];
-    char *argumentPtr = argumentBuffer;
-
-    const void *argumentPtrs[32];
-    Type argumentTypes[32];
+    auto function = GetComponentEntity(ComponentOf_Function(), functionIndex);
 
     auto numJsArguments = duk_get_top(ctx);
-    auto numArguments = GetFunctionArguments(functionIndex, 32, argumentTypes);
 
-    if(numJsArguments != numArguments) {
-        Log(0, LogSeverity_Error, "Incorrect number of arguments passed to native function %s.", GetName(GetComponentEntity(ComponentOf_Function(), functionIndex)));
+    u32 numFunctionArguments = 0;
+    auto arguments = GetFunctionArguments(function, &numFunctionArguments);
+
+    if(numJsArguments != numFunctionArguments) {
+        Log(0, LogSeverity_Error, "Incorrect number of arguments passed to native function %s.", GetUuid(GetComponentEntity(ComponentOf_Function(), functionIndex)));
         return -1;
     }
 
-    for(auto i = 0; i < numArguments; ++i) {
-        switch(argumentTypes[i]) {
+    Variant *finalArguments = (Variant*)alloca(numFunctionArguments * sizeof(Variant));
+
+    u32 numArgs = 0;
+    auto functionArguments = GetFunctionArguments(function, &numArgs);
+    for(auto i = 0; i < numArgs; ++i) {
+        if(i >= numFunctionArguments) {
+            finalArguments[i] = Variant_Empty;
+        } else {
+            auto type = GetFunctionArgumentType(functionArguments[i]);
+            //finalArguments[i] = (type == TypeOf_Variant) ? arguments[i] : Cast(arguments[i], type);
+        }
+    }
+
+    for(auto i = 0; i < numFunctionArguments; ++i) {
+        auto type = GetFunctionArgumentType(arguments[i]);
+        switch(type) {
             HandleArgument(bool, BOOLEAN, boolean)
             HandleArgument(u8, NUMBER, number)
             HandleArgument(u16, NUMBER, number)
@@ -78,17 +96,14 @@ static duk_ret_t CallFunc(duk_context *ctx) {
                 duk_push_undefined(ctx);
                 return 1;
             default:
-                Log(0, LogSeverity_Error, "Unsupported function argument type: %d", GetTypeName(argumentTypes[i]));
+                Log(0, LogSeverity_Error, "Unsupported function argument type: %d", GetTypeName(type));
                 return -1;
         }
     }
 
-    if(!CallFunction(GetComponentEntity(ComponentOf_Function(), functionIndex), returnBuffer, numArguments, argumentTypes, argumentPtrs)) {
-        return -1;
-    }
+    auto returnValue = CallFunction(function, numFunctionArguments, finalArguments);
 
-    auto returnType = GetFunctionReturnTypeByIndex(functionIndex);
-    switch(returnType) {
+    switch(returnValue.type) {
         HandleReturnType(bool, BOOLEAN, boolean)
         HandleReturnType(u8, NUMBER, number)
         HandleReturnType(u16, NUMBER, number)
@@ -103,20 +118,10 @@ static duk_ret_t CallFunc(duk_context *ctx) {
         HandleReturnType(StringRef, STRING, string)
         HandleReturnType(Entity, NUMBER, entity)
         default:
-            Log(0, LogSeverity_Error, "Unsupported function return type: %d", GetTypeName(GetFunctionReturnTypeByIndex(functionIndex)));
-            return -1;
+            return 0;
     }
-}
 
-static bool CallJavaScriptFunc(
-        u64 functionImplementation,
-        Type returnArgumentTypeIndex,
-        void *returnData,
-        u32 numArguments,
-        const Type *argumentTypes,
-        const void **argumentDataPtrs
-) {
-
+    return 1;
 }
 
 static void ToCamelCase(char *line)  {
@@ -138,24 +143,38 @@ static void ToCamelCase(char *line)  {
 
 static void BindModule(duk_context *ctx, Entity module) {
     // Module object
-    duk_push_bare_object(ctx);
+    //duk_push_c_function(ctx,);
 
-    for_children(child, module) {
-        if(HasComponent(child, ComponentOf_Function())) {
-            auto functionIndex = GetComponentIndex(ComponentOf_Function(), child);
-            Assert(child, functionIndex < UINT16_MAX);
+    duk_get_prototype(ctx, -1);
 
-            duk_push_c_function(ctx, CallFunc, DUK_VARARGS);
-            duk_set_magic(ctx, -1, *(s16*)&functionIndex);
-        } else {
-            duk_push_entity(ctx, child);
-        }
+    for_children(child, Functions, module, {
+        auto functionIndex = GetComponentIndex(ComponentOf_Function(), child);
+        Assert(child, functionIndex < UINT16_MAX);
+
+        duk_push_c_function(ctx, CallFunc, DUK_VARARGS);
+        duk_set_magic(ctx, -1, *(s16*)&functionIndex);
 
         auto name = GetName(child);
         duk_put_prop_string(ctx, -2, name);
-    }
+    });
 
-    // Push module object onto the global table
+    for_children(child, Components, module, {
+        duk_push_entity(ctx, child);
+
+        auto name = GetName(child);
+        duk_put_prop_string(ctx, -2, name);
+    });
+
+    for_children(child, Properties, module, {
+        duk_push_entity(ctx, child);
+
+        auto name = GetName(child);
+        duk_put_prop_string(ctx, -2, name);
+    });
+
+    duk_pop(ctx); // Pop prototype
+
+    // Push module function onto the global table
     duk_put_global_string(ctx, GetName(module));
 }
 
@@ -166,7 +185,7 @@ LocalFunction(OnJavaScriptContextAdded, void, Entity component, Entity context) 
 
     for_entity(module, moduleData, Module, {
         BindModule(data->ctx, module);
-    }
+    });
 }
 
 LocalFunction(OnJavaScriptContextRemoved, void, Entity component, Entity context) {
@@ -178,14 +197,35 @@ LocalFunction(OnJavaScriptContextRemoved, void, Entity component, Entity context
 static void RebindModuleChild(Entity module, Entity child, StringRef oldName) {
     for_entity(context, contextData, JavaScriptContext, {
         BindModule(contextData->ctx, module);
-    }
+    });
 }
 
-API_EXPORT bool EvaluateJavaScript(Entity context, StringRef name, StringRef code) {
-    auto data = GetJavaScriptContextData(context);
+static Variant CallJavaScriptFunc(
+        Entity function,
+        u32 numArguments,
+        const Variant *arguments) {
+    auto data = GetJavaScriptFunctionData(function);
+    //duk_push_heapptr(data->JavaScriptFunctionContext, data->JavaScriptFunctionHandle);
+}
 
-    if (duk_peval_string(data->ctx, code) != 0) {
-        Log(context, LogSeverity_Error, "Error: %s (%s)\n", duk_safe_to_string(data->ctx, -1), name);
+static bool EvaluateJavaScript(Entity script) {
+    auto data = GetJavaScriptContextData(JavaScriptContextOf_JavaScriptMainContext());
+
+    if(!StreamOpen(script, StreamMode_Read)) {
+        return false;
+    }
+
+    StreamSeek(script, StreamSeek_End);
+    auto scriptLength = StreamTell(script);
+    StreamSeek(script, 0);
+
+    auto scriptCode = (char*)malloc(scriptLength + 1);
+    StreamRead(script, scriptLength, scriptCode);
+    scriptCode[scriptLength + 1] = '\0';
+    StreamClose(script);
+
+    if (duk_peval_string(data->ctx, scriptCode) != 0) {
+        Log(script, LogSeverity_Error, "Script Evaluation Error: %s\n", duk_safe_to_string(data->ctx, -1));
         duk_pop(data->ctx);  // pop error
         return false;
     } else {
@@ -203,14 +243,14 @@ API_EXPORT bool EvaluateJavaScript(Entity context, StringRef name, StringRef cod
             if(!caller || caller == CallJavaScriptFunc) {
                 auto functionName = GetName(function);
                 if(duk_get_prop_string(data->ctx, -1, functionName) == 1) {
-                    Verbose("%s implements %s", name, functionName);
+                    //Verbose(Verbose_JS, "%s implements %s", name, functionName);
 
-                    SetFunctionCaller(function, CallJavaScriptFunc);
-                    SetFunctionImplementation(function, (u64)duk_get_heapptr(data->ctx, -1));
+                    SetFunctionCaller(function, (NativePtr)CallJavaScriptFunc);
+                    SetJavaScriptFunctionHandle(function, duk_get_heapptr(data->ctx, -1));
                 }
                 duk_pop(data->ctx);
             }
-        }
+        });
 
         duk_pop(data->ctx); // pop global object
 
@@ -218,15 +258,21 @@ API_EXPORT bool EvaluateJavaScript(Entity context, StringRef name, StringRef cod
     }
 }
 
-
 BeginUnit(JavaScriptContext)
     BeginComponent(JavaScriptContext)
+    EndComponent()
+
+    BeginComponent(JavaScriptFunction)
+        RegisterProperty(NativePtr, JavaScriptFunctionHandle)
+    EndComponent()
+
+    BeginComponent(JavaScript)
+        RegisterBase(Stream)
+        RegisterArrayProperty(JavaScriptFunction, JavaScriptFunctions)
     EndComponent()
 
     RegisterSubscription(EventOf_EntityComponentAdded(), OnJavaScriptContextAdded, ComponentOf_JavaScriptContext())
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnJavaScriptContextRemoved, ComponentOf_JavaScriptContext())
 
-    auto context = NodeOf_JavaScriptMainContext();
-    SetName(context, "MainJavaScriptContext");
-    AddComponent(context, ComponentOf_JavaScriptContext());
+    AddComponent(JavaScriptContextOf_JavaScriptMainContext(), ComponentOf_JavaScriptContext());
 EndUnit()

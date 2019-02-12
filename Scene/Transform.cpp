@@ -116,12 +116,12 @@ API_EXPORT void LookAt(Entity transform, v3f origin, v3f direction, v3f up) {
 }
 
 LocalFunction(InvalidateChildren, void, Entity entity) {
-    Invalidate(entity);
+    if(HasComponent(entity, ComponentOf_Transform())) {
+        Invalidate(entity);
+    }
 
     for_children(child, Children, entity, {
-        if(HasComponent(child, ComponentOf_Transform())) {
-            InvalidateChildren(child);
-        }
+        InvalidateChildren(child);
     });
 }
 
@@ -167,6 +167,10 @@ static void CalculateHierarchyLevel(Entity entity) {
 
         GetTransformData(entity)->TransformHierarchyLevel = level;
         Invalidate(entity);
+
+        for_children(child, Children, entity, {
+            CalculateHierarchyLevel(child);
+        });
     }
 }
 

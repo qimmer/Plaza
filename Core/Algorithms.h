@@ -7,6 +7,8 @@
 
 #define Max(x, y) (((x) > (y)) ? (x) : (y))
 #define Min(x, y) (((x) < (y)) ? (x) : (y))
+#define Clamp(x, low, high) Max(Min(x, high), low)
+
 #define Abs(x) (((x) > 0) ? x : -x)
 
 inline unsigned long RGBA2DWORD(int iR, int iG, int iB, int iA)

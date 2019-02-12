@@ -74,7 +74,7 @@ static inline void Cast_StringRef_StringRef(const void *input, void *output) {}
                 } else {\
                     dst_elems[i] = 0;\
                 }\
-            }\    
+            }\
         }\
     }
 
@@ -240,6 +240,8 @@ API_EXPORT Variant Cast(Variant v, Type type_to) {
     Variant newVar;
     memset(&newVar.data, 0, sizeof(m4x4f));
     newVar.type = type_to;
+
+    if(!v.type) return newVar; // Return default value if source is unknown
 
     auto input = (const void*)&v.data;
     auto output = (void*)&newVar.data;

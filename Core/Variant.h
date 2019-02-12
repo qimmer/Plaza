@@ -39,6 +39,7 @@ struct ALIGN(16) Variant {
         rgba32 as_rgba32;
         rgb32 as_rgb32;
         Date as_Date;
+        NativePtr as_NativePtr;
         void* as_unknown;
     };
 

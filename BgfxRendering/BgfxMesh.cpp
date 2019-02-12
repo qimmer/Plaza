@@ -183,43 +183,45 @@ static void ValidateIndexBuffer(Entity entity) {
 
 static void ValidateVertexDeclaration(Entity entity) {
     auto data = GetBgfxVertexDeclarationData(entity);
-    data->decl.begin();
-    for_children(attribute, VertexDeclarationAttributes, entity, {
-        bgfx::AttribType::Enum elementType;
-        u32 elementCount;
-        if(GetVertexAttributeType(attribute) == TypeOf_float) {
-            elementType = bgfx::AttribType::Float;
-            elementCount = 1;
-        } else if(GetVertexAttributeType(attribute) == TypeOf_v2f) {
-            elementType = bgfx::AttribType::Float;
-            elementCount = 2;
-        } else if(GetVertexAttributeType(attribute) == TypeOf_v3f) {
-            elementType = bgfx::AttribType::Float;
-            elementCount = 3;
-        } else if(GetVertexAttributeType(attribute) == TypeOf_v4f) {
-            elementType = bgfx::AttribType::Float;
-            elementCount = 4;
-        } else if(GetVertexAttributeType(attribute) == TypeOf_rgba8) {
-            elementType = bgfx::AttribType::Uint8;
-            elementCount = 4;
-        } else if(GetVertexAttributeType(attribute) == TypeOf_s16) {
-            elementType = bgfx::AttribType::Int16;
-            elementCount = 1;
-        } else {
-            Log(entity, LogSeverity_Error, "Unsupported attribute type: %s", GetTypeName(GetVertexAttributeType(attribute)));
-            continue;
-        }
+    if(data) {
+        data->decl.begin();
+        for_children(attribute, VertexDeclarationAttributes, entity, {
+            bgfx::AttribType::Enum elementType;
+            u32 elementCount;
+            if(GetVertexAttributeType(attribute) == TypeOf_float) {
+                elementType = bgfx::AttribType::Float;
+                elementCount = 1;
+            } else if(GetVertexAttributeType(attribute) == TypeOf_v2f) {
+                elementType = bgfx::AttribType::Float;
+                elementCount = 2;
+            } else if(GetVertexAttributeType(attribute) == TypeOf_v3f) {
+                elementType = bgfx::AttribType::Float;
+                elementCount = 3;
+            } else if(GetVertexAttributeType(attribute) == TypeOf_v4f) {
+                elementType = bgfx::AttribType::Float;
+                elementCount = 4;
+            } else if(GetVertexAttributeType(attribute) == TypeOf_rgba8) {
+                elementType = bgfx::AttribType::Uint8;
+                elementCount = 4;
+            } else if(GetVertexAttributeType(attribute) == TypeOf_s16) {
+                elementType = bgfx::AttribType::Int16;
+                elementCount = 1;
+            } else {
+                Log(entity, LogSeverity_Error, "Unsupported attribute type: %s", GetTypeName(GetVertexAttributeType(attribute)));
+                continue;
+            }
 
-        auto elementUsage = (bgfx::Attrib::Enum)GetVertexAttributeUsage(attribute);
-        data->decl.add(
-                elementUsage,
-                elementCount,
-                elementType,
-                GetVertexAttributeNormalize(attribute),
-                GetVertexAttributeAsInt(attribute));
-    });
+            auto elementUsage = (bgfx::Attrib::Enum)GetVertexAttributeUsage(attribute);
+            data->decl.add(
+                    elementUsage,
+                    elementCount,
+                    elementType,
+                    GetVertexAttributeNormalize(attribute),
+                    GetVertexAttributeAsInt(attribute));
+        });
 
-    data->decl.end();
+        data->decl.end();
+    }
 
     for_entity(vertexBuffer, vertexBufferData, VertexBuffer, {
         if(GetVertexBufferDeclaration(vertexBuffer) == entity) {

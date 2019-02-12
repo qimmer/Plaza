@@ -14,7 +14,7 @@
 #include <Core/AlignedAllocator.h>
 #include "Types.h"
 
-template<typename T, size_t fixedCapacity = 128> using Vector = eastl::vector<T>;
+template<typename T, size_t fixedCapacity = 32> using Vector = eastl::fixed_vector<T, fixedCapacity>;
 template<typename T> using Set = eastl::unordered_set<T, std::hash<T>, std::equal_to<T>>;
 template<typename T, typename Comparator = std::less<T>> using OrderedSet = eastl::set<T, Comparator>;
 
