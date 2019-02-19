@@ -5,7 +5,7 @@
 #include <cglm/cglm.h>
 
 LocalFunction(OnValidateTransforms, void, Entity component) {
-    for_entity(frustum, transformData, Frustum, {
+    for_entity(frustum, transformData, Frustum) {
         if(!IsDirty(frustum)) continue;
 
         auto data = GetFrustumData(frustum);
@@ -22,7 +22,7 @@ LocalFunction(OnValidateTransforms, void, Entity component) {
         glm_mat4_inv((vec4*)&viewProjMat, (vec4*)&invViewProjMat);
 
         SetFrustumInvViewProjectionMatrix(frustum, invViewProjMat);
-    });
+    }
 }
 
 BeginUnit(Frustum)

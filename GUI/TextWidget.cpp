@@ -19,6 +19,8 @@
 #include <Json/NativeUtils.h>
 
 static void RebuildTextWidget(Entity entity) {
+    Vector<v4f> colors;
+
     if (!HasComponent(entity, ComponentOf_TextWidget())) return;
 
     auto data = GetTextWidgetData(entity);
@@ -32,8 +34,14 @@ static void RebuildTextWidget(Entity entity) {
         }
 
         auto length = strlen(text);
+
+        colors.resize(length);
+        for(auto i = 0; i < length; ++i) {
+            colors[i] = *(v4f*)&data->TextWidgetColor;
+        }
         auto vertices = (FontVertex *) malloc(sizeof(FontVertex) * length * 6);
-        auto numVertices = GetFontGlyphData(font, text, {0.0f, 0.0f}, vertices,
+        v2f size;
+        auto numVertices = GetFontGlyphData(font, text, colors.data(), {0.0f, 0.0f}, &size, vertices,
                                             length * 6);
 
         v2f min = {FLT_MAX, FLT_MAX}, max = {FLT_MIN, FLT_MIN};
@@ -45,25 +53,8 @@ static void RebuildTextWidget(Entity entity) {
             max.y = Max(max.y, vertices[i].Position.y);
         }
 
-        v2f textSize2D = {
-                max.x - min.x,
-                max.y - min.y,
-        };
-
-        auto widgetSize = GetSize2D(entity);
-        auto alignment = GetTextWidgetAlignment(entity);
-
-        v2f offset = {
-                (widgetSize.x - textSize2D.x) * alignment.x - min.x,
-                (widgetSize.y - textSize2D.y) * alignment.y - min.y
-        };
-
-        for (auto i = 0; i < numVertices; ++i) {
-            vertices[i].Position.y = widgetSize.y - vertices[i].Position.y;
-
-            vertices[i].Position.x += offset.x;
-            vertices[i].Position.y -= offset.y;
-        }
+        // Set size to text extent
+        SetSize2D(entity, {Max(s32(size.x), 0), Max(s32(size.y), 0)});
 
         auto textWidgetMesh = GetTextWidgetMesh(entity);
         auto vertexBuffer = GetMeshVertexBuffer(textWidgetMesh);
@@ -96,23 +87,23 @@ static void RebuildTextWidget(Entity entity) {
 }
 
 LocalFunction(OnValidateMeshes, void, Entity component) {
-    for_entity(textWidget, data, TextWidget, {
+    for_entity(textWidget, data, TextWidget) {
         if(IsDirty(textWidget)) {
             RebuildTextWidget(textWidget);
         }
-    });
+    }
 }
 
 LocalFunction(OnValidateTextures, void, Entity component) {
-    for_entity(font, data, Font, {
+    for_entity(font, data, Font) {
         if(IsDirty(font)) {
-            for_entity(textWidget, data, TextWidget, {
+            for_entity(textWidget, data2, TextWidget) {
                     if(GetTextWidgetFont(textWidget) == font) {
                         RebuildTextWidget(textWidget);
                     }
-            });
+            }
         }
-    });
+    }
 }
 
 LocalFunction(OnTextWidgetChanged, void, Entity textWidget) {
@@ -125,7 +116,6 @@ BeginUnit(TextWidget)
         RegisterProperty(StringRef, TextWidgetText)
         RegisterReferenceProperty(Font, TextWidgetFont)
         RegisterProperty(rgba8, TextWidgetColor)
-        RegisterProperty(v2f, TextWidgetAlignment)
         RegisterChildProperty(Mesh, TextWidgetMesh)
 
         ComponentTemplate({

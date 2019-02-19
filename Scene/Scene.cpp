@@ -26,11 +26,11 @@ static Entity FindScene(Entity entity) {
 
 static void SetSceneNodeSceneRecursive(Entity entity) {
     SetSceneNodeScene(entity, FindScene(entity));
-    for_entity(child, data, SceneNode, {
+    for_entity(child, data, SceneNode) {
         if(GetOwner(child) == entity) {
             SetSceneNodeSceneRecursive(child);
         }
-    });
+    }
 }
 
 LocalFunction(OnOwnerChanged, void, Entity entity) {

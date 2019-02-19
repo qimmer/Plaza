@@ -15,7 +15,7 @@ LocalFunction(OnUpdateTransitions, void) {
     static Vector<Entity> finishedTransitions;
 
     finishedTransitions.clear();
-    for_entity(activeTransition, transitionData, ActiveTransition, {
+    for_entity(activeTransition, transitionData, ActiveTransition) {
         if(!IsEntityValid(GetAppNodeRoot(activeTransition))) continue;
 
         auto t = Clamp(transitionData->ActiveTransitionTime / transitionData->ActiveTransitionDuration, 0.0f, 1.0f);
@@ -27,7 +27,7 @@ LocalFunction(OnUpdateTransitions, void) {
         if(t >= 1.0f) {
             finishedTransitions.push_back(activeTransition);
         }
-    });
+    }
 
     for(auto& finished : finishedTransitions) {
         auto context = GetOwner(finished);
@@ -42,16 +42,21 @@ LocalFunction(OnUpdateTransitions, void) {
 }
 
 API_EXPORT void Transition(Entity entity, Entity property, Variant destinationValue, float time) {
+    if(time <= 0.0f) {
+        SetPropertyValue(property, entity, destinationValue);
+        return;
+    }
+
     ActiveTransition *data = NULL;
     Entity activeTransition = 0;
 
-    for_children(transition, ActiveTransitions, entity, {
+    for_children(transition, ActiveTransitions, entity) {
         data = GetActiveTransitionData(transition);
         if(data->ActiveTransitionProperty == property) {
             activeTransition = transition;
             break;
         }
-    });
+    }
 
     if(!data) {
         activeTransition = AddActiveTransitions(entity);

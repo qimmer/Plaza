@@ -8,7 +8,7 @@
 #include <Core/NativeUtils.h>
 
 struct MainFrame {
-    Entity MainFrameRenderer, MainFrameCamera;
+    Entity MainFrameRenderer, MainFrameCamera, MainFramePicker;
 };
 
 struct MainFrameStyle {
@@ -19,6 +19,7 @@ Unit(MainFrame)
     Component(MainFrame)
         ChildProperty(SceneRenderer, MainFrameRenderer)
         ChildProperty(Camera, MainFrameCamera)
+        ChildProperty(GuiPickRay, MainFramePicker)
 
     Component(MainFrameStyle)
         ChildProperty(WidgetMesh, MainFrameStyleMesh)

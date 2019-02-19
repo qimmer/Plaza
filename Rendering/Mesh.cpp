@@ -9,9 +9,9 @@
 
 API_EXPORT u32 GetVertexStride(Entity vertexDeclaration) {
     u32 stride = 0;
-    for_children(attribute, VertexDeclarationAttributes, vertexDeclaration, {
+    for_children(attribute, VertexDeclarationAttributes, vertexDeclaration) {
         stride += GetTypeSize(GetVertexAttributeType(attribute));
-    });
+    }
 
     return stride;
 }

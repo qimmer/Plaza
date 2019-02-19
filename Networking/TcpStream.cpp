@@ -216,7 +216,7 @@ LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 new
     }
 
     // Remove closed clients from server
-    for_entity(server, serverData, TcpServer, {
+    for_entity(server, serverData, TcpServer) {
         u32 count = 0;
         auto clients = GetTcpServerClients(server, &count);
         for(auto i = 0; i < count; ++i) {
@@ -227,7 +227,7 @@ LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 new
                 i--;
             }
         }
-    });
+    }
 }
 
 BeginUnit(TcpStream)

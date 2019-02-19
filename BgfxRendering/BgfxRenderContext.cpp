@@ -116,15 +116,15 @@ LocalFunction(OnResourceSubmission, void, Entity appLoop) {
 }
 
 LocalFunction(OnTextureReadBack, void, Entity appLoop) {
-    for_entity(readBack, data, TextureReadBack, {
+    for_entity(readBack, data, TextureReadBack) {
         UpdateTextureReadBack(readBack, data);
-    });
+    }
 }
 
 LocalFunction(OnInputPoll, void, Entity appLoop) {
     auto numContexts = 0;
 
-    for_entity(context, contextData, BgfxRenderContext, {
+    for_entity(context, contextData, BgfxRenderContext) {
         numContexts++;
 
         SetInputStateValueByKey(context, MOUSE_SCROLL_DOWN, 0.0f);
@@ -193,7 +193,7 @@ LocalFunction(OnInputPoll, void, Entity appLoop) {
                 SetInputStateValueByKey(context, GAMEPAD_DPAD_DOWN + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_DOWN) ? 1.0f : 0.0f);
             }
         }
-    });
+    }
 
     if(numContexts) {
         glfwPollEvents();
@@ -204,7 +204,7 @@ LocalFunction(OnPresent, void, Entity appLoop) {
     auto numContexts = 0;
     auto debugFlags = 0;
 
-    for_entity(context, contextData, BgfxRenderContext, {
+    for_entity(context, contextData, BgfxRenderContext) {
         numContexts++;
 
         if(GetRenderContextShowDebug(context)) {
@@ -213,7 +213,7 @@ LocalFunction(OnPresent, void, Entity appLoop) {
         if(GetRenderContextShowStats(context)) {
             debugFlags |= BGFX_DEBUG_STATS;
         }
-    });
+    }
 
     if(numContexts) {
         auto viewId = 0;
@@ -391,9 +391,9 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
 
         PrimaryContext = entity;
 
-        for_children(extension, Extensions, ModuleOf_BgfxRendering(), {
+        for_children(extension, Extensions, ModuleOf_BgfxRendering()) {
             SetExtensionDisabled(extension, false);
-        });
+        }
 
     } else {
         data->fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
@@ -408,9 +408,9 @@ LocalFunction(OnBgfxRenderContextRemoved, void, Entity component, Entity entity)
     }
 
     if(NumContexts == 1) {
-        for_children(extension, Extensions, ModuleOf_BgfxRendering(), {
+        for_children(extension, Extensions, ModuleOf_BgfxRendering()) {
             SetExtensionDisabled(extension, true);
-        });
+        }
 
         bgfx::destroy(u_uvOffsetSizePerSampler);
 

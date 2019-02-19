@@ -507,7 +507,7 @@ API_EXPORT void SetPropertyMeta(Entity property, StringRef metaString) {
 static void LayoutProperties(Entity component) {
     auto offset = 0;
 
-    for_children(property, Properties, component, {
+    for_children(property, Properties, component) {
         auto data = GetPropertyData(property);
 
         auto alignment = GetTypeAlignment(data->PropertyType);
@@ -522,7 +522,7 @@ static void LayoutProperties(Entity component) {
         SetPropertyOffset(property, offset);
 
         offset += size;
-    });
+    }
 
     offset = Align(offset, alignof(max_align_t)); // Align component size to maximum possible alignment
 
@@ -542,7 +542,7 @@ LocalFunction(OnPropertyKindChanged, void, Entity property, u32 oldKind, u32 new
     auto propertyData = GetPropertyData(property);
     auto component = GetOwner(property);
 
-    for_entity_abstract(entity, data, component, {
+    for_entity_abstract(entity, data, component) {
         if(oldKind == PropertyKind_Array) {
             EntityVectorStruct *vec = (EntityVectorStruct*)(data + propertyData->PropertyOffset);
             for(auto i = 0; i < vec->Count; ++i) {
@@ -558,25 +558,27 @@ LocalFunction(OnPropertyKindChanged, void, Entity property, u32 oldKind, u32 new
             }
             *child = 0;
         }
-    });
+    }
 
     if(!GetComponentExplicitSize(component)) {
         LayoutProperties(component);
     }
 
-    for_entity_abstract(entity, data, component, {
-        if(newKind == PropertyKind_Array) {
-            EntityVectorStruct *vec = (EntityVectorStruct*)(data + propertyData->PropertyOffset);
-            memset(vec, 0, sizeof(EntityVectorStruct));
-        } else if(newKind == PropertyKind_Child) {
-            Entity *child = (Entity*)(data + propertyData->PropertyOffset);
+    {
+        for_entity_abstract(entity, data, component) {
+            if(newKind == PropertyKind_Array) {
+                EntityVectorStruct *vec = (EntityVectorStruct*)(data + propertyData->PropertyOffset);
+                memset(vec, 0, sizeof(EntityVectorStruct));
+            } else if(newKind == PropertyKind_Child) {
+                Entity *child = (Entity*)(data + propertyData->PropertyOffset);
 
-            *child = CreateEntity();
-            SetOwner(*child, entity, property);
-        } else {
-            memset(data + propertyData->PropertyOffset, 0, GetTypeSize(propertyData->PropertyType));
+                *child = CreateEntity();
+                SetOwner(*child, entity, property);
+            } else {
+                memset(data + propertyData->PropertyOffset, 0, GetTypeSize(propertyData->PropertyType));
+            }
         }
-    });
+    }
 }
 
 LocalFunction(OnPropertyAdded, void, Entity unused, Entity property) {
@@ -600,12 +602,9 @@ LocalFunction(OnPropertyOffsetChanged, void, Entity property, u32 oldValue, u32 
         propertySize = sizeof(VectorStruct) - 1 + propertySize * GetPropertySize(property);
     }
 
-    Entity entity = 0;
-    char * data = 0;
-
-    for_entity_abstract(entity, data, component, {
+    for_entity_abstract(entity, data, component) {
         memmove(data + newValue, data + oldValue, propertySize);
-    });
+    }
 }
 
 BeginUnit(Property)
@@ -644,11 +643,11 @@ static void DumpEntity(Entity entity, u32 indentLevel) {
     for(auto i = 0; i < indentLevel; ++i) printf("%s", "  ");
     printf("%s\n", GetUuid(entity));
 
-    for_entity(child, data, Identification, {
+    for_entity(child, data, Identification) {
         if(GetOwner(child) == entity) {
             DumpEntity(child, indentLevel+1);
         }
-    });
+    }
 }
 
 API_EXPORT void DumpTree(Entity entity) {
@@ -659,3 +658,7 @@ API_EXPORT void RegisterGenericPropertyChangedListener(GenericPropertyChangedLis
     PropertyChangedListeners.push_back(listener);
 }
 
+API_EXPORT bool IsOwnedBy(Entity entity, Entity owner) {
+    auto entityOwner = GetOwner(entity);
+    return IsEntityValid(entityOwner) && (entityOwner == owner || IsOwnedBy(entityOwner, owner));
+}

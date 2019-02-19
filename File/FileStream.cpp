@@ -46,9 +46,9 @@ public:
             char *path = (char*)alloca(pathLength + 1);
             sprintf(path, "file://%s/%s", dir.c_str(), filename.c_str());
 
-            for_entity(fileStream, data, FileStream, {
+            for_entity(fileStream, data, FileStream) {
                 OnHandleFileChanged(fileStream, path, pathLength, watchid);
-            });
+            }
         }
     }
 };

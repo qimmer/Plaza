@@ -208,12 +208,12 @@ LocalFunction(OnBindingIndirectionPropertyChanged, void, Entity indirection) {
 
 API_EXPORT bool Bind(Entity entity, Entity property, StringRef sourceBindingString) {
     // First, remove eventual existing binding of this property
-    for_children(existingBinding, Bindings, entity, {
+    for_children(existingBinding, Bindings, entity) {
         auto data = GetBindingData(existingBinding);
         if(data->BindingTargetProperty == property) {
             return ParseBinding(existingBinding, sourceBindingString);
         }
-    });
+    }
 
     auto binding = AddBindings(entity);
     SetBindingTargetProperty(binding, property);
@@ -222,12 +222,12 @@ API_EXPORT bool Bind(Entity entity, Entity property, StringRef sourceBindingStri
 }
 
 API_EXPORT Entity GetBinding(Entity entity, Entity property) {
-    for_children(binding, Bindings, entity, {
+    for_children(binding, Bindings, entity) {
         auto data = GetBindingData(binding);
         if(data->BindingTargetProperty == property) {
             return binding;
         }
-    });
+    }
 
     return 0;
 }

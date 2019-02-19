@@ -27,58 +27,67 @@ BeginModule(Gui)
            "RenderPathPasses": [
            {
                "RenderPassClearDepth": 1.0,
-               "RenderPassClearColor": [64, 64, 64, 255],
-               "RenderPassClearTargets": "ClearTarget_Depth|ClearTarget_Color",
+               "RenderPassClearTargets": "ClearTarget_Depth",
                "RenderPassMeshUniforms": [
-               {
-                   "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshEnabledTexture",
-                   "UniformIdentifier": "s_widgetMeshEnabledTexture",
-                   "UniformSamplerIndex": 0,
-                   "UniformEntityProperty": "Property.WidgetMeshEnabledTexture"
-               },
-               {
-                   "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshDisabledTexture",
-                   "UniformIdentifier": "s_widgetMeshDisabledTexture",
-                   "UniformSamplerIndex": 1,
-                   "UniformEntityProperty": "Property.WidgetMeshDisabledTexture"
-               },
-               {
-                   "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshSelectedTexture",
-                   "UniformIdentifier": "s_widgetMeshSelectedTexture",
-                   "UniformSamplerIndex": 2,
-                   "UniformEntityProperty": "Property.WidgetMeshSelectedTexture"
-               },
-               {
-                   "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshHoveredTexture",
-                   "UniformIdentifier": "s_widgetMeshHoveredTexture",
-                   "UniformSamplerIndex": 3,
-                   "UniformEntityProperty": "Property.WidgetMeshHoveredTexture"
-               },
-               {
-                   "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshFocusedTexture",
-                   "UniformIdentifier": "s_widgetMeshFocusedTexture",
-                   "UniformSamplerIndex": 4,
-                   "UniformEntityProperty": "Property.WidgetMeshFocusedTexture"
-               },
-               {
-                   "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshClickedTexture",
-                   "UniformIdentifier": "s_widgetMeshClickedTexture",
-                   "UniformSamplerIndex": 5,
-                   "UniformEntityProperty": "Property.WidgetMeshClickedTexture"
-               }
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshEnabledTexture",
+                       "UniformIdentifier": "s_widgetMeshEnabledTexture",
+                       "UniformSamplerIndex": 0,
+                       "UniformEntityProperty": "Property.WidgetMeshEnabledTexture"
+                   },
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshDisabledTexture",
+                       "UniformIdentifier": "s_widgetMeshDisabledTexture",
+                       "UniformSamplerIndex": 1,
+                       "UniformEntityProperty": "Property.WidgetMeshDisabledTexture"
+                   },
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshSelectedTexture",
+                       "UniformIdentifier": "s_widgetMeshSelectedTexture",
+                       "UniformSamplerIndex": 2,
+                       "UniformEntityProperty": "Property.WidgetMeshSelectedTexture"
+                   },
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshHoveredTexture",
+                       "UniformIdentifier": "s_widgetMeshHoveredTexture",
+                       "UniformSamplerIndex": 3,
+                       "UniformEntityProperty": "Property.WidgetMeshHoveredTexture"
+                   },
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshFocusedTexture",
+                       "UniformIdentifier": "s_widgetMeshFocusedTexture",
+                       "UniformSamplerIndex": 4,
+                       "UniformEntityProperty": "Property.WidgetMeshFocusedTexture"
+                   },
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.WidgetMeshClickedTexture",
+                       "UniformIdentifier": "s_widgetMeshClickedTexture",
+                       "UniformSamplerIndex": 5,
+                       "UniformEntityProperty": "Property.WidgetMeshClickedTexture"
+                   }
                ],
                "RenderPassRenderableUniforms": [
-               {
-                   "Uuid": "Gui.RenderPath.Uniforms.TextWidgetTexture",
-                   "UniformIdentifier": "s_fontAtlas",
-                   "UniformSamplerIndex": 0,
-                   "UniformEntityProperty": "Property.TextWidgetFont"
-               },
-               {
-                   "Uuid": "Gui.RenderPath.Uniforms.Size2D",
-                   "UniformIdentifier": "u_widgetSize",
-                   "UniformEntityProperty": "Property.Size2D"
-               }
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.TextWidgetTexture",
+                       "UniformIdentifier": "s_fontAtlas",
+                       "UniformSamplerIndex": 6,
+                       "UniformEntityProperty": "Property.TextWidgetFont"
+                   },
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.Size2D",
+                       "UniformIdentifier": "u_widgetSize",
+                       "UniformEntityProperty": "Property.Size2D"
+                   },
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.WidgetState",
+                       "UniformIdentifier": "u_widgetState",
+                       "UniformEntityProperty": "Property.WidgetState"
+                   },
+                   {
+                       "Uuid": "Gui.RenderPath.Uniforms.WidgetInteractionState",
+                       "UniformIdentifier": "u_widgetInteractionState",
+                       "UniformEntityProperty": "Property.WidgetInteractionState"
+                   }
                ],
                "RenderPassRenderState": {
                    "RenderStateBlendMode": "RenderState_STATE_BLEND_ALPHA",
@@ -173,6 +182,11 @@ BeginModule(Gui)
                "Uuid": "Gui.Font.VertexDeclaration.TexCoord0",
                "VertexAttributeType": "v2f",
                "VertexAttributeUsage": "VertexAttributeUsage_TexCoord0"
+           },
+           {
+               "Uuid": "Gui.Font.VertexDeclaration.Color",
+               "VertexAttributeType": "v4f",
+               "VertexAttributeUsage": "VertexAttributeUsage_TexCoord1"
            }
            ]
        },

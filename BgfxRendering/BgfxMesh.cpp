@@ -185,7 +185,7 @@ static void ValidateVertexDeclaration(Entity entity) {
     auto data = GetBgfxVertexDeclarationData(entity);
     if(data) {
         data->decl.begin();
-        for_children(attribute, VertexDeclarationAttributes, entity, {
+        for_children(attribute, VertexDeclarationAttributes, entity) {
             bgfx::AttribType::Enum elementType;
             u32 elementCount;
             if(GetVertexAttributeType(attribute) == TypeOf_float) {
@@ -218,37 +218,37 @@ static void ValidateVertexDeclaration(Entity entity) {
                     elementType,
                     GetVertexAttributeNormalize(attribute),
                     GetVertexAttributeAsInt(attribute));
-        });
+        }
 
         data->decl.end();
     }
 
-    for_entity(vertexBuffer, vertexBufferData, VertexBuffer, {
+    for_entity(vertexBuffer, vertexBufferData, VertexBuffer) {
         if(GetVertexBufferDeclaration(vertexBuffer) == entity) {
             Invalidate(vertexBuffer);
         }
-    });
+    }
 }
 
 LocalFunction(OnVertexDeclarationValidation, void, Entity component) {
-    for_entity(entity, data, VertexDeclaration, {
+    for_entity(entity, data, VertexDeclaration) {
         if(!IsDirty(entity)) continue;
         ValidateVertexDeclaration(entity);
-    });
+    }
 }
 
 LocalFunction(OnVertexBufferValidation, void, Entity component) {
-    for_entity(entity, data, VertexBuffer, {
+    for_entity(entity, data, VertexBuffer) {
         if(!IsDirty(entity)) continue;
         ValidateVertexBuffer(entity);
-    });
+    }
 }
 
 LocalFunction(OnIndexBufferValidation, void, Entity component) {
-    for_entity(entity, data, IndexBuffer, {
+    for_entity(entity, data, IndexBuffer) {
         if(!IsDirty(entity)) continue;
         ValidateIndexBuffer(entity);
-    });
+    }
 }
 
 BeginUnit(BgfxMesh)

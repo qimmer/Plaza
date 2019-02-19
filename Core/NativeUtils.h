@@ -570,16 +570,10 @@ StringRef GetUniqueEntityName(Entity entity);
 #define EndUnit() \
     }
 
-#define for_children(VARNAME, PROPERTY, PARENTENTITY, CONTENTS) \
-    {\
-        Entity VARNAME = 0;\
-        u32 count = 0;\
-        auto entries = Get ## PROPERTY (PARENTENTITY, &count);\
-        auto i = 0;\
-        for(VARNAME = entries ? (entries[i]) : 0; i < count; VARNAME = entries [++i]) {\
-            CONTENTS\
-        }\
-    }
+#define for_children(VARNAME, PROPERTY, PARENTENTITY) \
+        u32 _count ## VARNAME = 0, _i ## VARNAME = 0;\
+        auto _entries ## VARNAME = Get ## PROPERTY (PARENTENTITY, &_count ## VARNAME);\
+        for(Entity VARNAME = (_entries ## VARNAME ? (_entries ## VARNAME[_i ## VARNAME]) : 0); _i ## VARNAME < _count ## VARNAME; VARNAME = _entries ## VARNAME [++(_i ## VARNAME)])
 
 #include <Core/Module.h>
 #include <Core/Property.h>

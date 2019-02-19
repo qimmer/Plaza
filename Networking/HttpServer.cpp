@@ -98,7 +98,7 @@ void ApplyResponseContentHeaders(Entity server, Entity request, Entity response)
     SetHttpHeaderType(header, contentLengthHeader);
     SetHttpHeaderValue(header, headerValue);
 
-    for_children(requestHeader, HttpRequestHeaders, request, {
+    for_children(requestHeader, HttpRequestHeaders, request) {
 
         // If we have keep-alive, apply this to response as well
         if(GetHttpHeaderType(requestHeader) == connectionHeader) {
@@ -112,7 +112,7 @@ void ApplyResponseContentHeaders(Entity server, Entity request, Entity response)
             SetHttpHeaderType(header, keepAliveHeader);
             SetHttpHeaderValue(header, keepAliveHeaderValue);
         }
-    });
+    }
 
     char serverHeaderValue[256];
     snprintf(serverHeaderValue, sizeof(serverHeaderValue), "%s", GetName(server));
@@ -153,14 +153,14 @@ static void ParseHeader(Entity server, HttpStreamPartialRequest *partial, char *
                     *charSet = '\0';
                 }
 
-                for_entity(fileType, fileTypeData, FileType, {
+                for_entity(fileType, fileTypeData, FileType) {
                     if(stricmp(GetFileTypeMimeType(fileType), value) == 0) {
                         char streamPath[PathMax];
                         snprintf(streamPath, PathMax, "memory://request%s", GetFileTypeExtension(fileType));
 
                         SetStreamPath(GetHttpRequestContentStream(partial->request), streamPath);
                     }
-                });
+                }
 
                 // Revert faking null terminator
                 if(charSet) {
@@ -211,14 +211,14 @@ static void WriteResponse(Entity server, Entity clientStream, Entity request, En
     responseQueue.insert(responseQueue.end(), headerLine, headerLine + strlen(headerLine));
 
     // Write additional HTTP headers
-    for_children(header, HttpResponseHeaders, response, {
+    for_children(header, HttpResponseHeaders, response) {
         auto identifier = GetHttpHeaderTypeIdentifier(GetHttpHeaderType(header));
         auto value = GetHttpHeaderValue(header);
 
         snprintf(headerLine, sizeof(headerLine), "%s: %s\r\n", identifier, value);
 
         responseQueue.insert(responseQueue.end(), headerLine, headerLine + strlen(headerLine));
-    });
+    }
 
     // Write header-to-content terminator
     strncpy(headerLine, "\r\n", sizeof(headerLine));
@@ -343,8 +343,8 @@ static bool OnData(Entity server, Entity stream, HttpStream *streamData, const c
 }
 
 LocalFunction(OnAppLoopChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    for_entity(httpServer, httpServerData, HttpServer, {
-        for_children(client, TcpServerClients, httpServer, {
+    for_entity(httpServer, httpServerData, HttpServer) {
+        for_children(client, TcpServerClients, httpServer) {
 
             auto streamData = GetHttpStreamData(client);
             auto& responseQueue = streamData->partial->responseQueue;
@@ -376,8 +376,8 @@ LocalFunction(OnAppLoopChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame
 					
 				}
 			}
-        });
-    });
+        }
+    }
 }
 
 LocalFunction(OnTcpClientConnected, void, Entity server, Entity client) {

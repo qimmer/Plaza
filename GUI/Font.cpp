@@ -74,7 +74,7 @@ static int intFromUtf8(unsigned int *out_char, const char *in_text, const char *
     return 0;
 }
 
-static void GetBakedQuad(const Glyph *b, int pw, int ph, float *xpos, float *ypos, FontVertex *vertices) {
+static void GetBakedQuad(const Glyph *b, int pw, int ph, float *xpos, float *ypos, v4f color, FontVertex *vertices) {
     float ipw = 1.0f / pw, iph = 1.0f / ph;
     int round_x = (int) floor((*xpos + b->GlyphOffset.x));
     int round_y = (int) floor((*ypos + b->GlyphOffset.y));
@@ -92,40 +92,48 @@ static void GetBakedQuad(const Glyph *b, int pw, int ph, float *xpos, float *ypo
     *xpos += b->GlyphAdvance;
 
     vertices[0] = {
-            {x0, -y0},
+            {x0, y0},
             {s0, t0},
+            color
     };
 
     vertices[1] = {
-            {x1, -y0},
+            {x1, y0},
             {s1, t0},
+            color
     };
 
     vertices[2] = {
-            {x1, -y1},
+            {x1, y1},
             {s1, t1},
+            color
     };
 
 
     vertices[3] = {
-            {x1, -y1},
+            {x1, y1},
             {s1, t1},
+            color
     };
 
     vertices[4] = {
-            {x0, -y1},
+            {x0, y1},
             {s0, t1},
+            color
     };
 
     vertices[5] = {
-            {x0, -y0},
+            {x0, y0},
             {s0, t0},
+            color
     };
 }
 
 API_EXPORT u32 GetFontGlyphData(Entity font,
                             StringRef text,
+                            const v4f *colors,
                             v2f origin,
+                            v2f *size,
                             FontVertex *vertices,
                             u32 maxVertices) {
     auto data = GetFontData(font);
@@ -134,26 +142,43 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
     auto end = text + strlen(text);
     u32 numVertices = 0;
 
+    origin.y += data->FontAscent;
+
+    auto i = 0;
     while (text < end) {
         Assert(font, (numVertices + 6) <= maxVertices);
         u32 ch = 0;
         text += intFromUtf8(&ch, text, end);
 
+        if(ch == '\n') {
+            origin.x = 0;
+            origin.y += -data->FontDescent + data->FontLineGap + data->FontAscent;
+            continue;
+        }
+
         Glyph *glyphData = NULL;
-        for_children(glyph, FontGlyphs, font, {
+        for_children(glyph, FontGlyphs, font) {
             glyphData = GetGlyphData(glyph);
             if (glyphData->GlyphCode == ch) {
                 break;
             }
             glyphData = NULL;
-        });
+        }
 
         if (glyphData) {
-            GetBakedQuad(glyphData, textureSize.x, textureSize.y, &origin.x, &origin.y, vertices);//1=opengl & d3d10+,0=d3d9
+            GetBakedQuad(glyphData, textureSize.x, textureSize.y, &origin.x, &origin.y, colors[i], vertices);//1=opengl & d3d10+,0=d3d9
 
             numVertices += 6;
             vertices += 6;
         }
+
+        size->x = Max(size->x, origin.x);
+
+        ++i;
+    }
+
+    if(size) {
+        size->y = origin.y - data->FontDescent;
     }
 
     return numVertices;
@@ -162,13 +187,13 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
 LocalFunction(AddFontCharacterGlyphs, void, Entity font, StringRef oldCharacters, StringRef newCharacters) {
     while(*newCharacters) {
         Glyph *glyphData = NULL;
-        for_children(glyph, FontGlyphs, font, {
+        for_children(glyph, FontGlyphs, font) {
             glyphData = GetGlyphData(glyph);
             if (glyphData->GlyphCode == *newCharacters) {
                 break;
             }
             glyphData = NULL;
-        });
+        }
 
         if (!glyphData) {
             auto glyph = AddFontGlyphs(font);
@@ -193,6 +218,9 @@ BeginUnit(Font)
         RegisterBase(Texture2D)
         RegisterArrayProperty(Glyph, FontGlyphs)
         RegisterProperty(StringRef, FontCharacters)
+        RegisterProperty(s32, FontAscent)
+        RegisterProperty(s32, FontDescent)
+        RegisterProperty(s32, FontLineGap)
     EndComponent()
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontCharacters()), AddFontCharacterGlyphs, 0)

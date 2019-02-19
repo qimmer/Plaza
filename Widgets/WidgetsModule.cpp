@@ -32,7 +32,7 @@ BeginModule(Widgets)
                "StyleFonts": [
                {
                    "Uuid": "Font.DroidSans",
-                   "TrueTypeFontSize": 10.0,
+                   "TrueTypeFontSize": 14.0,
                    "FontCharacters": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+-!\"@#$%&/()=?'*\\{[]}.,:;<>| ",
                    "StreamPath": "file://Widgets/Fonts/DroidSans.ttf",
                    "PersistancePointLoaded": true
@@ -67,6 +67,39 @@ BeginModule(Widgets)
                        ]
                    },
                    {
+                       "Uuid": "Style.Default.StyleSheet.MenuItem.Enabled",
+                       "SubTexture2DOffset": [
+                       0,
+                       27
+                       ],
+                       "SubTexture2DSize": [
+                       5,
+                       5
+                       ]
+                   },
+                   {
+                       "Uuid": "Style.Default.StyleSheet.MenuItem.Selected",
+                       "SubTexture2DOffset": [
+                       7,
+                       14
+                       ],
+                       "SubTexture2DSize": [
+                       4,
+                       4
+                       ]
+                   },
+                   {
+                       "Uuid": "Style.Default.StyleSheet.MenuItem.Clicked",
+                       "SubTexture2DOffset": [
+                       7,
+                       7
+                       ],
+                       "SubTexture2DSize": [
+                       6,
+                       6
+                       ]
+                   },
+                   {
                        "Uuid": "Style.Default.StyleSheet.Well",
                        "SubTexture2DOffset": [
                        7,
@@ -80,8 +113,8 @@ BeginModule(Widgets)
                    {
                        "Uuid": "Style.Default.StyleSheet.Button.Enabled",
                        "SubTexture2DOffset": [
-                       8,
-                       0
+                       0,
+                       7
                        ],
                        "SubTexture2DSize": [
                        5,
@@ -95,8 +128,8 @@ BeginModule(Widgets)
                        7
                        ],
                        "SubTexture2DSize": [
-                       5,
-                       5
+                       6,
+                       6
                        ]
                    },
                    {
@@ -119,7 +152,13 @@ BeginModule(Widgets)
                },
 
                "PanelStyleMesh": {
-                   "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.Panel",
+                   "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.Button.Enabled",
+                   "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.Button.Enabled",
+                   "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.Button.Enabled",
+
+                   "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.Button.Enabled",
+                   "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.Button.Enabled",
+                   "WidgetMeshClickedTexture": "Style.Default.StyleSheet.Button.Clicked",
                    "WidgetMeshFixedBorderWidth": 3
                },
 
@@ -130,14 +169,43 @@ BeginModule(Widgets)
 
                "ButtonStyleMesh": {
                    "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.Button.Enabled",
-                   "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.Button.Focused",
+                   "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.Button.Enabled",
+                   "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.Button.Enabled",
+
+                   "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.Button.Enabled",
+                   "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.Button.Enabled",
                    "WidgetMeshClickedTexture": "Style.Default.StyleSheet.Button.Clicked",
+                   "WidgetMeshFixedBorderWidth": 3
+               },
+
+               "MenuItemStyleMesh": {
+                   "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+                   "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+                   "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.MenuItem.Selected",
+
+                   "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.MenuItem.Selected",
+                   "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+                   "WidgetMeshClickedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+                   "WidgetMeshFixedBorderWidth": 3
+               },
+
+               "MainMenuItemStyleMesh": {
+                   "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+                   "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+                   "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.MenuItem.Clicked",
+
+                   "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+                   "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+                   "WidgetMeshClickedTexture": "Style.Default.StyleSheet.MenuItem.Clicked",
                    "WidgetMeshFixedBorderWidth": 3
                },
                "ButtonStylePadding": [5, 5, 5, 5],
                "ButtonStyleFont": "Font.DroidSans",
 
-               "PanelStylePadding": [0, 5, 0, 5]
+               "MainMenuStylePadding": [3, 3, 3, 3],
+               "MenuItemStylePadding": [7, 2, 7, 2],
+
+               "PanelStylePadding": [5, 5, 5, 5]
            }
         ]
     })

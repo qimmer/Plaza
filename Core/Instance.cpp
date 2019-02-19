@@ -32,9 +32,9 @@ static bool TryResolve(Entity unresolvedReference, UnresolvedReference *data) {
     return true;
 }
 static bool ResolveOne() {
-    for_entity(unresolvedReference, data, UnresolvedReference, {
+    for_entity(unresolvedReference, data, UnresolvedReference) {
         if(TryResolve(unresolvedReference, data)) return true;
-    });
+    }
 
     return false;
 }
@@ -47,9 +47,9 @@ API_EXPORT void ResolveReferences() {
 static void Instantiate(Entity templateEntity, Entity destinationEntity, Entity templateRoot, Entity destinationRoot);
 
 static bool IsInstanceOverriding(Entity instance, Entity property) {
-    for_children(override, InstanceOverrides, instance, {
+    for_children(override, InstanceOverrides, instance) {
         if(GetInstanceOverrideProperty(override) == property) return true;
-    });
+    }
 
     return false;
 }
@@ -168,20 +168,20 @@ static void Instantiate(Entity templateEntity, Entity destinationEntity, Entity 
     auto templateRootUuid = GetUuid(templateRoot);
     auto instanceRootUuid = GetUuid(instanceRoot);
 
-    for_entity(component, data, Component, {
+    for_entity(component, data, Component) {
         if (!GetIgnoreInstantiation(component) && HasComponent(templateEntity, component)) {
             AddComponent(destinationEntity, component);
 
-            for_children(property, Properties, component, {
+            for_children(property, Properties, component) {
                 if(property == PropertyOf_Uuid() || property == PropertyOf_InstanceTemplate() || GetPropertyReadOnly(property)) continue;
 
                 if(IsInstanceOverriding(destinationEntity, property)) continue;
                 if(IsEntityValid(GetBinding(templateEntity, property))) continue; // Do not instantiate bound properties. The Binding system resolve these!
 
                 InstantiateProperty(templateEntity, destinationEntity, templateRoot, instanceRoot, templateRootUuid, instanceRootUuid, templateUuid, instanceUuid, property);
-            });
+            }
         }
-    });
+    }
 
     SetInstanceIgnoreChanges(destinationEntity, false);
 
@@ -236,9 +236,9 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
         switch(GetPropertyKind(property)) {
             case PropertyKind_Value:
             {
-                for_entity(instance, data, Instance, {
+                for_entity(instance, data, Instance) {
                     UpdateInstance(instance, templateEntity, property, data);
-                });
+                }
                 break;
             }
             case PropertyKind_Array:
@@ -247,17 +247,17 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
                 auto oldEntity = oldValue.as_Entity;
                 // If element has been added, add one to all instances and bind template/instance relation
                 if(newEntity && !oldEntity) {
-                    for_entity(instance, data, Instance, {
+                    for_entity(instance, data, Instance) {
                         if(data->InstanceTemplate != templateEntity) continue;
 
                         auto addedIndex = AddArrayPropertyElement(property, instance);
                         SetInstanceTemplate(GetArrayPropertyElement(property, instance, addedIndex), newEntity);
-                    });
+                    }
                 }
 
                 // If element has been removed, remove all instanced elements as well
                 if(!newEntity && oldEntity) {
-                    for_entity(instance, data, Instance, {
+                    for_entity(instance, data, Instance) {
                         if(data->InstanceTemplate != templateEntity) continue;
 
                         u32 count = 0;
@@ -270,7 +270,7 @@ static void OnPropertyChanged(Entity property, Entity templateEntity, Type value
                                 break;
                             }
                         }
-                    });
+                    }
                 }
                 break;
             }
@@ -294,9 +294,9 @@ static void RemoveInstanceComponent(Entity entity, Entity instance, Entity compo
 
 LocalFunction(OnTemplateComponentAdded, void, Entity component, Entity entity) {
     if(HasComponent(entity, ComponentOf_Template())) {
-        for_entity(instance, instanceData, Instance, {
+        for_entity(instance, instanceData, Instance) {
             AddInstanceComponent(entity, instance, component, instanceData);
-        });
+        }
     }
 
     if(HasComponent(component, ComponentOf_TemplatedComponent()) && entity != GetComponentTemplate(component)) {
@@ -306,9 +306,9 @@ LocalFunction(OnTemplateComponentAdded, void, Entity component, Entity entity) {
 
 LocalFunction(OnTemplateComponentRemoved, void, Entity component, Entity entity) {
     if(HasComponent(entity, ComponentOf_Template())) {
-        for_entity(instance, instanceData, Instance, {
+        for_entity(instance, instanceData, Instance) {
             RemoveInstanceComponent(entity, instance, component, instanceData);
-        });
+        }
     }
 }
 

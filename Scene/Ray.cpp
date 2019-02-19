@@ -159,7 +159,7 @@ static inline Entity RayTrace(Entity ray, TraceRay *data) {
     finalHitPoint.z += rayMatrix.z.z;
 
     auto scene = GetAppNodeRoot(ray);
-    for_entity_dynamic(candidate, data->TraceRayComponent, {
+    for_entity_abstract(candidate, data2, data->TraceRayComponent) {
         v3f hitPoint;
 
         if(GetAppNodeRoot(candidate) != scene) continue;
@@ -173,7 +173,7 @@ static inline Entity RayTrace(Entity ray, TraceRay *data) {
                 finalHitPoint = hitPoint;
             }
         }
-    });
+    }
 
     SetTraceRayPoint(ray, finalHitPoint);
 
@@ -217,13 +217,13 @@ static void UpdatePickRay(Entity ray, PickRay *data) {
 }
 
 LocalFunction(OnAppUpdate, void, Entity appLoop) {
-    for_entity(ray, data, PickRay, {
+    for_entity(ray, data, PickRay) {
         UpdatePickRay(ray, data);
-    });
+    }
 
-    for_entity(ray, data, TraceRay, {
-        SetTraceRayRenderable(ray, RayTrace(ray, data));
-    });
+    for_entity(ray, data2, TraceRay) {
+        SetTraceRayRenderable(ray, RayTrace(ray, data2));
+    }
 }
 
 BeginUnit(Ray)

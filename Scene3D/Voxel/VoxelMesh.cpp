@@ -348,14 +348,14 @@ static void RegenerateVoxelMesh(Entity voxelMesh) {
 
 LocalFunction(OnVoxelChunkChanged, void, Entity voxelChunk) {
     if(HasComponent(voxelChunk, ComponentOf_VoxelChunk())) {
-        for_entity(voxelMesh, data, VoxelMesh, {
+        for_entity(voxelMesh, data, VoxelMesh) {
             if(GetVoxelMeshChunk(voxelMesh) == voxelChunk) RegenerateVoxelMesh(voxelMesh);
         }
     }
 }
 
 LocalFunction(OnVoxelPaletteChanged, void, Entity voxelPalette) {
-    for_entity(voxelMesh, data, VoxelMesh, {
+    for_entity(voxelMesh, data, VoxelMesh) {
         if(GetVoxelMeshPalette(voxelMesh) == voxelPalette) RegenerateVoxelMesh(voxelMesh);
     }
 }

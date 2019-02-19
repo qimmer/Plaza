@@ -4,6 +4,9 @@ $input v_texcoord0, v_normal
 
 uniform vec4 u_uvOffsetSizePerSampler[8];
 
+uniform vec4 u_widgetState;
+uniform vec4 u_widgetInteractionState;
+
 SAMPLER2D(s_widgetMeshEnabledTexture, 0);
 SAMPLER2D(s_widgetMeshDisabledTexture, 1);
 SAMPLER2D(s_widgetMeshSelectedTexture, 2);
@@ -11,9 +14,6 @@ SAMPLER2D(s_widgetMeshSelectedTexture, 2);
 SAMPLER2D(s_widgetMeshHoveredTexture, 3);
 SAMPLER2D(s_widgetMeshFocusedTexture, 4);
 SAMPLER2D(s_widgetMeshClickedTexture, 5);
-
-uniform vec2 u_widgetState;
-uniform vec4 u_widgetInteractionState;
 
 void main()
 {
@@ -50,11 +50,12 @@ void main()
         s_widgetMeshClickedTexture,
         v_texcoord0 * u_uvOffsetSizePerSampler[5].zw + u_uvOffsetSizePerSampler[5].xy);
 
-    vec4 albedo = mix(enabledColor, disabledColor, disabled);
-    albedo.xyz = mix(albedo.xyz, selectedColor.xyz, u_widgetInteractionState.x * selectedColor.a);
-    albedo.xyz = mix(albedo.xyz, focusedColor.xyz, u_widgetInteractionState.y * focusedColor.a);
-    albedo.xyz = mix(albedo.xyz, hoveredColor.xyz, u_widgetInteractionState.z * hoveredColor.a);
-    albedo.xyz = mix(albedo.xyz, clickedColor.xyz, u_widgetInteractionState.w * clickedColor.a);
+    vec4 albedo = mix(mix(enabledColor, selectedColor, selected), disabledColor, disabled);
+
+    albedo.xyz = mix(albedo.xyz, focusedColor.xyz, focused * focusedColor.a);
+    albedo.xyz = mix(albedo.xyz, hoveredColor.xyz, hovered * hoveredColor.a);
+    albedo.xyz = mix(albedo.xyz, selectedColor.xyz, selected * hoveredColor.a);
+    albedo.xyz = mix(albedo.xyz, clickedColor.xyz, clicked * clickedColor.a);
 
     gl_FragColor = albedo;
 }

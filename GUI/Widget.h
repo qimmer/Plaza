@@ -8,14 +8,14 @@
 #include <Core/NativeUtils.h>
 
 struct Rect2D {
-    v2f Size2D;
+    v2i Size2D;
 };
 
 struct Widget {
     Entity WidgetModel, WidgetMesh;
     bool WidgetDisabled, WidgetSelected;
     float WidgetStateTransitionDuration;
-    v2f WidgetState;
+    v3f WidgetState;
 };
 
 struct InteractableWidget {
@@ -48,12 +48,12 @@ Unit(Widget)
     Enum(WidgetState)
 
     Component(Rect2D)
-        Property(v2f, Size2D)
+        Property(v2i, Size2D)
 
     Component(Widget)
         Property(Entity, WidgetModel)
         Property(float, WidgetStateTransitionDuration)
-        Property(v2f, WidgetState)
+        Property(v3f, WidgetState)
         Property(bool, WidgetDisabled)
         Property(bool, WidgetSelected)
 

@@ -147,7 +147,7 @@ static void BindModule(duk_context *ctx, Entity module) {
 
     duk_get_prototype(ctx, -1);
 
-    for_children(child, Functions, module, {
+    for_children(child, Functions, module) {
         auto functionIndex = GetComponentIndex(ComponentOf_Function(), child);
         Assert(child, functionIndex < UINT16_MAX);
 
@@ -156,21 +156,21 @@ static void BindModule(duk_context *ctx, Entity module) {
 
         auto name = GetName(child);
         duk_put_prop_string(ctx, -2, name);
-    });
+    }
 
-    for_children(child, Components, module, {
-        duk_push_entity(ctx, child);
+    for_children(child2, Components, module) {
+        duk_push_entity(ctx, child2);
 
-        auto name = GetName(child);
+        auto name = GetName(child2);
         duk_put_prop_string(ctx, -2, name);
-    });
+    }
 
-    for_children(child, Properties, module, {
-        duk_push_entity(ctx, child);
+    for_children(child3, Properties, module) {
+        duk_push_entity(ctx, child3);
 
-        auto name = GetName(child);
+        auto name = GetName(child3);
         duk_put_prop_string(ctx, -2, name);
-    });
+    }
 
     duk_pop(ctx); // Pop prototype
 
@@ -183,9 +183,9 @@ LocalFunction(OnJavaScriptContextAdded, void, Entity component, Entity context) 
 
     data->ctx = duk_create_heap_default();
 
-    for_entity(module, moduleData, Module, {
+    for_entity(module, moduleData, Module) {
         BindModule(data->ctx, module);
-    });
+    }
 }
 
 LocalFunction(OnJavaScriptContextRemoved, void, Entity component, Entity context) {
@@ -195,9 +195,9 @@ LocalFunction(OnJavaScriptContextRemoved, void, Entity component, Entity context
 }
 
 static void RebindModuleChild(Entity module, Entity child, StringRef oldName) {
-    for_entity(context, contextData, JavaScriptContext, {
+    for_entity(context, contextData, JavaScriptContext) {
         BindModule(contextData->ctx, module);
-    });
+    }
 }
 
 static Variant CallJavaScriptFunc(
@@ -233,7 +233,7 @@ static bool EvaluateJavaScript(Entity script) {
 
         duk_push_global_object(data->ctx);
 
-        for_entity(function, functionData, Function, {
+        for_entity(function, functionData, Function) {
             auto caller = GetFunctionCaller(function);
 
             // If function has no caller or has a JavaScript caller,
@@ -250,7 +250,7 @@ static bool EvaluateJavaScript(Entity script) {
                 }
                 duk_pop(data->ctx);
             }
-        });
+        }
 
         duk_pop(data->ctx); // pop global object
 

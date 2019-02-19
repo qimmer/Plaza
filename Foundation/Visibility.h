@@ -11,6 +11,7 @@
 Unit(Visibility)
     Component(Visibility)
         Property(bool, Hidden)
+        Property(bool, HierarchiallyHidden)
 
 
 #endif //PLAZA_VISIBILITY_H

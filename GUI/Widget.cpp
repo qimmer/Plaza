@@ -14,6 +14,7 @@
 #include <Rendering/Texture2D.h>
 #include <Core/Identification.h>
 #include <Foundation/Invalidation.h>
+#include <Foundation/Visibility.h>
 #include <Animation/Transition.h>
 #include <Json/NativeUtils.h>
 #include <Scene/Scene.h>
@@ -28,7 +29,7 @@ static void UpdateWidgetBounds(Entity widget) {
     auto globalMat = GetTransformGlobalMatrix(widget);
 
     v4f localMin = { 0.0f, 0.0f, 0.0f, 1.0f };
-    v4f localMax = { widgetSize.x, widgetSize.y, 0.0f, 1.0f };
+    v4f localMax = { (float)widgetSize.x, (float)widgetSize.y, 0.0f, 1.0f };
 
     v4f globalMin, globalMax;
 
@@ -147,11 +148,11 @@ LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
 }
 
 LocalFunction(OnValidateMeshes, void, Entity component) {
-    for_entity(mesh, meshData, WidgetMesh, {
+    for_entity(mesh, meshData, WidgetMesh) {
         if(IsDirty(mesh)) {
             RebuildWidgetMesh(mesh);
         }
-    });
+    }
 }
 
 LocalFunction(OnWidgetMeshAdded, void, Entity component, Entity entity) {
@@ -160,14 +161,17 @@ LocalFunction(OnWidgetMeshAdded, void, Entity component, Entity entity) {
 }
 
 LocalFunction(OnStateChanged, void, Entity entity) {
-    auto data = GetWidgetData(entity);
+    if(HasComponent(entity, ComponentOf_Widget())) {
+        auto data = GetWidgetData(entity);
 
-    v2f newState = {
-        data->WidgetDisabled ? 1.0f : 0.0f,
-        data->WidgetSelected ? 1.0f : 0.0f
-    };
+        v3f newState = {
+                data->WidgetDisabled ? 1.0f : 0.0f,
+                data->WidgetSelected ? 1.0f : 0.0f,
+                GetHidden(entity) ? 1.0f : 0.0f
+        };
 
-    Transition(entity, PropertyOf_WidgetState(), MakeVariant(v2f, newState), GetWidgetStateTransitionDuration(entity));
+        Transition(entity, PropertyOf_WidgetState(), MakeVariant(v2f, newState), GetWidgetStateTransitionDuration(entity));
+    }
 }
 
 LocalFunction(OnInteractableStateChanged, void, Entity entity) {
@@ -185,7 +189,7 @@ LocalFunction(OnInteractableStateChanged, void, Entity entity) {
 BeginUnit(Widget)
     BeginComponent(Rect2D)
         RegisterBase(Transform)
-        RegisterProperty(v2f, Size2D)
+        RegisterProperty(v2i, Size2D)
     EndComponent()
 
     BeginComponent(Widget)
@@ -193,7 +197,7 @@ BeginUnit(Widget)
         RegisterBase(Renderable)
         RegisterProperty(Entity, WidgetModel)
         RegisterProperty(float, WidgetStateTransitionDuration)
-        RegisterProperty(v2f, WidgetState)
+        RegisterProperty(v3f, WidgetState)
         RegisterProperty(bool, WidgetDisabled)
         RegisterProperty(bool, WidgetSelected)
 
@@ -239,6 +243,7 @@ BeginUnit(Widget)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetDisabled()), OnStateChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetSelected()), OnStateChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Hidden()), OnStateChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetHovered()), OnInteractableStateChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetFocused()), OnInteractableStateChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClicked()), OnInteractableStateChanged, 0)

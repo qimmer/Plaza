@@ -317,11 +317,11 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
         {
             writer.String("$components");
             writer.StartArray();
-            for_entity(component, componentData, Component, {
+            for_entity(component, componentData, Component) {
                 if(HasComponent(parent, component)) {
                     writer.String(GetUuid(component));
                 }
-            });
+            }
             writer.EndArray();
         }
 
@@ -330,7 +330,7 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
         writer.String("$handle");
         writer.Uint64(parent);
 
-        for_entity(component, componentData, Component, {
+        for_entity(component, componentData, Component) {
             if(!HasComponent(parent, component)
                || (parent == root && (component == ComponentOf_PersistancePoint()))
                || component == ComponentOf_Ownership()) {
@@ -401,7 +401,7 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
                         break;
                 }
             }
-        });
+        }
 
         writer.EndObject();
     } else {
@@ -592,7 +592,9 @@ static Entity ResolveEntity(Entity stream, StringRef uuid, rapidjson::Value& ent
             SetUuid(entity, uuid);
         }
 
-        DeserializeEntity(stream, entity, value, entityMap, document);
+        if(IsEntityValid(entity)) {
+            DeserializeEntity(stream, entity, value, entityMap, document);
+        }
 
         return entity;
     }

@@ -9,6 +9,7 @@
 
 struct Button {
     StringRef ButtonTitle;
+    Entity ButtonLabel;
 };
 
 struct ButtonStyle {
@@ -20,6 +21,7 @@ struct ButtonStyle {
 Unit(Button)
     Component(Button)
         Property(StringRef, ButtonTitle)
+        ChildProperty(Entity, ButtonLabel)
 
     Component(ButtonStyle)
         ChildProperty(WidgetMesh, ButtonStyleMesh)

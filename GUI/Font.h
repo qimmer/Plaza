@@ -16,15 +16,19 @@ struct Glyph {
 
 struct Font {
     StringRef FontCharacters;
+    s32 FontAscent, FontDescent, FontLineGap;
 };
 
 struct FontVertex {
     v2f Position, Uv;
+    v4f Color;
 };
 
 u32 GetFontGlyphData(Entity font,
                      StringRef text,
+                     const v4f *colors,
                      v2f origin,
+                     v2f *size,
                      FontVertex *vertices,
                      u32 maxVertices);
 
@@ -38,6 +42,9 @@ Unit(Font)
 
     Component(Font)
         Property(StringRef, FontCharacters)
+        Property(s32, FontAscent)
+        Property(s32, FontDescent)
+        Property(s32, FontLineGap)
         ArrayProperty(Glyph, FontGlyphs)
 
 #endif //PLAZA_FONT_H

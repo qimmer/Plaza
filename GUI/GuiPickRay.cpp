@@ -49,7 +49,7 @@ LocalFunction(OnInputStateChanged, void, Entity inputState, float oldValue, floa
             if(IsEntityValid(widget)) {
                 SetGuiPickRayPickedWidget(ray, widget);
                 SetWidgetClicked(widget, true);
-                SetWidgetFocused(widget, true);
+                //SetWidgetFocused(widget, true);
             }
         } else { // Released
             auto widget = GetGuiPickRayPickedWidget(ray);

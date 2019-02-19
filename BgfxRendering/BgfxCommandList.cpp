@@ -41,21 +41,32 @@
 
 extern bgfx::UniformHandle u_uvOffsetSizePerSampler;
 
-static v4f uvOffsetSizePerSampler[8];
-
 struct BgfxCommandList {
 };
 
-static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encoder) {
+static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encoder, v4f *uvOffsetSizePerSampler) {
     auto uniformData = GetUniformData(uniform);
 
     auto component = GetOwner(uniformData->UniformEntityProperty);
-    if(!HasComponent(entity, component)) return;
-
-    auto value = GetPropertyValue(uniformData->UniformEntityProperty, entity);
     auto propertyType = GetPropertyType(uniformData->UniformEntityProperty);
 
     if(!propertyType) return;
+
+    Variant value;
+    auto whiteTexture = TextureOf_White();
+
+    if(!HasComponent(entity, component)) {
+        // Make default value
+
+        value = Variant_Default;
+        value.type = propertyType;
+
+        if(propertyType == TypeOf_Entity) {
+            value.as_Entity = whiteTexture;
+        }
+    } else {
+        value = GetPropertyValue(uniformData->UniformEntityProperty, entity);
+    }
 
     switch (propertyType) {
         case TypeOf_s8:
@@ -112,7 +123,8 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
         }
 
         if(!HasComponent(texture, ComponentOf_Texture())) {
-            texture = TextureOf_White();
+            Warning(entity, "%s is missing texture value for uniform %s.", GetUuid(entity), GetUuid(uniform));
+            texture = whiteTexture;
         }
 
         auto textureHandle = bgfx::TextureHandle{GetBgfxResourceHandle(texture)};
@@ -120,7 +132,7 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
     }
 }
 
-inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity renderState, Entity pass) {
+inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity renderState, Entity pass, v4f *uvOffsetSizePerSampler) {
     auto batchData = GetBatchData(batch);
     auto renderStateData = GetRenderStateData(renderState);
     if(!batchData) return;
@@ -132,6 +144,8 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     auto transformData = GetTransformData(renderable);
     if(!transformData) return;
     auto worldMatrix = transformData->TransformGlobalMatrix;
+
+    if(GetHierarchiallyHidden(renderable)) return;
 
     auto subMesh = GetRenderableSubMesh(renderable);
 
@@ -201,20 +215,19 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
         }
     }
 
+    for_children(uniform1, RenderPassMaterialUniforms, pass) {
+        SetUniformState(uniform1, material, encoder, uvOffsetSizePerSampler);
+    }
 
-    for_children(uniform, RenderPassMaterialUniforms, pass, {
-        SetUniformState(uniform, material, encoder);
-    });
+    for_children(uniform2, RenderPassMeshUniforms, pass) {
+        SetUniformState(uniform2, mesh, encoder, uvOffsetSizePerSampler);
+    }
 
-    for_children(uniform, RenderPassMeshUniforms, pass, {
-        SetUniformState(uniform, mesh, encoder);
-    });
+    for_children(uniform3, RenderPassRenderableUniforms, pass) {
+        SetUniformState(uniform3, renderable, encoder, uvOffsetSizePerSampler);
+    }
 
-    for_children(uniform, RenderPassRenderableUniforms, pass, {
-        SetUniformState(uniform, renderable, encoder);
-    });
-
-    encoder->setUniform(u_uvOffsetSizePerSampler, &uvOffsetSizePerSampler);
+    encoder->setUniform(u_uvOffsetSizePerSampler, uvOffsetSizePerSampler, 8);
 
     encoder->submit(viewId, bgfx::ProgramHandle {programHandle}, transformData->TransformHierarchyLevel);
 }
@@ -227,6 +240,8 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
     auto renderTarget = GetSceneRendererTarget(sceneRenderer);
 
     if(!IsEntityValid(camera) || !IsEntityValid(scene) || !IsEntityValid(renderTarget)) return;
+
+    if(GetHierarchiallyHidden(camera)) return;
 
     auto viewport = GetSceneRendererViewport(sceneRenderer);
     auto pass = GetCommandListPass(commandList);
@@ -308,13 +323,16 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
     bgfx::touch(viewId);
 
     auto primaryEncoder = bgfx::begin();
-    for_children(uniform, RenderPassSceneUniforms, pass, {
-        SetUniformState(uniform, scene, primaryEncoder);
-    });
 
-    for_children(uniform, RenderPassCameraUniforms, pass, {
-        SetUniformState(uniform, camera, primaryEncoder);
-    });
+    v4f uvOffsetSizePerSampler[8];
+
+    for_children(uniform1, RenderPassSceneUniforms, pass) {
+        SetUniformState(uniform1, scene, primaryEncoder, uvOffsetSizePerSampler);
+    }
+
+    for_children(uniform2, RenderPassCameraUniforms, pass) {
+        SetUniformState(uniform2, camera, primaryEncoder, uvOffsetSizePerSampler);
+    }
 
     u32 numBatches = 0;
     auto batches = GetCommandListBatches(commandList, &numBatches);
@@ -331,14 +349,14 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
                 auto encoder = bgfx::begin();
 
                 for (auto i=low; i<high; i++) {
-                    RenderBatch(viewId, encoder, batches[i], renderState, pass);
+                    RenderBatch(viewId, encoder, batches[i], renderState, pass, uvOffsetSizePerSampler);
                 }
 
                 bgfx::end(encoder);
             }
         } else {
             for (auto i=0; i < numBatches; i++) {
-                RenderBatch(viewId, primaryEncoder, batches[i], renderState, pass);
+                RenderBatch(viewId, primaryEncoder, batches[i], renderState, pass, uvOffsetSizePerSampler);
             }
         }
     }
@@ -348,10 +366,10 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
 
 LocalFunction(OnSubmitCommandLists, void, Entity appLoop) {
     auto i = 0;
-    for_entity(commandList, data, CommandList, {
+    for_entity(commandList, data, CommandList) {
         RenderCommandList(commandList, i);
         ++i;
-    });
+    }
 }
 
 BeginUnit(BgfxCommandList)

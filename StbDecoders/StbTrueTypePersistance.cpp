@@ -8,6 +8,7 @@
 #include <Rendering/Texture2D.h>
 #include <Rendering/Texture.h>
 #include <Foundation/Invalidation.h>
+#include <Core/Algorithms.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
@@ -108,7 +109,14 @@ static bool Deserialize(Entity texture) {
             y = bottom_y, x = 1; // advance to next row
     }
 
+    int ascent, descent, lineGap;
+    stbtt_GetFontVMetrics(&f, &ascent, &descent, &lineGap);
+
     free(fontData);
+
+    SetFontAscent(texture, ascent * scale);
+    SetFontDescent(texture, descent * scale);
+    SetFontLineGap(texture, lineGap * scale);
 
     SetTextureFormat(texture, TextureFormat_A8);
     SetTextureFlag(texture, TextureFlag_MIN_POINT | TextureFlag_MAG_POINT);

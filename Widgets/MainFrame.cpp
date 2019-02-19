@@ -7,6 +7,7 @@
 #include <Rendering/RenderContext.h>
 #include <Scene/Scene.h>
 #include <Scene/Camera.h>
+#include <Gui/GuiPickRay.h>
 #include <Gui/Widget.h>
 #include <Json/NativeUtils.h>
 
@@ -14,11 +15,12 @@ BeginUnit(MainFrame)
     BeginComponent(MainFrame)
         RegisterBase(Scene)
         RegisterChildProperty(SceneRenderer, MainFrameRenderer)
+        RegisterChildProperty(GuiPickRay, MainFramePicker)
         RegisterChildProperty(Camera, MainFrameCamera)
 
         ComponentTemplate({
             "Uuid": "Template.MainFrame",
-            "$components": ["Component.VerticalLayout"],
+            "LayoutMode": "LayoutMode_Vertical",
             "MainFrameRenderer": {
                 "SceneRendererTarget": "Template.MainFrame",
                 "SceneRendererScene": "Template.MainFrame",
@@ -33,6 +35,19 @@ BeginUnit(MainFrame)
                 "OrthographicFrustumBottomRight": "{Owner.MainFrameRenderer.SceneRendererTarget.RenderTargetSize}",
                 "Position3D": [0, 0, -100]
             },
+            "MainFramePicker": {
+                "PickRaySceneRenderer": "{Owner.MainFrameRenderer}",
+                "GuiPickRayClickState": {
+                    "InputStateContext": "{Owner.Owner}",
+                    "InputStateKey": "MOUSEBUTTON_0"
+                }
+            },
+            "LayoutChildOrder": [
+                {
+                    "LayoutChildOrderingProperty": "Property.Children"
+                }
+            ],
+            "LayoutChildWeight": [1.0, 1.0],
             "SceneStyle": "Style.Default"
         })
 

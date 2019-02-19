@@ -23,31 +23,30 @@ static inline void EvaluateLayer(Entity animationPlayer, Entity layer, Animation
     newTime += deltaTime * layerData->AnimationPlayerLayerSpeed;
     SetAnimationPlayerLayerTime(layer, newTime);
 
-    for_children(track, AnimationTracks, GetAnimationPlayerLayerAnimation(layer), {
+    for_children(track, AnimationTracks, GetAnimationPlayerLayerAnimation(layer)) {
         auto value = EvaluateAnimationFrame(track, newTime, layerData->AnimationPlayerLayerLooping);
         if(!value.type) continue;
 
         auto property = GetAnimationTrackProperty(track);
         value = Cast(value, GetPropertyType(property));
         SetPropertyValue(property, animationPlayer, value);
-    });
+    }
 }
 
 LocalFunction(OnUpdateAnimation, void) {
     auto deltaTime = GetStopWatchElapsedSeconds(StopWatchOf_Animation());
     SetStopWatchElapsedSeconds(StopWatchOf_Animation(), 0.0);
 
-    #pragma omp parallel
-    for_entity_parallel(animationPlayer, playerData, AnimationPlayer, {
+    for_entity(animationPlayer, playerData, AnimationPlayer) {
         if(!IsEntityValid(GetAppNodeRoot(animationPlayer))) continue;
 
-        for_children(layer, AnimationPlayerLayers, animationPlayer, {
+        for_children(layer, AnimationPlayerLayers, animationPlayer) {
             auto layerData = GetAnimationPlayerLayerData(layer);
             if(layerData->AnimationPlayerLayerSpeed != 0.0f) {
                 EvaluateLayer(animationPlayer, layer, layerData, deltaTime);
             }
-        });
-    });
+        }
+    }
 }
 
 BeginUnit(AnimationPlayer)

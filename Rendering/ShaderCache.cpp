@@ -37,13 +37,13 @@ API_EXPORT Entity GetShaderCacheBinaryProgram(
         Entity shaderCache,
         Entity program) {
 
-    for_children(binaryProgram, ShaderCachePrograms, shaderCache, {
+    for_children(binaryProgram, ShaderCachePrograms, shaderCache) {
         auto binaryProgramData = GetBinaryProgramData(binaryProgram);
 
         if(binaryProgramData->BinaryProgramProgram == program) {
             return binaryProgram;
         }
-    });
+    }
 
     return CreateBinaryProgram(shaderCache, program);
 }
@@ -84,28 +84,28 @@ LocalFunction(OnStreamChanged, void,
     if(HasComponent(owner, ComponentOf_Program())) {
         auto program = owner;
 
-        for_entity(binaryProgram, binaryProgramData, BinaryProgram, {
+        for_entity(binaryProgram, binaryProgramData, BinaryProgram) {
             if(binaryProgramData->BinaryProgramProgram == program) {
                 InvalidateBinaryProgram(binaryProgram);
             }
-        });
+        }
     }
 }
 
 LocalFunction(OnProgramChanged, void,
               Entity program) {
-    for_entity(binaryProgram, binaryProgramData, BinaryProgram, {
+    for_entity(binaryProgram, binaryProgramData, BinaryProgram) {
         if(binaryProgramData->BinaryProgramProgram == program) {
             InvalidateBinaryProgram(binaryProgram);
         }
-    });
+    }
 }
 
 LocalFunction(OnShaderCacheChanged, void,
               Entity shaderCache) {
-    for_children(binaryProgram, ShaderCachePrograms, shaderCache, {
+    for_children(binaryProgram, ShaderCachePrograms, shaderCache) {
         InvalidateBinaryProgram(binaryProgram);
-    });
+    }
 }
 
 BeginUnit(ShaderCache)

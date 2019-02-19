@@ -13,6 +13,10 @@
 
 #define ComponentTemplate(...) \
     AddComponent(component, ComponentOf_TemplatedComponent());\
+    AddComponent(GetComponentTemplate(component), component);\
+    for_children(base, Bases, component) {\
+        AddComponent(GetComponentTemplate(component), GetBaseComponent(base));\
+    }\
     DeserializeJsonFromString(GetComponentTemplate(component), GetComponentTemplate(component), #__VA_ARGS__ );
 
 #define Define(TYPE, NAME, ...) \

@@ -7,39 +7,38 @@
 
 #include <Core/NativeUtils.h>
 
-struct HorizontalLayout {
-
-};
-
-struct VerticalLayout {
-
+enum {
+    LayoutMode_Vertical,
+    LayoutMode_Horizontal,
+    LayoutMode_Stacked
 };
 
 struct LayoutChildOrdering {
-    Entity LayoutOrderingChildProperty;
+    Entity LayoutChildOrderingProperty;
 };
 
 struct Layout {
-    v4f LayoutPadding;
-    v2f LayoutSpacing;
+    v4i LayoutPadding;
+    v2i LayoutSpacing;
+    u8 LayoutMode;
 };
 
 struct LayoutChild {
     v2f LayoutChildWeight;
-    v2f LayoutChildMinimumSize;
 };
 
 Unit(Layout)
+    Enum(LayoutMode)
     Component(Layout)
-        Property(v4f, LayoutPadding)
-        Property(v2f, LayoutSpacing)
+        Property(v4i, LayoutPadding)
+        Property(v2i, LayoutSpacing)
+        Property(u8, LayoutMode)
         ArrayProperty(LayoutChildOrdering, LayoutChildOrder)
 
-    Component(HorizontalLayout)
-    Component(VerticalLayout)
+    Component(LayoutChildOrdering)
+        ReferenceProperty(Property, LayoutChildOrderingProperty)
 
     Component(LayoutChild)
         Property(v2f, LayoutChildWeight)
-        Property(v2f, LayoutChildMinimumSize)
 
 #endif //PLAZA_LAYOUT_H

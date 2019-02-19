@@ -40,6 +40,8 @@ Component(Property)
 Component(Ownership)
     __PropertyCoreGetOnly(Ownership, Entity, Owner, PropertyFlag_ReadOnly, PropertyFlag_Transient)
     __PropertyCoreGetOnly(Ownership, Entity, OwnerProperty, PropertyFlag_ReadOnly, PropertyFlag_Transient)
+
+Function(IsOwnedBy, bool, Entity entity, Entity owner)
     void SetOwner(Entity entity, Entity owner, Entity ownerProperty);
 
 StringRef Intern(StringRef sourceString);

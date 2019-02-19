@@ -11,8 +11,7 @@ struct TextWidget {
     StringRef TextWidgetText;
     Entity TextWidgetMesh;
     Entity TextWidgetFont;
-    rgba8 TextWidgetColor;
-    v2f TextWidgetAlignment;
+    rgba32 TextWidgetColor;
 };
 
 Unit(TextWidget)
@@ -20,7 +19,6 @@ Unit(TextWidget)
         Property(StringRef, TextWidgetText)
         ChildProperty(Mesh, TextWidgetMesh)
         ReferenceProperty(Font, TextWidgetFont)
-        Property(rgba8, TextWidgetColor)
-        Property(v2f, TextWidgetAlignment)
+        Property(rgba32, TextWidgetColor)
 
 #endif //PLAZA_TEXTWIDGET_H

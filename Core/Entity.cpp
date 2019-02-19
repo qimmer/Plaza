@@ -91,9 +91,9 @@ API_EXPORT void DestroyEntity(Entity entity) {
         return;
     }
 
-    for_entity(component, componentData, Component, {
+    for_entity(component, componentData, Component) {
         RemoveComponent(entity, component);
-    });
+    }
 
     auto argument = MakeVariant(Entity, entity);
 	FireEventFast(EventOf_EntityDestroyed(), 1, &argument);

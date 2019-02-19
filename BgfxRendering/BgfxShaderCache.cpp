@@ -65,11 +65,11 @@ static void CompileProgram(Entity entity) {
 }
 
 LocalFunction(OnBinaryProgramValidation, void, Entity component) {
-    for_entity(entity, data, BgfxBinaryProgram, {
+    for_entity(entity, data, BgfxBinaryProgram) {
         if(!IsDirty(entity)) continue;
 
         CompileProgram(entity);
-    });
+    }
 }
 
 BeginUnit(BgfxShaderCache)

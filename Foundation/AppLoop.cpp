@@ -21,9 +21,9 @@ static bool CompareAppLoopOrder(const Entity &a, const Entity &b) {
 LocalFunction(OnSortAppLoops, void, Entity changedAppLoop) {
     sortedAppLoops.clear();
 
-    for_entity(appLoop, appLoopData, AppLoop, {
+    for_entity(appLoop, appLoopData, AppLoop) {
         sortedAppLoops.push_back(appLoop);
-    });
+    }
 
     std::sort(sortedAppLoops.begin(), sortedAppLoops.end(), CompareAppLoopOrder);
 

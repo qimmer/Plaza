@@ -21,8 +21,7 @@ BeginUnit(Dock)
 
         ComponentTemplate({
               "RenderableSubMesh": "{SceneNodeScene.SceneStyle.DockStyleMesh}",
-              "LayoutPadding": "{SceneNodeScene.SceneStyle.DockStylePadding}",
-              "LayoutChildMinimumSize": [20, 20]
+              "LayoutPadding": "{SceneNodeScene.SceneStyle.DockStylePadding}"
           })
     EndComponent()
 EndUnit()

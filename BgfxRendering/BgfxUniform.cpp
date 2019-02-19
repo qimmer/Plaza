@@ -23,7 +23,7 @@ LocalFunction(OnUniformRemoved, void, Entity entity) {
 }
 
 LocalFunction(OnUniformValidation, void, Entity component) {
-    for_entity(entity, data, BgfxUniform, {
+    for_entity(entity, data, BgfxUniform) {
         if(!IsDirty(entity)) continue;
 
         // Eventually free old buffers
@@ -33,6 +33,7 @@ LocalFunction(OnUniformValidation, void, Entity component) {
         bgfx::UniformType::Enum type;
 
         auto property = GetUniformEntityProperty(entity);
+
         auto propertyType = GetPropertyType(property);
         switch (propertyType) {
             case TypeOf_s8:
@@ -63,14 +64,14 @@ LocalFunction(OnUniformValidation, void, Entity component) {
                 type = bgfx::UniformType::Int1;
                 break;
             default:
-                Log(entity, LogSeverity_Error, "Unsupported uniform property type: %s (property %s)", GetTypeName(propertyType), GetUuid(property));
+                Log(entity, LogSeverity_Error, "Unsupported uniform property type: %s (uniform %s)", GetTypeName(propertyType), GetUuid(entity));
                 break;
         }
 
         auto name = GetUniformIdentifier(entity);
         auto arrayCount = Max((u32)1, GetUniformArrayCount(entity));
         SetBgfxResourceHandle(entity, bgfx::createUniform(name, type, arrayCount).idx);
-    });
+    }
 }
 
 BeginUnit(BgfxUniform)

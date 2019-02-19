@@ -6,6 +6,7 @@
 #include <Json/NativeUtils.h>
 #include <Gui/Widget.h>
 #include <Gui/Font.h>
+#include <Gui/TextWidget.h>
 #include <Widgets/Style.h>
 
 BeginUnit(Button)
@@ -17,20 +18,23 @@ BeginUnit(Button)
     EndComponent()
 
     BeginComponent(Button)
-        RegisterBase(Widget)
+        RegisterBase(InteractableWidget)
         RegisterProperty(StringRef, ButtonTitle)
+        RegisterChildProperty(TextWidget, ButtonLabel)
 
         ComponentTemplate({
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.ButtonStyleMesh}",
+            "LayoutMode": "LayoutMode_Horizontal",
             "LayoutPadding": "{SceneNodeScene.SceneStyle.ButtonStylePadding}",
-            "LayoutChildMinimumSize": [40, 20],
-            "Children": [
-                {
-                    "TextWidgetFont": "{SceneNodeScene.SceneStyle.ButtonStyleFont}",
-                    "TextWidgetAlignment": [0.0, 0.5],
-                    "TextWidgetText": "{Owner.ButtonTitle}"
-                }
-            ]
+            "LayoutChildOrder": [
+              {
+                  "LayoutChildOrderingProperty": "Property.ButtonLabel"
+              }
+            ],
+            "ButtonLabel": {
+                "TextWidgetFont": "{SceneNodeScene.SceneStyle.ButtonStyleFont}",
+                "TextWidgetText": "{Owner.ButtonTitle}"
+            }
         })
     EndComponent()
 EndUnit()

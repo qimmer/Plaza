@@ -21,32 +21,61 @@ BeginModule(Editor)
 
     ModuleData({
         "EditorMainFrame": {
-            "$components": ["Component.VerticalLayout"],
             "Size2D": "{RenderTargetSize}",
             "RenderContextTitle": "Editor",
             "RenderTargetSize": [800, 600],
+            "LayoutMode": "LayoutMode_Vertical",
             "Children": [
                 {
                     "$components": ["Component.MainMenu"],
-                    "Children": [
+                    "MenuItems": [
                         {
-                            "ButtonTitle": "File"
+                            "$components": ["Component.MainMenuItem"],
+                            "MenuItemTitle": "File",
+                            "MenuItemSubMenu": {
+                                "MenuItems": [
+                                    {
+                                        "MenuItemTitle": "New ..."
+                                    },
+                                    {
+                                        "MenuItemTitle": "Open ..."
+                                    },
+                                    {
+                                        "MenuItemTitle": "Quit"
+                                    }
+                                ]
+                            }
                         },
                         {
-                            "ButtonTitle": "Edit"
+                            "$components": ["Component.MainMenuItem"],
+                            "MenuItemTitle": "Edit"
                         },
                         {
-                            "ButtonTitle": "View"
+                            "$components": ["Component.MainMenuItem"],
+                            "MenuItemTitle": "View"
                         }
                     ]
                 },
                 {
-                    "$components": ["Component.HorizontalLayout"],
-                    "LayoutChildWeight": [1.0, 1.0]
+                    "LayoutMode": "LayoutMode_Horizontal",
+                    "LayoutChildWeight": [1.0, 1.0],
+                    "Children": [
+                        {
+                            "$components": ["Component.Panel"],
+                            "LayoutChildWeight": [0.25, 1.0]
+                        },
+                        {
+                            "LayoutChildWeight": [0.5, 1.0]
+                        },
+                        {
+                            "$components": ["Component.Panel"],
+                            "LayoutChildWeight": [0.25, 1.0]
+                        }
+                    ]
                 },
                 {
                     "$components": ["Component.Panel"],
-                    "LayoutChildMinimumSize": [32, 32]
+                    "LayoutChildWeight": [1.0, 0.0]
                 }
             ]
         }

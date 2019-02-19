@@ -152,9 +152,9 @@ static void BuildBody(Entity body) {
 
     auto isSensor = GetCollisionBodyType(body) == CollisionBodyType_Overlap;
 
-    for_children(shape, CollisionBodyShapes, body, {
+    for_children(shape, CollisionBodyShapes, body) {
         AddFixture(data->Body, shape, isSensor);
-    });
+    }
 }
 
 LocalFunction(OnSceneAdded, void, Entity component, Entity entity) {
@@ -259,27 +259,27 @@ LocalFunction(OnUpdate, void) {
     auto deltaTime = GetStopWatchElapsedSeconds(StopWatchOf_Box2D());
     SetStopWatchElapsedSeconds(StopWatchOf_Box2D(), 0.0);
 
-    for_entity(force, forceData, CollisionForce, {
+    for_entity(force, forceData, CollisionForce) {
         auto bodyData = GetBox2DCollisionBodyData(forceData->CollisionForceBody);
         if(!bodyData || !bodyData->Body) continue;
 
         auto factor = forceData->CollisionForceFactor * (float)deltaTime;
         bodyData->Body->ApplyLinearImpulseToCenter({forceData->CollisionForceDirection.x * factor, forceData->CollisionForceDirection.y * factor}, true);
-    });
+    }
 
-    for_entity(scene, sceneData, Box2DCollisionScene, {
+    for_entity(scene, sceneData, Box2DCollisionScene) {
         auto velocityIterations = 6;
         auto positionIterations = 2;
 
         sceneData->World->Step(deltaTime, velocityIterations, positionIterations);
-    });
+    }
 
     isUpdatingTransforms = true;
-    for_entity(body, bodyData, Box2DCollisionBody, {
+    for_entity(body, bodyData, Box2DCollisionBody) {
         if(!bodyData->Body) continue;
 
         UpdateBody(body, bodyData);
-    });
+    }
 
     isUpdatingTransforms = false;
 }
