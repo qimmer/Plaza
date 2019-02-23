@@ -95,7 +95,7 @@ typedef struct {
 
 } rgba8;
 
-typedef struct {
+typedef struct ALIGN(16) {
 
     union {
         struct {
