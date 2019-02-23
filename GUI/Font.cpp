@@ -142,6 +142,8 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
     auto end = text + strlen(text);
     u32 numVertices = 0;
 
+    *size = {0.0f, 0.0f};
+
     origin.y += data->FontAscent;
 
     auto i = 0;

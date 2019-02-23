@@ -115,7 +115,7 @@ BeginUnit(TextWidget)
         RegisterBase(Widget)
         RegisterProperty(StringRef, TextWidgetText)
         RegisterReferenceProperty(Font, TextWidgetFont)
-        RegisterProperty(rgba8, TextWidgetColor)
+        RegisterProperty(rgba32, TextWidgetColor)
         RegisterChildProperty(Mesh, TextWidgetMesh)
 
         ComponentTemplate({
@@ -125,6 +125,7 @@ BeginUnit(TextWidget)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextWidgetText()), OnTextWidgetChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextWidgetFont()), OnTextWidgetChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextWidgetColor()), OnTextWidgetChanged, 0)
     RegisterSubscription(EventOf_Validate(), OnValidateMeshes, ComponentOf_Mesh())
     RegisterSubscription(EventOf_Validate(), OnValidateTextures, ComponentOf_Texture())
 EndUnit()

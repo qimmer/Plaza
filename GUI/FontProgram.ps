@@ -4,11 +4,9 @@
 
 SAMPLER2D(s_fontAtlas, 6);
 
-uniform vec3 u_tint;
-
 void main()
 {
 	float a = texture2D(s_fontAtlas, v_texcoord0).a;
 
-	gl_FragColor = vec4(0, 0, 0, a);//vec4(1, 1, 1, a) * v_color;
+	gl_FragColor = vec4(1, 1, 1, a) * v_color;
 }
