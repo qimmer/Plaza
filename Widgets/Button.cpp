@@ -14,6 +14,7 @@ BeginUnit(Button)
         RegisterBase(Style)
         RegisterChildProperty(WidgetMesh, ButtonStyleMesh)
         RegisterReferenceProperty(Font, ButtonStyleFont)
+        RegisterProperty(v4f, ButtonStyleTextColor)
         RegisterProperty(v4i, ButtonStylePadding)
     EndComponent()
 
@@ -33,7 +34,8 @@ BeginUnit(Button)
             ],
             "ButtonLabel": {
                 "TextWidgetFont": "{SceneNodeScene.SceneStyle.ButtonStyleFont}",
-                "TextWidgetText": "{Owner.ButtonTitle}"
+                "TextWidgetText": "{Owner.ButtonTitle}",
+                "TextWidgetColor": "{Owner.WidgetStateColor}"
             }
         })
     EndComponent()

@@ -16,6 +16,7 @@ struct ButtonStyle {
     Entity ButtonStyleMesh;
     Entity ButtonStyleFont;
     v4i ButtonStylePadding;
+    v4f ButtonStyleTextColor;
 };
 
 Unit(Button)
@@ -27,5 +28,6 @@ Unit(Button)
         ChildProperty(WidgetMesh, ButtonStyleMesh)
         ReferenceProperty(Font, ButtonStyleFont)
         Property(v4i, ButtonStylePadding)
+        Property(v4f, ButtonStyleTextColor)
 
 #endif //PLAZA_BUTTON_H
