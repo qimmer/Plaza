@@ -62,11 +62,11 @@ static void ValidateTexture(Entity entity, BgfxTexture2D *data) {
 }
 
 LocalFunction(OnValidation, void, Entity component) {
-    for_entity(entity, data, BgfxTexture2D, {
+    for_entity(entity, data, BgfxTexture2D) {
         if(IsDirty(entity)) {
             ValidateTexture(entity, data);
         }
-    });
+    }
 }
 
 BeginUnit(BgfxTexture2D)

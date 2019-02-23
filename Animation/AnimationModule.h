@@ -8,8 +8,5 @@
 #include <Core/Module.h>
 
 Module(Animation)
-    Unit(AnimationModule)
-    Component(AnimationModule)
-        ChildProperty(StopWatch, AnimationStopWatch)
 
 #endif //PLAZA_ANIMATIONMODULE_H

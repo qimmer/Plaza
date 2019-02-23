@@ -6,17 +6,112 @@
                 {
                     "TileColor": [127, 0, 0, 255],
                     "TileTemplate": {
+                        "Uuid": "Platformer.TileSets.Mario.Ground",
                         "SpriteTexture": "Platformer.TileAtlases.MarioTiles.Ground",
                         "RenderableMaterial": "Sprite.Material",
-                        "RenderableSubMesh": "Sprite.Meshes.Rect.SubMesh0"
+                        "RenderableSubMesh": "Sprite.Meshes.Rect.SubMesh0",
+                        "CollisionBodyShapes": [
+                            {
+                                "CollisionShapeExtent": [0.5, 0.5, 0.5]
+                            }
+                        ],
+                        "CollisionBodyType": "CollisionBodyType_Static"
                     }
                 },
                 {
                     "TileColor": [255, 216, 0, 255],
                     "TileTemplate": {
+                        "Uuid": "Platformer.TileSets.Mario.Question",
                         "SpriteTexture": "Platformer.TileAtlases.MarioTiles.Question[0]",
                         "RenderableMaterial": "Sprite.Material",
-                        "RenderableSubMesh": "Sprite.Meshes.Rect.SubMesh0"
+                        "RenderableSubMesh": "Sprite.Meshes.Rect.SubMesh0",
+                        "AnimationPlayerLayers": [
+                            {
+                                "AnimationPlayerLayerAnimation": "Platformer.Animations.QuestionIdle",
+                                "AnimationPlayerLayerSpeed": 1.0,
+                                "AnimationPlayerLayerLooping": true
+                            }
+                        ],
+                        "CollisionBodyShapes": [
+                            {
+                                "CollisionShapeExtent": [0.5, 0.5, 0.5]
+                            }
+                        ],
+                        "CollisionBodyType": "CollisionBodyType_Static"
+                    },
+                    "Children": [
+                        {
+                            "Uuid": "Platformer.Animations.QuestionIdle",
+                            "AnimationTracks": [
+                                {
+                                    "AnimationTrackProperty": "Property.SpriteTexture",
+                                    "AnimationTrackFrames": [
+                                        {
+                                            "AnimationFrameDuration": 0.4,
+                                            "AnimationFrameValue": {
+                                                "type": "Entity",
+                                                "value": "Platformer.TileAtlases.MarioTiles.Question[0]"
+                                            }
+                                        },
+                                        {
+                                            "AnimationFrameDuration": 0.12,
+                                            "AnimationFrameValue": {
+                                                "type": "Entity",
+                                                "value": "Platformer.TileAtlases.MarioTiles.Question[1]"
+                                            }
+                                        },
+                                        {
+                                            "AnimationFrameDuration": 0.12,
+                                            "AnimationFrameValue": {
+                                                "type": "Entity",
+                                                "value": "Platformer.TileAtlases.MarioTiles.Question[2]"
+                                            }
+                                        },
+                                        {
+                                            "AnimationFrameDuration": 0.12,
+                                            "AnimationFrameValue": {
+                                                "type": "Entity",
+                                                "value": "Platformer.TileAtlases.MarioTiles.Question[1]"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "TileColor": [0, 0, 0, 255],
+                    "TileTemplate": {
+                        "Uuid": "Platformer.TileSets.Mario.Player",
+                        "SpriteTexture": "Platformer.TileAtlases.Mario.Idle",
+                        "RenderableMaterial": "Sprite.Material",
+                        "RenderableSubMesh": "Sprite.Meshes.Rect.SubMesh0",
+                        "CollisionBodyShapes": [
+                            {
+                                "CollisionShapeRadius": 0.45,
+                                "CollisionShapeRestitution": 0.0,
+                                "CollisionShapeFriction": 0.15
+                            }
+                        ],
+                        "CollisionBodyType": "CollisionBodyType_Dynamic",
+                        "CollisionBodyFixedRotation": true,
+                        "CollisionBodyAngularDamping": 1.0,
+                        "CollisionBodyLinearDamping": 5.0,
+                        "CollisionBodyGravityScale": 15.0,
+                        "Children": [
+                            {
+                                "CollisionForceBody": "Platformer.TileSets.Mario.Player",
+                                "CollisionForceFactor": 60.0,
+                                "CollisionForceDirection": "{VectorSplitValue@Platformer.Control.Player.VelocitySplit}"
+                            },
+                            {
+                                "CollisionImpulseBody": "Platformer.TileSets.Mario.Player",
+                                "CollisionImpulseFactor": 40.0,
+                                "CollisionImpulseDirection": [0.0, 1.0, 0.0],
+                                "CollisionImpulseTrigger": "{InputStateValue@Platformer.Input.Jump}"
+                            }
+                        ]
                     }
                 }
             ]

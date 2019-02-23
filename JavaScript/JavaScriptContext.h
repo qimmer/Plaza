@@ -9,8 +9,14 @@
 
 Unit(JavaScriptContext)
     Component(JavaScriptContext)
-    Node(JavaScriptMainContext)
 
-bool EvaluateJavaScript(Entity context, StringRef name, StringRef code);
+    Component(JavaScript)
+        ArrayProperty(JavaScriptFunction, JavaScriptFunctions)
+
+    Component(JavaScriptFunction)
+        Property(NativePtr, JavaScriptFunctionHandle)
+        Property(NativePtr, JavaScriptFunctionContext)
+
+    Declare(JavaScriptContext, JavaScriptMainContext)
 
 #endif //PLAZA_JAVASCRIPTCONTEXT_H

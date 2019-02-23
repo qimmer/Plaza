@@ -1,1 +1,0 @@
-cmd='C:/Program Files/CMake/bin/cmake.exe;-DCMAKE_INSTALL_PREFIX=c:/Users/Kim/Documents/Plaza/.install;-DCMAKE_BUILD_TYPE=Debug;-DBUILD_SHARED_LIBS=OFF;-DBUILD_STATIC=1;-GNinja;<SOURCE_DIR><SOURCE_SUBDIR>'

@@ -37,10 +37,10 @@ LocalFunction(OnWidgetInteractionPointChanged, void, Entity widget, v2i oldPoint
     auto resizeHandleData = GetResizeHandleData(widget);
 
     if(resizeHandleData && resizeHandleData->ResizeHandleResizing && IsEntityValid(resizeHandleData->ResizeHandleTarget)) {
-        auto size = GetWidgetSize(resizeHandleData->ResizeHandleTarget);
+        auto size = GetSize2D(resizeHandleData->ResizeHandleTarget);
         size.x += (newPoint.x - oldPoint.x);
         size.y += (newPoint.y - oldPoint.y);
-        SetWidgetSize(resizeHandleData->ResizeHandleTarget, size);
+        SetSize2D(resizeHandleData->ResizeHandleTarget, size);
     }
 }
 

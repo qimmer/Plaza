@@ -148,7 +148,7 @@ static void UpdateBatches(Entity scenePicker) {
             (float)idComponents[1] / 255.0f,
             (float)idComponents[2] / 255.0f,
             (float)idComponents[3] / 255.0f
-        });
+        }
 
         batch = GetSibling(batch);
         batchIndex++;

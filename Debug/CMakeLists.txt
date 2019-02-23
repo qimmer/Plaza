@@ -3,7 +3,7 @@ project(Debug)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Debug DebugModule.cpp DebugModule.h EntityTracker.cpp EntityTracker.h FlowNode.cpp FlowNode.h)
+add_library(Debug DebugModule.cpp DebugModule.h EntityTracker.cpp EntityTracker.h FlowNode.cpp FlowNode.h ModuleProfiling.cpp ModuleProfiling.h)
 
 target_include_directories(Debug PUBLIC "..")
 

@@ -22,18 +22,18 @@ LocalFunction(OnBgfxOffscreenRenderTargetRemoved, void, Entity entity) {
 }
 
 LocalFunction(OnTextureValidation, void, Entity component) {
-    for_entity(entity, data, BgfxOffscreenRenderTarget, {
+    for_entity(entity, data, BgfxOffscreenRenderTarget) {
         if(!IsDirty(entity)) continue;
 
         auto owner = GetOwner(entity);
         if(HasComponent(owner, ComponentOf_BgfxOffscreenRenderTarget())) {
             Invalidate(owner);
         }
-    });
+    }
 }
 
 LocalFunction(OnOffscreenRenderTargetValidation, void, Entity component) {
-    for_entity(entity, data, BgfxOffscreenRenderTarget, {
+    for_entity(entity, data, BgfxOffscreenRenderTarget) {
         if(!IsDirty(entity)) continue;
 
         bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
@@ -51,7 +51,7 @@ LocalFunction(OnOffscreenRenderTargetValidation, void, Entity component) {
         }
 
         SetBgfxResourceHandle(entity, bgfx::createFrameBuffer(numStages, targets).idx);
-    });
+    }
 }
 
 BeginUnit(BgfxOffscreenRenderTarget)

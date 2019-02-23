@@ -11,7 +11,7 @@ LocalFunction(OnUpdateMovement, void, Entity appLoop, u64 oldFrame, u64 newFrame
     auto deltaTime = GetStopWatchElapsedSeconds(StopWatchOf_Velocity());
     SetStopWatchElapsedSeconds(StopWatchOf_Velocity(), 0.0);
 
-    for_entity(accelerator, data, Accelerator, {
+    for_entity(accelerator, data, Accelerator) {
         auto movement = data->AcceleratorTarget;
 
         if(HasComponent(movement, ComponentOf_Movement())) {
@@ -21,25 +21,25 @@ LocalFunction(OnUpdateMovement, void, Entity appLoop, u64 oldFrame, u64 newFrame
             velocity.z += data->AcceleratorAcceleration.z * deltaTime;
             SetMovementVelocity(movement, velocity);
         }
-    });
+    }
 
-    for_entity(movement, data, Movement, {
-        auto transform = data->MovementTransform;
+    for_entity(movement, data2, Movement) {
+        auto transform = data2->MovementTransform;
 
         if(HasComponent(transform, ComponentOf_Transform())) {
             auto position = GetPosition3D(transform);
-            position.x += data->MovementVelocity.x * deltaTime;
-            position.y += data->MovementVelocity.y * deltaTime;
-            position.z += data->MovementVelocity.z * deltaTime;
+            position.x += data2->MovementVelocity.x * deltaTime;
+            position.y += data2->MovementVelocity.y * deltaTime;
+            position.z += data2->MovementVelocity.z * deltaTime;
             SetPosition3D(transform, position);
 
             auto euler = GetRotationEuler3D(transform);
-            euler.x += data->MovementTorque.x * deltaTime;
-            euler.y += data->MovementTorque.y * deltaTime;
-            euler.z += data->MovementTorque.z * deltaTime;
+            euler.x += data2->MovementTorque.x * deltaTime;
+            euler.y += data2->MovementTorque.y * deltaTime;
+            euler.z += data2->MovementTorque.z * deltaTime;
             SetRotationEuler3D(transform, euler);
         }
-    });
+    }
 }
 
 BeginUnit(Velocity)

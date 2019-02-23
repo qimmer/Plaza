@@ -1,0 +1,5 @@
+{
+    "Uuid": "Action.Quit",
+    "InvocationFunction": "Function.Quit",
+    "InvocationToggleState": "{InputStateValue@Keys.Close}"
+}

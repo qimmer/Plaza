@@ -43,6 +43,8 @@ char * GetComponentBytes(Entity component, u32 index);
 
 char * GetComponentData(u32 componentTypeIndex, Entity entity);
 
+bool IsEntityValid(Entity entity);
+
 struct ComponentPageElement {
     Entity Entity;
     u64 Padding;
@@ -55,78 +57,62 @@ char *GetComponentPage(Entity component, u32 index, u32 *elementStride);
 void __InitializeComponent();
 void __PreInitialize();
 
-#define for_entity(ENTITYVAR, DATAVAR, COMPONENTTYPE, CONTENTS) \
-    {\
-        auto __component ## ENTITYVAR = ComponentOf_ ## COMPONENTTYPE ();\
-        auto __numPages ## ENTITYVAR = GetNumComponentPages(__component ## ENTITYVAR);\
-        for(auto __pageIndex ## ENTITYVAR = 0; __pageIndex ## ENTITYVAR < __numPages ## ENTITYVAR; ++__pageIndex ## ENTITYVAR) {\
-            u32 __elementStride ## ENTITYVAR;\
-            auto __pageData ## ENTITYVAR = GetComponentPage(__component ## ENTITYVAR, __pageIndex ## ENTITYVAR, &__elementStride ## ENTITYVAR);\
-            for(auto __elementIndex ## ENTITYVAR = 0; __elementIndex ## ENTITYVAR < PoolPageElements; ++__elementIndex ## ENTITYVAR) {\
-                auto __element ## ENTITYVAR = &__pageData ## ENTITYVAR [__elementIndex ## ENTITYVAR * __elementStride ## ENTITYVAR];\
-                Entity ENTITYVAR = *(Entity*)__element ## ENTITYVAR;\
-                if(!IsEntityValid(ENTITYVAR)) continue;\
-                __element ## ENTITYVAR += sizeof(Entity) * 2;\
-                COMPONENTTYPE * DATAVAR = (COMPONENTTYPE*)__element ## ENTITYVAR;\
-                CONTENTS\
-            }\
-        }\
-    } do {}while(false)
+static inline Entity GetNextEntity(Entity *index, Entity component, void **data) {
+    auto numPages = GetNumComponentPages(component);
 
-#define for_entity_dynamic(ENTITYVAR, COMPONENTTYPE, CONTENTS) \
-    {\
-        auto __component ## ENTITYVAR = COMPONENTTYPE;\
-        auto __numPages ## ENTITYVAR = GetNumComponentPages(__component ## ENTITYVAR);\
-        for(auto __pageIndex ## ENTITYVAR = 0; __pageIndex ## ENTITYVAR < __numPages ## ENTITYVAR; ++__pageIndex ## ENTITYVAR) {\
-            u32 __elementStride ## ENTITYVAR;\
-            auto __pageData ## ENTITYVAR = GetComponentPage(__component ## ENTITYVAR, __pageIndex ## ENTITYVAR, &__elementStride ## ENTITYVAR);\
-            for(auto __elementIndex ## ENTITYVAR = 0; __elementIndex ## ENTITYVAR < PoolPageElements; ++__elementIndex ## ENTITYVAR) {\
-                auto __element ## ENTITYVAR = &__pageData ## ENTITYVAR [__elementIndex ## ENTITYVAR * __elementStride ## ENTITYVAR];\
-                Entity ENTITYVAR = *(Entity*)__element ## ENTITYVAR;\
-                if(!IsEntityValid(ENTITYVAR)) continue;\
-                __element ## ENTITYVAR += sizeof(Entity) * 2;\
-                CONTENTS\
-            }\
-        }\
-    } do {}while(false)
+    auto elementIndex = *index - ((*index / PoolPageElements) * PoolPageElements);
+
+    for(auto pageIndex = *index / PoolPageElements; pageIndex < numPages; ++pageIndex) {
+        u32 stride;
+        auto pageData = GetComponentPage(component, pageIndex, &stride);
+
+        for(; elementIndex < PoolPageElements; ++elementIndex) {
+            auto element = &pageData[elementIndex * stride];
+            auto entity = *(Entity*)element;
+
+            if(IsEntityValid(entity)) {
+                *index = pageIndex * PoolPageElements + elementIndex + 1;
+                *data = element + sizeof(Entity) * 2;
+                return entity;
+            }
+        }
+
+        elementIndex = 0;
+    }
+
+    return 0;
+}
+
+#define for_entity(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
+    COMPONENTTYPE *DATAVAR;\
+    for(Entity __i = 0, __component = ComponentOf_ ## COMPONENTTYPE(), ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR))
+
+#define for_entity_abstract(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
+    char *DATAVAR;\
+    for(Entity __i = 0, __component = COMPONENTTYPE, ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR))
+
 
 #define for_entity_parallel(ENTITYVAR, DATAVAR, COMPONENTTYPE, CONTENTS) \
     {\
-        auto __component ## ENTITYVAR = ComponentOf_ ## COMPONENTTYPE ();\
-        auto __numPages ## ENTITYVAR = GetNumComponentPages(__component ## ENTITYVAR);\
+        auto __component = ComponentOf_ ## COMPONENTTYPE ();\
+        auto __numPages = GetNumComponentPages(__component);\
         auto threadnum = omp_get_thread_num();\
         auto numthreads = omp_get_num_threads();\
-        auto low = __numPages ## ENTITYVAR *threadnum/numthreads;\
-        auto high = __numPages ## ENTITYVAR *(threadnum+1)/numthreads;\
+        auto low = __numPages *threadnum/numthreads;\
+        auto high = __numPages *(threadnum+1)/numthreads;\
         for (auto __pageIndex=low; __pageIndex<high; __pageIndex++) {\
-            u32 __elementStride ## ENTITYVAR;\
-            auto __pageData ## ENTITYVAR = GetComponentPage(__component ## ENTITYVAR, __pageIndex, &__elementStride ## ENTITYVAR);\
-            for(auto __elementIndex ## ENTITYVAR = 0; __elementIndex ## ENTITYVAR < PoolPageElements; ++__elementIndex ## ENTITYVAR) {\
-                auto __element ## ENTITYVAR = &__pageData ## ENTITYVAR [__elementIndex ## ENTITYVAR * __elementStride ## ENTITYVAR];\
-                Entity ENTITYVAR = *(Entity*)__element ## ENTITYVAR;\
+            u32 __elementStride;\
+            auto __pageData = GetComponentPage(__component, __pageIndex, &__elementStride);\
+            for(auto __elementIndex = 0; __elementIndex < PoolPageElements; ++__elementIndex) {\
+                auto __element = &__pageData [__elementIndex * __elementStride];\
+                Entity ENTITYVAR = *(Entity*)__element;\
                 if(!IsEntityValid(ENTITYVAR)) continue;\
-                __element ## ENTITYVAR += sizeof(Entity) * 2;\
-                COMPONENTTYPE * DATAVAR = (COMPONENTTYPE*)__element ## ENTITYVAR;\
+                __element += sizeof(Entity) * 2;\
+                COMPONENTTYPE * DATAVAR = (COMPONENTTYPE*)__element;\
                 CONTENTS\
             }\
         }\
     }
 
-#define for_entity_abstract(ENTITYVAR, DATAVAR, COMPONENT, CONTENTS) \
-    {\
-        auto __component = COMPONENT;\
-        auto __numPages = GetNumComponentPages(__component);\
-        for(auto __pageIndex = 0; __pageIndex < __numPages; ++__pageIndex) {\
-            u32 __elementStride;\
-            auto __pageData = GetComponentPage(__component, __pageIndex, &__elementStride);\
-            for(auto __elementIndex = 0; __elementIndex < PoolPageElements; ++__elementIndex) {\
-                auto __element = &__pageData[__elementIndex * __elementStride];\
-                Entity ENTITYVAR = *(Entity*)__element;\
-                __element += sizeof(Entity) * 2;\
-                char * DATAVAR = __element;\
-                CONTENTS\
-            }\
-        }\
-    } do {}while(false)
 
 #endif //PLAZA_COMPONENT_H

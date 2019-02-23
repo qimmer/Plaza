@@ -26,11 +26,11 @@ static Entity FindAppRoot(Entity entity) {
 
 static void SetAppNodeRootRecursive(Entity entity) {
     SetAppNodeRoot(entity, FindAppRoot(entity));
-    for_entity(child, data, AppNode, {
+    for_entity(child, data, AppNode) {
         if(GetOwner(child) == entity) {
             SetAppNodeRootRecursive(child);
         }
-    });
+    }
 }
 
 LocalFunction(OnOwnerChanged, void, Entity entity) {

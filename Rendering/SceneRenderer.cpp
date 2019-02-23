@@ -24,11 +24,11 @@ static void SyncBatches(Entity commandList) {
     GetCommandListBatches(commandList, &numExisting);
     u32 numBatches = 0;
     {
-        for_entity(renderable, data, Renderable, {
+        for_entity(renderable, data, Renderable) {
             if(GetSceneNodeScene(renderable) != scene) continue;
 
             numBatches++;
-        });
+        }
     }
 
     SetArrayPropertyCount(PropertyOf_CommandListBatches(), commandList, numBatches);
@@ -36,13 +36,13 @@ static void SyncBatches(Entity commandList) {
     auto batches = GetCommandListBatches(commandList, &numBatches);
     {
         auto i = 0;
-        for_entity(renderable, data, Renderable, {
+        for_entity(renderable, data, Renderable) {
             if(GetSceneNodeScene(renderable) != scene) continue;
 
             SetBatchRenderable(batches[i], renderable);
 
             i++;
-        });
+        }
     }
 
 }
@@ -77,20 +77,20 @@ LocalFunction(OnBatchRenderableChanged, void, Entity batch, Entity oldRenderable
 }
 
 LocalFunction(OnRenderableMaterialChanged, void, Entity renderable, Entity oldMaterial, Entity newMaterial) {
-    for_entity(batch, data, Batch, {
+    for_entity(batch, data, Batch) {
         if(data->BatchRenderable == renderable) {
             OnBatchRenderableChanged(batch, renderable, renderable);
         }
-    });
+    }
 }
 
 LocalFunction(OnMaterialProgramChanged, void, Entity material, Entity oldProgram, Entity newProgram) {
-    for_entity(renderable, data, Renderable, {
+    for_entity(renderable, data, Renderable) {
         if(GetRenderableMaterial(renderable) == material) {
             OnRenderableMaterialChanged(renderable, material, material);
         }
 
-    });
+    }
 }
 
 LocalFunction(OnSceneRendererPathChanged, void, Entity sceneRenderer, Entity oldPath, Entity newPath) {
@@ -102,22 +102,22 @@ LocalFunction(OnSceneRendererSceneChanged, void, Entity sceneRenderer, Entity ol
 }
 
 LocalFunction(OnRenderPathPassesChanged, void, Entity renderPath, Entity oldPass, Entity newPass) {
-    for_entity(sceneRenderer, data, SceneRenderer, {
+    for_entity(sceneRenderer, data, SceneRenderer) {
         if(data->SceneRendererPath == renderPath) {
             SyncCommandLists(sceneRenderer);
         }
-    });
+    }
 }
 
 LocalFunction(OnSceneNodeSceneChanged, void, Entity sceneNode, Entity oldScene, Entity newScene) {
     if(HasComponent(sceneNode, ComponentOf_Renderable())) {
-        for_entity(sceneRenderer, data, SceneRenderer, {
+        for_entity(sceneRenderer, data, SceneRenderer) {
             if((oldScene && data->SceneRendererScene == oldScene) || (newScene && data->SceneRendererScene == newScene)) {
-                for_children(commandList, SceneRendererCommandLists, sceneRenderer, {
+                for_children(commandList, SceneRendererCommandLists, sceneRenderer) {
                     SyncBatches(commandList);
-                });
+                }
             }
-        });
+        }
     }
 }
 

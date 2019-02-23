@@ -17,6 +17,7 @@
 #include "DebugModule.h"
 #include "EntityTracker.h"
 #include "FlowNode.h"
+#include "ModuleProfiling.h"
 
 struct DebugSession {
     Entity DebugSessionChangeTracker;
@@ -147,6 +148,11 @@ BeginUnit(DebugModule)
                         "RestRoutingRoute": "/"
                     },
                     {
+                        "Name": "AssetRoute",
+                        "RestResourceRoutingRoot": "file://",
+                        "RestRoutingRoute": "/asset/"
+                    },
+                    {
                         "Name": "EntityRoute",
                         "RestEntityRoutingRoot": "/",
                         "RestRoutingRoute": "/api/entity",
@@ -176,11 +182,16 @@ BeginUnit(DebugModule)
             }
 		}
 	);
+
+    Info(module, "\n--- Debugging Server is now listening on port 8080 ---\n");
 EndUnit()
 
 BeginModule(Debug)
     RegisterDependency(Core)
     RegisterDependency(Foundation)
+
+    RegisterUnit(ModuleProfiling)
+
     RegisterDependency(File)
     RegisterDependency(Networking)
     RegisterDependency(Json)

@@ -20,13 +20,13 @@ struct InputContext {
 };
 
 API_EXPORT void SetInputStateValueByKey(Entity context, u16 key, float value) {
-    for_entity(inputState, data, InputState, {
+    for_entity(inputState, data, InputState) {
         if(!data->InputStateContext || data->InputStateContext == context) {
             if(data->InputStateKey == key) {
                 SetInputStateValue(inputState, value);
             }
         }
-    });
+    }
 }
 
 BeginUnit(InputContext)

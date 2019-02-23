@@ -8,7 +8,6 @@
 #include <Core/NativeUtils.h>
 
 struct UnresolvedReference {
-    Entity UnresolvedReferenceEntity;
     Entity UnresolvedReferenceProperty;
     StringRef UnresolvedReferenceUuid;
 };
@@ -27,10 +26,20 @@ struct InstanceOverride {
     Entity InstanceOverrideProperty;
 };
 
+struct TemplateableComponent {
+    bool IgnoreInstantiation;
+};
+
+struct TemplatedComponent {
+    Entity ComponentTemplate;
+};
+
 Unit(Instance)
+    Component(TemplateableComponent)
+        Property(bool, IgnoreInstantiation)
+
     Component(UnresolvedReference)
         ReferenceProperty(Property, UnresolvedReferenceProperty)
-        Property(Entity, UnresolvedReferenceEntity)
         Property(StringRef, UnresolvedReferenceUuid)
 
     Component(UnresolvedEntity)
@@ -46,6 +55,9 @@ Unit(Instance)
         ArrayProperty(InstanceOverride, InstanceOverrides)
         Property(bool, InstanceIgnoreChanges)
 
-    Function(ResolveReferences, bool, Entity root)
+    Component(TemplatedComponent)
+        ChildProperty(Identification, ComponentTemplate)
+
+    Function(ResolveReferences, void)
 
 #endif //PLAZA_INSTANCE_H

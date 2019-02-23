@@ -3,11 +3,60 @@ $input v_texcoord0, v_normal
 #include <common.sh>
 
 uniform vec4 u_uvOffsetSizePerSampler[8];
-SAMPLER2D(s_widgetMeshTexture, 0);
+
+uniform vec4 u_widgetState;
+uniform vec4 u_widgetInteractionState;
+
+SAMPLER2D(s_widgetMeshEnabledTexture, 0);
+SAMPLER2D(s_widgetMeshDisabledTexture, 1);
+SAMPLER2D(s_widgetMeshSelectedTexture, 2);
+
+SAMPLER2D(s_widgetMeshHoveredTexture, 3);
+SAMPLER2D(s_widgetMeshFocusedTexture, 4);
+SAMPLER2D(s_widgetMeshClickedTexture, 5);
 
 void main()
 {
     v_normal = abs(v_normal);
-    vec4 albedo = texture2D(s_widgetMeshTexture, v_texcoord0 * u_uvOffsetSizePerSampler[0].zw + u_uvOffsetSizePerSampler[0].xy);
+
+    float disabled = u_widgetState.x;
+    float selected = u_widgetState.y;
+
+    float hovered = u_widgetInteractionState.x;
+    float focused = u_widgetInteractionState.y;
+    float clicked = u_widgetInteractionState.z;
+
+    vec4 enabledColor = texture2D(
+        s_widgetMeshEnabledTexture,
+        v_texcoord0 * u_uvOffsetSizePerSampler[0].zw + u_uvOffsetSizePerSampler[0].xy);
+
+    vec4 disabledColor = texture2D(
+        s_widgetMeshDisabledTexture,
+        v_texcoord0 * u_uvOffsetSizePerSampler[1].zw + u_uvOffsetSizePerSampler[1].xy);
+
+    vec4 selectedColor = texture2D(
+        s_widgetMeshSelectedTexture,
+        v_texcoord0 * u_uvOffsetSizePerSampler[2].zw + u_uvOffsetSizePerSampler[2].xy);
+
+    vec4 hoveredColor = texture2D(
+        s_widgetMeshHoveredTexture,
+        v_texcoord0 * u_uvOffsetSizePerSampler[3].zw + u_uvOffsetSizePerSampler[3].xy);
+
+    vec4 focusedColor = texture2D(
+        s_widgetMeshFocusedTexture,
+        v_texcoord0 * u_uvOffsetSizePerSampler[4].zw + u_uvOffsetSizePerSampler[4].xy);
+
+    vec4 clickedColor = texture2D(
+        s_widgetMeshClickedTexture,
+        v_texcoord0 * u_uvOffsetSizePerSampler[5].zw + u_uvOffsetSizePerSampler[5].xy);
+
+    vec4 albedo = enabledColor;
+
+    albedo.xyz = mix(albedo.xyz, focusedColor.xyz, focused * focusedColor.a);
+    albedo.xyz = mix(albedo.xyz, hoveredColor.xyz, hovered * hoveredColor.a);
+    albedo.xyz = mix(albedo.xyz, selectedColor.xyz, selected * selectedColor.a);
+    albedo.xyz = mix(albedo.xyz, clickedColor.xyz, clicked * clickedColor.a);
+    albedo.xyz = mix(albedo.xyz, disabledColor.xyz, disabled * disabledColor.a);
+
     gl_FragColor = albedo;
 }

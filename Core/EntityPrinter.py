@@ -16,7 +16,7 @@ class HandlePrinter:
         self.val = val
 
     def to_string(self):
-        return str(gdb.parse_and_eval("GetEntityPath(%s)" % (str(self.val))))
+        return str(gdb.parse_and_eval("GetUuid(%s)" % (str(self.val))))
 
 
 # register the pretty-printer

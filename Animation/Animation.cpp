@@ -9,8 +9,8 @@
 #include <cglm/cglm.h>
 
 struct AnimationFrame {
-    double AnimationFrameDuration;
     Variant AnimationFrameValue;
+    double AnimationFrameDuration;
 };
 
 struct AnimationTrack {
@@ -56,7 +56,7 @@ struct Animation {
         return MakeVariant(TYPE, TYPE ## value);\
         break;
 
-static Variant Interpolate(Variant left, Variant right, float t) {
+API_EXPORT Variant Interpolate(Variant left, Variant right, float t) {
     if(left.type != right.type) {
         Log(0, LogSeverity_Error, "Interpolation values have different types.");
         return Variant_Empty;
@@ -111,10 +111,14 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     double duration = 0.0, sum = 0.0;
 
     // Find accumulated duration
-    for_children(frame, AnimationTrackFrames, animationTrack, {
+    for_children(frame, AnimationTrackFrames, animationTrack) {
         auto frameData = GetAnimationFrameData(frame);
+        if(!frameData) continue;
+
         duration += frameData->AnimationFrameDuration;
-    });
+
+        lastFrame = frame;
+    }
 
     if(loop) {
         time = fmod(time, duration);
@@ -123,20 +127,23 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     }
 
     // Find first frame
-    for_children(frame, AnimationTrackFrames, animationTrack, {
-        auto frameData = GetAnimationFrameData(frame);
+    for_children(frame2, AnimationTrackFrames, animationTrack) {
+        auto frameData = GetAnimationFrameData(frame2);
+        if(!frameData) continue;
 
         auto startTime = sum;
         sum += frameData->AnimationFrameDuration;
 
         if(!firstFrame && time >= startTime && time < sum) {
-            firstFrame = frame;
+            firstFrame = frame2;
             firstTime = startTime;
-            lastFrame = entries[(i + 1) % count];
+            lastFrame = _entriesframe2[(_iframe2 + 1) % _countframe2];
             lastTime = sum;
             break;
         }
-    });
+    }
+
+    if(!firstFrame || !lastFrame) return Variant_Empty;
 
     t = (time - firstTime) / (lastTime - firstTime);
 

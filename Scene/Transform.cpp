@@ -115,16 +115,6 @@ API_EXPORT void LookAt(Entity transform, v3f origin, v3f direction, v3f up) {
     SetPosition3D(transform, origin);
 }
 
-LocalFunction(InvalidateChildren, void, Entity entity) {
-    Invalidate(entity);
-
-    for_children(child, Children, entity, {
-        if(HasComponent(child, ComponentOf_Transform())) {
-            InvalidateChildren(child);
-        }
-    });
-}
-
 static void UpdateLocalTransform(Entity entity) {
     auto position = GetPosition3D(entity);
     float pos4[] = {position.x, position.y, position.z, 0.0f};
@@ -167,6 +157,10 @@ static void CalculateHierarchyLevel(Entity entity) {
 
         GetTransformData(entity)->TransformHierarchyLevel = level;
         Invalidate(entity);
+
+        for_children(child, Children, entity) {
+            CalculateHierarchyLevel(child);
+        }
     }
 }
 
@@ -207,17 +201,15 @@ LocalFunction(OnTransformValidation, void, Entity component) {
     {
         hasAny = false;
 
-        for_entity(entity, transformData, Transform, {
+        for_entity(entity, transformData, Transform) {
             if(transformData->TransformHierarchyLevel == level) {
                 hasAny = true;
             } else {
                 continue;
             }
 
-            if(!IsDirty(entity)) continue;
-
             ValidateTransform(entity, transformData);
-        });
+        }
 
         level++;
     } while(hasAny);
@@ -263,7 +255,6 @@ BeginUnit(Transform)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Rotation2D()), OnRotationEuler3DChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Distance2D()), OnLocalChanged, 0)
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TransformLocalMatrix()), InvalidateChildren, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
     RegisterSubscription(EventOf_EntityComponentAdded(), OnAdded, ComponentOf_Transform())
     RegisterSubscription(EventOf_Validate(), OnTransformValidation, ComponentOf_Transform())

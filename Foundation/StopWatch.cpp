@@ -80,17 +80,17 @@ static void UpdateStopWatch(Entity stopWatch, StopWatch *data) {
 }
 
 LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    for_entity(stopWatch, data, StopWatch, {
+    for_entity(stopWatch, data, StopWatch) {
         if(data) {
             UpdateStopWatch(stopWatch, data);
         }
-    });
+    }
 }
 
 LocalFunction(OnStopWatchRunningChanged, void, Entity stopWatch, bool oldValue, bool newValue) {
-    if(newValue) {
-        auto data = GetStopWatchData(stopWatch);
+    auto data = GetStopWatchData(stopWatch);
 
+    if(newValue) {
 #ifdef WIN32
         LARGE_INTEGER currentTime;
         QueryPerformanceCounter(&currentTime);
@@ -98,6 +98,11 @@ LocalFunction(OnStopWatchRunningChanged, void, Entity stopWatch, bool oldValue, 
 #else
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &data->lastTime);
 #endif
+    } else {
+        // Make sure to include time from last update and until now when stopped!
+        data->StopWatchRunning = true;
+        UpdateStopWatch(stopWatch, data);
+        data->StopWatchRunning = false;
     }
 }
 

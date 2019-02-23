@@ -16,22 +16,21 @@ struct Glyph {
 
 struct Font {
     StringRef FontCharacters;
+    s32 FontAscent, FontDescent, FontLineGap;
 };
 
 struct FontVertex {
     v2f Position, Uv;
+    v4f Color;
 };
 
-struct Label {
-    Entity LabelFont;
-    StringRef LabelText;
-    v2f LabelAlignment;
-    Entity LabelMesh;
-};
-
-struct LabelArgument {
-    Variant LabelArgumentValue;
-};
+u32 GetFontGlyphData(Entity font,
+                     StringRef text,
+                     const v4f *colors,
+                     v2f origin,
+                     v2f *size,
+                     FontVertex *vertices,
+                     u32 maxVertices);
 
 Unit(Font)
     Component(Glyph)
@@ -43,16 +42,9 @@ Unit(Font)
 
     Component(Font)
         Property(StringRef, FontCharacters)
+        Property(s32, FontAscent)
+        Property(s32, FontDescent)
+        Property(s32, FontLineGap)
         ArrayProperty(Glyph, FontGlyphs)
-
-    Component(LabelArgument)
-        Property(Variant, LabelArgumentValue)
-
-    Component(Label)
-        ReferenceProperty(Font, LabelFont)
-        Property(StringRef, LabelText)
-        ArrayProperty(LabelArgument, LabelArguments)
-        Property(v2f, LabelAlignment)
-        ChildProperty(Mesh, LabelMesh)
 
 #endif //PLAZA_FONT_H

@@ -424,12 +424,12 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     auto oldProtocol = data->StreamProtocol;
 
     // Find protocol
-    for_entity(protocolEntity, protocolData, StreamProtocol, {
+    for_entity(protocolEntity, protocolData, StreamProtocol) {
         if(protocolIdentifierInterned == protocolData->StreamProtocolIdentifier) {
             SetStreamProtocol(entity, protocolEntity);
             break;
         }
-    });
+    }
 
     if(!IsEntityValid(data->StreamProtocol)) {
         Log(entity, LogSeverity_Error, "Unknown stream protocol: %s (%s)", protocolIdentifier, resolvedPath);
@@ -438,7 +438,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
 
     if(strlen(extension) > 0) {
         // Find Filetype (optional)
-        for_entity(fileTypeEntity, fileTypeData, FileType, {
+        for_entity(fileTypeEntity, fileTypeData, FileType) {
             if(extension == fileTypeData->FileTypeExtension) {
                 SetStreamFileType(entity, fileTypeEntity);
                 if(fileTypeData->FileTypeMimeType) {
@@ -446,7 +446,7 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
                     break;
                 }
             }
-        });
+        }
 
         if(!IsEntityValid(GetStreamFileType(entity))) {
             Log(entity, LogSeverity_Warning, "Unknown file type: %s", extension);
@@ -454,11 +454,11 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     }
 
     // Find compressor (optional)
-    for_entity(compressorEntity, compressorData, StreamCompressor, {
+    for_entity(compressorEntity, compressorData, StreamCompressor) {
         if(mimeType == compressorData->StreamCompressorMimeType) {
             SetStreamCompressor(entity, compressorEntity);
         }
-    });
+    }
 
     // Update stream with new protocol, compressor and filetype
     if(IsEntityValid(oldProtocol)) {
@@ -476,48 +476,48 @@ LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, Stri
     }
 
     // Find serializer (optional)
-    for_entity(serializerEntity, serializerData, Serializer, {
+    for_entity(serializerEntity, serializerData, Serializer) {
         if(mimeType == serializerData->SerializerMimeType) {
             AddComponent(entity, ComponentOf_PersistancePoint());
             break;
         }
-    });
+    }
 
     SetStreamResolvedPath(entity, Intern(resolvedPath));
 }
 
 LocalFunction(OnProtocolChanged, void, Entity protocol) {
-    for_entity(stream, streamData, Stream, {
+    for_entity(stream, streamData, Stream) {
         if(streamData->StreamProtocol == protocol) {
             OnStreamPathChanged(stream, streamData->StreamPath, streamData->StreamPath);
         }
-    });
+    }
 }
 
 LocalFunction(OnFileTypeChanged, void, Entity fileType) {
-    for_entity(stream, streamData, Stream, {
+    for_entity(stream, streamData, Stream) {
         if(streamData->StreamFileType == fileType) {
             OnStreamPathChanged(stream, streamData->StreamPath, streamData->StreamPath);
         }
-    });
+    }
 }
 
 LocalFunction(OnCompressorChanged, void, Entity compressor) {
-    for_entity(stream, streamData, Stream, {
+    for_entity(stream, streamData, Stream) {
         if(streamData->StreamCompressor == compressor) {
             OnStreamPathChanged(stream, streamData->StreamPath, streamData->StreamPath);
         }
-    });
+    }
 }
 
 LocalFunction(OnReresolvePaths, void) {
-    for_entity(stream, data, Stream, {
+    for_entity(stream, data, Stream) {
         char resolvedPath[PathMax];
         auto streamData = GetStreamData(stream);
         ResolveVirtualPath(GetStreamPath(stream), PathMax, resolvedPath);
 
         SetStreamResolvedPath(stream, Intern(resolvedPath));
-    });
+    }
 }
 
 LocalFunction(OnResolvedPathChanged, void, Entity stream) {

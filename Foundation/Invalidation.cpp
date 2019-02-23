@@ -36,14 +36,14 @@ API_EXPORT void Validate(Entity component) {
 
     Entity entity = 0;
 
-    for_entity_abstract(entity, data, component, {
+    for_entity_abstract(entity, data, component) {
         auto entityIndex = GetEntityIndex(entity);
         if(entityDirtyFlags.size() <= entityIndex) {
             entityDirtyFlags.resize(entityIndex + 1, false);
         }
 
         entityDirtyFlags[entityIndex] = false;
-    });
+    }
 }
 
 BeginUnit(Invalidation)

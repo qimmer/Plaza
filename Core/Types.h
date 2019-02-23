@@ -95,7 +95,7 @@ typedef struct {
 
 } rgba8;
 
-typedef struct {
+typedef struct ALIGN(16) {
 
     union {
         struct {
@@ -145,46 +145,46 @@ static const v3f v2f_Zero = {0, 0};
 static const v3f v2f_One = {1, 1};
 
 enum {
-    TypeOf_unknown,
+    TypeOf_unknown = 0,
 
-    TypeOf_void,
-    TypeOf_u8,
-    TypeOf_u16,
-    TypeOf_u32,
-    TypeOf_u64,
-    TypeOf_s8,
-    TypeOf_s16,
-    TypeOf_s32,
-    TypeOf_s64,
-    TypeOf_float,
-    TypeOf_double,
-    TypeOf_bool,
-    TypeOf_StringRef,
+    TypeOf_void = 1,
+    TypeOf_u8 = 2,
+    TypeOf_u16 = 3,
+    TypeOf_u32 = 4,
+    TypeOf_u64 = 5,
+    TypeOf_s8 = 6,
+    TypeOf_s16 = 7,
+    TypeOf_s32 = 8,
+    TypeOf_s64 = 9,
+    TypeOf_float = 10,
+    TypeOf_double = 11,
+    TypeOf_bool = 12,
+    TypeOf_StringRef = 13,
 
-    TypeOf_v2i,
-    TypeOf_v3i,
-    TypeOf_v4i,
+    TypeOf_v2i = 14,
+    TypeOf_v3i = 15,
+    TypeOf_v4i = 16,
 
-    TypeOf_v2f,
-    TypeOf_v3f,
-    TypeOf_v4f,
+    TypeOf_v2f = 17,
+    TypeOf_v3f = 18,
+    TypeOf_v4f = 19,
 
-    TypeOf_m3x3f,
-    TypeOf_m4x4f,
+    TypeOf_m3x3f = 20,
+    TypeOf_m4x4f = 21,
 
-    TypeOf_Entity,
-    TypeOf_Type,
+    TypeOf_Entity = 22,
+    TypeOf_Type = 23,
 
-    TypeOf_rgba8,
-    TypeOf_rgb8,
+    TypeOf_rgba8 = 24,
+    TypeOf_rgb8 = 25,
 
-    TypeOf_rgba32,
-    TypeOf_rgb32,
+    TypeOf_rgba32 = 26,
+    TypeOf_rgb32 = 27,
 
-    TypeOf_Date,
+    TypeOf_Date = 28,
 
-    TypeOf_Variant,
-    TypeOf_NativePtr,
+    TypeOf_Variant = 29,
+    TypeOf_NativePtr = 30,
 
     TypeOf_MAX,
 };

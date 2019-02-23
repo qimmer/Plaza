@@ -24,7 +24,7 @@ EndUnit()
 RegisterProperty(Entity, MousePickerContext)
 
 LocalFunction(OnAppUpdate, void, double deltaTime) {
-    for_entity(mousePicker, data, MousePicker, {
+    for_entity(mousePicker, data, MousePicker) {
         auto context = GetMousePickerContext(mousePicker);
         if(IsEntityValid(context)) {
             auto cursor = GetCursorPosition(context, 0);

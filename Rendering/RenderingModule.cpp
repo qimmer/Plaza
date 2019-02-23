@@ -65,27 +65,38 @@ BeginUnit(Rendering)
     ModuleData(
             {
                 "FileTypes": [
-                    { "FileTypeExtension": ".vs", "FileTypeMimeType" : "application/vertex-shader" },
-                    { "FileTypeExtension": ".ps", "FileTypeMimeType" : "application/pixel-shader" },
-                    { "FileTypeExtension": ".var", "FileTypeMimeType" : "application/decl-shader" },
-                    { "FileTypeExtension": ".vsb", "FileTypeMimeType" : "application/binary-vertex-shader" },
-                    { "FileTypeExtension": ".psb", "FileTypeMimeType" : "application/binary-pixel-shader" },
-                    { "FileTypeExtension": ".vtb", "FileTypeMimeType" : "application/vertex-buffer" },
-                    { "FileTypeExtension": ".idb", "FileTypeMimeType" : "application/index-buffer" }
+                    { "Uuid": "FileType.VertexShader", "FileTypeExtension": ".vs", "FileTypeMimeType" : "application/vertex-shader" },
+                    { "Uuid": "FileType.PixelShader", "FileTypeExtension": ".ps", "FileTypeMimeType" : "application/pixel-shader" },
+                    { "Uuid": "FileType.DeclShader", "FileTypeExtension": ".var", "FileTypeMimeType" : "application/decl-shader" },
+                    { "Uuid": "FileType.BinaryVertexShader", "FileTypeExtension": ".vsb", "FileTypeMimeType" : "application/binary-vertex-shader" },
+                    { "Uuid": "FileType.BinaryPixelShader", "FileTypeExtension": ".psb", "FileTypeMimeType" : "application/binary-pixel-shader" },
+                    { "Uuid": "FileType.VertexBuffer", "FileTypeExtension": ".vtb", "FileTypeMimeType" : "application/vertex-buffer" },
+                    { "Uuid": "FileType.IndexBuffer", "FileTypeExtension": ".idb", "FileTypeMimeType" : "application/index-buffer" }
                 ]
             }
     );
 
     auto whiteTexture = TextureOf_White();
-    SetTextureSize2D(whiteTexture, {1, 1});
+    SetTextureSize2D(whiteTexture, {32, 32});
     SetTextureFormat(whiteTexture, TextureFormat_RGBA8);
     SetStreamPath(whiteTexture, "memory://Rendering/WhiteTexture.bin");
 
     if(StreamOpen(whiteTexture, StreamMode_Write)) {
-        rgba8 white;
+        rgba8 white, black;
         white.rgba = 0xffffffff;
+        black.rgba = 0xff000000;
 
-        StreamWrite(whiteTexture, 4, &white.rgba);
+        rgba8 pixels[32*32];
+        rgba8 colors[] = { white, black };
+
+        for(auto y = 0; y < 32; ++y) {
+            for(auto x = 0; x < 32; ++x) {
+                auto color = colors[(x/16 + y/16) % 2];
+                pixels[y*32 + x] = color;
+            }
+        }
+
+        StreamWrite(whiteTexture, 32*32*4, pixels);
         StreamClose(whiteTexture);
     }
 EndUnit()

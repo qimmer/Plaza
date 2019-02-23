@@ -31,7 +31,7 @@ API_EXPORT bool IsEntityOccupied(u32 index) {
 
 API_EXPORT bool IsEntityValid(Entity entity) {
     auto index = GetEntityIndex(entity);
-    return entity && Generations[index] == GetEntityGeneration(entity);
+    return entity && Generations.size() > index && Generations[index] == GetEntityGeneration(entity);
 }
 
 API_EXPORT Entity GetEntityByIndex (u32 index) {
@@ -91,9 +91,9 @@ API_EXPORT void DestroyEntity(Entity entity) {
         return;
     }
 
-    for_entity(component, componentData, Component, {
+    for_entity(component, componentData, Component) {
         RemoveComponent(entity, component);
-    });
+    }
 
     auto argument = MakeVariant(Entity, entity);
 	FireEventFast(EventOf_EntityDestroyed(), 1, &argument);

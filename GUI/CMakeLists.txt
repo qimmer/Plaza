@@ -3,11 +3,11 @@ project(Gui)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Gui GuiModule.cpp GuiModule.h Widget.cpp Widget.h Font.cpp Font.h GuiPickRay.cpp GuiPickRay.h DragHandle.cpp DragHandle.h Button.cpp Button.h)
+add_library(Gui GuiModule.cpp GuiModule.h Widget.cpp Widget.h Font.cpp Font.h GuiPickRay.cpp GuiPickRay.h DragHandle.cpp DragHandle.h TextWidget.cpp TextWidget.h Layout.cpp Layout.h)
 
 target_include_directories(Gui PUBLIC ".." ".")
 
-target_link_libraries(Gui Foundation Core Rendering Scene)
+target_link_libraries(Gui Foundation Core Rendering Scene Animation)
 
 if(MSVC)
     target_sources(Gui PRIVATE Gui.def)

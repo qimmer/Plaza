@@ -22,6 +22,16 @@
       "InputStateKey": "KEY_RIGHT"
     },
     {
+      "Uuid": "Platformer.Input.Up",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_UP"
+    },
+    {
+      "Uuid": "Platformer.Input.Down",
+      "InputStateContext": "Platformer.Output.Context",
+      "InputStateKey": "KEY_DOWN"
+    },
+    {
       "Uuid": "Platformer.Input.Run",
       "InputStateContext": "Platformer.Output.Context",
       "InputStateKey": "KEY_LEFT_CONTROL"
@@ -57,6 +67,18 @@
       "MathOperation": "MathOperation_Sub",
       "MathA": "{InputStateValue@Platformer.Input.CameraUp}",
       "MathB": "{InputStateValue@Platformer.Input.CameraDown}"
+    },
+    {
+      "Uuid": "Platformer.Input.PlayerHorizontal",
+      "MathOperation": "MathOperation_Sub",
+      "MathA": "{InputStateValue@Platformer.Input.Right}",
+      "MathB": "{InputStateValue@Platformer.Input.Left}"
+    },
+    {
+      "Uuid": "Platformer.Input.PlayerVertical",
+      "MathOperation": "MathOperation_Sub",
+      "MathA": "{InputStateValue@Platformer.Input.Up}",
+      "MathB": "{InputStateValue@Platformer.Input.Down}"
     },
     {
       "Uuid": "Platformer.Input.QuitAction",

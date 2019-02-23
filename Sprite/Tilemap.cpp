@@ -112,11 +112,11 @@ LocalFunction(OnTileGridChanged, void, Entity grid) {
 
 LocalFunction(OnStreamContentChanged, void, Entity stream) {
     if(HasComponent(stream, ComponentOf_Texture2D())) {
-        for_entity(grid, data, TileGrid, {
+        for_entity(grid, data, TileGrid) {
             if(data->TileGridMap == stream) {
                 UpdateTileGrid(grid);
             }
-        });
+        }
     }
 }
 

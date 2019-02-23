@@ -16,7 +16,7 @@ static void Replicate(Entity context) {
 
     data->ReplicationLastChangeFrame = GetAppLoopFrame(AppLoopOf_Networking());
 
-    for_entity(property, propertyData, Property, {
+    for_entity(property, propertyData, Property) {
         auto component = GetOwner(property);
         if(HasComponent(context, component)) {
             auto kind = GetPropertyKind(property);
@@ -38,7 +38,7 @@ static void Replicate(Entity context) {
                 }
             }
         }
-    });
+    }
 }
 
 LocalFunction(OnComponentAdded, void, Entity component, Entity context) {
