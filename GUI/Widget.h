@@ -12,6 +12,7 @@ struct Rect2D {
 };
 
 struct Widget {
+    rgba32 WidgetStateColor;
     Entity WidgetModel, WidgetMesh;
     bool WidgetDisabled, WidgetSelected;
     float WidgetStateTransitionDuration;
@@ -30,6 +31,10 @@ struct WidgetVertex {
 };
 
 struct WidgetMesh {
+    rgba32 WidgetMeshEnabledColor;
+    rgba32 WidgetMeshDisabledColor;
+    rgba32 WidgetMeshSelectedColor;
+
     Entity WidgetMeshEnabledTexture;
     Entity WidgetMeshDisabledTexture;
     Entity WidgetMeshSelectedTexture;
@@ -38,6 +43,10 @@ struct WidgetMesh {
 };
 
 struct InteractableWidgetMesh {
+    rgba32 WidgetMeshHoveredColor;
+    rgba32 WidgetMeshFocusedColor;
+    rgba32 WidgetMeshClickedColor;
+
     Entity WidgetMeshHoveredTexture;
     Entity WidgetMeshFocusedTexture;
     Entity WidgetMeshClickedTexture;
@@ -56,6 +65,7 @@ Unit(Widget)
         Property(v3f, WidgetState)
         Property(bool, WidgetDisabled)
         Property(bool, WidgetSelected)
+        Property(rgba32, WidgetStateColor)
 
     Component(InteractableWidget)
         Property(v2i, WidgetInteractionPoint)
@@ -68,12 +78,18 @@ Unit(Widget)
         ReferenceProperty(SubTexture2D, WidgetMeshEnabledTexture)
         ReferenceProperty(SubTexture2D, WidgetMeshDisabledTexture)
         ReferenceProperty(SubTexture2D, WidgetMeshSelectedTexture)
+        Property(rgba32, WidgetMeshEnabledColor)
+        Property(rgba32, WidgetMeshDisabledColor)
+        Property(rgba32, WidgetMeshSelectedColor)
         Property(u16, WidgetMeshFixedBorderWidth)
 
     Component(InteractableWidgetMesh)
         ReferenceProperty(SubTexture2D, WidgetMeshHoveredTexture)
         ReferenceProperty(SubTexture2D, WidgetMeshFocusedTexture)
         ReferenceProperty(SubTexture2D, WidgetMeshClickedTexture)
+        Property(rgba32, WidgetMeshHoveredColor)
+        Property(rgba32, WidgetMeshFocusedColor)
+        Property(rgba32, WidgetMeshClickedColor)
 
 
 #endif //PLAZA_WIDGET_H

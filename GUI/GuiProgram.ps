@@ -50,12 +50,13 @@ void main()
         s_widgetMeshClickedTexture,
         v_texcoord0 * u_uvOffsetSizePerSampler[5].zw + u_uvOffsetSizePerSampler[5].xy);
 
-    vec4 albedo = mix(mix(enabledColor, selectedColor, selected), disabledColor, disabled);
+    vec4 albedo = enabledColor;
 
     albedo.xyz = mix(albedo.xyz, focusedColor.xyz, focused * focusedColor.a);
     albedo.xyz = mix(albedo.xyz, hoveredColor.xyz, hovered * hoveredColor.a);
-    albedo.xyz = mix(albedo.xyz, selectedColor.xyz, selected * hoveredColor.a);
+    albedo.xyz = mix(albedo.xyz, selectedColor.xyz, selected * selectedColor.a);
     albedo.xyz = mix(albedo.xyz, clickedColor.xyz, clicked * clickedColor.a);
+    albedo.xyz = mix(albedo.xyz, disabledColor.xyz, disabled * disabledColor.a);
 
     gl_FragColor = albedo;
 }

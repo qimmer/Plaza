@@ -186,6 +186,38 @@ LocalFunction(OnInteractableStateChanged, void, Entity entity) {
     Transition(entity, PropertyOf_WidgetInteractionState(), MakeVariant(v3f, newState), GetWidgetStateTransitionDuration(entity));
 }
 
+LocalFunction(OnStateUpdated, void, Entity entity) {
+    if(!HasComponent(entity, ComponentOf_Widget())) return;
+
+    auto state = GetWidgetState(entity);
+    auto interactionState = GetWidgetInteractionState(entity);
+
+    auto widgetMesh = GetRenderableSubMesh(entity);
+    if (HasComponent(widgetMesh, ComponentOf_SubMesh())) {
+        widgetMesh = GetOwner(widgetMesh);
+    }
+
+    auto widgetMeshData = GetWidgetMeshData(widgetMesh);
+    if(!widgetMeshData) return;
+
+    auto interactableWidgetMeshData = GetInteractableWidgetMeshData(widgetMesh);
+
+    rgba32 color = widgetMeshData->WidgetMeshEnabledColor;
+
+    if(interactableWidgetMeshData) {
+        glm_vec4_lerp(&color.r, &interactableWidgetMeshData->WidgetMeshFocusedColor.r, interactionState.y, &color.x);
+        glm_vec4_lerp(&color.r, &interactableWidgetMeshData->WidgetMeshHoveredColor.r, interactionState.x, &color.x);
+        glm_vec4_lerp(&color.r, &widgetMeshData->WidgetMeshSelectedColor.r, state.y, &color.x);
+        glm_vec4_lerp(&color.r, &interactableWidgetMeshData->WidgetMeshClickedColor.r, interactionState.z, &color.x);
+    } else {
+        glm_vec4_lerp(&color.r, &widgetMeshData->WidgetMeshSelectedColor.r, state.y, &color.x);
+    }
+
+    glm_vec4_lerp(&color.r, &widgetMeshData->WidgetMeshDisabledColor.r, state.x, &color.x);
+
+    SetWidgetStateColor(entity, color);
+}
+
 BeginUnit(Widget)
     BeginComponent(Rect2D)
         RegisterBase(Transform)
@@ -200,6 +232,7 @@ BeginUnit(Widget)
         RegisterProperty(v3f, WidgetState)
         RegisterProperty(bool, WidgetDisabled)
         RegisterProperty(bool, WidgetSelected)
+        RegisterPropertyReadOnly(rgba32, WidgetStateColor)
 
         ComponentTemplate({
             "RenderableMaterial": "Gui.Material"
@@ -213,6 +246,12 @@ BeginUnit(Widget)
         RegisterProperty(bool, WidgetHovered)
         RegisterProperty(bool, WidgetFocused)
         RegisterProperty(bool, WidgetClicked)
+
+        ComponentTemplate({
+          "WidgetMeshHoveredColor": [0, 0, 0, 1],
+          "WidgetMeshFocusedColor": [0, 0, 0, 1],
+          "WidgetMeshClickedColor": [0, 0, 0, 1]
+        })
     EndComponent()
 
     BeginComponent(WidgetMesh)
@@ -220,7 +259,16 @@ BeginUnit(Widget)
         RegisterReferenceProperty(SubTexture2D, WidgetMeshEnabledTexture)
         RegisterReferenceProperty(SubTexture2D, WidgetMeshDisabledTexture)
         RegisterReferenceProperty(SubTexture2D, WidgetMeshSelectedTexture)
+        RegisterProperty(rgba32, WidgetMeshEnabledColor)
+        RegisterProperty(rgba32, WidgetMeshDisabledColor)
+        RegisterProperty(rgba32, WidgetMeshSelectedColor)
         RegisterProperty(u16, WidgetMeshFixedBorderWidth)
+
+        ComponentTemplate({
+            "WidgetMeshEnabledColor": [0, 0, 0, 1],
+            "WidgetMeshDisabledColor": [0, 0, 0, 1],
+            "WidgetMeshSelectedColor": [0, 0, 0, 1]
+        })
     EndComponent()
 
     BeginComponent(InteractableWidgetMesh)
@@ -228,6 +276,9 @@ BeginUnit(Widget)
         RegisterReferenceProperty(SubTexture2D, WidgetMeshHoveredTexture)
         RegisterReferenceProperty(SubTexture2D, WidgetMeshFocusedTexture)
         RegisterReferenceProperty(SubTexture2D, WidgetMeshClickedTexture)
+        RegisterProperty(rgba32, WidgetMeshHoveredColor)
+        RegisterProperty(rgba32, WidgetMeshFocusedColor)
+        RegisterProperty(rgba32, WidgetMeshClickedColor)
     EndComponent()
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Size2D()), OnSize2DChanged, 0)
@@ -247,6 +298,10 @@ BeginUnit(Widget)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetHovered()), OnInteractableStateChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetFocused()), OnInteractableStateChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClicked()), OnInteractableStateChanged, 0)
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetState()), OnStateUpdated, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetInteractionState()), OnStateUpdated, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderableSubMesh()), OnStateUpdated, 0)
 
     RegisterSubscription(EventOf_Validate(), OnValidateMeshes, ComponentOf_Mesh())
     RegisterSubscription(EventOf_EntityComponentAdded(), OnWidgetMeshAdded, ComponentOf_WidgetMesh())

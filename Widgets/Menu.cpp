@@ -30,7 +30,7 @@ LocalFunction(OnClickedChanged, void, Entity entity, bool oldClicked, bool newCl
         for(auto i = 0; i < numItems; ++i) {
             auto selected = menuItems[i] == entity && !alreadySelected;
             auto subMenu = GetMenuItemSubMenu(menuItems[i]);
-            //(subMenu, !selected);
+            SetHidden(subMenu, !selected);
             SetWidgetSelected(menuItems[i], selected);
         }
     }
@@ -55,7 +55,7 @@ LocalFunction(OnHoveredChanged, void, Entity entity, bool oldHovered, bool newHo
         for(auto i = 0; i < numItems; ++i) {
             auto selected = menuItems[i] == entity;
             auto subMenu = GetMenuItemSubMenu(menuItems[i]);
-            //SetHidden(subMenu, !selected);
+            SetHidden(subMenu, !selected);
             SetWidgetSelected(menuItems[i], selected);
         }
     }
@@ -82,6 +82,7 @@ BeginUnit(Menu)
             "LayoutMode": "LayoutMode_Vertical",
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.PanelStyleMesh}",
             "LayoutPadding": "{SceneNodeScene.SceneStyle.PanelStylePadding}",
+            "LayoutChildWeight": [0.0, 0.0],
             "LayoutChildOrder": [
                 {
                     "LayoutChildOrderingProperty": "Property.MenuItems"
@@ -112,10 +113,11 @@ BeginUnit(Menu)
           "LayoutChildWeight": [0.0, 0.0],
           "MenuItemLabel": {
             "TextWidgetFont": "{SceneNodeScene.SceneStyle.ButtonStyleFont}",
-            "TextWidgetText": "{Owner.MenuItemTitle}"
+            "TextWidgetText": "{Owner.MenuItemTitle}",
+            "TextWidgetColor": "{Owner.WidgetStateColor}"
           },
           "MenuItemSubMenu": {
-            "Hidden": true
+              "Hidden": true
           },
           "LayoutChildOrder": [
               {

@@ -41,9 +41,7 @@ static v2i CalculateMinimumSize(Entity layout) {
         for(auto i = 0; i < numChildWidgets; ++i) {
             auto childWidget = childWidgets[i];
 
-            v2i childSize = HasComponent(childWidget, ComponentOf_Layout())
-                ? CalculateMinimumSize(childWidget)
-                : GetSize2D(childWidget);
+            v2i childSize = GetSize2D(childWidget);
 
             switch(layoutMode) {
                 case LayoutMode_Vertical:
@@ -88,12 +86,61 @@ static v2i CalculateMinimumSize(Entity layout) {
     return childrenSize;
 }
 
-static void UpdateChildrenLayout(Entity layout) {
+static void Shrink(Entity layout) {
+    /*for_children(ordering, LayoutChildOrder, layout) {
+        auto property = GetLayoutChildOrderingProperty(ordering);
+        if(!HasComponent(property, ComponentOf_Property())) continue;
+
+        u32 numChildWidgets = 0;
+        Entity *childWidgets;
+        Entity singleChild;
+        if(GetPropertyKind(property) == PropertyKind_Array) {
+            childWidgets = GetArrayPropertyElements(property, layout, &numChildWidgets);
+        } else {
+            singleChild = GetPropertyValue(property, layout).as_Entity;
+            childWidgets = &singleChild;
+            numChildWidgets = 1;
+        }
+
+        for(auto i = 0; i < numChildWidgets; ++i) {
+            auto childWidget = childWidgets[i];
+
+            Shrink(childWidget);
+        }
+    }*/
+
+    bool sizeChanged = false;
+    if(HasComponent(layout, ComponentOf_LayoutChild())) {
+        auto weight = GetLayoutChildWeight(layout);
+        auto minimumSize = CalculateMinimumSize(layout);
+
+        auto size = GetSize2D(layout);
+        if(weight.x == 0.0f) {
+            size.x = minimumSize.x;
+            sizeChanged = true;
+        }
+        if(weight.y == 0.0f) {
+            size.y = minimumSize.y;
+            sizeChanged = true;
+        }
+
+        if(sizeChanged) {
+            SetSize2D(layout, size);
+        }
+    }
+}
+
+static void ExpandChildLayouts(Entity layout) {
     auto parentData = GetLayoutData(layout);
     if(!parentData) return;
 
     auto parentSize = GetSize2D(layout);
     auto minimumSize = CalculateMinimumSize(layout);
+
+    if(!HasComponent(layout, ComponentOf_LayoutChild())) {
+        SetSize2D(layout, minimumSize);
+        parentSize = minimumSize;
+    }
 
     float weightSum = 0.0f;
     s32 fixedSum = 0;
@@ -115,7 +162,7 @@ static void UpdateChildrenLayout(Entity layout) {
 
             for(auto i = 0; i < numChildWidgets; ++i) {
                 auto childWidget = childWidgets[i];
-                auto minimumSize = CalculateMinimumSize(childWidget);
+                auto childSize = GetSize2D(childWidget);
                 auto childWeight = GetLayoutChildWeight(childWidget);
                 auto hiddenState = GetWidgetState(childWidget).z;
 
@@ -123,7 +170,7 @@ static void UpdateChildrenLayout(Entity layout) {
                     if(childWeight.x > 0.0f) {
                         weightSum += childWeight.x;
                     } else {
-                        fixedSum += minimumSize.x;
+                        fixedSum += childSize.x;
                     }
                 }
 
@@ -131,7 +178,7 @@ static void UpdateChildrenLayout(Entity layout) {
                     if(childWeight.y > 0.0f) {
                         weightSum += childWeight.y;
                     } else {
-                        fixedSum += minimumSize.y;
+                        fixedSum += childSize.y;
                     }
                 }
             }
@@ -171,20 +218,19 @@ static void UpdateChildrenLayout(Entity layout) {
             });
             SetDistance2D(childWidget, -1.0f);
 
-            auto childMinimumSize = CalculateMinimumSize(childWidget);
             auto childWeight = GetLayoutChildWeight(childWidget);
 
             v2i newSize = size;
             switch(GetLayoutMode(layout)) {
                 case LayoutMode_Vertical:
-                    newSize.x = parentSize.x - (parentData->LayoutPadding.x + parentData->LayoutPadding.z);
-                    newSize.y = (childWeight.y > 0.0f) ? s32(weightedSize * (childWeight.y / weightSum)) : childMinimumSize.y;
+                    newSize.x = (childWeight.x > 0.0f) ? parentSize.x - (parentData->LayoutPadding.x + parentData->LayoutPadding.z) : size.x;
+                    newSize.y = (childWeight.y > 0.0f) ? s32(weightedSize * (childWeight.y / weightSum)) : size.y;
 
                     position.y += newSize.y;
                     break;
                 case LayoutMode_Horizontal:
-                    newSize.x = (childWeight.x > 0.0f) ? s32(weightedSize * (childWeight.x / weightSum)) : childMinimumSize.x;
-                    newSize.y = parentSize.y - (parentData->LayoutPadding.y + parentData->LayoutPadding.w);
+                    newSize.x = (childWeight.x > 0.0f) ? s32(weightedSize * (childWeight.x / weightSum)) : size.x;
+                    newSize.y = (childWeight.y > 0.0f) ? parentSize.y - (parentData->LayoutPadding.y + parentData->LayoutPadding.w) : size.y;
 
                     position.x += newSize.x;
                     break;
@@ -203,45 +249,41 @@ static void UpdateChildrenLayout(Entity layout) {
     }
 }
 
-static void Shrink(Entity layout) {
-    auto weight = GetLayoutChildWeight(layout);
-    auto minimumSize = CalculateMinimumSize(layout);
-
-    auto size = GetSize2D(layout);
-    if(weight.x == 0.0f) {
-        size.x = minimumSize.x;
-    }
-    if(weight.y == 0.0f) {
-        size.y = minimumSize.y;
-    }
-    SetSize2D(layout, size);
-}
-
 
 LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOwner) {
-    if(HasComponent(newOwner, ComponentOf_Layout())) {
-        UpdateChildrenLayout(newOwner);
-    }
+    Shrink(entity);
+    Shrink(oldOwner);
+    ExpandChildLayouts(oldOwner);
+    ExpandChildLayouts(newOwner);
 }
 
 LocalFunction(OnWeightChanged, void, Entity entity) {
     auto owner = GetOwner(entity);
-    UpdateChildrenLayout(owner);
+    Shrink(entity);
+    ExpandChildLayouts(owner);
 }
 
 LocalFunction(OnLayoutModeChanged, void, Entity entity) {
-    UpdateChildrenLayout(entity);
+    Shrink(entity);
+    ExpandChildLayouts(entity);
+}
+
+LocalFunction(OnLayoutChildOrderingChanged, void, Entity entity) {
+    auto layout = GetOwner(entity);
+    OnLayoutModeChanged(layout);
 }
 
 LocalFunction(OnSize2DChanged, void, Entity widget, v2i oldSize, v2i newSize) {
     auto owner = GetOwner(widget);
 
+    Shrink(owner);
+
     if(HasComponent(owner, ComponentOf_Layout())) {
-        UpdateChildrenLayout(owner);
+        ExpandChildLayouts(owner);
     }
 
     if(HasComponent(widget, ComponentOf_Layout())) {
-        UpdateChildrenLayout(widget);
+        ExpandChildLayouts(widget);
     }
 }
 
@@ -278,4 +320,7 @@ BeginUnit(Layout)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Size2D()), OnSize2DChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetState()), OnWeightChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutMode()), OnLayoutModeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutSpacing()), OnLayoutModeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutPadding()), OnLayoutModeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutChildOrderingProperty()), OnLayoutChildOrderingChanged, 0)
 EndUnit()

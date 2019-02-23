@@ -186,7 +186,13 @@ BeginModule(Widgets)
                    "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.MenuItem.Selected",
                    "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
                    "WidgetMeshClickedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
-                   "WidgetMeshFixedBorderWidth": 3
+                   "WidgetMeshFixedBorderWidth": 3,
+                   "WidgetMeshEnabledColor": [0.0, 0.0, 0.0, 1.0],
+                   "WidgetMeshDisabledColor": [0.3, 0.3, 0.3, 1.0],
+                   "WidgetMeshSelectedColor": [1.0, 1.0, 1.0, 1.0],
+                   "WidgetMeshFocusedColor": [0.0, 0.0, 0.0, 1.0],
+                   "WidgetMeshHoveredColor": [1.0, 1.0, 1.0, 1.0],
+                   "WidgetMeshClickedColor": [0.0, 0.0, 0.0, 1.0]
                },
 
                "MainMenuItemStyleMesh": {
@@ -197,10 +203,17 @@ BeginModule(Widgets)
                    "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
                    "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
                    "WidgetMeshClickedTexture": "Style.Default.StyleSheet.MenuItem.Clicked",
-                   "WidgetMeshFixedBorderWidth": 3
+                   "WidgetMeshFixedBorderWidth": 3,
+                   "WidgetMeshEnabledColor": [0.0, 0.0, 0.0, 1.0],
+                   "WidgetMeshDisabledColor": [0.3, 0.3, 0.3, 1.0],
+                   "WidgetMeshSelectedColor": [0.0, 0.0, 0.0, 1.0],
+                   "WidgetMeshFocusedColor": [0.0, 0.0, 0.0, 1.0],
+                   "WidgetMeshHoveredColor": [0.0, 0.0, 0.0, 1.0],
+                   "WidgetMeshClickedColor": [0.0, 0.0, 0.0, 1.0]
                },
                "ButtonStylePadding": [5, 5, 5, 5],
                "ButtonStyleFont": "Font.DroidSans",
+               "ButtonStyleTextColor": [0.0, 0.0, 0.0, 1.0],
 
                "MainMenuStylePadding": [3, 3, 3, 3],
                "MenuItemStylePadding": [7, 2, 7, 2],
