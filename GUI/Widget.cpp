@@ -227,12 +227,12 @@ BeginUnit(Widget)
     BeginComponent(Widget)
         RegisterBase(Rect2D)
         RegisterBase(Renderable)
-        RegisterProperty(Entity, WidgetModel)
         RegisterProperty(float, WidgetStateTransitionDuration)
-        RegisterProperty(v3f, WidgetState)
+        RegisterPropertyReadOnly(v3f, WidgetState)
         RegisterProperty(bool, WidgetDisabled)
         RegisterProperty(bool, WidgetSelected)
         RegisterPropertyReadOnly(rgba32, WidgetStateColor)
+        RegisterProperty(float, WidgetDepthOrder)
 
         ComponentTemplate({
             "RenderableMaterial": "Gui.Material"
@@ -241,17 +241,11 @@ BeginUnit(Widget)
 
     BeginComponent(InteractableWidget)
         RegisterBase(Widget)
-        RegisterProperty(v3f, WidgetInteractionState)
-        RegisterProperty(v2i, WidgetInteractionPoint)
+        RegisterPropertyReadOnly(v3f, WidgetInteractionState)
+        RegisterPropertyReadOnly(v2i, WidgetInteractionPoint)
         RegisterProperty(bool, WidgetHovered)
         RegisterProperty(bool, WidgetFocused)
         RegisterProperty(bool, WidgetClicked)
-
-        ComponentTemplate({
-          "WidgetMeshHoveredColor": [0, 0, 0, 1],
-          "WidgetMeshFocusedColor": [0, 0, 0, 1],
-          "WidgetMeshClickedColor": [0, 0, 0, 1]
-        })
     EndComponent()
 
     BeginComponent(WidgetMesh)
@@ -279,6 +273,11 @@ BeginUnit(Widget)
         RegisterProperty(rgba32, WidgetMeshHoveredColor)
         RegisterProperty(rgba32, WidgetMeshFocusedColor)
         RegisterProperty(rgba32, WidgetMeshClickedColor)
+        ComponentTemplate({
+          "WidgetMeshHoveredColor": [0, 0, 0, 1],
+          "WidgetMeshFocusedColor": [0, 0, 0, 1],
+          "WidgetMeshClickedColor": [0, 0, 0, 1]
+        })
     EndComponent()
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Size2D()), OnSize2DChanged, 0)

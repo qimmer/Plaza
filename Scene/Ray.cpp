@@ -13,6 +13,7 @@
 #include <cglm/cglm.h>
 #include <Rendering/RenderTarget.h>
 #include <Foundation/AppNode.h>
+#include <Foundation/Visibility.h>
 
 struct EvaluatedRay {
     int sign[3];
@@ -162,7 +163,7 @@ static inline Entity RayTrace(Entity ray, TraceRay *data) {
     for_entity_abstract(candidate, data2, data->TraceRayComponent) {
         v3f hitPoint;
 
-        if(GetAppNodeRoot(candidate) != scene) continue;
+        if(GetAppNodeRoot(candidate) != scene || GetHierarchiallyHidden(candidate)) continue;
 
         if (TraceRenderable(candidate, &evaluatedRay, &hitPoint)) {
             auto distance = glm_vec_distance(&hitPoint.x, &evaluatedRay.orig.x);

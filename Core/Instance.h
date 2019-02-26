@@ -15,19 +15,8 @@ struct UnresolvedReference {
 struct UnresolvedEntity {
 };
 
-struct Template {};
-
 struct Instance {
-    bool InstanceIgnoreChanges;
     Entity InstanceTemplate;
-};
-
-struct InstanceOverride {
-    Entity InstanceOverrideProperty;
-};
-
-struct TemplateableComponent {
-    bool IgnoreInstantiation;
 };
 
 struct TemplatedComponent {
@@ -35,9 +24,6 @@ struct TemplatedComponent {
 };
 
 Unit(Instance)
-    Component(TemplateableComponent)
-        Property(bool, IgnoreInstantiation)
-
     Component(UnresolvedReference)
         ReferenceProperty(Property, UnresolvedReferenceProperty)
         Property(StringRef, UnresolvedReferenceUuid)
@@ -45,15 +31,8 @@ Unit(Instance)
     Component(UnresolvedEntity)
         ArrayProperty(UnresolvedReference, UnresolvedReferences)
 
-    Component(Template)
-
-    Component(InstanceOverride)
-        ReferenceProperty(Property, InstanceOverrideProperty)
-
     Component(Instance)
-        ReferenceProperty(Template, InstanceTemplate)
-        ArrayProperty(InstanceOverride, InstanceOverrides)
-        Property(bool, InstanceIgnoreChanges)
+        Property(Entity, InstanceTemplate)
 
     Component(TemplatedComponent)
         ChildProperty(Identification, ComponentTemplate)

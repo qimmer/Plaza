@@ -296,6 +296,11 @@ API_EXPORT void SetUuid(Entity entity, StringRef value) {
 
         auto oldValue = data->Uuid;
 
+        auto oldIt = uuidTable.find(oldValue);
+        if(oldIt != uuidTable.end()) {
+            uuidTable.erase(oldIt);
+        }
+
         uuidTable[value] = entity;
 
         EmitChangedEvent(entity, PropertyOf_Uuid(), GetPropertyData(PropertyOf_Uuid()), MakeVariant(StringRef, data->Uuid), MakeVariant(StringRef, value));

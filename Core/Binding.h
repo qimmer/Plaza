@@ -21,6 +21,10 @@ struct BindingIndirection {
     Entity BindingIndirectionProperty;
 };
 
+struct ArrayBindingChild {
+    Entity ArrayBindingChildSource;
+};
+
 Unit(Binding)
     Component(BindingListener)
         ReferenceProperty(Property, BindingListenerProperty)
@@ -39,7 +43,8 @@ Unit(Binding)
     Component(Bindable)
         ArrayProperty(Binding, Bindings)
 
-    Function(Bind, bool, Entity entity, Entity property, StringRef sourceBindingString)
-    Function(GetBinding, Entity, Entity entity, Entity property)
+    Component(ArrayBindingChild)
+        Property(Entity, ArrayBindingChildSource)
 
+    Function(GetBinding, Entity, Entity entity, Entity property)
 #endif //PLAZA_BINDING_H

@@ -156,6 +156,8 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
                 SetOwner(child, entity, property);
 
                 AddComponent(child, GetPropertyChildComponent(property));
+
+                EmitChangedEvent(entity, property, propertyData, Variant_Default, MakeVariant(Entity, child));
             }
 
             for_children(base, Bases, component) {
@@ -214,10 +216,13 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
             auto properties = GetProperties(component, &count);
             for(auto i = 0; i < count; ++i) {
                 auto property = properties[i];
+                auto propertyData = GetPropertyData(property);
+
                 auto kind = GetPropertyKind(property);
 
                 if(kind == PropertyKind_Child) {
                     auto childEntity = GetPropertyValue(property, entity);
+                    EmitChangedEvent(entity, property, propertyData, MakeVariant(Entity, childEntity), Variant_Default);
                     DestroyEntity(childEntity.as_Entity);
                 } else if(kind == PropertyKind_Array) {
                     while(GetArrayPropertyCount(property, entity)) {

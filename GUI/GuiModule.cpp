@@ -20,6 +20,13 @@ BeginModule(Gui)
     RegisterDependency(Rendering)
     RegisterDependency(Scene)
 
+    RegisterUnit(Widget)
+    RegisterUnit(Layout)
+    RegisterUnit(Font)
+    RegisterUnit(TextWidget)
+    RegisterUnit(GuiPickRay)
+    RegisterUnit(DragHandle)
+
     ModuleData({
        "Children": [
        {
@@ -91,7 +98,7 @@ BeginModule(Gui)
                ],
                "RenderPassRenderState": {
                    "RenderStateBlendMode": "RenderState_STATE_BLEND_ALPHA",
-                   "RenderStateDepthTest": "RenderState_STATE_DEPTH_TEST_NONE"
+                   "RenderStateDepthTest": "RenderState_STATE_DEPTH_TEST_LEQUAL"
                },
                "RenderPassSortMode": "RenderingSortMode_DepthAscending"
            }
@@ -103,23 +110,18 @@ BeginModule(Gui)
        },
        {
            "Uuid": "Gui.Program",
-           "Children": [
-           {
+           "ProgramVertexShaderSource": {
                "Uuid": "Gui.Program.VertexShader",
                "StreamPath": "file://Gui/GuiProgram.vs"
            },
-           {
+           "ProgramPixelShaderSource": {
                "Uuid": "Gui.Program.PixelShader",
                "StreamPath": "file://Gui/GuiProgram.ps"
            },
-           {
+           "ProgramDeclShaderSource": {
                "Uuid": "Gui.Program.DeclShader",
                "StreamPath": "file://Gui/GuiProgram.var"
            }
-           ],
-           "ProgramVertexShaderSource": "Gui.Program.VertexShader",
-           "ProgramPixelShaderSource": "Gui.Program.PixelShader",
-           "ProgramDeclShaderSource": "Gui.Program.DeclShader"
        },
        {
            "Uuid": "Gui.VertexDeclaration",
@@ -152,23 +154,18 @@ BeginModule(Gui)
        },
        {
            "Uuid": "Gui.Font.Program",
-           "Children": [
-           {
+           "ProgramVertexShaderSource": {
                "Uuid": "Gui.Font.Program.VertexShader",
                "StreamPath": "file://Gui/FontProgram.vs"
            },
-           {
+           "ProgramPixelShaderSource": {
                "Uuid": "Gui.Font.Program.PixelShader",
                "StreamPath": "file://Gui/FontProgram.ps"
            },
-           {
+           "ProgramDeclShaderSource": {
                "Uuid": "Gui.Font.Program.DeclShader",
                "StreamPath": "file://Gui/FontProgram.var"
            }
-           ],
-           "ProgramVertexShaderSource": "Gui.Font.Program.VertexShader",
-           "ProgramPixelShaderSource": "Gui.Font.Program.PixelShader",
-           "ProgramDeclShaderSource": "Gui.Font.Program.DeclShader"
        },
        {
            "Uuid": "Gui.Font.VertexDeclaration",
@@ -245,11 +242,4 @@ BeginModule(Gui)
        }
        ]
    })
-
-    RegisterUnit(Widget)
-    RegisterUnit(Layout)
-    RegisterUnit(Font)
-    RegisterUnit(TextWidget)
-    RegisterUnit(GuiPickRay)
-    RegisterUnit(DragHandle)
 EndModule()

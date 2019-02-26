@@ -11,9 +11,11 @@ struct BindingPropertyListener {
     Entity Listener, Property;
 };
 
-static Vector<BindingPropertyListener, 8>& GetBindingListeners(Entity sourceEntity) {
-    static eastl::vector<Vector<BindingPropertyListener, 8>> BindingPropertyListeners;
+static eastl::vector<Vector<BindingPropertyListener, 8>> BindingPropertyListeners;
 
+static Vector<Entity, 32> currentChangingBindings;
+
+static Vector<BindingPropertyListener, 8>& GetBindingListeners(Entity sourceEntity) {
     auto index = GetEntityIndex(sourceEntity);
 
     if(BindingPropertyListeners.size() <= index) {
@@ -46,12 +48,58 @@ static inline void RemoveBindingListener(Entity sourceEntity, Entity sourcePrope
     });
 }
 
+static inline void UpdateValue(Entity binding) {
+    u32 numListeners = 0;
+    auto listeners = GetBindingListeners(binding, &numListeners);
+    auto data = GetBindingListenerData(listeners[0]);
+
+    auto self = GetOwner(binding);
+    if(!self) return;
+
+    auto targetProperty = GetBindingTargetProperty(binding);
+
+    if(!IsEntityValid(data->BindingListenerEntity)) return;
+
+    auto propertyData = GetPropertyData(data->BindingListenerProperty);
+
+    if(propertyData->PropertyKind == PropertyKind_Array) {
+        u32 numChildren = 0;
+        auto templateChildren = GetArrayPropertyElements(data->BindingListenerProperty, data->BindingListenerEntity, &numChildren);
+
+        SetArrayPropertyCount(targetProperty, self, 0);
+        SetArrayPropertyCount(targetProperty, self, numChildren);
+
+        templateChildren = GetArrayPropertyElements(data->BindingListenerProperty, data->BindingListenerEntity, &numChildren);
+        auto instanceChildren = GetArrayPropertyElements(targetProperty, self, &numChildren);
+
+        for(auto i = 0; i < numChildren; ++i) {
+            SetInstanceTemplate(instanceChildren[i], templateChildren[i]);
+        }
+    } else {
+        auto value = GetPropertyValue(data->BindingListenerProperty, data->BindingListenerEntity);
+
+        // Do we need a cast?
+        auto targetType = GetPropertyType(targetProperty);
+        if(propertyData->PropertyKind == PropertyKind_Value && targetType != value.type) {
+            value = Cast(value, targetType);
+        }
+
+        currentChangingBindings.push_back(binding); // Allow change without breaking the binding
+        SetPropertyValue(targetProperty, self, value);
+        currentChangingBindings.pop_back();
+    }
+}
+
 static void UpdateBindingListeners(Entity binding) {
     auto data = GetBindingData(binding);
-    if(!data) return;
+    if(!IsEntityValid(data->BindingTargetProperty)) return;
+
+    auto self = GetOwner(binding);
 
     auto sourceEntity = data->BindingSourceEntity;
-    if(!IsEntityValid(sourceEntity)) return;
+
+    // If binding is not set, the source is "self"
+    if(!IsEntityValid(sourceEntity)) sourceEntity = self;
 
     u32 numIndirections = 0;
     auto indirections = GetBindingIndirections(binding, &numIndirections);
@@ -73,34 +121,32 @@ static void UpdateBindingListeners(Entity binding) {
         if(i < (numIndirections - 1)) {
             // If there are more indirections pending, this is an indirection and not the final property
             SetBindingListenerIndirection(listeners[reverseIndex], indirections[i]);
-        }
 
-        if(IsEntityValid(sourceEntity) && IsEntityValid(property)) {
-            value = GetPropertyValue(property, sourceEntity);
-            sourceEntity = value.as_Entity;
+            if(IsEntityValid(sourceEntity) && IsEntityValid(property)) {
+                sourceEntity = GetPropertyValue(property, sourceEntity).as_Entity;
+            }
         } else {
-            value = Variant_Default;
-            value.type = GetPropertyType(data->BindingTargetProperty);
+            SetBindingListenerIndirection(listeners[reverseIndex], 0);
         }
     }
 
-    value = Cast(value, GetPropertyType(data->BindingTargetProperty));
-    SetPropertyValue(data->BindingTargetProperty, GetOwner(binding), value);
+    UpdateValue(binding);
 }
 
-static inline void HandleListener(Entity listener, Variant newValue) {
+static inline void HandleListener(Entity listener, Variant oldValue, Variant newValue) {
     auto data = GetBindingListenerData(listener);
     auto binding = GetOwner(listener);
 
-    if(data->BindingListenerIndirection) {
-        // If an indirection changed, re-evaluate listeners
-        UpdateBindingListeners(binding);
-    } else {
-        // No indirection, so this is a value update, re-evaluate value
-        auto targetProperty = GetBindingTargetProperty(binding);
+    if(data && binding) {
+        if(data->BindingListenerIndirection) {
+            // If an indirection changed, re-evaluate listeners
+            UpdateBindingListeners(binding);
+        } else {
+            // No indirection, so this is a value update, re-evaluate value
+            auto targetProperty = GetBindingTargetProperty(binding);
 
-        auto value = Cast(newValue, GetPropertyType(targetProperty));
-        SetPropertyValue(targetProperty, GetOwner(binding), value);
+            UpdateValue(binding);
+        }
     }
 }
 
@@ -114,88 +160,37 @@ LocalFunction(OnBindingListenerPropertyChanged, void, Entity listener, Entity ol
     AddBindingListener(GetBindingListenerEntity(listener), newProperty, listener);
 }
 
+API_EXPORT Entity GetBinding(Entity entity, Entity property) {
+    for_children(binding, Bindings, entity) {
+        auto data = GetBindingData(binding);
+        if(data && data->BindingTargetProperty == property) {
+            return binding;
+        }
+    }
+
+    return 0;
+}
+
 static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue) {
     auto& listeners = GetBindingListeners(entity);
-
-    auto propertyName = GetUuid(property);
 
     for(auto i = 0; i < listeners.size(); ++i) {
         auto& listener = listeners[i];
 
-        auto listenerPropertyName = GetUuid(listener.Property);
-
         if(property != listener.Property) continue;
 
-        HandleListener(listener.Listener, newValue);
-    }
-}
-
-static bool ParseConverter(Entity binding, StringRef converterString) {
-
-}
-
-static StringRef Tokenize(char* string, char delimeter) {
-    auto delimeterLocation = strrchr(string, delimeter);
-    if(!delimeterLocation) return string;
-
-    *delimeterLocation = '\0';
-
-    return delimeterLocation + 1;
-}
-
-static void Split(char* string, char delimeter, StringRef* left, StringRef* right) {
-    auto delimeterLocation = strrchr(string, delimeter);
-    if(delimeterLocation) {
-        *delimeterLocation = '\0';
+        HandleListener(listener.Listener, oldValue, newValue);
     }
 
-    *left = string;
-    *right = delimeterLocation ? (delimeterLocation + 1) : "";
-}
+    // If this property is bound and the change was not triggered by a binding value update, break the binding!
+    auto binding = GetBinding(entity, property);
+    if(binding && currentChangingBindings.back() != binding) {
 
-static bool ParseBinding(Entity binding, StringRef sourceBindingString) {
-    auto data = GetBindingData(binding);
-
-    SetNumBindingIndirections(binding, 0);
-
-    auto len = strlen(sourceBindingString);
-    auto buffer = (char*)alloca(len + 1);
-    strcpy(buffer, sourceBindingString);
-
-    StringRef sourceEntityUuid, propertiesString;
-    Split(buffer, '@', &propertiesString, &sourceEntityUuid);
-
-    StringRef propertyName;
-    do {
-        propertyName = Tokenize((char*)propertiesString, '.');
-        auto prototypeNameLen = strlen(propertyName);
-
-        char *propertyUuid = (char*)alloca(prototypeNameLen + 1 + 9);
-        sprintf(propertyUuid, "Property.%s", propertyName);
-        auto property = FindEntityByUuid(propertyUuid);
-
-        if(!IsEntityValid(property)) {
-            Error(binding, "Cannot find property with Uuid '%s'.", propertyUuid);
-            return false;
+        auto property = GetBindingTargetProperty(binding);
+        if(GetPropertyKind(property) == PropertyKind_Value) {
+            RemoveBindingsByValue(entity, binding);
         }
-
-        auto indirection = AddBindingIndirections(binding);
-        SetBindingIndirectionProperty(indirection, property);
     }
-    while(propertyName > propertiesString);
-
-    static const StringRef selfUuid = Intern("self");
-
-    if(*sourceEntityUuid && sourceEntityUuid != selfUuid) {
-        auto reference = AddUnresolvedReferences(binding);
-        SetUnresolvedReferenceUuid(reference, sourceEntityUuid);
-        SetUnresolvedReferenceProperty(reference, PropertyOf_BindingSourceEntity());
-    } else {
-        // If no '@', we use self as our source entity
-        SetBindingSourceEntity(binding, GetOwner(binding));
-    }
-
-    return true;
 }
 
 LocalFunction(OnBindingSourceEntityChanged, void, Entity binding) {
@@ -203,33 +198,24 @@ LocalFunction(OnBindingSourceEntityChanged, void, Entity binding) {
 }
 
 LocalFunction(OnBindingIndirectionPropertyChanged, void, Entity indirection) {
-    UpdateBindingListeners(GetOwner(indirection));
+    auto binding = GetOwner(indirection);
+    if(binding) {
+        UpdateBindingListeners(binding);
+    }
 }
 
-API_EXPORT bool Bind(Entity entity, Entity property, StringRef sourceBindingString) {
-    // First, remove eventual existing binding of this property
-    for_children(existingBinding, Bindings, entity) {
-        auto data = GetBindingData(existingBinding);
-        if(data->BindingTargetProperty == property) {
-            return ParseBinding(existingBinding, sourceBindingString);
-        }
-    }
-
-    auto binding = AddBindings(entity);
-    SetBindingTargetProperty(binding, property);
-
-    return ParseBinding(binding, sourceBindingString);
+LocalFunction(OnBindingTargetPropertyChanged, void, Entity binding, Entity oldProperty, Entity newProperty) {
+    UpdateBindingListeners(binding);
 }
 
-API_EXPORT Entity GetBinding(Entity entity, Entity property) {
-    for_children(binding, Bindings, entity) {
-        auto data = GetBindingData(binding);
-        if(data->BindingTargetProperty == property) {
-            return binding;
-        }
+LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOwner) {
+    if(HasComponent(entity, ComponentOf_BindingIndirection())) {
+        UpdateBindingListeners(oldOwner);
     }
 
-    return 0;
+    if(HasComponent(entity, ComponentOf_Binding())) {
+        UpdateBindingListeners(entity);
+    }
 }
 
 BeginUnit(Binding)
@@ -255,10 +241,16 @@ BeginUnit(Binding)
         RegisterArrayProperty(Binding, Bindings)
     EndComponent()
 
+    BeginComponent(ArrayBindingChild)
+        RegisterProperty(Entity, ArrayBindingChildSource)
+    EndComponent()
+
     RegisterGenericPropertyChangedListener(OnPropertyChanged);
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BindingListenerEntity()), OnBindingListenerEntityChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BindingListenerProperty()), OnBindingListenerPropertyChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BindingSourceEntity()), OnBindingSourceEntityChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BindingTargetProperty()), OnBindingTargetPropertyChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BindingIndirectionProperty()), OnBindingIndirectionPropertyChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
 EndUnit()

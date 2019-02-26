@@ -1,0 +1,13 @@
+{
+    "Children": [
+        {
+            "$components": ["Component.ItemWell"],
+            "LayoutChildWeight": [1.0, 1.0],
+            "Children": [
+                {
+                    "EntityLabelEntity": "ModuleRoot"
+                }
+            ]
+        }
+    ]
+}

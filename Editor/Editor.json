@@ -1,0 +1,13 @@
+{
+    "Children": [
+        {
+            "$include": "file://Editor/Styles/Default.json"
+        },
+        {
+            "$include": "file://Editor/Widgets/EntityLabel.json"
+        }
+    ],
+    "EditorMainFrame": {
+        "$include": "file://Editor/Views/MainFrame.json"
+    }
+}

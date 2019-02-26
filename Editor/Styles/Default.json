@@ -1,0 +1,222 @@
+{
+    "Uuid": "Style.Default",
+    
+    "StyleFonts": [
+        {
+            "$include": "file://Editor/Styles/tahoma.ttf",
+            "Uuid": "Font.Tahoma",
+            "TrueTypeFontSize": 14.0,
+            "FontCharacters": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+-!\"@#$%&/()=?'*\\{[]}.,:;<>| ",
+            "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT"
+        }
+    ],
+    
+    "StyleSheet": {
+        "$include": "file://Editor/Styles/Default.png",
+        "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT",
+        "TextureAtlasSubTextures": [
+            {
+                "Uuid": "Style.Default.StyleSheet.Dock",
+                "SubTexture2DOffset": [
+                    0,
+                    0
+                ],
+                "SubTexture2DSize": [
+                    6,
+                    6
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.Panel",
+                "SubTexture2DOffset": [
+                    0,
+                    0
+                ],
+                "SubTexture2DSize": [
+                    6,
+                    6
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.MenuItem.Enabled",
+                "SubTexture2DOffset": [
+                    0,
+                    27
+                ],
+                "SubTexture2DSize": [
+                    5,
+                    5
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.MenuItem.Selected",
+                "SubTexture2DOffset": [
+                    7,
+                    14
+                ],
+                "SubTexture2DSize": [
+                    4,
+                    4
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.MenuItem.Clicked",
+                "SubTexture2DOffset": [
+                    7,
+                    7
+                ],
+                "SubTexture2DSize": [
+                    6,
+                    6
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.Well",
+                "SubTexture2DOffset": [
+                    7,
+                    7
+                ],
+                "SubTexture2DSize": [
+                    5,
+                    5
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.ItemWell",
+                "SubTexture2DOffset": [
+                    7,
+                    0
+                ],
+                "SubTexture2DSize": [
+                    6,
+                    6
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.Button.Enabled",
+                "SubTexture2DOffset": [
+                    0,
+                    7
+                ],
+                "SubTexture2DSize": [
+                    5,
+                    5
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.Button.Clicked",
+                "SubTexture2DOffset": [
+                    7,
+                    7
+                ],
+                "SubTexture2DSize": [
+                    6,
+                    6
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.Button.Focused",
+                "SubTexture2DOffset": [
+                    0,
+                    19
+                ],
+                "SubTexture2DSize": [
+                    7,
+                    7
+                ]
+            }
+        ]
+    },
+    
+    "DockStyleMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.Dock",
+        "WidgetMeshFixedBorderWidth": 3
+    },
+    
+    "PanelStyleMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.Button.Enabled",
+        "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.Button.Enabled",
+        "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.Button.Enabled",
+        
+        "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.Button.Enabled",
+        "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.Button.Enabled",
+        "WidgetMeshClickedTexture": "Style.Default.StyleSheet.Button.Clicked",
+        "WidgetMeshFixedBorderWidth": 3
+    },
+    
+    "WellStyleMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.Well",
+        "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.Well",
+        "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.Well",
+        "WidgetMeshFixedBorderWidth": 3
+    },
+    
+    "ItemWellStyleMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.ItemWell",
+        "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.ItemWell",
+        "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.ItemWell",
+        "WidgetMeshFixedBorderWidth": 3
+    },
+    
+    "ButtonStyleMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.Button.Enabled",
+        "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.Button.Enabled",
+        "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.Button.Enabled",
+        
+        "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.Button.Enabled",
+        "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.Button.Enabled",
+        "WidgetMeshClickedTexture": "Style.Default.StyleSheet.Button.Clicked",
+        "WidgetMeshFixedBorderWidth": 3,
+        
+        "WidgetMeshEnabledColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshDisabledColor": [0.3, 0.3, 0.3, 1.0],
+        "WidgetMeshSelectedColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshFocusedColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshHoveredColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshClickedColor": [0.0, 0.0, 0.0, 1.0]
+    },
+    
+    "MenuItemStyleMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+        "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+        "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.MenuItem.Selected",
+        
+        "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.MenuItem.Selected",
+        "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+        "WidgetMeshClickedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+        "WidgetMeshFixedBorderWidth": 3,
+        "WidgetMeshEnabledColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshDisabledColor": [0.3, 0.3, 0.3, 1.0],
+        "WidgetMeshSelectedColor": [1.0, 1.0, 1.0, 1.0],
+        "WidgetMeshFocusedColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshHoveredColor": [1.0, 1.0, 1.0, 1.0],
+        "WidgetMeshClickedColor": [0.0, 0.0, 0.0, 1.0]
+    },
+    
+    "MainMenuItemStyleMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+        "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+        "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.MenuItem.Clicked",
+        
+        "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+        "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+        "WidgetMeshClickedTexture": "Style.Default.StyleSheet.MenuItem.Clicked",
+        "WidgetMeshFixedBorderWidth": 3,
+        "WidgetMeshEnabledColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshDisabledColor": [0.3, 0.3, 0.3, 1.0],
+        "WidgetMeshSelectedColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshFocusedColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshHoveredColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshClickedColor": [0.0, 0.0, 0.0, 1.0]
+    },
+    "ButtonStylePadding": [5, 3, 5, 3],
+    "ButtonStyleFont": "Font.Tahoma",
+    "ButtonStyleTextColor": [0.0, 0.0, 0.0, 1.0],
+    
+    "MainMenuStylePadding": [2, 2, 2, 2],
+    "MenuItemStylePadding": [7, 2, 7, 2],
+    
+    "PanelStylePadding": [5, 5, 5, 5],
+    "WellStylePadding": [5, 5, 5, 5],
+    "ItemWellStylePadding": [2, 2, 2, 2]
+}

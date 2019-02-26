@@ -1,0 +1,41 @@
+{
+    "Size2D": "{RenderTargetSize}",
+    "RenderContextTitle": "Editor",
+    "RenderTargetSize": [800, 600],
+    "LayoutMode": "LayoutMode_Vertical",
+    "SceneStyle": "Style.Default",
+    "Children": [
+        {
+            "$include": "file://Editor/Views/MainMenu.json"
+        },
+        {
+            "$components": ["Component.Panel"],
+            "LayoutChildWeight": [1.0, 0.0],
+            "$include": "file://Editor/Views/ToolBar.json"
+        },
+        {
+            "LayoutMode": "LayoutMode_Horizontal",
+            "LayoutChildWeight": [1.0, 1.0],
+            "Children": [
+                {
+                    "$components": ["Component.Panel"],
+                    "LayoutChildWeight": [0.25, 1.0],
+                    "$include": "file://Editor/Views/EntityExplorer.json"
+                },
+                {
+                    "LayoutChildWeight": [0.5, 1.0]
+                },
+                {
+                    "$components": ["Component.Panel"],
+                    "LayoutChildWeight": [0.25, 1.0],
+                    "$include": "file://Editor/Views/Inspector.json"
+                }
+            ]
+        },
+        {
+            "$components": ["Component.Panel"],
+            "$include": "file://Editor/Views/StatusBar.json",
+            "LayoutChildWeight": [1.0, 0.0]
+        }
+    ]
+}

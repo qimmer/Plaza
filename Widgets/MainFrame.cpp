@@ -19,13 +19,12 @@ BeginUnit(MainFrame)
         RegisterChildProperty(Camera, MainFrameCamera)
 
         ComponentTemplate({
-            "Uuid": "Template.MainFrame",
             "LayoutMode": "LayoutMode_Vertical",
             "MainFrameRenderer": {
-                "SceneRendererTarget": "Template.MainFrame",
-                "SceneRendererScene": "Template.MainFrame",
+                "SceneRendererTarget": "{Owner}",
+                "SceneRendererScene": "{Owner}",
                 "SceneRendererPath": "Gui.RenderPath",
-                "SceneRendererCamera": "Template.MainFrame.MainFrameCamera",
+                "SceneRendererCamera": "{Owner.MainFrameCamera}",
                 "SceneRendererViewport": [0.0, 0.0, 1.0, 1.0]
             },
             "MainFrameCamera": {
@@ -42,13 +41,7 @@ BeginUnit(MainFrame)
                     "InputStateKey": "MOUSEBUTTON_0"
                 }
             },
-            "LayoutChildOrder": [
-                {
-                    "LayoutChildOrderingProperty": "Property.Children"
-                }
-            ],
-            "LayoutChildWeight": [1.0, 1.0],
-            "SceneStyle": "Style.Default"
+            "LayoutChildWeight": [1.0, 1.0]
         })
 
     EndComponent()

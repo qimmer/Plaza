@@ -7,30 +7,7 @@
 
 #include <Core/NativeUtils.h>
 
-struct Switch {
-    Variant SwitchInput;
-    Variant SwitchResult;
-};
-
-struct SwitchCase {
-    Variant SwitchCaseValue;
-    Variant SwitchCaseResult;
-};
-
 Unit(Logical)
-    Component(Switch)
-        Property(Variant, SwitchInput)
-        Property(Variant, SwitchResult)
-        ArrayProperty(SwitchCase, SwitchCases)
-
-    Component(SwitchCase)
-        Property(Variant, SwitchCaseValue)
-        Property(Variant, SwitchCaseResult)
-
-    Component(ForEach)
-        Property(Entity, ForEachSource)
-        ReferenceProperty(Property, ForEachProperty)
-
     Component(FormatArgument)
         Property(Variant, FormatArgumentValue)
 

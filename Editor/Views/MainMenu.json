@@ -1,0 +1,52 @@
+{
+    "$components": ["Component.MainMenu"],
+    "MenuItems": [
+        {
+            "$components": ["Component.MainMenuItem"],
+            "MenuItemTitle": "File",
+            "MenuItemSubMenu": {
+                "MenuItems": [
+                    {
+                        "MenuItemTitle": "New ..."
+                    },
+                    {
+                        "MenuItemTitle": "Opening ..."
+                    },
+                    {
+                        "MenuItemTitle": "Save"
+                    },
+                    {
+                        "MenuItemTitle": "Quit"
+                    }
+                ]
+            }
+        },
+        {
+            "$components": ["Component.MainMenuItem"],
+            "MenuItemTitle": "Edit",
+            "MenuItemSubMenu": {
+                "MenuItems": [
+                    {
+                        "MenuItemTitle": "Undo"
+                    },
+                    {
+                        "MenuItemTitle": "Redo"
+                    },
+                    {
+                        "MenuItemTitle": "Cut"
+                    },
+                    {
+                        "MenuItemTitle": "Copy"
+                    },
+                    {
+                        "MenuItemTitle": "Paste"
+                    }
+                ]
+            }
+        },
+        {
+            "$components": ["Component.MainMenuItem"],
+            "MenuItemTitle": "View"
+        }
+    ]
+}

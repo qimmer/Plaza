@@ -1,0 +1,19 @@
+{
+    "Uuid": "Component.EntityLabel",
+    "Name": "EntityLabel",
+    "Properties": [
+        {
+            "Uuid": "Property.EntityLabelEntity",
+            "PropertyType": "Entity"
+        }
+    ],
+    "Bases": [
+        {
+            "BaseComponent": "Component.ListItem"
+        }
+    ],
+    "ComponentTemplate": {
+        "LayoutChildWeight": [1.0, 0.0],
+        "ListItemTitle": "{EntityLabelEntity.Uuid}"
+    }
+}

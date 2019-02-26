@@ -13,10 +13,11 @@ struct Rect2D {
 
 struct Widget {
     rgba32 WidgetStateColor;
-    Entity WidgetModel, WidgetMesh;
+    Entity WidgetMesh;
     bool WidgetDisabled, WidgetSelected;
     float WidgetStateTransitionDuration;
     v3f WidgetState;
+    float WidgetDepthOrder;
 };
 
 struct InteractableWidget {
@@ -60,12 +61,12 @@ Unit(Widget)
         Property(v2i, Size2D)
 
     Component(Widget)
-        Property(Entity, WidgetModel)
         Property(float, WidgetStateTransitionDuration)
         Property(v3f, WidgetState)
         Property(bool, WidgetDisabled)
         Property(bool, WidgetSelected)
         Property(rgba32, WidgetStateColor)
+        Property(float, WidgetDepthOrder)
 
     Component(InteractableWidget)
         Property(v2i, WidgetInteractionPoint)

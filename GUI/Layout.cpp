@@ -10,6 +10,7 @@
 #include <Rendering/Mesh.h>
 #include <Core/Algorithms.h>
 #include <Json/NativeUtils.h>
+#include <Scene/Scene.h>
 
 static v2i CalculateMinimumSize(Entity layout) {
     if(!HasComponent(layout, ComponentOf_Layout())) return GetSize2D(layout);
@@ -192,6 +193,16 @@ static void ExpandChildLayouts(Entity layout) {
 
     v2i position = {parentData->LayoutPadding.x, parentData->LayoutPadding.y};
 
+    auto layer = 0;
+    auto owner = GetOwner(layout);
+    while(owner) {
+        layer++;
+        owner = GetOwner(owner);
+    }
+
+    auto layoutDistanceFactor = 1.0f / (float)(10 ^ layer);
+    auto childDistanceFactor = 1.0f / (float)(10 ^ (layer + 1));
+
     for_children(ordering, LayoutChildOrder, layout) {
         auto property = GetLayoutChildOrderingProperty(ordering);
         if(!HasComponent(property, ComponentOf_Property())) continue;
@@ -211,12 +222,13 @@ static void ExpandChildLayouts(Entity layout) {
             auto childWidget = childWidgets[j];
             auto size = GetSize2D(childWidget);
             auto hiddenState = GetWidgetState(childWidget).z;
+            auto localLayer = (float)j / numChildWidgets;
 
-            SetPosition2D(childWidget, {
+            SetPosition3D(childWidget, {
                     (float) position.x,
-                    (float) position.y
+                    (float) position.y,
+                    -GetWidgetDepthOrder(childWidget) -layoutDistanceFactor -localLayer
             });
-            SetDistance2D(childWidget, -1.0f);
 
             auto childWeight = GetLayoutChildWeight(childWidget);
 
@@ -273,6 +285,11 @@ LocalFunction(OnLayoutChildOrderingChanged, void, Entity entity) {
     OnLayoutModeChanged(layout);
 }
 
+LocalFunction(OnWidgetDepthOrderChanged, void, Entity entity) {
+    auto layout = GetOwner(entity);
+    OnLayoutModeChanged(layout);
+}
+
 LocalFunction(OnSize2DChanged, void, Entity widget, v2i oldSize, v2i newSize) {
     auto owner = GetOwner(widget);
 
@@ -319,6 +336,7 @@ BeginUnit(Layout)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Size2D()), OnSize2DChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetState()), OnWeightChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetDepthOrder()), OnWidgetDepthOrderChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutMode()), OnLayoutModeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutSpacing()), OnLayoutModeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutPadding()), OnLayoutModeChanged, 0)

@@ -38,4 +38,19 @@ BeginUnit(Panel)
             "LayoutPadding": "{SceneNodeScene.SceneStyle.WellStylePadding}"
         })
     EndComponent()
+
+    BeginComponent(ItemWellStyle)
+        RegisterBase(Style)
+        RegisterChildProperty(WidgetMesh, ItemWellStyleMesh)
+        RegisterProperty(v4i, ItemWellStylePadding)
+    EndComponent()
+
+    BeginComponent(ItemWell)
+        RegisterBase(Widget)
+        ComponentTemplate({
+            "$components": ["Component.Widget"],
+            "RenderableSubMesh": "{SceneNodeScene.SceneStyle.ItemWellStyleMesh}",
+            "LayoutPadding": "{SceneNodeScene.SceneStyle.ItemWellStylePadding}"
+        })
+    EndComponent()
 EndUnit()

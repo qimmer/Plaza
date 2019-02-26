@@ -66,6 +66,7 @@ void ApplyResponseContentHeaders(Entity server, Entity request, Entity response)
     auto keepAliveHeader = FindHeaderType("Keep-Alive");
     auto connectionHeader = FindHeaderType("Connection");
     auto serverHeader = FindHeaderType("Server");
+    auto cacheControlHeader = FindHeaderType("Cache-Control");
 
     u64 contentLength = 0;
 
@@ -97,6 +98,10 @@ void ApplyResponseContentHeaders(Entity server, Entity request, Entity response)
     header = AddHttpResponseHeaders(response);
     SetHttpHeaderType(header, contentLengthHeader);
     SetHttpHeaderValue(header, headerValue);
+
+    header = AddHttpResponseHeaders(response);
+    SetHttpHeaderType(header, cacheControlHeader);
+    SetHttpHeaderValue(header, "max-age=1");
 
     for_children(requestHeader, HttpRequestHeaders, request) {
 

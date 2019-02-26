@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "Types.h"
+#include <Core/Types.h>
 #include <Core/Variant.h>
 #include <Core/Vector.h>
 
@@ -573,7 +573,12 @@ StringRef GetUniqueEntityName(Entity entity);
 #define for_children(VARNAME, PROPERTY, PARENTENTITY) \
         u32 _count ## VARNAME = 0, _i ## VARNAME = 0;\
         auto _entries ## VARNAME = Get ## PROPERTY (PARENTENTITY, &_count ## VARNAME);\
-        for(Entity VARNAME = (_entries ## VARNAME ? (_entries ## VARNAME[_i ## VARNAME]) : 0); _i ## VARNAME < _count ## VARNAME; VARNAME = _entries ## VARNAME [++(_i ## VARNAME)])
+        for(Entity VARNAME = (_entries ## VARNAME ? (_entries ## VARNAME[_i ## VARNAME]) : 0); _i ## VARNAME < _count ## VARNAME; VARNAME = (++_i ## VARNAME == _count ## VARNAME) ? 0 : _entries ## VARNAME [_i ## VARNAME])
+
+#define for_children_abstract(VARNAME, PROPERTY, PARENTENTITY) \
+        u32 _count ## VARNAME = 0, _i ## VARNAME = 0;\
+        auto _entries ## VARNAME = GetArrayPropertyElements(PROPERTY, PARENTENTITY, &_count ## VARNAME);\
+        for(Entity VARNAME = (_entries ## VARNAME ? (_entries ## VARNAME[_i ## VARNAME]) : 0); _i ## VARNAME < _count ## VARNAME; VARNAME = (++_i ## VARNAME == _count ## VARNAME) ? 0 : _entries ## VARNAME [_i ## VARNAME])
 
 #include <Core/Module.h>
 #include <Core/Property.h>

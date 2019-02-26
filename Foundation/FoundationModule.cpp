@@ -20,6 +20,8 @@
 #include <Foundation/Invalidation.h>
 #include <Foundation/AppNode.h>
 #include <Foundation/MathOperation.h>
+#include <Foundation/Switch.h>
+#include <Foundation/ForEach.h>
 #include "FoundationModule.h"
 
 struct FoundationModule {
@@ -56,4 +58,6 @@ BeginModule(Foundation)
     RegisterUnit(Invalidation)
     RegisterUnit(AppNode)
     RegisterUnit(MathOperation)
+    RegisterUnit(ForEach)
+    RegisterUnit(Switch)
 EndModule()

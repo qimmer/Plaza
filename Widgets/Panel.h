@@ -18,9 +18,17 @@ struct PanelStyle {
 struct Well {
 };
 
+struct ItemWell {
+};
+
 struct WellStyle {
     v4i WellStylePadding;
     Entity WellStyleMesh;
+};
+
+struct ItemWellStyle {
+    v4i ItemWellStylePadding;
+    Entity ItemWellStyleMesh;
 };
 
 Unit(Panel)
@@ -35,5 +43,11 @@ Unit(Panel)
     Component(WellStyle)
         ChildProperty(WidgetMesh, WellStyleMesh)
         Property(v4i, WellStylePadding)
+
+    Component(ItemWell)
+
+    Component(ItemWellStyle)
+        ChildProperty(WidgetMesh, ItemWellStyleMesh)
+        Property(v4i, ItemWellStylePadding)
 
 #endif //PLAZA_PANEL_H

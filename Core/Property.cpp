@@ -293,6 +293,11 @@ API_EXPORT Variant GetPropertyValue(Entity property, Entity context) {
         return Variant_Empty;
     }
 
+    if(propertyData->PropertyKind == PropertyKind_Array) {
+        Log(0, LogSeverity_Error, "Cannot get value of array property %s. Retrieve an indexed element first.", GetDebugName(property));
+        return Variant_Empty;
+    }
+
     auto offset = propertyData->PropertyOffset;
     auto size = GetTypeSize(propertyData->PropertyType);
 

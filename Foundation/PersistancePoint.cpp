@@ -68,8 +68,6 @@ LocalFunction(Load, void, Entity persistancePoint) {
         return;
     }
 
-    Log(persistancePoint, LogSeverity_Info, "Loading %s ...", path);
-
     auto result = GetSerializerData(serializer)->DeserializeHandler(persistancePoint);
 
     if(result) {
@@ -181,8 +179,6 @@ BeginUnit(PersistancePoint)
         RegisterProperty(bool, PersistancePointLoading)
         RegisterProperty(bool, PersistancePointLoaded)
         RegisterProperty(bool, PersistancePointSaving)
-
-        SetIgnoreInstantiation(component, true);
 
         RegisterBase(Stream)
     EndComponent()
