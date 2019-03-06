@@ -112,7 +112,6 @@ LocalFunction(OnResourceSubmission, void, Entity appLoop) {
     Validate(ComponentOf_Mesh());
     Validate(ComponentOf_VertexBuffer());
     Validate(ComponentOf_IndexBuffer());
-    Validate(ComponentOf_Transform());
 }
 
 LocalFunction(OnTextureReadBack, void, Entity appLoop) {

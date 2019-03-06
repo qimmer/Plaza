@@ -20,4 +20,6 @@ BeginUnit(Renderable)
         RegisterProperty(v3f, RenderableAABBMin)
         RegisterProperty(v3f, RenderableAABBMax)
     EndComponent()
+
+	SetAppLoopOrder(AppLoopOf_BoundsUpdate(), AppLoopOrder_BoundsUpdate);
 EndUnit()

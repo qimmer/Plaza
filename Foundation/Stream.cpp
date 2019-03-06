@@ -22,7 +22,9 @@
 #include <Core/Identification.h>
 #include <Core/Algorithms.h>
 
+#if defined(WIN32) && defined(EA_COMPILER_MSVC)
 #include <unistd.h>
+#endif
 
 using namespace eastl;
 

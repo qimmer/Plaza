@@ -1,0 +1,3 @@
+LIBRARY Widgets
+EXPORTS
+	ModuleOf_Widgets

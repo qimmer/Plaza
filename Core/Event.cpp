@@ -18,23 +18,9 @@
 
 #define Verbose_Event "event"
 
-struct Subscription {
-    Entity SubscriptionHandler, SubscriptionEvent, SubscriptionSender;
-};
+static eastl::vector<SubscriptionCacheVector> EventSubscriptionCache;
 
-struct Event {
-};
-
-struct EventArgument {
-    u32 EventArgumentOffset;
-    u8 EventArgumentType;
-};
-
-typedef std::vector<Subscription> SubscriptionCacheVector;
-
-static std::vector<SubscriptionCacheVector> EventSubscriptionCache;
-
-static inline SubscriptionCacheVector& GetSubscriptionCache(u32 eventEntityIndex) {
+API_EXPORT SubscriptionCacheVector& GetSubscriptionCache(u32 eventEntityIndex) {
     if(EventSubscriptionCache.size() <= eventEntityIndex) {
         EventSubscriptionCache.resize(eventEntityIndex + 1);
     }
@@ -229,7 +215,7 @@ API_EXPORT void SetEventArgsByDecl(Entity event, StringRef arguments) {
         auto argument = &argumentSplits[0] + offset;
         auto nextComma = strchr(&argumentSplits[0] + offset, ',');
         if(!nextComma) nextComma = &argumentSplits[0] + len;
-        auto argumentLength = nextComma - argument;
+        auto argumentLength = (u32)(nextComma - argument);
         offset += argumentLength + 1;
         *nextComma = '\0';
 
@@ -249,7 +235,7 @@ API_EXPORT void SetEventArgsByDecl(Entity event, StringRef arguments) {
 
         auto argumentEntity = AddEventArguments(event);
 
-        SetUuid(argumentEntity, StringFormatV("%s.Arguments.%s", eventUuid, name));
+        SetUuid(argumentEntity, StringFormatV("%s.EventArguments.%s", eventUuid, name));
 
         auto type = 0;
         for(auto i = 0; i < TypeOf_MAX; ++i) {

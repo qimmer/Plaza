@@ -8,20 +8,22 @@
 #include <Core/NativeUtils.h>
 
 struct ListItem {
-    Entity ListItemLabel, ListItemChildContainer;
-    StringRef ListItemTitle;
+    Entity ListItemContainer;
+    StringRef ListItemTitle, ListItemIcon;
+    bool ListItemExpanded;
 };
 
 struct ListItemStyle {
     v4i ListItemStylePadding;
-    Entity ListItemStyleMesh;
+    Entity ListItemStyleMesh, ListItemPlusStyleMesh;
 };
 
 Unit(ListItem)
     Component(ListItem)
-        ChildProperty(Widget, ListItemLabel)
-        ChildProperty(Layout, ListItemChildContainer)
+        ChildProperty(Layout, ListItemContainer)
         Property(StringRef, ListItemTitle)
+        Property(StringRef, ListItemIcon)
+        Property(bool, ListItemExpanded)
 
     Component(ListItemStyle)
         ChildProperty(WidgetMesh, ListItemStyleMesh)

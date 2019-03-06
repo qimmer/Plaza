@@ -1,0 +1,3 @@
+LIBRARY Collision
+EXPORTS
+	ModuleOf_Collision

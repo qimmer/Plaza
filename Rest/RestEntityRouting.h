@@ -9,7 +9,6 @@
 
 Unit(RestEntityRouting)
     Component(RestEntityRouting)
-        ReferenceProperty(Ownership, RestEntityRoutingRoot)
-        Property(u8, RestEntityRoutingDepth)
+        ChildProperty(JsonSettings, RestEntityRoutingJsonSettings)
 
 #endif //PLAZA_RESTENTITYROUTING_H

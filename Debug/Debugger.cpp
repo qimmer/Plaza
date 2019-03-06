@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
         auto path = argv[i];
 
         if(strstr(path, "-verbose=")) {
-            VerboseTag = path + strlen("-verbose=");
+            //VerboseTag = path + strlen("-verbose=");
         }
     }
 

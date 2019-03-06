@@ -22,16 +22,11 @@ extern bool __IsCoreInitialized;
 #define Verbose_Entity "entity"
 
 API_EXPORT u32 GetNumEntities() {
-    return Generations.size() - FreeSlots.size();
+    return (u32)(Generations.size() - FreeSlots.size());
 }
 
 API_EXPORT bool IsEntityOccupied(u32 index) {
     return Generations.size() > index && Generations[index] % 2 != 0;
-}
-
-API_EXPORT bool IsEntityValid(Entity entity) {
-    auto index = GetEntityIndex(entity);
-    return entity && Generations.size() > index && Generations[index] == GetEntityGeneration(entity);
 }
 
 API_EXPORT Entity GetEntityByIndex (u32 index) {
@@ -67,7 +62,7 @@ API_EXPORT Entity CreateEntity() {
         FreeSlots.pop_back();
     } else {
         Generations.push_back(0);
-        index = Generations.size() - 1;
+        index = (u32)(Generations.size() - 1);
     }
     
     Generations[index]++;
@@ -99,7 +94,12 @@ API_EXPORT void DestroyEntity(Entity entity) {
 	FireEventFast(EventOf_EntityDestroyed(), 1, &argument);
     
     auto index = GetEntityIndex(entity);
+
+    // Only reuse entity when in release build. In debug, we want to preserve entity handle id's over time for easier debugging
+#ifdef NDEBUG
     FreeSlots.push_back(index);
+#endif
+
     ++ Generations[index];
     
     Assert(0, Generations[index] % 2 == 0);

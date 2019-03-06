@@ -8,7 +8,9 @@ add_library(Rendering RenderingModule.cpp RenderingModule.h Program.cpp Program.
 target_include_directories(Rendering PUBLIC "..")
 
 target_link_libraries(Rendering Core Foundation Input Json Scene)
-
+if(MSVC)
+    target_sources(Rendering PRIVATE Rendering.def)
+endif()
 if(BUILD_SHARED_LIBS)
     install (TARGETS Rendering RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 

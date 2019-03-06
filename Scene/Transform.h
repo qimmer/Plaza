@@ -6,9 +6,12 @@
 #define PLAZA_TRANSFORM_H
 
 #include <Core/NativeUtils.h>
+#include <Foundation/AppLoop.h>
 
 struct Transform {
-    m4x4f TransformGlobalMatrix, TransformLocalMatrix;
+	v4f TransformGlobalMatrix[4];
+	v4f TransformLocalMatrix[4];
+
     s32 TransformHierarchyLevel;
 
     union {
@@ -37,8 +40,6 @@ struct Transform {
 
 Unit(Transform)
     Component(Transform)
-        Property(m4x4f, TransformGlobalMatrix)
-        Property(m4x4f, TransformLocalMatrix)
         Property(s32, TransformHierarchyLevel)
         Property(v3f, Position3D)
         Property(v3f, RotationEuler3D)
@@ -52,7 +53,12 @@ Unit(Transform)
     Function(TransformPoint, v3f, Entity sourceSpace, Entity destinationSpace, v3f sourcePoint)
     Function(TransformNormal, v3f, Entity sourceSpace, Entity destinationSpace, v3f sourceNormal)
 
+	Declare(AppLoop, TransformUpdate)
+#define AppLoopOrder_TransformUpdate (AppLoopOrder_Update + 1.0f)
+
 void Move3D(Entity transform, v3f direction, bool relativeToRotation);
 void LookAt(Entity transform, v3f origin, v3f direction, v3f up = {0.0f, 1.0f, 0.0f});
+
+
 
 #endif //PLAZA_TRANSFORM_H

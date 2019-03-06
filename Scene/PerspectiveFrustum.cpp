@@ -4,6 +4,7 @@
 
 #include "PerspectiveFrustum.h"
 #include "Frustum.h"
+#include <Foundation/Invalidation.h>
 
 #include <cglm/cglm.h>
 
@@ -15,14 +16,14 @@ LocalFunction(UpdateProjectionMatrix, void, Entity entity) {
     if(!HasComponent(entity, ComponentOf_PerspectiveFrustum())) return;
 
     auto data = GetPerspectiveFrustumData(entity);
+	auto frustumData = GetFrustumData(entity);
 
-    m4x4f projection;
-    glm_perspective(glm_rad(data->PerspectiveFrustumFieldOfView), data->PerspectiveFrustumAspectRatio, GetFrustumNearClip(entity), GetFrustumFarClip(entity), (vec4*)&projection.x.x);
+    glm_perspective(glm_rad(data->PerspectiveFrustumFieldOfView), data->PerspectiveFrustumAspectRatio, GetFrustumNearClip(entity), GetFrustumFarClip(entity), (vec4*)&frustumData->FrustumProjectionMatrix[0].x);
 
     vec3 scale = {1.0f, 1.0f, -1.0f};
-    glm_scale((vec4*)&projection.x, scale);
+    glm_scale((vec4*)&frustumData->FrustumProjectionMatrix[0].x, scale);
 
-    SetFrustumProjectionMatrix(entity, projection);
+	Invalidate(entity);
 }
 
 LocalFunction(OnPerspectiveFrustumAdded, void, Entity component, Entity entity) {

@@ -85,7 +85,7 @@ u16 DebugCreateSession(Entity responseStream, StringRef path) {
     StreamClose(responseStream);
 
     auto session = AddDebugServerSessions(ModuleOf_Debug());
-    SetName(session, guid);
+    //SetName(session, guid);
     SetStopWatchRunning(session, true);
 
     return 200;
@@ -95,9 +95,9 @@ u16 DebugGetChanges(Entity responseStream, StringRef path) {
     if(path[0] != '/') return 400;
 
     char sessionPath[1024];
-    snprintf(sessionPath, 1024, "/Modules/Debug/DebugServerSessions%s", path);
+    snprintf(sessionPath, 1024, "Module.Debug.DebugServerSessions.%s", path);
 
-    auto session = FindEntityByPath(sessionPath);
+    auto session = FindEntityByUuid(sessionPath);
     if(!IsEntityValid(session)) {
         return 404;
     }
@@ -137,7 +137,6 @@ BeginUnit(DebugModule)
 				{ "FileTypeExtension": ".js", "FileTypeMimeType" : "application/javascript" }
 			],
             "DebugServer":{
-                "Name": "Debug Server",
                 "ServerPort": 8080,
                 "HttpServerKeepAliveTimeout": 5,
                 "HttpServerKeepAliveMaxConnections": 100,
@@ -154,28 +153,32 @@ BeginUnit(DebugModule)
                     },
                     {
                         "Name": "EntityRoute",
-                        "RestEntityRoutingRoot": "/",
                         "RestRoutingRoute": "/api/entity",
-                        "RestEntityRoutingDepth": 4
+                        "RestEntityRoutingJsonSettings": {
+                            "JsonSettingsResolveBindings": true,
+                            "JsonSettingsIgnoreReadOnly": false,
+                            "JsonSettingsMaxRecursiveLevels": 0,
+                            "JsonSettingsExplicitComponents": false
+                        }
                     },
                     {
                         "Name": "SessionRoute",
-                        "RestFunctionRoutingFunction": "/Modules/Debug/Functions/DebugCreateSession",
+                        "RestFunctionRoutingFunction": "Function.DebugCreateSession",
                         "RestRoutingRoute": "/api/session"
                     },
                     {
                         "Name": "ChangesRoute",
-                        "RestFunctionRoutingFunction": "/Modules/Debug/Functions/DebugGetChanges",
+                        "RestFunctionRoutingFunction": "Function.DebugGetChanges",
                         "RestRoutingRoute": "/api/changes"
                     },
                     {
                         "Name": "AddComponentRoute",
-                        "RestFunctionRoutingFunction": "/Modules/Debug/Functions/DebugAddComponent",
+                        "RestFunctionRoutingFunction": "Function.DebugAddComponent",
                         "RestRoutingRoute": "/api/addcomponent"
                     },
                     {
                         "Name": "RemoveComponentRoute",
-                        "RestFunctionRoutingFunction": "/Modules/Debug/Functions/DebugRemoveComponent",
+                        "RestFunctionRoutingFunction": "Function.DebugRemoveComponent",
                         "RestRoutingRoute": "/api/removecomponent"
                     }
                 ]

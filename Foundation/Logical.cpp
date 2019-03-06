@@ -20,7 +20,7 @@ static StringRef FormatArguments(Entity format) {
 
         formattedText.insert(formattedText.end(), textStart, textEnd);
 
-        char* closeBrace = strchr(textEnd, '}');
+        StringRef closeBrace = strchr(textEnd, '}');
 
         if(*textEnd == '{' && closeBrace) {
             char argIndexString[32];

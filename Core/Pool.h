@@ -1,6 +1,8 @@
 #ifndef POOL_H
 #define POOL_H
 
+#include <Core/NativeUtils.h>
+#include <Core/Debug.h>
 #include <Core/Types.h>
 #include <Core/Vector.h>
 #include <Core/Debug.h>
@@ -24,13 +26,18 @@ class Pool
 {
 private:
     u32 elementSize, blockSize, endIndex;
-    Vector(entryPages, char*, 0);
-    Vector<u32> freeIndices;
+    Vector(entryPages, char*, 8);
+    Vector<u32, 64> freeIndices;
 public:
     Pool() {
         blockSize = 0;
         elementSize = 0;
         endIndex = 0;
+
+		this->entryPages.Count = 0;
+		this->entryPages.DynCapacity = 0;
+		this->entryPages.DynBuf = NULL;
+
         SetElementSize(0);
     }
 
@@ -93,7 +100,7 @@ inline void Pool::SetElementSize(u32 size) {
     blockSize = UpperPowerOf2(Max(size + 1, 32));
 #endif
     // Make sure to expand every single existing element with the new size by allocating new pages
-    for(auto i = 0; i < entryPages.Count; ++i) {
+    for(u32 i = 0; i < entryPages.Count; ++i) {
         auto newPage = (char*)_mm_malloc(PoolPageElements * blockSize, PoolAlignment);
         memset(newPage, 0, PoolPageElements * blockSize);
 
@@ -183,7 +190,7 @@ inline bool Pool::Insert(u32 index)
     auto block = &GetVector(this->entryPages)[page][index * blockSize];
 
     // Assert that this block is at least 16 byte aligned
-    Assert(0, ((unsigned long)(u64)block & 15) == 0);
+    //Assert(0, ((unsigned long)(u64)block & 15) == 0);
 
     auto blockState = block[blockSize - 1];
 

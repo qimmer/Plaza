@@ -10,7 +10,6 @@
 
 #define HEADER_SIZE_MAX 4096
 
-#include <unistd.h>
 #include <asio.hpp>
 #include <unordered_map>
 #include <chrono>
@@ -119,15 +118,36 @@ void ApplyResponseContentHeaders(Entity server, Entity request, Entity response)
         }
     }
 
-    char serverHeaderValue[256];
-    snprintf(serverHeaderValue, sizeof(serverHeaderValue), "%s", GetName(server));
     header = AddHttpResponseHeaders(response);
     SetHttpHeaderType(header, serverHeader);
-    SetHttpHeaderValue(header, serverHeaderValue);
+    SetHttpHeaderValue(header, GetUuid(server));
 }
 
 static void ParseQueryParams(Entity request, StringRef queryParams) {
+    auto paramsBuffer = (char*)alloca(strlen(queryParams) + 1);
+    strcpy(paramsBuffer, queryParams);
 
+    auto nextParam = paramsBuffer;
+    while(nextParam && *nextParam) {
+        auto param = nextParam;
+        nextParam = strchr(nextParam, '&');
+        if(nextParam) {
+            *nextParam = '\0';
+            nextParam++;
+        }
+
+        auto parameter = AddHttpRequestParameters(request);
+
+        auto value = strchr(param, '=');
+        if(value) {
+            *value = '\0';
+            value++;
+
+            SetHttpParameterValue(parameter, value);
+        }
+
+        SetHttpParameterName(parameter, param);
+    }
 }
 
 static void ParseHeader(Entity server, HttpStreamPartialRequest *partial, char *headerLine) {
@@ -188,6 +208,7 @@ static void ParseHeader(Entity server, HttpStreamPartialRequest *partial, char *
 			auto queryParams = strchr(url, '?');
 			if (queryParams) {
 				*queryParams = '\0';
+                queryParams++;
 				ParseQueryParams(partial->request, queryParams);
 			}
 

@@ -30,6 +30,28 @@ BeginModule(StbDecoders)
                         "FileTypeExtension": ".png",
                         "FileTypeMimeType" : "image/png"
                     }
+                ],
+                "Children": [
+                    {
+                        "Uuid": "Unicode.BasicLatin",
+                        "UnicodeRangeStart": 32,
+                        "UnicodeRangeEnd": 128
+                    },
+                    {
+                        "Uuid": "Unicode.Latin1",
+                        "UnicodeRangeStart": 160,
+                        "UnicodeRangeEnd": 256
+                    },
+                    {
+                        "Uuid": "Unicode.LatinExtendedA",
+                        "UnicodeRangeStart": 256,
+                        "UnicodeRangeEnd": 383
+                    },
+                    {
+                        "Uuid": "Unicode.LatinExtendedB",
+                        "UnicodeRangeStart": 384,
+                        "UnicodeRangeEnd": 591
+                    }
                 ]
             }
     );

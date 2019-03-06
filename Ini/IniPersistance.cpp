@@ -98,7 +98,7 @@ API_EXPORT bool DeserializeIni(Entity stream) {
         }
 
         if(sscanf(str.c_str(), "%1023[^=]=%1023[^=\r]", uuid, value) > 1 && IsEntityValid(currentEntity) && IsEntityValid(currentGroup)) {
-            auto property = FindEntityByName(ComponentOf_Property(), uuid);
+            auto property = FindEntityByUuid(StringFormatV("Property.%s", uuid));
             if(IsEntityValid(property)) {
                 Variant valueVar;
                 valueVar.as_StringRef = value;
@@ -106,7 +106,7 @@ API_EXPORT bool DeserializeIni(Entity stream) {
 
                 auto enu = GetPropertyEnum(property);
                 if(IsEntityValid(enu)) {
-                    valueVar.as_u64 = GetEnumValue(enu, value);
+                    valueVar.as_u64 = GetEnumValue(enu, StringFormatV("%s.%s", GetUuid(enu), value));
                     valueVar.type = TypeOf_u64;
                 }
 

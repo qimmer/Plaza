@@ -3,11 +3,9 @@
 //
 
 #include <Networking/HttpServer.h>
+#include <Json/JsonPersistance.h>
 #include "RestServer.h"
 #include "RestRouting.h"
-
-struct RestServer {
-};
 
 BeginUnit(RestServer)
     BeginComponent(RestServer)

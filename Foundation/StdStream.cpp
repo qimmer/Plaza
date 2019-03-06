@@ -6,6 +6,12 @@
 #include <Foundation/Stream.h>
 #include <Foundation/NativeUtils.h>
 
+#if defined(WIN32) && defined(_MSC_VER)
+#define STDIN_FILENO 0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 

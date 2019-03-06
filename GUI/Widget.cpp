@@ -26,30 +26,25 @@
 
 static void UpdateWidgetBounds(Entity widget) {
     auto widgetSize = GetSize2D(widget);
-    auto globalMat = GetTransformGlobalMatrix(widget);
-
+	auto transformData = GetTransformData(widget);
+	if (!transformData) return;
+    
     v4f localMin = { 0.0f, 0.0f, 0.0f, 1.0f };
     v4f localMax = { (float)widgetSize.x, (float)widgetSize.y, 0.0f, 1.0f };
 
     v4f globalMin, globalMax;
 
-    glm_mat4_mulv((vec4*)&globalMat, &localMin.x, &globalMin.x);
-    glm_mat4_mulv((vec4*)&globalMat, &localMax.x, &globalMax.x);
+    glm_mat4_mulv((vec4*)&transformData->TransformGlobalMatrix[0].x, &localMin.x, &globalMin.x);
+    glm_mat4_mulv((vec4*)&transformData->TransformGlobalMatrix[0].x, &localMax.x, &globalMax.x);
 
     SetRenderableAABBMin(widget, {globalMin.x, globalMin.y, globalMin.z});
     SetRenderableAABBMax(widget, {globalMax.x, globalMax.y, globalMax.z});
 }
 
-LocalFunction(OnSize2DChanged, void, Entity widget, v2i oldSize, v2i newSize) {
-    if(!HasComponent(widget, ComponentOf_Widget())) return;
-
-    UpdateWidgetBounds(widget);
-}
-
-LocalFunction(OnTransformGlobalChanged, void, Entity widget) {
-    if(HasComponent(widget, ComponentOf_Widget())) {
-        UpdateWidgetBounds(widget);
-    }
+LocalFunction(OnBoundsUpdate, void) {
+	for_entity_parallel(widget, data, Widget, {
+		UpdateWidgetBounds(widget);
+	});
 }
 
 LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
@@ -280,8 +275,7 @@ BeginUnit(Widget)
         })
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Size2D()), OnSize2DChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TransformGlobalMatrix()), OnTransformGlobalChanged, 0)
+	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnBoundsUpdate, AppLoopOf_BoundsUpdate())
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshFixedBorderWidth()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshEnabledTexture()), Invalidate, 0)

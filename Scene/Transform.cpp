@@ -15,23 +15,25 @@ API_EXPORT v3f TransformPoint(Entity sourceSpace, Entity destinationSpace, v3f s
         sourcePoint.z,
         1.0f
     };
+	auto sourceData = GetTransformData(sourceSpace);
+    auto sourceWorld = &sourceData->TransformGlobalMatrix[0];
 
-    auto sourceWorld = GetTransformGlobalMatrix(sourceSpace);
+	auto destinationData = GetTransformData(destinationSpace);
+	auto destinationWorld = &destinationData->TransformGlobalMatrix[0];
 
-    auto destinationWorld = GetTransformGlobalMatrix(destinationSpace);
-    m4x4f destinationWorldInv;
-    glm_mat4_inv((vec4*)&destinationWorld, (vec4*)&destinationWorldInv);
+    v4f destinationWorldInv[4];
+    glm_mat4_inv((vec4*)destinationWorld, (vec4*)&destinationWorldInv[0].x);
 
     v4f worldSpacePoint = {sourcePoint.x, sourcePoint.y, sourcePoint.z, 0.0f}, destinationPoint;
 
     // Transform from local into world space
     if(IsEntityValid(sourceSpace)) {
-        glm_mat4_mulv((vec4*)&sourceWorld, &sourcePoint4.x, &worldSpacePoint.x);
+        glm_mat4_mulv((vec4*)sourceWorld, &sourcePoint4.x, &worldSpacePoint.x);
     }
 
     // Transform from world back into destination local space
     if(IsEntityValid(destinationSpace)) {
-        glm_mat4_mulv((vec4 *) &destinationWorldInv, &worldSpacePoint.x, &destinationPoint.x);
+        glm_mat4_mulv((vec4 *) &destinationWorldInv[0].x, &worldSpacePoint.x, &destinationPoint.x);
     }
 
     return {destinationPoint.x, destinationPoint.y, destinationPoint.z};
@@ -45,27 +47,35 @@ API_EXPORT v3f TransformNormal(Entity sourceSpace, Entity destinationSpace, v3f 
         0.0f
     };
 
-    auto sourceWorld = GetTransformGlobalMatrix(sourceSpace);
-    sourceWorld.w = {0, 0, 0, 1};
+	auto sourceData = GetTransformData(sourceSpace);
+	auto sourceWorld = &sourceData->TransformGlobalMatrix[0];
 
-    auto destinationWorldInv = GetTransformGlobalMatrix(destinationSpace);
-    destinationWorldInv.w = {0, 0, 0, 1};
+	v4f sourceWorldNormal[] = {
+		sourceWorld[0],
+		sourceWorld[1],
+		sourceWorld[2],
+		{0, 0, 0, 1}
+	};
 
-    glm_mat4_inv((vec4*)&destinationWorldInv, (vec4*)&destinationWorldInv);
+	auto destinationData = GetTransformData(destinationSpace);
+	auto destinationWorld = &destinationData->TransformGlobalMatrix[0];
 
-    v4f worldSpaceNormal = {sourceNormal.x, sourceNormal.y, sourceNormal.z, 0.0f}, destinationNormal;
+	v4f destinationWorldInv[4];
+	glm_mat4_inv((vec4*)destinationWorld, (vec4*)&destinationWorldInv[0].x);
 
-    // Transform from local into world space
-    if(IsEntityValid(sourceSpace)) {
-        glm_mat4_mulv((vec4 *) &sourceWorld, &sourceNormal4.x, &worldSpaceNormal.x);
-    }
+	v4f worldSpaceNormal = { sourceNormal.x, sourceNormal.y, sourceNormal.z, 0.0f }, destinationNormal;
 
-    // Transform from world back into destination local space
-    if(IsEntityValid(destinationSpace)) {
-        glm_mat4_mulv((vec4 *) &destinationWorldInv, &worldSpaceNormal.x, &destinationNormal.x);
-    }
+	// Transform from local into world space
+	if (IsEntityValid(sourceSpace)) {
+		glm_mat4_mulv((vec4*)&sourceWorldNormal[0].x, &sourceNormal4.x, &worldSpaceNormal.x);
+	}
 
-    return {destinationNormal.x, destinationNormal.y, destinationNormal.z};
+	// Transform from world back into destination local space
+	if (IsEntityValid(destinationSpace)) {
+		glm_mat4_mulv((vec4 *)&destinationWorldInv[0].x, &worldSpaceNormal.x, &destinationNormal.x);
+	}
+
+	return { destinationNormal.x, destinationNormal.y, destinationNormal.z };
 }
 
 
@@ -93,7 +103,7 @@ API_EXPORT void Move3D(Entity transform, v3f direction, bool relativeToRotation)
 
 API_EXPORT void LookAt(Entity transform, v3f origin, v3f direction, v3f up) {
     v4f quat, conj;
-    m4x4f m;
+    v4f m[4];
     v3f right;
 
     glm_vec_normalize(&direction.x);
@@ -103,12 +113,12 @@ API_EXPORT void LookAt(Entity transform, v3f origin, v3f direction, v3f up) {
 
     glm_vec_cross(&direction.x, &right.x, &up.x);
 
-    m.x = {right.x, right.y, right.z, 0.0f};
-    m.y = {up.x, up.y, up.z, 0.0f};
-    m.z = {direction.x, direction.y, direction.z, 0.0f};
-    m.w = {origin.x, origin.y, origin.z, 1.0f};
+    m[0] = {right.x, right.y, right.z, 0.0f};
+    m[1] = {up.x, up.y, up.z, 0.0f};
+    m[2] = {direction.x, direction.y, direction.z, 0.0f};
+    m[3] = {origin.x, origin.y, origin.z, 1.0f};
 
-    glm_mat4_quat((vec4*)&m.x, &quat.x);
+    glm_mat4_quat((vec4*)&m[0].x, &quat.x);
     glm_quat_conjugate(&quat.x, &conj.x);
 
     SetRotationQuat3D(transform, conj);
@@ -116,34 +126,34 @@ API_EXPORT void LookAt(Entity transform, v3f origin, v3f direction, v3f up) {
 }
 
 static void UpdateLocalTransform(Entity entity) {
+	auto data = GetTransformData(entity);
+
     auto position = GetPosition3D(entity);
     float pos4[] = {position.x, position.y, position.z, 0.0f};
     auto rotationQuat = GetRotationQuat3D(entity);
     auto scale = GetScale3D(entity);
 
-    mat4 scaleMat, rotationMat, srMat;
+    mat4 scaleMat, rotationMat;
     glm_scale_make(scaleMat, &scale.x);
     glm_quat_mat4(&rotationQuat.x, rotationMat);
-    glm_mul(scaleMat, rotationMat, srMat);
+    glm_mul(scaleMat, rotationMat, (vec4*)&data->TransformLocalMatrix[0].x);
 
-    glm_vec4_add(srMat[3], pos4, srMat[3]);
-
-    SetTransformLocalMatrix(entity, *(m4x4f *) srMat);
+    glm_vec4_add(&data->TransformLocalMatrix[3].x, pos4, &data->TransformLocalMatrix[3].x);
 }
 
-static inline void ValidateTransform(Entity entity, Transform *transformData) {
-    auto local = transformData->TransformLocalMatrix;
+static void ValidateTransform(Entity entity, Transform *transformData) {
     auto parent = GetOwner(entity);
 
-    m4x4f global = local;
-
     if(transformData->TransformHierarchyLevel > 0 && HasComponent(parent, ComponentOf_Transform()) > 0) {
-        auto parentGlobalMatrix = GetTransformGlobalMatrix(parent);
-        glm_mat4_mul((vec4*)&parentGlobalMatrix, (vec4*)&local, (vec4*)&global);
-
-    }
-
-    SetTransformGlobalMatrix(entity, global);
+		auto parentData = GetTransformData(parent);
+        glm_mat4_mul((vec4*)&parentData->TransformGlobalMatrix[0].x, (vec4*)&transformData->TransformLocalMatrix[0].x, (vec4*)&transformData->TransformGlobalMatrix[0].x);
+	}
+	else {
+		transformData->TransformGlobalMatrix[0] = transformData->TransformLocalMatrix[0];
+		transformData->TransformGlobalMatrix[1] = transformData->TransformLocalMatrix[1];
+		transformData->TransformGlobalMatrix[2] = transformData->TransformLocalMatrix[2];
+		transformData->TransformGlobalMatrix[3] = transformData->TransformLocalMatrix[3];
+	}
 }
 
 static void CalculateHierarchyLevel(Entity entity) {
@@ -194,7 +204,7 @@ LocalFunction(OnRotationQuat3DChanged, void, Entity entity) {
     UpdateLocalTransform(entity);
 }
 
-LocalFunction(OnTransformValidation, void, Entity component) {
+LocalFunction(OnTransformUpdate, void) {
     s32 level = 0;
     bool hasAny = false;
     do
@@ -216,8 +226,17 @@ LocalFunction(OnTransformValidation, void, Entity component) {
 }
 
 LocalFunction(OnAdded, void, Entity component, Entity entity) {
-    SetTransformLocalMatrix(entity, m4x4f_Identity);
-    SetTransformGlobalMatrix(entity, m4x4f_Identity);
+	auto data = GetTransformData(entity);
+	data->TransformGlobalMatrix[0] = { 1, 0, 0, 0};
+	data->TransformGlobalMatrix[1] = { 0, 1, 0, 0 };
+	data->TransformGlobalMatrix[2] = { 0, 0, 1, 0 };
+	data->TransformGlobalMatrix[3] = { 0, 0, 0, 1 };
+
+	data->TransformLocalMatrix[0] = { 1, 0, 0, 0 };
+	data->TransformLocalMatrix[1] = { 0, 1, 0, 0 };
+	data->TransformLocalMatrix[2] = { 0, 0, 1, 0 };
+	data->TransformLocalMatrix[3] = { 0, 0, 0, 1 };
+
     OnRotationEuler3DChanged(entity);
     SetScale3D(entity, {1.0f, 1.0f, 1.0f});
 
@@ -232,8 +251,6 @@ LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOw
 BeginUnit(Transform)
     BeginComponent(Transform)
         RegisterBase(SceneNode)
-        RegisterProperty(m4x4f, TransformLocalMatrix)
-        RegisterPropertyReadOnly(m4x4f, TransformGlobalMatrix)
         RegisterPropertyReadOnly(s32, TransformHierarchyLevel)
         RegisterProperty(v3f, Position3D)
         RegisterProperty(v3f, Scale3D)
@@ -257,5 +274,8 @@ BeginUnit(Transform)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
     RegisterSubscription(EventOf_EntityComponentAdded(), OnAdded, ComponentOf_Transform())
-    RegisterSubscription(EventOf_Validate(), OnTransformValidation, ComponentOf_Transform())
+
+	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnTransformUpdate, AppLoopOf_TransformUpdate())
+
+	SetAppLoopOrder(AppLoopOf_TransformUpdate(), AppLoopOrder_TransformUpdate);
 EndUnit()

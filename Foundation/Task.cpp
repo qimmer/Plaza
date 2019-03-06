@@ -11,6 +11,8 @@
 #define SCHED_IMPLEMENTATION
 #define SCHED_STATIC
 #undef SCHED_MIN
+#define __SSE__ 1
+
 #include <mmx/sched.h>
 #include <Core/Vector.h>
 
@@ -36,7 +38,9 @@ struct TaskQueue {
 };
 
 static void TaskFunc(void* taskIndexPtr, struct scheduler*, struct sched_task_partition, sched_uint thread_num) {
-    auto task = GetComponentEntity(ComponentOf_Task(), (size_t)taskIndexPtr);
+    static auto taskComponent = ComponentOf_Task();
+    auto componentEntityIndex = GetEntityIndex(taskComponent);
+    auto task = GetComponentEntity(componentEntityIndex, (size_t)taskIndexPtr);
     Invoke(task);
 }
 
@@ -112,7 +116,6 @@ LocalFunction(OnCoreModuleDestroyed, void, Entity module){
 
 BeginUnit(Task)
     BeginComponent(Task)
-        RegisterBase(Invocation)
         RegisterProperty(bool, TaskFinished)
     EndComponent()
 

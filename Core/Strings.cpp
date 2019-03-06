@@ -15,8 +15,6 @@ typedef eastl::unordered_map<SmallString, u32> StringMap;
 
 StringMap lookup;
 
-static StringRef nullString = "";
-
 u32 lastCleanupSize = 0;
 
 API_EXPORT void CleanupStrings() {
@@ -37,7 +35,7 @@ API_EXPORT void CleanupStrings() {
 }
 
 API_EXPORT StringRef AddStringRef(StringRef sourceString) {
-    if(!sourceString || !sourceString[0]) return nullString;
+    if(!sourceString || !sourceString[0]) return 0;
 
     auto it = lookup.find(sourceString);
     if(it == lookup.end()) {
@@ -60,7 +58,7 @@ API_EXPORT void ReleaseStringRef(StringRef sourceString) {
 }
 
 API_EXPORT StringRef Intern(StringRef sourceString) {
-    if(!sourceString || !sourceString[0]) return nullString;
+    if(!sourceString || !sourceString[0]) return 0;
 
     auto it = lookup.find(sourceString);
     if(it == lookup.end()) {

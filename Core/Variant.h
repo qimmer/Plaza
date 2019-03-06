@@ -10,10 +10,8 @@
 
 struct ALIGN(16) Variant {
     union {
-        m4x4f data;
+        v4i data;
 
-        m4x4f as_m4x4f;
-        m3x3f as_m3x3f;
         v2f as_v2f;
         v3f as_v3f;
         v4f as_v4f;
@@ -53,12 +51,15 @@ inline Variant __MakeVariant(const void *data, Type type) {
         return *(const Variant*)data;
     }
 
-    Variant v;
-    memset(&v.data, 0, sizeof(m4x4f));
+	Variant v;
 
     if(data) {
         memcpy(&v.data, data, GetTypeSize(type));
-    }
+	}
+	else {
+		v.data = { 0, 0, 0, 0 };
+	}
+
     v.type = type;
     return v;
 }

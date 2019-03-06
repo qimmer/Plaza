@@ -1,10 +1,15 @@
 {
     "Uuid": "Component.EntityLabel",
-    "Name": "EntityLabel",
     "Properties": [
         {
             "Uuid": "Property.EntityLabelEntity",
             "PropertyType": "Entity"
+        },
+        {
+            "Uuid": "Property.EntityLabelChildForEach",
+            "PropertyType": "Entity",
+            "PropertyKind": "PropertyKind_Child",
+            "PropertyChildComponent": "Component.ForEach"
         }
     ],
     "Bases": [
@@ -13,7 +18,20 @@
         }
     ],
     "ComponentTemplate": {
-        "LayoutChildWeight": [1.0, 0.0],
-        "ListItemTitle": "{EntityLabelEntity.Uuid}"
-    }
+        "ListItemTitle": "{EntityLabelEntity.Uuid}",
+        "EntityLabelChildForEach": {
+            "ForEachEnabled": "{Owner.ListItemExpanded}",
+            "ForEachSourceEntity": "{Owner.EntityLabelEntity}",
+            "ForEachSourceArrayProperty": "Property.Modules",
+            "ForEachDestinationEntity": "{Owner}",
+            "ForEachDestinationArrayProperty": "Property.Children",
+            "ForEachTemplate": "Template.EntityLabelChild"
+        }
+    },
+    "Children": [
+        {
+            "Uuid": "Template.EntityLabelChild",
+            "EntityLabelEntity": "{ForEachSource}"
+        }
+    ]
 }

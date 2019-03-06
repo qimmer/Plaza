@@ -10,9 +10,6 @@ EXPORTS
 	SetPropertySize
 	SetPropertyKind
 	GetUniqueEntity
-	__InjectArrayPropertyElement
-	__InjectChildPropertyValue
-	GetComponentIndex
 	SetPropertyValue
 	IsEntityValid
 	ModuleOf_Core
@@ -26,35 +23,29 @@ EXPORTS
 	GetOwner
 	SetFunctionCaller
 	SetFunctionArgsByDecl
-	CallNativeFunction
 	SetSubscriptionEvent
 	SetSubscriptionSender
 	SetSubscriptionHandler
 	RemoveComponent
-	GetNextComponent
-	Log
 	Exit
 	GetDebugName
 	__SetVectorAmount
 	HasComponent
-	GetComponentEntity
 	CallFunction
 	GetName
-	GetComponentBytes
 	GetTypeName
 	FindType
 	GetArrayPropertyCount
 	RemoveArrayPropertyElement
 	GetPropertyType
 	GetPropertyKind
-	GetNumProperties
 	GetProperties
 	CalculateEntityPath
 	GetEntityRelativePath
-	FindEntityByPath
 	GetArrayPropertyElements
 	strnstr
 	FindEntityByName
 	GetParentPath
 	DebuggerBreak
 	LoadPlazaModule
+	GetComponentType

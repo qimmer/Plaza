@@ -19,7 +19,7 @@ struct EnumFlag {
 API_EXPORT StringRef GetEnumName(Entity e, u64 value) {
     for_children(flag, EnumFlags, e) {
         if(GetEnumFlagValue(flag) == value) {
-            return GetName(flag);
+            return GetUuid(flag);
         }
     }
 
@@ -27,9 +27,14 @@ API_EXPORT StringRef GetEnumName(Entity e, u64 value) {
 }
 
 API_EXPORT u64 GetEnumValue(Entity e, StringRef name) {
+    if(!name) return 0;
+
     name = Intern(name);
+
+    auto uuid = StringFormatV("%s.%s", GetUuid(e), name);
+
     for_children(flag, EnumFlags, e) {
-        if(GetName(flag) == name) {
+        if(GetUuid(flag) == name || GetUuid(flag) == uuid) {
             return GetEnumFlagValue(flag);
         }
     }

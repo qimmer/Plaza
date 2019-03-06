@@ -12,7 +12,9 @@ if (OPENMP_FOUND)
 endif()
 
 target_include_directories(Scene PUBLIC ".." ".")
-
+if(MSVC)
+    target_sources(Scene PRIVATE Scene.def)
+endif()
 target_link_libraries(Scene Core Foundation)
 if(BUILD_SHARED_LIBS)
     install (TARGETS Scene RUNTIME DESTINATION bin LIBRARY DESTINATION bin)

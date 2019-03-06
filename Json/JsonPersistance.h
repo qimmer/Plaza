@@ -8,9 +8,21 @@
 #include <Core/NativeUtils.h>
 #include <Foundation/PersistancePoint.h>
 
-Unit(JsonPersistance)
+struct JsonSettings {
+    u8 JsonSettingsMaxRecursiveLevels;
+    bool JsonSettingsResolveBindings, JsonSettingsIgnoreReadOnly, JsonSettingsExplicitComponents, JsonSettingsExplicitBindings, JsonSettingsExplicitHandle;
+};
 
-bool SerializeJson(Entity stream, Entity entity, s16 includeChildLevels = 100, s16 includeReferenceLevels = 0, bool includePersistedChildren = true, bool includeNativeEntities = true);
+Unit(JsonPersistance)
+    Component(JsonSettings)
+        Property(bool, JsonSettingsResolveBindings)
+        Property(bool, JsonSettingsIgnoreReadOnly)
+        Property(u8, JsonSettingsMaxRecursiveLevels)
+        Property(bool, JsonSettingsExplicitComponents)
+        Property(bool, JsonSettingsExplicitBindings)
+        Property(bool, JsonSettingsExplicitHandle)
+
+bool SerializeJson(Entity stream, Entity entity, Entity jsonSettings);
 bool DeserializeJson(Entity stream, Entity entity);
 
 Function(DeserializeJsonFromString, bool, Entity stream, Entity entity, StringRef jsonString)

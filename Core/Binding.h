@@ -7,44 +7,40 @@
 
 #include <Core/NativeUtils.h>
 
-struct Bindable {};
+struct Indirection {
+    Indirection() : IndirectionProperty(0), ListenerEntity(0) {}
 
-struct BindingListener {
-    Entity BindingListenerEntity, BindingListenerProperty, BindingListenerIndirection;
+    Entity IndirectionProperty;
+    Entity ListenerEntity;
 };
 
 struct Binding {
+    Binding() : BindingTargetProperty(0), BindingSourceEntity(0) {}
+
     Entity BindingTargetProperty, BindingSourceEntity;
+    Vector<Indirection, 8> BindingIndirections;
 };
 
-struct BindingIndirection {
-    Entity BindingIndirectionProperty;
+struct Listener {
+    Listener() : BindingEntity(0), BindingIndirectionIndex(0), BindingTargetProperty(0), ListenerProperty(0) {}
+
+    Entity BindingEntity;
+    u16 BindingIndirectionIndex;
+    Entity BindingTargetProperty;
+    Entity ListenerProperty;
 };
 
-struct ArrayBindingChild {
-    Entity ArrayBindingChildSource;
+struct EntityBindingData {
+    Vector<Listener, 4> Listeners;
+    Vector<Binding, 4> Bindings;
 };
 
 Unit(Binding)
-    Component(BindingListener)
-        ReferenceProperty(Property, BindingListenerProperty)
-        Property(Entity, BindingListenerEntity)
-        ReferenceProperty(BindingIndirection, BindingListenerIndirection)
 
-    Component(BindingIndirection)
-        ReferenceProperty(Property, BindingIndirectionProperty)
+void Bind(Entity entity, Entity property, Entity sourceEntity, const Entity* indirections, u32 numIndirections);
+const Binding* GetBinding(Entity entity, Entity property);
+void Unbind(Entity entity, Entity property);
 
-    Component(Binding)
-        ArrayProperty(BindingListener, BindingListeners) // Last source contains source with final value, others are sub-entities/path elements
-        ReferenceProperty(Property, BindingTargetProperty)
-        Property(Entity, BindingSourceEntity)
-        ArrayProperty(BindingIndirection, BindingIndirections)
+EntityBindingData& GetBindingData(Entity entity);
 
-    Component(Bindable)
-        ArrayProperty(Binding, Bindings)
-
-    Component(ArrayBindingChild)
-        Property(Entity, ArrayBindingChildSource)
-
-    Function(GetBinding, Entity, Entity entity, Entity property)
 #endif //PLAZA_BINDING_H

@@ -918,7 +918,7 @@ scheduler_wait_for_work(struct scheduler *s, sched_uint thread_num)
   #if defined _M_IX86 || defined _M_X64
     #pragma intrinsic(_mm_pause)
     SCHED_INTERN void sched_pause(void) {
-# if defined(__SSE__)
+# if defined(__SSE__) || defined(__SSE2__)
         _mm_pause();
 # else
         __asm__ __volatile__ ("rep; nop");

@@ -14,7 +14,7 @@ struct MemoryBuffer {
     s32 RefCount;
 };
 
-static eastl::unordered_map<eastl::string, MemoryBuffer> MemoryBuffers;
+static eastl::unordered_map<const void*, MemoryBuffer> MemoryBuffers;
 
 struct MemoryStream {
     s32 Offset;

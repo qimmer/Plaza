@@ -2,9 +2,8 @@
 // Created by Kim Johannsen on 02/01/2018.
 //
 
-#include <Core/Property.h>
+#include <Core/NativeUtils.h>
 #include <Core/Enum.h>
-#include <Core/Component.h>
 #include "Function.h"
 #include "Debug.h"
 #include "Entity.h"
@@ -20,11 +19,6 @@
 #include <malloc.h>
 #include <memory.h>
 #include <cstring>
-
-extern "C" {
-    #include <ex_intern/strings.h>
-    #include <ex_intern/optimize.h>
-}
 
 #define Verbose_Children "children"
 #define Verbose_PropertyChanges "changes"
@@ -43,7 +37,7 @@ struct EntityChildren {
 
     u32 StartIndex;
     u32 Count;
-    eastl::fixed_vector<Entity, 32> children;
+    eastl::vector<Entity> children;
 };
 
 struct PropertyChildArray {
@@ -52,10 +46,13 @@ struct PropertyChildArray {
 };
 
 static eastl::vector<PropertyChildArray> PerPropertyChildrenInfo;
-static eastl::vector<GenericPropertyChangedListener> PropertyChangedListeners;
+static Vector<GenericPropertyChangedListener, 64> PropertyChangedListeners;
 
-PropertyChildArray *GetPropertyChildren(Entity property) {
-    auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
+static inline PropertyChildArray *GetPropertyChildren(Entity property) {
+    static auto propertyComponent = ComponentOf_Property();
+    static auto propertyComponentEntityIndex = GetEntityIndex(propertyComponent);
+	static auto type = GetComponentType(propertyComponentEntityIndex);
+    auto propertyIndex = _GetComponentIndex(type, GetEntityIndex(property));
 
     if(propertyIndex == InvalidIndex) {
         return NULL;
@@ -66,6 +63,10 @@ PropertyChildArray *GetPropertyChildren(Entity property) {
     }
 
     return &PerPropertyChildrenInfo[propertyIndex];
+}
+
+API_EXPORT Vector<GenericPropertyChangedListener, 64>& GetGenericPropertyChangedListeners() {
+    return PropertyChangedListeners;
 }
 
 API_EXPORT u32 AddChild(Entity property, Entity entity, Entity child, bool takeOwnership) {
@@ -159,7 +160,7 @@ API_EXPORT u32 GetChildIndex(Entity property, Entity entity, Entity child) {
     auto children = GetChildArray(property, entity, &count);
     if(!children) return InvalidIndex;
 
-    for(auto i = 0; i < count; ++i) {
+    for(u32 i = 0; i < count; ++i) {
         if(children[i] == child) return i;
     }
 
@@ -178,71 +179,72 @@ API_EXPORT Entity* GetChildArray(Entity property, Entity entity, u32 *count) {
     if(!info.Count) return NULL;
 
     if(count) {
-        *count = propertyChildren->PerEntityChildrenInfo[entityIndex].children.size();
+        *count = (u32)propertyChildren->PerEntityChildrenInfo[entityIndex].children.size();
     }
 
     return propertyChildren->PerEntityChildrenInfo[entityIndex].children.data(); //&propertyChildren->ChildrenPool[info.StartIndex];
 }
 
 API_EXPORT void EmitChangedEvent(Entity entity, Entity property, Property *propertyData, Variant oldValueData, Variant newValueData) {
-    if(propertyData) {
-        Variant arguments[] = { MakeVariant(Entity, entity), oldValueData, newValueData};
+    if(!propertyData) return;
 
-        FireEventFast(propertyData->PropertyChangedEvent, 3, arguments);
+    auto eventIndex = GetEntityIndex(propertyData->PropertyChangedEvent);
+    auto& cache = GetSubscriptionCache(eventIndex);
+
+    Variant arguments[] = { MakeVariant(Entity, entity), oldValueData, newValueData};
+
+    for(auto i = 0; i < cache.size(); ++i) {
+        auto& subscription = cache[i];
+        if(!subscription.SubscriptionSender || subscription.SubscriptionSender == entity) {
+            auto functionData = GetFunctionData(subscription.SubscriptionHandler);
+
+            ((FunctionCallerType)functionData->FunctionCaller)(
+                    functionData->FunctionPtr,
+                    arguments
+            );
+        }
     }
 
-    for(auto& listener : PropertyChangedListeners) {
+    for(auto listener : PropertyChangedListeners) {
         listener(property, entity, propertyData->PropertyType, oldValueData, newValueData);
     }
 }
 
 API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newValueData) {
-    if(!IsEntityValid(context)) {
-        Log(context, LogSeverity_Error, "Invalid entity when trying to set property %s.", GetUuid(property));
+	auto propertyData = GetPropertyData(property);
+	if(!propertyData) {
+        Log(context, LogSeverity_Error, "Invalid property when trying to set property %s on %s", GetDebugName(property), GetDebugName(context));
         return;
-    }
+	}
 
-    auto component = GetOwner(property);
-
-    static auto componentOfProperty = ComponentOf_Property();
-    static StringRef nullStr = Intern("");
-    auto propertyIndex = GetComponentIndex(componentOfProperty, property);
-    auto propertyData = (Property*) GetComponentBytes(componentOfProperty, propertyIndex);
-
-    if(!propertyData) {
-        Log(context, LogSeverity_Error, "Property %s has not been registered.", GetUuid(property));
-        return;
-    }
-
-    AddComponent(context, component);
-
-    auto offset = propertyData->PropertyOffset;
+    u32 offset = propertyData->PropertyOffset;
+    Entity component = GetOwner(property);
+    auto componentEntityIndex = GetEntityIndex(component);
+    auto type = GetComponentType(componentEntityIndex);
     auto size = GetTypeSize(propertyData->PropertyType);
+	auto isString = propertyData->PropertyType == TypeOf_StringRef;
+	auto isVariant = propertyData->PropertyType == TypeOf_Variant;
 
-    auto componentIndex = GetComponentIndex(component, context);
-    auto componentData = GetComponentBytes(component, componentIndex);
-
-    if(!componentData) {
-        return;
+	if(propertyData->PropertyType != newValueData.type) {
+	    newValueData = Cast(newValueData, propertyData->PropertyType);
+	}
+        
+    auto componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
+        
+    if(componentIndex == InvalidIndex) {
+        AddComponent(context, component);
+        componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
     }
-
+        
+    auto componentData = _GetComponentData(type, componentIndex);
     auto valueData = componentData + offset;
-
-    StringRef internedString = 0;
-
-    if(propertyData->PropertyType == TypeOf_StringRef) {
-        if(!memcmp(valueData, "\0\0\0\0\0\0\0\0", sizeof(StringRef))) {
-            *(StringRef*)valueData = nullStr;
-        }
-    }
 
     if(propertyData->PropertyType == TypeOf_StringRef || (propertyData->PropertyType == TypeOf_Variant && ((Variant*)valueData)->type == TypeOf_StringRef)) {
         ReleaseStringRef(*(StringRef*)valueData);
     }
 
     if(propertyData->PropertyType == TypeOf_StringRef || (propertyData->PropertyType == TypeOf_Variant && newValueData.type == TypeOf_StringRef)) {
-        internedString = AddStringRef(newValueData.as_StringRef);
-        newValueData.as_StringRef = internedString;
+        newValueData.as_StringRef = AddStringRef(newValueData.as_StringRef);
     }
 
     if(propertyData->PropertyType == TypeOf_Variant) {
@@ -284,74 +286,19 @@ API_EXPORT Variant GetPropertyValue(Entity property, Entity context) {
         return Variant_Empty;
     }
 
-    static StringRef nullStr = Intern("");
-    auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
-    auto propertyData = (Property*) GetComponentBytes(ComponentOf_Property(), propertyIndex);
+    auto propertyData = GetPropertyData(property);
+    auto componentEntityIndex = GetEntityIndex(component);
+    auto type = GetComponentType(componentEntityIndex);
+        
+    auto componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
+    if(componentIndex == InvalidIndex) return Variant_Default;
+    auto componentData = _GetComponentData(type, componentIndex);
 
-    if(!propertyData) {
-        Log(context, LogSeverity_Error, "Property has not been registered.");
-        return Variant_Empty;
-    }
-
-    if(propertyData->PropertyKind == PropertyKind_Array) {
-        Log(0, LogSeverity_Error, "Cannot get value of array property %s. Retrieve an indexed element first.", GetDebugName(property));
-        return Variant_Empty;
-    }
-
-    auto offset = propertyData->PropertyOffset;
-    auto size = GetTypeSize(propertyData->PropertyType);
-
-    auto componentIndex = GetComponentIndex(component, context);
-    auto componentData = GetComponentBytes(component, componentIndex);
-
-    if(componentIndex == InvalidIndex || !componentData) {
-        Verbose(Verbose_PropertyChanges, "'%s' is not present on entity '%s'. Returning default value.", GetDebugName(property), GetDebugName(component));
-
-        return Variant_Empty;
-    }
-
-    auto valueData = componentData + offset;
-
-    if(propertyData->PropertyType == TypeOf_StringRef && !memcmp(valueData, "\0\0\0\0\0\0\0\0", sizeof(StringRef))) {
-        return MakeVariant(StringRef, nullStr);
-    }
-
+    auto valueData = componentData + propertyData->PropertyOffset;
+	
     return __MakeVariant(valueData, propertyData->PropertyType);
 }
 
-
-API_EXPORT void __InjectChildPropertyValue(Entity property, Entity context, Entity value) {
-    Assert(property, IsEntityValid(value) && IsEntityValid(context));
-
-    auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
-    auto propertyData = (Property*) GetComponentBytes(ComponentOf_Property(), propertyIndex);
-
-    if(!propertyData) {
-        Log(context, LogSeverity_Error, "Property has not been registered.");
-        return;
-    }
-
-    auto component = GetOwner(property);
-
-    Assert(property, IsEntityValid(component));
-    Assert(property, propertyData->PropertyKind == PropertyKind_Child);
-
-    auto offset = propertyData->PropertyOffset;
-
-    auto componentIndex = GetComponentIndex(component, context);
-    Assert(property, componentIndex != InvalidIndex);
-    auto componentData = GetComponentBytes(component, componentIndex);
-    Assert(property, componentData);
-    auto valueData = componentData + offset;
-
-    *(Entity*)valueData = value;
-
-    SetOwner(value, context, property);
-
-    if(IsEntityValid(propertyData->PropertyChildComponent)) {
-        AddComponent(value, propertyData->PropertyChildComponent);
-    }
-}
 
 API_EXPORT u32 GetArrayPropertyCount(Entity property, Entity entity) {
     u32 count = 0;
@@ -389,7 +336,7 @@ API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity) {
     auto index = AddChild(property, entity, element, true);
 
     auto parentUuid = GetUuid(entity);
-    auto propertyName = GetName(property);
+    auto propertyName = strrchr(GetUuid(property), '.') + 1;
     char *buffer = (char*)alloca(strlen(parentUuid) + strlen(propertyName) + 16);
 
     u32 i = index;
@@ -491,6 +438,8 @@ __PropertyCoreImpl(Entity, PropertyChangedEvent, Property)
 __PropertyCoreImpl(u8, PropertyKind, Property)
 __PropertyCoreImpl(bool, PropertyReadOnly, Property)
 
+__PropertyCoreImpl(StringRef, Name, ArrayChild)
+
 API_EXPORT void SetOwner(Entity entity, Entity owner, Entity ownerProperty) {
     AddComponent(entity, ComponentOf_Ownership());
     auto data = GetOwnershipData(entity);
@@ -550,7 +499,7 @@ LocalFunction(OnPropertyKindChanged, void, Entity property, u32 oldKind, u32 new
     for_entity_abstract(entity, data, component) {
         if(oldKind == PropertyKind_Array) {
             EntityVectorStruct *vec = (EntityVectorStruct*)(data + propertyData->PropertyOffset);
-            for(auto i = 0; i < vec->Count; ++i) {
+            for(u32 i = 0; i < vec->Count; ++i) {
                 DestroyEntity(vec->StaBuf[i]);
                 vec->StaBuf[i] = 0;
             }
@@ -632,6 +581,9 @@ BeginUnit(Property)
         RegisterProperty(Entity, Owner)
         RegisterReferenceProperty(Property, OwnerProperty)
     EndComponent()
+    BeginComponent(ArrayChild)
+        //RegisterProperty(StringRef, Name)
+    EndComponent()
 
     RegisterFunction(SetPropertyValue)
     RegisterFunction(GetPropertyValue)
@@ -645,7 +597,7 @@ BeginUnit(Property)
 EndUnit()
 
 static void DumpEntity(Entity entity, u32 indentLevel) {
-    for(auto i = 0; i < indentLevel; ++i) printf("%s", "  ");
+    for(u32 i = 0; i < indentLevel; ++i) printf("%s", "  ");
     printf("%s\n", GetUuid(entity));
 
     for_entity(child, data, Identification) {

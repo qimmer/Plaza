@@ -181,9 +181,9 @@ BeginModule(Gui)
                "VertexAttributeUsage": "VertexAttributeUsage_TexCoord0"
            },
            {
-               "Uuid": "Gui.Font.VertexDeclaration.Color",
+               "Uuid": "Gui.Font.VertexDeclaration.Color0",
                "VertexAttributeType": "v4f",
-               "VertexAttributeUsage": "VertexAttributeUsage_TexCoord1"
+               "VertexAttributeUsage": "VertexAttributeUsage_Color0"
            }
            ]
        },

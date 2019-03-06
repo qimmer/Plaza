@@ -5,8 +5,7 @@
 #include "Variant.h"
 
 typedef Variant(*FunctionCallerType)(
-    Entity entity,
-    u32 numArguments,
+	NativePtr functionPtr,
     const Variant *arguments
 );
 
@@ -15,17 +14,20 @@ struct FunctionArgument {
 };
 
 struct Function {
+	NativePtr FunctionCaller, FunctionPtr;
+	u32 NumFunctionArguments;
     Type FunctionReturnType;
-    NativePtr FunctionCaller;
+	Type FunctionArgumentTypes[11];
 };
 
 Unit(Function)
     Component(FunctionArgument)
-        Property(Type, FunctionArgumentType)
+		__PropertyCore(Function, Type, FunctionArgumentType)
 
     Component(Function)
         __PropertyCore(Function, NativePtr, FunctionCaller)
-        Property(Type, FunctionReturnType)
+		__PropertyCore(Function, NativePtr, FunctionPtr)
+		__PropertyCore(Function, Type, FunctionReturnType)
         ArrayProperty(FunctionArgument, FunctionArguments)
 
 void SetFunctionArgsByDecl(Entity f, StringRef argsDecl);

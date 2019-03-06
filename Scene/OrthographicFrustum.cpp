@@ -4,6 +4,7 @@
 
 #include "OrthographicFrustum.h"
 #include "Frustum.h"
+#include <Foundation/Invalidation.h>
 
 #include <cglm/cglm.h>
 
@@ -15,8 +16,8 @@ LocalFunction(UpdateProjectionMatrix, void, Entity entity) {
     if(!HasComponent(entity, ComponentOf_OrthographicFrustum())) return;
 
     auto data = GetOrthographicFrustumData(entity);
+	auto frustumData = GetFrustumData(entity);
 
-    m4x4f projection;
     glm_ortho(
         data->OrthographicFrustumTopLeft.x,
         data->OrthographicFrustumBottomRight.x,
@@ -24,12 +25,12 @@ LocalFunction(UpdateProjectionMatrix, void, Entity entity) {
         data->OrthographicFrustumTopLeft.y,
         GetFrustumNearClip(entity),
         GetFrustumFarClip(entity),
-        (vec4*)&projection);
+        (vec4*)&frustumData->FrustumProjectionMatrix[0].x);
 
     vec3 scale = {1.0f, 1.0f, -1.0f};
-    glm_scale((vec4*)&projection.x, scale);
-
-    SetFrustumProjectionMatrix(entity, projection);
+    glm_scale((vec4*)&frustumData->FrustumProjectionMatrix[0].x, scale);
+	
+	Invalidate(entity);
 }
 
 LocalFunction(OnOrthographicFrustumAdded, void, Entity component, Entity entity) {

@@ -19,12 +19,18 @@ SET(ex_bgfx_shader_dir "${SOURCE_DIR}/bgfx/examples/common")
 SET(ex_bgfx_src_dir "${SOURCE_DIR}/bgfx/src")
 
 ADD_LIBRARY(bx STATIC IMPORTED)
-SET_PROPERTY(TARGET bx PROPERTY IMPORTED_LOCATION "${ex_bgfx_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}bx${CMAKE_STATIC_LIBRARY_SUFFIX}")
 ADD_LIBRARY(bimg STATIC IMPORTED)
-SET_PROPERTY(TARGET bimg PROPERTY IMPORTED_LOCATION "${ex_bgfx_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}bimg${CMAKE_STATIC_LIBRARY_SUFFIX}")
 ADD_LIBRARY(bgfx STATIC IMPORTED)
-SET_PROPERTY(TARGET bgfx PROPERTY IMPORTED_LOCATION "${ex_bgfx_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}bgfx${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
+IF(MSVC)
+	SET_PROPERTY(TARGET bx PROPERTY IMPORTED_LOCATION "${ex_bgfx_lib_dir}/${CMAKE_BUILD_TYPE}/${CMAKE_STATIC_LIBRARY_PREFIX}bx${CMAKE_STATIC_LIBRARY_SUFFIX}")
+	SET_PROPERTY(TARGET bimg PROPERTY IMPORTED_LOCATION "${ex_bgfx_lib_dir}/${CMAKE_BUILD_TYPE}/${CMAKE_STATIC_LIBRARY_PREFIX}bimg${CMAKE_STATIC_LIBRARY_SUFFIX}")
+	SET_PROPERTY(TARGET bgfx PROPERTY IMPORTED_LOCATION "${ex_bgfx_lib_dir}/${CMAKE_BUILD_TYPE}/${CMAKE_STATIC_LIBRARY_PREFIX}bgfx${CMAKE_STATIC_LIBRARY_SUFFIX}")
+ELSE()
+	SET_PROPERTY(TARGET bx PROPERTY IMPORTED_LOCATION "${ex_bgfx_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}bx${CMAKE_STATIC_LIBRARY_SUFFIX}")
+	SET_PROPERTY(TARGET bimg PROPERTY IMPORTED_LOCATION "${ex_bgfx_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}bimg${CMAKE_STATIC_LIBRARY_SUFFIX}")
+	SET_PROPERTY(TARGET bgfx PROPERTY IMPORTED_LOCATION "${ex_bgfx_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}bgfx${CMAKE_STATIC_LIBRARY_SUFFIX}")
+ENDIF()
 ExternalProject_Add(ex_glfw
         GIT_REPOSITORY "https://github.com/glfw/glfw.git"
         GIT_TAG "master"
@@ -38,12 +44,21 @@ SET(ex_glfw_lib_dir "${BINARY_DIR}/src")
 SET(ex_glfw_inc_dir "${SOURCE_DIR}/include")
 
 ADD_LIBRARY(glfw STATIC IMPORTED)
-SET_PROPERTY(TARGET glfw PROPERTY IMPORTED_LOCATION "${ex_glfw_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}glfw3${CMAKE_STATIC_LIBRARY_SUFFIX}")
+IF(MSVC)
+	SET_PROPERTY(TARGET glfw PROPERTY IMPORTED_LOCATION "${ex_glfw_lib_dir}/${CMAKE_BUILD_TYPE}/${CMAKE_STATIC_LIBRARY_PREFIX}glfw3${CMAKE_STATIC_LIBRARY_SUFFIX}")
+ELSE()
+	SET_PROPERTY(TARGET glfw PROPERTY IMPORTED_LOCATION "${ex_glfw_lib_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}glfw3${CMAKE_STATIC_LIBRARY_SUFFIX}")
+ENDIF()
+
 
 add_library(BgfxRendering BgfxModule.cpp BgfxModule.h BgfxModule.cpp BgfxModule.h BgfxRenderContext.cpp BgfxRenderContext.h BgfxCommandList.cpp BgfxCommandList.h BgfxShaderCache.cpp BgfxShaderCache.h BgfxUniform.cpp BgfxUniform.h BgfxTexture2D.cpp BgfxTexture2D.h BgfxMesh.cpp BgfxMesh.h BgfxOffscreenRenderTarget.cpp BgfxOffscreenRenderTarget.h BgfxMesh.cpp BgfxMesh.h BgfxResource.cpp BgfxResource.h BgfxTextureReadBack.cpp BgfxTextureReadBack.h)
 add_dependencies(BgfxRendering ex_bgfx ex_glfw)
 
 target_include_directories(BgfxRendering PUBLIC ".." ${ex_bgfx_inc_dir} ${ex_glfw_inc_dir})
+
+if(MSVC)
+    target_sources(BgfxRendering PRIVATE BgfxRendering.def)
+endif()
 
 SET(libs Core Foundation Rendering glfw)
 

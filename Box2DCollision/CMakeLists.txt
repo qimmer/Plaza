@@ -3,7 +3,9 @@ project(Box2DCollision)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Box2DCollision Box2DModule.h Box2DModule.cpp
+add_library(Box2DCollision
+        Box2DModule.h
+        Box2DModule.cpp
         Box2D/Collision/Shapes/b2ChainShape.cpp
         Box2D/Collision/Shapes/b2CircleShape.cpp
         Box2D/Collision/Shapes/b2EdgeShape.cpp
@@ -53,5 +55,7 @@ add_library(Box2DCollision Box2DModule.h Box2DModule.cpp
 
 target_include_directories(Box2DCollision PUBLIC "..")
 target_include_directories(Box2DCollision PRIVATE ".")
-
+if(MSVC)
+    target_sources(Box2DCollision PRIVATE Box2DCollision.def)
+endif()
 target_link_libraries(Box2DCollision Core Foundation Scene Collision)

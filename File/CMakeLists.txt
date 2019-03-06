@@ -14,6 +14,7 @@ target_link_libraries(File Foundation Core)
 
 if(MSVC)
     target_sources(File PRIVATE File.def)
+	include_directories(./Win32)
 endif()
 
 if(BUILD_SHARED_LIBS)

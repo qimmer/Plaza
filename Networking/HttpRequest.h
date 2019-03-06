@@ -19,11 +19,16 @@ Unit(HttpRequest)
         ReferenceProperty(HttpHeaderType, HttpHeaderType)
         Property(StringRef, HttpHeaderValue)
 
+    Component(HttpParameter)
+        Property(StringRef, HttpParameterName)
+        Property(StringRef, HttpParameterValue)
+
     Component(HttpRequest)
         Property(StringRef, HttpRequestMethod)
         Property(StringRef, HttpRequestUrl)
         Property(StringRef, HttpRequestVersion)
         ArrayProperty(HttpHeader, HttpRequestHeaders)
+        ArrayProperty(HttpParameter, HttpRequestParameters)
         ChildProperty(Stream, HttpRequestContentStream)
 
     Component(HttpResponse)

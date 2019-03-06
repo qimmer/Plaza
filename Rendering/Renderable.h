@@ -20,4 +20,8 @@ Component(Renderable)
     Property(v3f, RenderableAABBMin)
     Property(v3f, RenderableAABBMax)
 
+	Declare(AppLoop, BoundsUpdate)
+
+#define AppLoopOrder_BoundsUpdate (AppLoopOrder_TransformUpdate + 1.0f)
+
 #endif //PLAZA_RENDERABLE_H

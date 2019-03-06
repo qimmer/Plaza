@@ -312,7 +312,7 @@ BeginUnit(Box2DCollision)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyGravityScale()), OnBodyChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyLinearDamping()), OnBodyChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyType()), OnBodyChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TransformLocalMatrix()), OnBodyChanged, 0)
+    //RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TransformLocalMatrix()), OnBodyChanged, 0)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyLinearVelocity()), OnLinearVelocityChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyAngularVelocity()), OnAngularVelocityChanged, 0)

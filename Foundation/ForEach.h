@@ -9,21 +9,24 @@
 
 struct ForEach {
     Entity ForEachSourceEntity, ForEachDestinationEntity, ForEachSourceArrayProperty, ForEachDestinationArrayProperty, ForEachTemplate;
+    bool ForEachEnabled;
 };
 
 struct ForEachInstance {
-    Entity ForEachModel;
+    Entity ForEachSource, ForEach;
 };
 
 Unit(ForEach)
     Component(ForEach)
+        Property(bool, ForEachEnabled)
         Property(Entity, ForEachSourceEntity)
         Property(Entity, ForEachDestinationEntity)
         ReferenceProperty(Property, ForEachSourceArrayProperty)
         ReferenceProperty(Property, ForEachDestinationArrayProperty)
-        ChildProperty(Ownership, ForEachTemplate)
+        Property(Entity, ForEachTemplate)
 
     Component(ForEachInstance)
-        Property(Entity, ForEachModel)
+        Property(Entity, ForEach)
+        Property(Entity, ForEachSource)
 
 #endif //PLAZA_FOREACH_H

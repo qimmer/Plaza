@@ -29,11 +29,7 @@ static void RebuildTextWidget(Entity entity) {
     auto text = GetTextWidgetText(entity);
 
     if (IsEntityValid(font)) {
-        if(!text) {
-            text = Intern("");
-        }
-
-        auto length = strlen(text);
+        auto length = text ? strlen(text) : 0;
 
         colors.resize(length);
         for(auto i = 0; i < length; ++i) {

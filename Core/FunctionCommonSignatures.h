@@ -63,8 +63,6 @@ TypeInvoker(rgb8)
 TypeInvoker(rgba8)
 TypeInvoker(rgb32)
 TypeInvoker(rgba32)
-TypeInvoker(m3x3f)
-TypeInvoker(m4x4f)
 TypeInvoker(Date)
 TypeInvoker(Variant)
 

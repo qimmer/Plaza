@@ -19,6 +19,10 @@ Unit(InputContext)
         Property(s8, InputContextLastCharacter)
         Property(float, InputContextDeadZone)
 
+    Component(HotKey)
+        ArrayProperty(InputState, HotKeyStates)
+        Property(float, HotKeyValue)
+
     Declare(AppLoop, InputPoll)
 
     Function(SetInputStateValueByKey, void, Entity context, u16 key, float value)

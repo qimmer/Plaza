@@ -12,47 +12,55 @@
 #define ARGUMENT_DATA_MAX 4096
 
 API_EXPORT bool Invoke(Entity invocationEntity) {
-    Variant result;
+    auto functionInvocation = GetFunctionInvocationData(invocationEntity);
+    auto propertyInvocation = GetPropertyInvocationData(invocationEntity);
 
-    u32 count = 0;
-    auto invocationArguments = GetInvocationArguments(invocationEntity, &count);
-    auto invocation = GetInvocationData(invocationEntity);
-
-    if(!invocation) return false;
-
-    auto arguments = (Variant*)alloca(sizeof(Variant) * count);
-    for(int i = 0; i < count; ++i) {
-        auto argument = GetInvocationArgumentData(invocationArguments[i]);
-
-        arguments[i] = argument->InvocationArgumentValue;
+    if(propertyInvocation) {
+        SetPropertyValue(propertyInvocation->InvocationProperty, propertyInvocation->InvocationTarget, propertyInvocation->InvocationValue);
+        return true;
     }
 
-    if(HasComponent(invocation->InvocationFunction, ComponentOf_Function())) {
-        result = CallFunction(
-                invocation->InvocationFunction,
-                count,
-                arguments
-        );
+    if(functionInvocation) {
+        Variant result;
+        u32 count = 0;
 
-        if(IsEntityValid(invocationEntity)) {
-            SetInvocationResult(invocationEntity, result);
+        auto invocationArguments = GetInvocationArguments(invocationEntity, &count);
+
+        auto arguments = (Variant*)alloca(sizeof(Variant) * count);
+        for(int i = 0; i < count; ++i) {
+            auto argument = GetInvocationArgumentData(invocationArguments[i]);
+
+            arguments[i] = argument->InvocationArgumentValue;
         }
 
-        return true;
-    } else if (HasComponent(invocation->InvocationFunction, ComponentOf_Event())) {
-        FireEventFast(
-                invocation->InvocationFunction,
-                count,
-                arguments
-        );
+        if(HasComponent(functionInvocation->InvocationFunction, ComponentOf_Function())) {
+            result = CallFunction(
+                    functionInvocation->InvocationFunction,
+                    count,
+                    arguments
+            );
 
-        result.type = TypeOf_unknown;
-        SetInvocationResult(invocationEntity, result);
+            if(IsEntityValid(invocationEntity)) {
+                SetInvocationResult(invocationEntity, result);
+            }
 
-        return true;
+            return true;
+        } else if (HasComponent(functionInvocation->InvocationFunction, ComponentOf_Event())) {
+            FireEventFast(
+                    functionInvocation->InvocationFunction,
+                    count,
+                    arguments
+            );
+
+            result.type = TypeOf_unknown;
+            SetInvocationResult(invocationEntity, result);
+
+            return true;
+        }
+
+        Log(invocationEntity, LogSeverity_Error, "Invocation '%s' failed: Invocation function is neither a function or an event.", GetUuid(invocationEntity));
+        return false;
     }
-
-    Log(invocationEntity, LogSeverity_Error, "Function invocation '%s' failed: Invocation function is either a function or an event.", GetName(invocationEntity));
 
     return false;
 }
@@ -64,11 +72,18 @@ LocalFunction(OnInvocationToggled, void, Entity invocation, bool oldState, bool 
 }
 
 BeginUnit(Invocation)
-    BeginComponent(Invocation)
+    BeginComponent(FunctionInvocation)
         RegisterReferenceProperty(Function, InvocationFunction)
         RegisterProperty(Variant, InvocationResult)
         RegisterArrayProperty(InvocationArgument, InvocationArguments)
     EndComponent()
+
+    BeginComponent(PropertyInvocation)
+        RegisterReferenceProperty(Property, InvocationProperty)
+        RegisterProperty(Variant, InvocationValue)
+        RegisterProperty(Entity, InvocationTarget)
+    EndComponent()
+
     BeginComponent(InvocationArgument)
         RegisterProperty(Variant, InvocationArgumentValue)
     EndComponent()

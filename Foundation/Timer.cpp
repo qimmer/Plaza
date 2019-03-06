@@ -2,9 +2,9 @@
 // Created by Kim on 05/07/2018.
 //
 
+#include <Core/NativeUtils.h>
 #include <Foundation/Timer.h>
 #include <Foundation/StopWatch.h>
-#include <Core/Debug.h>
 
 struct Timer {
     double TimerInterval;

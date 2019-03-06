@@ -1,0 +1,22 @@
+{
+    "Uuid": "Component.Command",
+    "Properties": [
+        {
+            "Uuid": "Property.CommandInvocation",
+            "PropertyKind": "PropertyKind_Child",
+            "PropertyType": "Entity",
+            "PropertyChildComponent": "Component.FunctionInvocation"
+        },
+        {
+            "Uuid": "Property.CommandHotKey",
+            "PropertyKind": "PropertyKind_Child",
+            "PropertyType": "Entity",
+            "PropertyChildComponent": "Component.HotKey"
+        }
+    ],
+    "ComponentTemplate": {
+        "CommandInvocation": {
+            "InvocationToggleState": "{Owner.CommandHotKey.HotKeyValue}"
+        }
+    }
+}

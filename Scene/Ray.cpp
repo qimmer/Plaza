@@ -137,12 +137,13 @@ static inline bool TraceRenderable(Entity renderable, EvaluatedRay *ray, v3f *hi
 }
 
 static inline Entity RayTrace(Entity ray, TraceRay *data) {
+	auto transformData = GetTransformData(ray);
+
     float minDistance = FLT_MAX;
     Entity pickedRenderable = 0;
 
-    auto rayMatrix = GetTransformGlobalMatrix(ray);
     int sign[3];
-    v3f invdir = {-rayMatrix.z.x, -rayMatrix.z.y, -rayMatrix.z.z};
+    v3f invdir = {-transformData->TransformGlobalMatrix[2].x, -transformData->TransformGlobalMatrix[2].y, -transformData->TransformGlobalMatrix[2].z};
     sign[0] = (invdir.x < 0);
     sign[1] = (invdir.y < 0);
     sign[2] = (invdir.z < 0);
@@ -150,14 +151,14 @@ static inline Entity RayTrace(Entity ray, TraceRay *data) {
     EvaluatedRay evaluatedRay = {
             {sign[0], sign[1], sign[2]},
             invdir,
-            {rayMatrix.z.x, rayMatrix.z.y, rayMatrix.z.z},
-            {rayMatrix.w.x, rayMatrix.w.y, rayMatrix.w.z}
+            {transformData->TransformGlobalMatrix[2].x, transformData->TransformGlobalMatrix[2].y, transformData->TransformGlobalMatrix[2].z},
+            {transformData->TransformGlobalMatrix[3].x, transformData->TransformGlobalMatrix[3].y, transformData->TransformGlobalMatrix[3].z}
     };
 
-    v3f finalHitPoint = {rayMatrix.w.x, rayMatrix.w.y, rayMatrix.w.z};
-    finalHitPoint.x += rayMatrix.z.x;
-    finalHitPoint.y += rayMatrix.z.y;
-    finalHitPoint.z += rayMatrix.z.z;
+    v3f finalHitPoint = {transformData->TransformGlobalMatrix[3].x, transformData->TransformGlobalMatrix[3].y, transformData->TransformGlobalMatrix[3].z};
+    finalHitPoint.x += transformData->TransformGlobalMatrix[2].x;
+    finalHitPoint.y += transformData->TransformGlobalMatrix[2].y;
+    finalHitPoint.z += transformData->TransformGlobalMatrix[2].z;
 
     auto scene = GetAppNodeRoot(ray);
     for_entity_abstract(candidate, data2, data->TraceRayComponent) {
@@ -207,10 +208,10 @@ static void UpdatePickRay(Entity ray, PickRay *data) {
     };
 
     location.z = 0.0f;
-    glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix.x, &viewport.x, &worldSpaceNear.x);
+    glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix[0].x, &viewport.x, &worldSpaceNear.x);
 
     location.z = 1.0f;
-    glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix.x, &viewport.x, &worldSpaceFar.x);
+    glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix[0].x, &viewport.x, &worldSpaceFar.x);
 
     glm_vec_sub(&worldSpaceFar.x, &worldSpaceNear.x, &rayDirection.x);
 
@@ -253,5 +254,5 @@ BeginUnit(Ray)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppUpdate, AppLoopOf_RayPicking())
 
-    SetAppLoopOrder(AppLoopOf_RayPicking(), AppLoopOrder_Update * 1.5f);
+    SetAppLoopOrder(AppLoopOf_RayPicking(), AppLoopOrder_BoundsUpdate + 1.0f);
 EndUnit()

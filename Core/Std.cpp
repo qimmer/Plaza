@@ -2,12 +2,13 @@
 // Created by Kim on 02-08-2018.
 //
 
+#include "NativeUtils.h"
+#include "Std.h"
+#include "Property.h"
+
 #include <string.h>
 #include <malloc.h>
 #include <locale>
-#include "Std.h"
-#include "Types.h"
-#include "Property.h"
 
 API_EXPORT char *strnstr(const char *haystack, const char *needle, size_t len)
 {

@@ -1,0 +1,3 @@
+LIBRARY Editor
+EXPORTS
+	ModuleOf_Editor

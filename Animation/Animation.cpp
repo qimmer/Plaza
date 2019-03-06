@@ -2,8 +2,8 @@
 // Created by Kim on 11-10-2018.
 //
 
+#include <Core/NativeUtils.h>
 #include <Core/Algorithms.h>
-#include <Core/Debug.h>
 #include "Animation.h"
 
 #include <cglm/cglm.h>

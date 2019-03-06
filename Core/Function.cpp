@@ -4,7 +4,7 @@
 
 #include <string.h>
 
-#include <Core/Function.h>
+#include <Core/NativeUtils.h>
 #include <Core/Vector.h>
 #include <Core/Pool.h>
 #include <Core/Types.h>
@@ -24,7 +24,12 @@
 
 #define ALIGNMENT_SSE 16
 
+static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+
 API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
+	auto functionData = GetFunctionData(f);
+	functionData->NumFunctionArguments = 0;
+
     auto len = strlen(arguments);
     auto offset = 0;
     auto byteOffset = 0;
@@ -36,7 +41,7 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
         auto argument = &argumentSplits[0] + offset;
         auto nextComma = strchr(&argumentSplits[0] + offset, ',');
         if(!nextComma) nextComma = &argumentSplits[0] + len;
-        auto argumentLength = nextComma - argument;
+        auto argumentLength = (u32)(nextComma - argument);
         offset += argumentLength + 1;
         *nextComma = '\0';
 
@@ -55,7 +60,6 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
         }
 
         auto argumentEntity = AddFunctionArguments(f);
-        SetName(argumentEntity, name);
 
         auto type = 0;
         for(auto i = 0; i < TypeOf_MAX; ++i) {
@@ -65,6 +69,9 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
             }
         }
 
+		functionData->FunctionArgumentTypes[functionData->NumFunctionArguments] = type;
+		functionData->NumFunctionArguments++;
+
         if(!type) {
             Log(f, LogSeverity_Error, "Unsupported function argument type: %s", typeSignature);
             return;
@@ -73,6 +80,8 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
         SetFunctionArgumentType(argumentEntity, type);
         byteOffset += GetTypeSize(type);
     }
+
+
 }
 
 API_EXPORT Variant CallFunction(
@@ -96,38 +105,45 @@ API_EXPORT Variant CallFunction(
         return defaultValue;
     }
 
-    Verbose(Verbose_Function, "Calling function %s ...", GetName(f));
+	Verbose(Verbose_Function, "Calling function %s ...", GetName(f));
 
-    Variant *finalArguments = (Variant*)alloca(numArguments * sizeof(Variant));
+	if (numArguments < data->NumFunctionArguments) {
+		Log(f, LogSeverity_Error, "Insufficient function arguments provided when calling %s", GetDebugName(f));
+		return Variant_Empty;
+	}
 
-    static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+	/*if (data->NumFunctionArguments != numArguments) {
+		Variant *finalArguments = (Variant*)alloca(numArguments * sizeof(Variant));
 
-    u32 numArgs = 0;
-    auto functionArguments = GetFunctionArguments(f, &numArgs);
-    for(auto i = 0; i < numArgs; ++i) {
-        if(i >= numArguments) {
-            finalArguments[i] = Variant_Empty;
-        } else {
-            auto type = GetFunctionArgumentType(functionArguments[i]);
-            finalArguments[i] = (type == TypeOf_Variant) ? arguments[i] : Cast(arguments[i], type);
-        }
-    }
+		u32 numArgs = data->NumFunctionArguments;
+		for (auto i = 0; i < numArgs; ++i) {
+			if (i >= numArguments) {
+				finalArguments[i] = Variant_Empty;
+			}
+			else {
+				auto type = data->FunctionArgumentTypes[i];
+				finalArguments[i] = (type == TypeOf_Variant) ? arguments[i] : Cast(arguments[i], type);
+			}
+		}
 
-    if(numArguments < numArgs) {
-        Log(f, LogSeverity_Error, "Insufficient function arguments provided when calling %s", GetDebugName(f));
-        return Variant_Empty;
-    }
+		if (numArguments < numArgs) {
+			Log(f, LogSeverity_Error, "Insufficient function arguments provided when calling %s", GetDebugName(f));
+			return Variant_Empty;
+		}
+
+		numArguments = numArgs;
+		arguments = finalArguments;
+	}*/
+    
 
 #ifdef PROFILE
     ProfileStart(GetName(f), 100.0);
 #endif
-    auto caller = (FunctionCallerType)data->FunctionCaller;
-
+    
     callStackCount++;
-    auto result = caller(
-            f,
-            numArgs,
-            finalArguments
+    auto result = ((FunctionCallerType)data->FunctionCaller)(
+            data->FunctionPtr,
+			arguments
     );
     callStackCount--;
 
@@ -147,16 +163,16 @@ struct ProfileEntry {
 std::vector<ProfileEntry> profileEntries;
 
 API_EXPORT void ProfileStart(StringRef tag, double thresholdMsecs) {
-    ProfileEntry ent;
+    /*ProfileEntry ent;
     clock_gettime(CLOCK_MONOTONIC, &ent.start);
     ent.tag = tag;
     ent.threshold = thresholdMsecs;
 
-    profileEntries.push_back(ent);
+    profileEntries.push_back(ent);*/
 }
 
 API_EXPORT void ProfileEnd() {
-    struct timespec ts_end;
+    /*struct timespec ts_end;
     clock_gettime(CLOCK_MONOTONIC, &ts_end);
 
     auto entry = profileEntries[profileEntries.size()-1];
@@ -167,7 +183,7 @@ API_EXPORT void ProfileEnd() {
 
     if(diff > entry.threshold) {
         Log(0, LogSeverity_Warning, "Function took too long and might cause frame spikes! %s took %.2f milliseconds!", entry.tag, diff);
-    }
+    }*/
 }
 
 void __InitializeFunction() {
@@ -183,39 +199,30 @@ void __InitializeFunction() {
     SetComponentSize(component, sizeof(FunctionArgument));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
     __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component, 0, PropertyKind_Value);
-
-    component = ComponentOf_NativeFunction();
-    AddComponent(component, ComponentOf_Component());
-    SetComponentSize(component, sizeof(NativeFunction));
-    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-
+	
     RegisterCommonSignatures();
 }
 
 int __ArgStackOffset(int value) {
     int val = 0;
-    auto offset = ((char*)&value - (char*)&val);
+    auto offset = (s32)((char*)&value - (char*)&val);
     return offset;
 }
 
-API_EXPORT Type GetFunctionReturnTypeByIndex(u32 functionIndex) {
-    auto data = (Function*) GetComponentBytes(ComponentOf_Function(), functionIndex);
-    return data->FunctionReturnType;
-}
-
 __PropertyCoreImpl(NativePtr, FunctionCaller, Function)
+__PropertyCoreImpl(NativePtr, FunctionPtr, Function)
+__PropertyCoreImpl(Type, FunctionReturnType, Function)
+__PropertyCoreImpl(Type, FunctionArgumentType, FunctionArgument)
 
 BeginUnit(Function)
     BeginComponent(Function)
         RegisterProperty(Type, FunctionReturnType)
+		RegisterProperty(NativePtr, FunctionCaller)
+		RegisterProperty(NativePtr, FunctionPtr)
         RegisterArrayProperty(FunctionArgument, FunctionArguments)
     EndComponent()
 
     BeginComponent(FunctionArgument)
         RegisterProperty(Type, FunctionArgumentType)
-    EndComponent()
-
-    BeginComponent(NativeFunction)
-        // RegisterBase(Function)
     EndComponent()
 EndUnit()

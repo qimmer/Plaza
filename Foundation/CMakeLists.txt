@@ -18,6 +18,7 @@ IF(UNIX)
 ENDIF()
 
 if(MSVC)
+	include_directories(./Win32)
     target_sources(Foundation PRIVATE Foundation.def)
 endif()
 

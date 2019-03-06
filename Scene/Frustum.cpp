@@ -4,40 +4,31 @@
 
 #include <cglm/cglm.h>
 
-LocalFunction(OnValidateTransforms, void, Entity component) {
+LocalFunction(OnFrustumTransformUpdate, void, Entity component) {
     for_entity(frustum, transformData, Frustum) {
-        if(!IsDirty(frustum)) continue;
+		auto transformData = GetTransformData(frustum);
 
         auto data = GetFrustumData(frustum);
-        auto globalMat = GetTransformGlobalMatrix(frustum);
 
-        m4x4f viewMat;
-        glm_mat4_inv((vec4*)&globalMat.x.x, (vec4*)&viewMat.x.x);
-        SetFrustumViewMatrix(frustum, viewMat);
+        glm_mat4_inv((vec4*)&transformData->TransformGlobalMatrix[0].x, (vec4*)&data->FrustumViewMatrix[0].x);
+        v4f viewProjMat[4];
 
-        m4x4f viewProjMat;
-        m4x4f invViewProjMat;
-
-        glm_mat4_mul((vec4*)&data->FrustumProjectionMatrix, (vec4*)&data->FrustumViewMatrix, (vec4*)&viewProjMat);
-        glm_mat4_inv((vec4*)&viewProjMat, (vec4*)&invViewProjMat);
-
-        SetFrustumInvViewProjectionMatrix(frustum, invViewProjMat);
+        glm_mat4_mul((vec4*)&data->FrustumProjectionMatrix, (vec4*)&data->FrustumViewMatrix, (vec4*)&viewProjMat[0].x);
+        glm_mat4_inv((vec4*)&viewProjMat[0].x, (vec4*)&data->FrustumInvViewProjectionMatrix[0].x);
     }
 }
 
 BeginUnit(Frustum)
     BeginComponent(Frustum)
         RegisterBase(Transform)
-        RegisterPropertyReadOnly(m4x4f, FrustumViewMatrix)
-        RegisterPropertyReadOnly(m4x4f, FrustumInvViewProjectionMatrix)
-
-        RegisterProperty(m4x4f, FrustumProjectionMatrix)
         RegisterProperty(float, FrustumNearClip)
         RegisterProperty(float, FrustumFarClip)
     EndComponent()
 
-    RegisterSubscription(EventOf_Validate(), OnValidateTransforms, ComponentOf_Transform())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumProjectionMatrix()), Invalidate, 0)
+	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnFrustumTransformUpdate, AppLoopOf_FrustumTransformUpdate())
+
+	SetAppLoopOrder(AppLoopOf_FrustumTransformUpdate(), AppLoopOrder_FrustumTransformUpdate);
+
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumNearClip()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumFarClip()), Invalidate, 0)
 EndUnit()

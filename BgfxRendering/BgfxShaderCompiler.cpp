@@ -9,6 +9,8 @@
 #include <Core/Base64.h>
 #include <Core/Debug.h>
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -17,6 +19,11 @@
 #include <Core/Identification.h>
 #include <Rendering/ShaderCache.h>
 #include <Foundation/Invalidation.h>
+
+#ifdef _MSC_VER
+#define popen _popen
+#define pclose _pclose
+#endif
 
 static const StringRef shaderTypes[] = {
     "vertex",

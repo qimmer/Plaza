@@ -154,28 +154,28 @@ static void BindModule(duk_context *ctx, Entity module) {
         duk_push_c_function(ctx, CallFunc, DUK_VARARGS);
         duk_set_magic(ctx, -1, *(s16*)&functionIndex);
 
-        auto name = GetName(child);
+        auto name = GetUuid(child);
         duk_put_prop_string(ctx, -2, name);
     }
 
     for_children(child2, Components, module) {
         duk_push_entity(ctx, child2);
 
-        auto name = GetName(child2);
+        auto name = GetUuid(child2);
         duk_put_prop_string(ctx, -2, name);
     }
 
     for_children(child3, Properties, module) {
         duk_push_entity(ctx, child3);
 
-        auto name = GetName(child3);
+        auto name = GetUuid(child3);
         duk_put_prop_string(ctx, -2, name);
     }
 
     duk_pop(ctx); // Pop prototype
 
     // Push module function onto the global table
-    duk_put_global_string(ctx, GetName(module));
+    duk_put_global_string(ctx, GetUuid(module));
 }
 
 LocalFunction(OnJavaScriptContextAdded, void, Entity component, Entity context) {
@@ -241,7 +241,7 @@ static bool EvaluateJavaScript(Entity script) {
             // in the new script we just evaluated.
 
             if(!caller || caller == CallJavaScriptFunc) {
-                auto functionName = GetName(function);
+                auto functionName = GetUuid(function);
                 if(duk_get_prop_string(data->ctx, -1, functionName) == 1) {
                     //Verbose(Verbose_JS, "%s implements %s", name, functionName);
 

@@ -15,7 +15,6 @@ struct Glyph {
 };
 
 struct Font {
-    StringRef FontCharacters;
     s32 FontAscent, FontDescent, FontLineGap;
 };
 
@@ -41,7 +40,6 @@ Unit(Font)
         Property(float, GlyphAdvance)
 
     Component(Font)
-        Property(StringRef, FontCharacters)
         Property(s32, FontAscent)
         Property(s32, FontDescent)
         Property(s32, FontLineGap)

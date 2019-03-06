@@ -61,9 +61,9 @@ void __InitModule_Core (Entity module) {
     RegisterUnit(Module)
     RegisterUnit(Component)
     RegisterUnit(Enum)
+	RegisterUnit(Function)
     RegisterUnit(Property)
     RegisterUnit(Event)
-    RegisterUnit(Function)
     RegisterUnit(Entity)
     RegisterUnit(Date)
     RegisterUnit(Debug)
@@ -75,7 +75,6 @@ void __InitModule_Core (Entity module) {
 
     AddChild(PropertyOf_Modules(), GetModuleRoot(), module, true);
     SetOwner(module, GetModuleRoot(), PropertyOf_Modules());
-    SetName(module, "Core");
 
     SetModuleSourcePath(module, __FILE__);
     SetModuleVersion(module, __DATE__ " " __TIME__);

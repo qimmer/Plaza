@@ -318,15 +318,6 @@ BeginUnit(Layout)
         RegisterProperty(v2i, LayoutSpacing)
         RegisterPropertyEnum(u8, LayoutMode, LayoutMode)
         RegisterArrayProperty(LayoutChildOrdering, LayoutChildOrder)
-
-        ComponentTemplate({
-            "LayoutChildOrder": [
-                {
-                  "LayoutChildOrderingProperty": "Property.Children"
-                }
-            ]
-        })
-
     EndComponent()
     BeginComponent(LayoutChild)
         RegisterProperty(v2f, LayoutChildWeight)

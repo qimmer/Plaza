@@ -2,7 +2,7 @@
 // Created by Kim on 23/06/2018.
 //
 
-#include <Core/Types.h>
+#include <Core/NativeUtils.h>
 #include "Debug.h"
 
 static StringRef typeNames[] = {
@@ -29,10 +29,7 @@ static StringRef typeNames[] = {
         "v2f",
         "v3f",
         "v4f",
-
-        "m3x3f",
-        "m4x4f",
-
+		
         "Entity",
         "Type",
 
@@ -74,10 +71,7 @@ API_EXPORT u32 GetTypeSize(Type type) {
         sizeof(v2f),
         sizeof(v3f),
         sizeof(v4f),
-
-        sizeof(m3x3f),
-        sizeof(m4x4f),
-
+		
         sizeof(Entity),
         sizeof(Type),
 
@@ -123,10 +117,7 @@ API_EXPORT u32 GetTypeAlignment(Type type) {
             alignof(v2f),
             alignof(v3f),
             alignof(v4f),
-
-            alignof(m3x3f),
-            alignof(m4x4f),
-
+			
             alignof(Entity),
             alignof(Type),
 

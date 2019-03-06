@@ -20,7 +20,12 @@ BeginUnit(Panel)
         ComponentTemplate({
             "$components": ["Component.Widget"],
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.PanelStyleMesh}",
-            "LayoutPadding": "{SceneNodeScene.SceneStyle.PanelStylePadding}"
+            "LayoutPadding": "{SceneNodeScene.SceneStyle.PanelStylePadding}",
+              "LayoutChildOrder": [
+              {
+                  "LayoutChildOrderingProperty": "Property.Children"
+              }
+              ]
         })
     EndComponent()
 
@@ -35,7 +40,12 @@ BeginUnit(Panel)
         ComponentTemplate({
             "$components": ["Component.Widget"],
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.WellStyleMesh}",
-            "LayoutPadding": "{SceneNodeScene.SceneStyle.WellStylePadding}"
+            "LayoutPadding": "{SceneNodeScene.SceneStyle.WellStylePadding}",
+              "LayoutChildOrder": [
+              {
+                  "LayoutChildOrderingProperty": "Property.Children"
+              }
+              ]
         })
     EndComponent()
 
@@ -50,7 +60,12 @@ BeginUnit(Panel)
         ComponentTemplate({
             "$components": ["Component.Widget"],
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.ItemWellStyleMesh}",
-            "LayoutPadding": "{SceneNodeScene.SceneStyle.ItemWellStylePadding}"
+            "LayoutPadding": "{SceneNodeScene.SceneStyle.ItemWellStylePadding}",
+              "LayoutChildOrder": [
+              {
+                  "LayoutChildOrderingProperty": "Property.Children"
+              }
+              ]
         })
     EndComponent()
 EndUnit()

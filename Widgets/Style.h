@@ -9,6 +9,7 @@
 
 struct Style {
     Entity StyleSheet;
+    Entity StyleIconFont;
 };
 
 struct StyledScene {
@@ -19,6 +20,7 @@ Unit(Style)
     Component(Style)
         ChildProperty(TextureAtlas, StyleSheet)
         ArrayProperty(Font, StyleFonts)
+        ReferenceProperty(Font, StyleIconFont)
 
     Component(StyledScene)
         ReferenceProperty(Style, SceneStyle)

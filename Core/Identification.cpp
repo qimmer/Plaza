@@ -57,11 +57,12 @@ API_EXPORT StringRef CalculateEntityPath(Entity entity, bool preferNamesToIndice
         }
 
         auto ownerPropertyKind = GetPropertyKind(ownerProperty);
+        auto ownerPropertyName = strrchr(GetUuid(ownerProperty), '.') + 1;
 
         char elementName[PathMax];
         switch(ownerPropertyKind) {
             case PropertyKind_Child:
-                snprintf(elementName, PathMax, "%s", GetName(ownerProperty));
+                snprintf(elementName, PathMax, "%s", ownerPropertyName);
                 entity = owner;
                 break;
             case PropertyKind_Array:
@@ -69,17 +70,14 @@ API_EXPORT StringRef CalculateEntityPath(Entity entity, bool preferNamesToIndice
                 unsigned long index = -1;
                 u32 count = 0;
                 auto elements = GetArrayPropertyElements(ownerProperty, owner, &count);
-                for(auto i = 0; i < count; ++i) {
+                for(u32 i = 0; i < count; ++i) {
                     if(elements[i] == entity) {
                         index = i;
                         break;
                     }
                 }
-                if(preferNamesToIndices) {
-                    snprintf(elementName, PathMax, "%s/%s", GetName(ownerProperty), GetName(elements[index]));
-                } else {
-                    snprintf(elementName, PathMax, "%s/%lu", GetName(ownerProperty), index);
-                }
+
+                snprintf(elementName, PathMax, "%s[%lu]", ownerPropertyName, index);
 
                 entity = owner;
             }
@@ -98,95 +96,15 @@ API_EXPORT StringRef CalculateEntityPath(Entity entity, bool preferNamesToIndice
     return Intern(finalPath);
 }
 
-API_EXPORT Entity FindEntityByName(Entity component, StringRef typeName) {
-    typeName = Intern(typeName);
-    for(auto i = 0; i < GetComponentMax(component); ++i) {
-        auto entity = GetComponentEntity(component, i);
-        if(IsEntityValid(entity) && typeName == GetName(entity)) {
-            return entity;
+API_EXPORT Entity FindEntityByName(Entity component, StringRef name) {
+    name = Intern(name);
+    for_entity(identification, data, Identification) {
+        if(name == data->Name && HasComponent(identification, component)) {
+            return identification;
         }
     }
+    
     return 0;
-}
-
-API_EXPORT Entity FindEntityByPath(StringRef path) {
-    while(path[0] == '/') path++; // Cut await leading slashes
-
-    char pathSplits[PathMax];
-    memset(pathSplits, 0, PathMax);
-    strncpy(pathSplits, path, PathMax);
-
-    auto len = strlen(pathSplits);
-
-    // Split path into elements
-    for(auto i = 0; i < len; ++i) {
-        if(pathSplits[i] == '/') pathSplits[i] = '\0';
-    }
-
-    auto root = GetModuleRoot();
-    Variant currentEntity = MakeVariant(Entity, root);
-    Entity currentArrayProperty = 0;
-
-    char *element = pathSplits;
-    while(element < pathSplits + len) {
-        auto elementLength = strlen(element);
-        auto internedElement = Intern(element);
-
-        if(currentArrayProperty != 0) { // Path element is a name of one child element of the current array property
-            u32 childCount = 0;
-            auto children = GetArrayPropertyElements(currentArrayProperty, currentEntity.as_Entity, &childCount);
-
-            for(auto i = 0; i < childCount; ++i) {
-                if(internedElement == GetName(children[i])) {
-                    currentArrayProperty = 0;
-                    currentEntity.as_Entity = children[i];
-                    break;
-                }
-            }
-
-            if(currentArrayProperty) { // If still set, no matching child found by name. Try parse element as index
-                char *endptr = NULL;
-                auto index = strtol(element, &endptr, 10);
-                if (element != endptr && index < childCount) {
-                    currentArrayProperty = 0;
-                    currentEntity.as_Entity = children[index];
-                }
-            }
-
-            if(currentArrayProperty) { // If still set, we did not find a matching child
-                return 0;
-            }
-        } else { // Path element is a property of the current entity
-            auto foundProperty = FindEntityByName(ComponentOf_Property(), element);
-
-            if(!IsEntityValid(foundProperty)) {
-                Log(0, LogSeverity_Warning, "Property '%s' not found.", element);
-                return 0;
-            }
-
-            switch(GetPropertyKind(foundProperty)) {
-                case PropertyKind_Child:
-                    currentEntity = GetPropertyValue(foundProperty, currentEntity.as_Entity);
-                    if(!IsEntityValid(currentEntity.as_Entity)) {
-                        Log(0, LogSeverity_Warning, "Entity '%s' has no %s.", GetName(currentEntity.as_Entity), element);
-                        return 0;
-                    }
-                    break;
-                case PropertyKind_Array:
-                    currentArrayProperty = foundProperty;
-                    break;
-            }
-        }
-
-        element += elementLength + 1;
-    }
-
-    if(currentArrayProperty != 0) {
-        Log(0, LogSeverity_Error, "Incomplete entity path: Path '%s' ended with array property.", path);
-        return 0;
-    }
-
-    return currentEntity.as_Entity;
 }
 
 
@@ -221,37 +139,7 @@ API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relative
 
 void __InitializeNode() {
     auto component = ComponentOf_Identification();
-    __Property(PropertyOf_Name(), offsetof(Identification, Name), sizeof(Identification::Name), TypeOf_StringRef,  component, 0, 0);
     __Property(PropertyOf_Uuid(), offsetof(Identification, Uuid), sizeof(Identification::Uuid), TypeOf_StringRef,  component, 0, 0);
-}
-
-API_EXPORT StringRef GetName(Entity entity)  {
-    auto data = GetIdentificationData(entity);
-	if (!data) {
-		return "";
-	}
-
-    return data->Name;
-}
-
-API_EXPORT void SetName(Entity entity, StringRef name) {
-    AddComponent(entity, ComponentOf_Identification());
-
-    GetUuid(entity); // Provoke eventual new Guid
-
-    auto data = GetIdentificationData(entity);
-
-    name = Intern(name);
-
-    if(data->Name != name) {
-        auto oldName = data->Name;
-
-        data->Name = AddStringRef(name);
-        EmitChangedEvent(entity, PropertyOf_Name(), GetPropertyData(PropertyOf_Name()), MakeVariant(StringRef, oldName), MakeVariant(StringRef, name));
-
-        ReleaseStringRef(oldName);
-
-    }
 }
 
 API_EXPORT StringRef GetUuid(Entity entity)  {
@@ -302,11 +190,10 @@ API_EXPORT void SetUuid(Entity entity, StringRef value) {
         }
 
         uuidTable[value] = entity;
-
-        EmitChangedEvent(entity, PropertyOf_Uuid(), GetPropertyData(PropertyOf_Uuid()), MakeVariant(StringRef, data->Uuid), MakeVariant(StringRef, value));
-
         ReleaseStringRef(oldValue);
         data->Uuid = AddStringRef(value);
+
+        EmitChangedEvent(entity, PropertyOf_Uuid(), GetPropertyData(PropertyOf_Uuid()), MakeVariant(StringRef, oldValue), MakeVariant(StringRef, value));
     }
 }
 
@@ -357,7 +244,6 @@ LocalFunction(OnUuidChanged, void, Entity entity, StringRef oldValue, StringRef 
 
 BeginUnit(Identification)
     BeginComponent(Identification)
-        RegisterProperty(StringRef, Name)
         RegisterProperty(StringRef, Uuid)
     EndComponent()
 

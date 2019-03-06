@@ -73,14 +73,6 @@ typedef struct {
 } v4i;
 
 typedef struct {
-    v3f x, y, z;
-} m3x3f;
-
-typedef struct ALIGN(16) {
-    v4f x, y, z, w;
-} m4x4f;
-
-typedef struct {
     union {
         struct {
             u8 r, g, b, a;
@@ -134,8 +126,6 @@ typedef struct {
     };
 } rgb32;
 
-static const m4x4f m4x4f_Identity = { {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1} };
-static const m3x3f m3x3f_Identity = { {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
 static const v4f v4f_Zero = {0, 0, 0, 0};
 static const v4f v4f_Identity = {0, 0, 0, 1};
 static const v4f v4f_One = {1, 1, 1, 1};
@@ -168,23 +158,20 @@ enum {
     TypeOf_v2f = 17,
     TypeOf_v3f = 18,
     TypeOf_v4f = 19,
+	
+    TypeOf_Entity = 20,
+    TypeOf_Type = 21,
 
-    TypeOf_m3x3f = 20,
-    TypeOf_m4x4f = 21,
+    TypeOf_rgba8 = 22,
+    TypeOf_rgb8 = 23,
 
-    TypeOf_Entity = 22,
-    TypeOf_Type = 23,
+    TypeOf_rgba32 = 24,
+    TypeOf_rgb32 = 25,
 
-    TypeOf_rgba8 = 24,
-    TypeOf_rgb8 = 25,
+    TypeOf_Date = 26,
 
-    TypeOf_rgba32 = 26,
-    TypeOf_rgb32 = 27,
-
-    TypeOf_Date = 28,
-
-    TypeOf_Variant = 29,
-    TypeOf_NativePtr = 30,
+    TypeOf_Variant = 27,
+    TypeOf_NativePtr = 28,
 
     TypeOf_MAX,
 };
@@ -215,9 +202,6 @@ Type FindType(StringRef typeName);
 #define v2f_Default {0.0f, 0.0f}
 #define v3f_Default {0.0f, 0.0f, 0.0f}
 #define v4f_Default {0.0f, 0.0f, 0.0f, 0.0f}
-
-#define m3x3f_Default {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}}
-#define m4x4f_Default {{0.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.0f}};
 
 #define Entity_Default 0
 #define Type_Default 0

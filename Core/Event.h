@@ -4,6 +4,24 @@
 #include <Core/NativeUtils.h>
 #include <Core/Variant.h>
 
+struct Subscription {
+    Entity SubscriptionHandler, SubscriptionEvent, SubscriptionSender;
+};
+
+struct Event {
+};
+
+struct EventArgument {
+    u32 EventArgumentOffset;
+    u8 EventArgumentType;
+};
+
+typedef eastl::vector<Subscription> SubscriptionCacheVector;
+
+SubscriptionCacheVector& GetSubscriptionCache(u32 eventEntityIndex);
+
+#include <Core/Component.h>
+
 Unit(Event)
     Component(EventArgument)
         __PropertyCore(EventArgument, Type, EventArgumentType)

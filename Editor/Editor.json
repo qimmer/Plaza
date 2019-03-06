@@ -1,10 +1,16 @@
 {
     "Children": [
         {
+            "$include": "file://Editor/Widgets/EntityLabel.json"
+        },
+        {
+            "$include": "file://Editor/Components/Command.json"
+        },
+        {
             "$include": "file://Editor/Styles/Default.json"
         },
         {
-            "$include": "file://Editor/Widgets/EntityLabel.json"
+            "$include": "file://Editor/Commands/Quit.json"
         }
     ],
     "EditorMainFrame": {

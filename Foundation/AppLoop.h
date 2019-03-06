@@ -5,7 +5,7 @@
 #ifndef PLAZA_APPLOOP_H
 #define PLAZA_APPLOOP_H
 
-#include <Core/Event.h>
+#include <Core/NativeUtils.h>
 
 struct AppLoop {
     u64 AppLoopFrame;

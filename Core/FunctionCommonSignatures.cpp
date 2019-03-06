@@ -41,8 +41,6 @@ void RegisterCommonSignatures() {
     RegisterTypeInvoker(rgba8)
     RegisterTypeInvoker(rgb32)
     RegisterTypeInvoker(rgba32)
-    RegisterTypeInvoker(m3x3f)
-    RegisterTypeInvoker(m4x4f)
     RegisterTypeInvoker(Date)
     RegisterTypeInvoker(Variant)
 }

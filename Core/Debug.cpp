@@ -2,8 +2,8 @@
 // Created by Kim Johannsen on 21/12/2017.
 //
 
-#include <Core/Debug.h>
 #include <Core/NativeUtils.h>
+#include <Core/Debug.h>
 #include <Core/Event.h>
 
 #include <stdio.h>
@@ -33,9 +33,6 @@
 #include <EASTL/map.h>
 #include <EASTL/fixed_string.h>
 
-
-API_EXPORT const char* VerboseTag = NULL;
-
 struct LogMessage {
     StringRef LogMessageEntity;
     StringRef LogMessageText;
@@ -62,10 +59,14 @@ API_EXPORT void Log(Entity context, int severity, StringRef format, va_list arg)
 
     lastLogMessage = interned;
 
-#ifndef NDEBUG
+//#ifndef NDEBUG
     setbuf(stdout, 0);
     printf("%s\n", interned);
+#ifdef _MSC_VER
+	OutputDebugStringA(interned);
+	OutputDebugStringA("\n");
 #endif
+//#endif
 
     if(severity >= LogSeverity_Error) {
         DebuggerBreak();
@@ -123,7 +124,7 @@ API_EXPORT StringRef GetDebugName(Entity entity) {
 
     if(!IsEntityValid(entity)) return "<Invalid>";
 
-    auto name = GetName(entity);
+    auto name = GetUuid(entity);
 
     if(!name || name[0] == '\0') {
         name = GetUniqueEntityName(entity);
@@ -151,7 +152,7 @@ static void PrintNode(int level, Entity entity) {
 
     for_entity(component2, componentData2, Component) {
         if (!HasComponent(entity, component2)) continue;
-        printf("%s, ", GetName(component2));
+        printf("%s, ", GetUuid(component2));
     }
 
     printf(")\n");
@@ -161,7 +162,7 @@ static void PrintNode(int level, Entity entity) {
 
         u32 numProperties = 0;
         auto properties = GetProperties(component, &numProperties);
-        for(auto i = 0; i < numProperties; ++i) {
+        for(u32 i = 0; i < numProperties; ++i) {
             auto property = properties[i];
             auto value = GetPropertyValue(property, entity);
             switch(GetPropertyKind(property)) {
@@ -173,7 +174,7 @@ static void PrintNode(int level, Entity entity) {
                     printf("%*s%s: [\n", (level + 1) * identation, " ", GetDebugName(property));
                     u32 count = 0;
                     auto elements = GetArrayPropertyElements(property, entity, &count);
-                    for(auto j = 0; j < count; ++j) {
+                    for(u32 j = 0; j < count; ++j) {
                         printf("%*s [%d]: ", (level + 2) * identation, " ", j);
                         PrintNode(level+2, elements[j]);
                     }

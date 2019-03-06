@@ -28,12 +28,8 @@ static void Split(char* string, char delimeter, StringRef* left, StringRef* righ
     *right = delimeterLocation ? (delimeterLocation + 1) : "";
 }
 
-static bool ParseBinding(Entity binding, StringRef sourceBindingString) {
-    AddComponent(binding, ComponentOf_Binding());
-
-    auto data = GetBindingData(binding);
-
-    SetNumBindingIndirections(binding, 0);
+static bool ParseBinding(Entity entity, Entity targetProperty, StringRef sourceBindingString) {
+    Vector<Entity, 16> indirections;
 
     auto len = strlen(sourceBindingString);
     auto buffer = (char*)alloca(len + 1);
@@ -52,51 +48,43 @@ static bool ParseBinding(Entity binding, StringRef sourceBindingString) {
         auto property = FindEntityByUuid(propertyUuid);
 
         if(!IsEntityValid(property)) {
-            Error(binding, "Cannot find property with Uuid '%s'.", propertyUuid);
+            Error(0, "Cannot find property with Uuid '%s'.", propertyUuid);
             return false;
         }
 
-        auto indirection = AddBindingIndirections(binding);
-        SetBindingIndirectionProperty(indirection, property);
+        indirections.push_back(property);
     }
     while(propertyName > propertiesString);
 
     if(*sourceEntityUuid) {
-        auto reference = AddUnresolvedReferences(binding);
-        SetUnresolvedReferenceUuid(reference, sourceEntityUuid);
-        SetUnresolvedReferenceProperty(reference, PropertyOf_BindingSourceEntity());
+        auto sourceEntity = FindEntityByUuid(sourceEntityUuid);
+        if(!sourceEntity) {
+            Error(0, "Cannot find source entity with Uuid '%s'.", sourceEntityUuid);
+            return false;
+        }
+
+        Bind(entity, targetProperty, sourceEntity, indirections.data(), indirections.size());
     } else {
         // If no '@', we use self as our source entity
-        SetBindingSourceEntity(binding, 0);
+        Bind(entity, targetProperty, 0, indirections.data(), indirections.size());
     }
 
     return true;
 }
 
-API_EXPORT bool Bind(Entity entity, Entity property, StringRef sourceBindingString) {
-    // First, remove eventual existing binding of this property
-    for_children(existingBinding, Bindings, entity) {
-        auto data = GetBindingData(existingBinding);
-        if(data->BindingTargetProperty == property) {
-            return ParseBinding(existingBinding, sourceBindingString);
-        }
-    }
-
-    auto binding = AddBindings(entity);
-    SetBindingTargetProperty(binding, property);
-
-    return ParseBinding(binding, sourceBindingString);
+API_EXPORT bool BindByString(Entity entity, Entity property, StringRef sourceBindingString) {
+    return ParseBinding(entity, property, sourceBindingString);
 }
 
-API_EXPORT StringRef GetBindingString(Entity binding) {
+API_EXPORT StringRef GetBindingString(const Binding& binding) {
     static std::stringstream ss;
     ss.str(std::string());
 
     ss << '{';
-    u32 numIndirections = 0;
-    auto indirections = GetBindingIndirections(binding, &numIndirections);
+
+    auto numIndirections = binding.BindingIndirections.size();
     for(auto i = 0; i < numIndirections; ++i) {
-        auto property = GetBindingIndirectionProperty(indirections[numIndirections - i - 1]);
+        auto property = binding.BindingIndirections[numIndirections - i - 1].IndirectionProperty;
         ss << (strrchr(GetUuid(property), '.') + 1);
 
         if(i != (numIndirections - 1)) {
@@ -104,9 +92,8 @@ API_EXPORT StringRef GetBindingString(Entity binding) {
         }
     }
 
-    auto sourceEntity = GetBindingSourceEntity(binding);
-    if(IsEntityValid(sourceEntity)) {
-        ss << '@' << GetUuid(sourceEntity);
+    if(IsEntityValid(binding.BindingSourceEntity)) {
+        ss << '@' << GetUuid(binding.BindingSourceEntity);
     }
 
     ss << '}';

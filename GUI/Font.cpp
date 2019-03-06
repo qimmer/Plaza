@@ -139,7 +139,7 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
     auto data = GetFontData(font);
     auto textureSize = GetTextureSize2D(font);
 
-    auto end = text + strlen(text);
+    auto end = text + (text ? strlen(text) : 0);
     u32 numVertices = 0;
 
     *size = {0.0f, 0.0f};
@@ -186,27 +186,6 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
     return numVertices;
 }
 
-LocalFunction(AddFontCharacterGlyphs, void, Entity font, StringRef oldCharacters, StringRef newCharacters) {
-    while(*newCharacters) {
-        Glyph *glyphData = NULL;
-        for_children(glyph, FontGlyphs, font) {
-            glyphData = GetGlyphData(glyph);
-            if (glyphData->GlyphCode == *newCharacters) {
-                break;
-            }
-            glyphData = NULL;
-        }
-
-        if (!glyphData) {
-            auto glyph = AddFontGlyphs(font);
-            SetGlyphCode(glyph, *newCharacters);
-            Invalidate(font);
-        }
-
-        newCharacters++;
-    }
-}
-
 BeginUnit(Font)
     BeginComponent(Glyph)
         RegisterProperty(u32, GlyphCode)
@@ -219,13 +198,11 @@ BeginUnit(Font)
     BeginComponent(Font)
         RegisterBase(Texture2D)
         RegisterArrayProperty(Glyph, FontGlyphs)
-        RegisterProperty(StringRef, FontCharacters)
         RegisterProperty(s32, FontAscent)
         RegisterProperty(s32, FontDescent)
         RegisterProperty(s32, FontLineGap)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontCharacters()), AddFontCharacterGlyphs, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontGlyphs()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_GlyphCode()), InvalidateParent, 0)
 EndUnit()

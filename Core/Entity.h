@@ -25,6 +25,11 @@ Unit(Entity)
         return entity;
     }
 
+	inline bool IsEntityValid(Entity entity) {
+		//auto index = GetEntityIndex(entity);
+		return entity;// && Generations.size() > index && Generations[index] == GetEntityGeneration(entity);
+	}
+
     Event(EntityDestroyed)
 
 #endif

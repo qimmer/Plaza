@@ -9,24 +9,14 @@
 
 Unit(Identification)
     Component(Identification)
-        static StringRef __Name__Meta = "";
-        Declare(Property, Name)
-        struct NameChangedArgs { Entity ChangedEntity; StringRef OldValue; StringRef NewValue; };
-        Event(NameChanged)
-        StringRef GetName(Entity entity);
-        void SetName(Entity entity, StringRef value);
         static StringRef __Uuid__Meta = "";
         Declare(Property, Uuid)
         struct UuidChangedArgs { Entity ChangedEntity; StringRef OldValue; StringRef NewValue; };
-        Event(UuidChanged)
         StringRef GetUuid(Entity entity);
         void SetUuid(Entity entity, StringRef value);
 
-StringRef CalculateEntityPath(Entity entity, bool preferNameToIndices);
 StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo, bool preferNameToIndex);
-Entity FindEntityByPath(StringRef path);
 Entity FindEntityByUuid(StringRef uuid);
-Entity FindEntityByName(Entity component, StringRef typeName);
 
 bool GetParentPath(StringRef childPath, u32 bufLen, char *parentPath);
 StringRef CreateGuidFromPath(StringRef path);

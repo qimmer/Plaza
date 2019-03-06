@@ -36,9 +36,6 @@ static bool Deserialize(Entity texture) {
     StreamRead(texture, fontDataSize, fontData);
     StreamClose(texture);
 
-    u32 numGlyphs = 0;
-    auto glyphs = GetFontGlyphs(texture, &numGlyphs);
-
     auto pixel_height = Max(GetTrueTypeFontSize(texture), 4);
 
     float scale;
@@ -47,6 +44,25 @@ static bool Deserialize(Entity texture) {
     f.userdata = NULL;
     if (!stbtt_InitFont(&f, fontData, 0))
         return false;
+
+    u32 numGlyphs = 0;
+    for_children(fontRange, TrueTypeFontRanges, texture) {
+        auto unicodeRange = GetTrueTypeUnicodeRange(fontRange);
+        numGlyphs += GetUnicodeRangeEnd(unicodeRange) - GetUnicodeRangeStart(unicodeRange);
+    }
+
+    SetNumFontGlyphs(texture, numGlyphs);
+    auto glyphs = GetFontGlyphs(texture, &numGlyphs);
+
+    auto glyphIndex = 0;
+    for_children(fontRange2, TrueTypeFontRanges, texture) {
+        auto unicodeRange = GetTrueTypeUnicodeRange(fontRange2);
+
+        for(auto unicode = GetUnicodeRangeStart(unicodeRange); unicode < GetUnicodeRangeEnd(unicodeRange); ++unicode) {
+            SetGlyphCode(glyphs[glyphIndex], unicode);
+            glyphIndex++;
+        }
+    }
 
     scale = stbtt_ScaleForPixelHeight(&f, pixel_height);
 
@@ -62,9 +78,11 @@ static bool Deserialize(Entity texture) {
         for (i=0; i < numGlyphs; ++i) {
             int advance, lsb, x0,y0,x1,y1,gw,gh;
             auto glyphData = GetGlyphData(glyphs[i]);
-            int g = stbtt_FindGlyphIndex(&f, glyphData->GlyphCode);
-            stbtt_GetGlyphHMetrics(&f, g, &advance, &lsb);
-            stbtt_GetGlyphBitmapBox(&f, g, scale,scale, &x0,&y0,&x1,&y1);
+
+            auto glyphIndex = stbtt_FindGlyphIndex(&f, glyphData->GlyphCode);
+
+            stbtt_GetGlyphHMetrics(&f, glyphIndex, &advance, &lsb);
+            stbtt_GetGlyphBitmapBox(&f, glyphIndex, scale,scale, &x0,&y0,&x1,&y1);
             gw = x1-x0;
             gh = y1-y0;
 
@@ -89,9 +107,10 @@ static bool Deserialize(Entity texture) {
     for (i=0; i < numGlyphs; ++i) {
         int advance, lsb, x0,y0,x1,y1,gw,gh;
         auto glyphData = GetGlyphData(glyphs[i]);
-        int g = stbtt_FindGlyphIndex(&f, glyphData->GlyphCode);
-        stbtt_GetGlyphHMetrics(&f, g, &advance, &lsb);
-        stbtt_GetGlyphBitmapBox(&f, g, scale,scale, &x0,&y0,&x1,&y1);
+        auto glyphIndex = stbtt_FindGlyphIndex(&f, glyphData->GlyphCode);
+
+        stbtt_GetGlyphHMetrics(&f, glyphIndex, &advance, &lsb);
+        stbtt_GetGlyphBitmapBox(&f, glyphIndex, scale,scale, &x0,&y0,&x1,&y1);
         gw = x1-x0;
         gh = y1-y0;
 
@@ -174,9 +193,10 @@ static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
         for (i=0; i < numGlyphs; ++i) {
             int advance, lsb, x0,y0,x1,y1,gw,gh;
             auto glyphData = GetGlyphData(glyphs[i]);
-            int g = stbtt_FindGlyphIndex(&f, glyphData->GlyphCode);
-            stbtt_GetGlyphHMetrics(&f, g, &advance, &lsb);
-            stbtt_GetGlyphBitmapBox(&f, g, scale,scale, &x0,&y0,&x1,&y1);
+            auto glyphIndex = stbtt_FindGlyphIndex(&f, glyphData->GlyphCode);
+
+            stbtt_GetGlyphHMetrics(&f, glyphIndex, &advance, &lsb);
+            stbtt_GetGlyphBitmapBox(&f, glyphIndex, scale,scale, &x0,&y0,&x1,&y1);
             gw = x1-x0;
             gh = y1-y0;
             if (x + gw + 1 >= textureSize.x)
@@ -188,7 +208,7 @@ static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
 
             Assert(entity, x+gw < textureSize.x);
             Assert(entity, y+gh < textureSize.y);
-            stbtt_MakeGlyphBitmap(&f, pixelsA+x+y*textureSize.x, gw,gh,textureSize.y, scale,scale, g);
+            stbtt_MakeGlyphBitmap(&f, pixelsA+x+y*textureSize.x, gw,gh,textureSize.y, scale,scale, glyphIndex);
 
             x = x + gw + 1;
             if (y+gh+1 > bottom_y)
@@ -202,24 +222,43 @@ static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
 }
 
 LocalFunction(ReloadFont, void, Entity font) {
-    auto argument = MakeVariant(Entity, font);
-    FireEventFast(EventOf_StreamContentChanged(), 1, &argument);
+	Deserialize(font);
 }
 
-LocalFunction(ReloadGlyph, void, Entity glyph) {
-    auto font = GetOwner(glyph);
-    auto argument = MakeVariant(Entity, font);
-    FireEventFast(EventOf_StreamContentChanged(), 1, &argument);
+LocalFunction(OnRangeChanged, void, Entity entity) {
+    ReloadFont(GetOwner(entity));
 }
+
+LocalFunction(OnUnicodeRangeChanged, void, Entity entity) {
+    for_entity(range, data, TrueTypeFontRange) {
+        if(data->TrueTypeUnicodeRange == entity) {
+            OnRangeChanged(range);
+        }
+    }
+}
+
 
 BeginUnit(StbTrueTypePersistance)
+    BeginComponent(UnicodeRange)
+        RegisterProperty(u16, UnicodeRangeStart)
+        RegisterProperty(u16, UnicodeRangeEnd)
+    EndComponent()
+
+    BeginComponent(TrueTypeFontRange)
+        RegisterReferenceProperty(UnicodeRange, TrueTypeUnicodeRange)
+    EndComponent()
+
     BeginComponent(TrueTypeFont)
         RegisterProperty(float, TrueTypeFontSize)
         RegisterChildProperty(Font, TrueTypeFontFont)
+        RegisterArrayProperty(TrueTypeFontRange, TrueTypeFontRanges)
     EndComponent()
+
     RegisterStreamCompressor(ComponentOf_Font(), "font/ttf")
     RegisterSerializer(TTF, "font/ttf")
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TrueTypeFontSize()), ReloadFont, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_GlyphCode()), ReloadGlyph, 0)
+	RegisterSubscription(EventOf_Validate(), ReloadFont, ComponentOf_Font())
+	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UnicodeRangeStart()), OnUnicodeRangeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UnicodeRangeEnd()), OnUnicodeRangeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TrueTypeUnicodeRange()), OnRangeChanged, 0)
 EndUnit()

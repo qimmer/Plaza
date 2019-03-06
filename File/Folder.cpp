@@ -45,12 +45,12 @@ API_EXPORT void ScanFolder(Entity entity) {
             switch(ent_stat.st_mode & S_IFMT) {
                 case S_IFDIR:
                     entryEntity = AddFolderSubfolders(entity);
-                    SetName(entryEntity, ent->d_name);
+                    //SetName(entryEntity, ent->d_name);
                     SetFolderPath(entryEntity, entryPath);
                     break;
                 case S_IFREG:
                     entryEntity = AddFolderFiles(entity);
-                    SetName(entryEntity, ent->d_name);
+                    //SetName(entryEntity, ent->d_name);
                     SetStreamPath(entryEntity, entryPath);
                     break;
             }

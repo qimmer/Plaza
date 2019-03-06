@@ -5,7 +5,7 @@
 #ifndef PLAZA_FOUNDATION_NATIVEUTILS_H
 #define PLAZA_FOUNDATION_NATIVEUTILS_H
 
-#include <Core/Debug.h>
+#include <Core/NativeUtils.h>
 #include <Foundation/Stream.h>
 #include <Foundation/PersistancePoint.h>
 
@@ -14,7 +14,6 @@
         auto protocol = GetUniqueEntity("Protocol." #COMPONENT, NULL );\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
         AddChild(PropertyOf_ModuleStreamProtocols(), module, protocol, true); \
-        SetName(protocol, #COMPONENT "Protocol");\
         SetStreamProtocolIdentifier(protocol, IDENTIFIER); \
         SetStreamProtocolComponent(protocol, ComponentOf_ ## COMPONENT ()); \
         auto protocolData = GetStreamProtocolData(protocol); \
@@ -34,7 +33,6 @@
         auto compressor = GetUniqueEntity("Compressor." #COMPONENT, NULL );\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
         AddChild(PropertyOf_ModuleStreamCompressors(), module, compressor, true); \
-        SetName(compressor, #COMPONENT "Compressor");\
         SetStreamCompressorMimeType(compressor, MIMETYPE); \
         auto compressorData = GetStreamCompressorData(compressor); \
         compressorData->CompressHandler = Compress; \
@@ -46,7 +44,6 @@
         auto serializer = GetUniqueEntity("Serializer." #NAME, NULL);\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
         AddChild(PropertyOf_ModuleSerializers(), module, serializer, true); \
-        SetName(serializer, #NAME "Serializer");\
         SetSerializerMimeType(serializer, MIMETYPE); \
         auto serializerData = GetSerializerData(serializer); \
         serializerData->SerializeHandler = Serialize; \

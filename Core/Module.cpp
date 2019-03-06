@@ -39,7 +39,6 @@ API_EXPORT Entity GetModuleRoot() {
         root = CreateEntity();
         AddComponent(root, ComponentOf_ModuleRoot());
         SetUuid(root, "ModuleRoot");
-        SetName(root, "ModuleRoot");
     }
     return root;
 }
@@ -101,7 +100,8 @@ static Entity LoadModuleWin32(StringRef dllPath) {
     for(i=0;i<pIED->NumberOfNames;i++)
     {
         auto name = (char*)hModule+Name[i];
-        if(memcmp(name + 4, "ModuleOf_", 9) == 0) {
+		auto moduleLocation = strstr(name, "ModuleOf_");
+        if(moduleLocation) {
             auto procAddress = (PVOID)((LPBYTE)hModule+Address[Ordinal[i]]);
             auto module = ((ModuleOfSignature)procAddress)();
 

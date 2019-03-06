@@ -2,6 +2,7 @@
 // Created by Kim Johannsen on 07/01/2018.
 //
 
+#include <Core/NativeUtils.h>
 #include <Foundation/AppLoop.h>
 #include <Core/Debug.h>
 #include <Core/Strings.h>

@@ -89,10 +89,6 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
         case TypeOf_rgba32:
             value = Cast(value, TypeOf_v4f);
             break;
-        case TypeOf_m3x3f:
-        case TypeOf_m4x4f:
-            value = Cast(value, TypeOf_m4x4f);
-            break;
         case TypeOf_Entity:
             value = Cast(value, TypeOf_Entity);
             break;
@@ -143,7 +139,6 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
 
     auto transformData = GetTransformData(renderable);
     if(!transformData) return;
-    auto worldMatrix = transformData->TransformGlobalMatrix;
 
     if(GetHierarchiallyHidden(renderable)) return;
 
@@ -199,7 +194,7 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
        subMeshData->SubMeshPrimitiveType
     );
 
-    encoder->setTransform(&worldMatrix);
+    encoder->setTransform(&transformData->TransformGlobalMatrix[0].x);
 
     if(vertexBufferData->VertexBufferDynamic) {
         encoder->setVertexBuffer(0, bgfx::DynamicVertexBufferHandle {vertexBufferHandle}, subMeshData->SubMeshStartVertex, subMeshData->SubMeshNumVertices);
@@ -248,8 +243,7 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
     auto renderState = GetRenderPassRenderState(pass);
     auto shaderCache = GetRenderPassShaderCache(pass);
     auto clearColor = GetRenderPassClearColor(pass);
-    auto viewMat = GetFrustumViewMatrix(camera);
-    auto projMat = GetFrustumProjectionMatrix(camera);
+	auto frustumData = GetFrustumData(camera);
 
     u8 shaderProfile;
     auto rendererType = bgfx::getRendererType();
@@ -317,7 +311,7 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
             viewport.w * renderTargetSize.y
     );
 
-    bgfx::setViewTransform(viewId, &viewMat, &projMat);
+    bgfx::setViewTransform(viewId, &frustumData->FrustumViewMatrix[0].x, &frustumData->FrustumProjectionMatrix[0].x);
     bgfx::setViewMode(viewId, (bgfx::ViewMode::Enum)GetRenderPassSortMode(pass));
 
     bgfx::touch(viewId);

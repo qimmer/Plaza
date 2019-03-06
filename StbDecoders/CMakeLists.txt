@@ -9,6 +9,10 @@ target_include_directories(StbDecoders PUBLIC "..")
 
 target_link_libraries(StbDecoders Core Foundation Rendering Gui)
 
+if(MSVC)
+    target_sources(StbDecoders PRIVATE StbDecoders.def)
+endif()
+
 if(BUILD_SHARED_LIBS)
     install (TARGETS StbDecoders RUNTIME DESTINATION bin LIBRARY DESTINATION bin)
 endif()

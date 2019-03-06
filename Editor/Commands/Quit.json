@@ -1,5 +1,14 @@
 {
-    "Uuid": "Action.Quit",
-    "InvocationFunction": "Function.Quit",
-    "InvocationToggleState": "{InputStateValue@Keys.Close}"
+    "Uuid": "Command.Quit",
+    "CommandInvocation": {
+        "InvocationFunction": "Function.Quit"
+    },
+    "CommandHotKey": {
+        "HotKeyStates": [
+            {
+                "InputStateContext": "Module.Editor.EditorMainFrame",
+                "InputStateKey": "KEY_WINDOW_CLOSE"
+            }
+        ]
+    }
 }

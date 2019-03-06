@@ -1,13 +1,33 @@
 {
     "Uuid": "Style.Default",
     
+    "Children": [
+        {
+            "Uuid": "Unicode.FontAwesomeSolid",
+            "UnicodeRangeStart": 61440,
+            "UnicodeRangeEnd": 62251
+        }
+    ],
     "StyleFonts": [
         {
-            "$include": "file://Editor/Styles/tahoma.ttf",
+            "StreamPath": "file://Editor/Styles/tahoma.ttf",
             "Uuid": "Font.Tahoma",
             "TrueTypeFontSize": 14.0,
-            "FontCharacters": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+-!\"@#$%&/()=?'*\\{[]}.,:;<>| ",
-            "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT"
+            "TrueTypeFontRanges": [
+                { "TrueTypeUnicodeRange":  "Unicode.BasicLatin" }
+            ],
+            "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT",
+            "PersistancePointLoaded": true
+        },
+        {
+            "StreamPath": "file://Editor/Styles/fa-solid-900.ttf",
+            "Uuid": "Font.FontAwesome",
+            "TrueTypeFontSize": 14.0,
+            "TrueTypeFontRanges": [
+                { "TrueTypeUnicodeRange":  "Unicode.FontAwesomeSolid" }
+            ],
+            "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT",
+            "PersistancePointLoaded": true
         }
     ],
     
@@ -15,6 +35,17 @@
         "$include": "file://Editor/Styles/Default.png",
         "TextureFlag": "TextureFlag_MIN_POINT|TextureFlag_MAG_POINT",
         "TextureAtlasSubTextures": [
+            {
+                "Uuid": "Style.Default.StyleSheet.None",
+                "SubTexture2DOffset": [
+                    9,
+                    20
+                ],
+                "SubTexture2DSize": [
+                    1,
+                    1
+                ]
+            },
             {
                 "Uuid": "Style.Default.StyleSheet.Dock",
                 "SubTexture2DOffset": [
@@ -90,6 +121,17 @@
                 "SubTexture2DSize": [
                     6,
                     6
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.Item",
+                "SubTexture2DOffset": [
+                    9,
+                    2
+                ],
+                "SubTexture2DSize": [
+                    2,
+                    2
                 ]
             },
             {
@@ -209,14 +251,35 @@
         "WidgetMeshHoveredColor": [0.0, 0.0, 0.0, 1.0],
         "WidgetMeshClickedColor": [0.0, 0.0, 0.0, 1.0]
     },
+    
+    "ListItemStyleMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.Item",
+        "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.Item",
+        "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.MenuItem.Selected",
+        
+        "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.Item",
+        "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
+        "WidgetMeshClickedTexture": "Style.Default.StyleSheet.MenuItem.Selected",
+        "WidgetMeshFixedBorderWidth": 1,
+        "WidgetMeshEnabledColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshDisabledColor": [0.3, 0.3, 0.3, 1.0],
+        "WidgetMeshSelectedColor": [1.0, 1.0, 1.0, 1.0],
+        "WidgetMeshFocusedColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshHoveredColor": [0.0, 0.0, 0.0, 1.0],
+        "WidgetMeshClickedColor": [1.0, 1.0, 1.0, 1.0]
+    },
+    
     "ButtonStylePadding": [5, 3, 5, 3],
     "ButtonStyleFont": "Font.Tahoma",
     "ButtonStyleTextColor": [0.0, 0.0, 0.0, 1.0],
     
     "MainMenuStylePadding": [2, 2, 2, 2],
     "MenuItemStylePadding": [7, 2, 7, 2],
+    "ListItemStylePadding": [7, 2, 7, 2],
     
     "PanelStylePadding": [5, 5, 5, 5],
     "WellStylePadding": [5, 5, 5, 5],
-    "ItemWellStylePadding": [2, 2, 2, 2]
+    "ItemWellStylePadding": [2, 2, 2, 2],
+    
+    "StyleIconFont": "Font.FontAwesome"
 }

@@ -24,27 +24,23 @@ int main(int argc, char** argv) { \
     for(auto i = 1; i < argc; ++i) {
         auto module = LoadPlazaModule(argv[i]);
         if(IsEntityValid(module)) {
-            printf("Module '%s' Loaded from '%s'.\n", GetName(module), argv[i]);
+            printf("Module '%s' Loaded from '%s'.\n", GetUuid(module), argv[i]);
         }
     }
 
     printf("%s", "\n");
 
     s32 numFailed = 0, numSucceeded = 0;
-    for(auto i = 0; i < GetComponentMax(ComponentOf_Test()); ++i) {
-        auto entity = GetComponentEntity(ComponentOf_Test(), i);
-        if(IsEntityValid(entity)) {
-            auto argument = MakeVariant(Entity, entity);
-            auto result = CallFunction(entity, 1, &argument);
-            printf("%s %s.\n", GetName(entity), (result.as_u32 == 0) ? "Succeeded" : "Failed");
+    for_entity(entity, data, Test) {
+        auto argument = MakeVariant(Entity, entity);
+        auto result = CallFunction(entity, 1, &argument);
+        printf("%s %s.\n", GetUuid(entity), (result.as_u32 == 0) ? "Succeeded" : "Failed");
 
-            if(result.as_u32 == 0) {
-                numSucceeded++;
-            } else {
-                numFailed++;
-            }
+        if(result.as_u32 == 0) {
+            numSucceeded++;
+        } else {
+            numFailed++;
         }
-
     }
 
     printf("\nTest Results:\n=================\n%d Tests Passed\n%d Tests Failed\n=================", numSucceeded, numFailed);

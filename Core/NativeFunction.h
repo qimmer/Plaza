@@ -7,21 +7,6 @@
 
 #include "NativeUtils.h"
 
-typedef Variant(*NativeFunctionInvokerType)(
-        void *funcPtr,
-        const Variant *arguments
-);
-
-struct NativeFunction {
-    NativePtr NativeFunctionPointer;
-    NativePtr NativeFunctionInvoker;
-};
-
-Unit(NativeFunction)
-    Component(NativeFunction)
-        __PropertyCore(NativeFunction, NativePtr, NativeFunctionPointer)
-        __PropertyCore(NativeFunction, NativePtr, NativeFunctionInvoker)
-
 void RegisterFunctionSignatureImpl(NativePtr invokerFuncPtr, StringRef signature);
 void SetNativeFunctionInvokerBySignature(Entity function, StringRef signature);
 

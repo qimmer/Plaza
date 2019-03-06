@@ -19,6 +19,24 @@ struct InputContext {
     float InputContextDeadZone;
 };
 
+struct HotKey {
+    float HotKeyValue;
+};
+
+LocalFunction(OnInputStateChanged, void, Entity state) {
+    auto hotKey = GetOwner(state);
+    if(HasComponent(hotKey, ComponentOf_HotKey())) {
+        float value = 1.0f;
+        for_children(hotKeyState, HotKeyStates, hotKey) {
+            if(GetInputStateValue(hotKeyState) < 0.5f) {
+                value = 0.0f;
+            }
+        }
+
+        SetHotKeyValue(hotKey, value);
+    }
+}
+
 API_EXPORT void SetInputStateValueByKey(Entity context, u16 key, float value) {
     for_entity(inputState, data, InputState) {
         if(!data->InputStateContext || data->InputStateContext == context) {
@@ -41,6 +59,12 @@ BeginUnit(InputContext)
         RegisterPropertyEnum(u16, InputStateKey, Key)
         RegisterReferenceProperty(InputContext, InputStateContext)
     EndComponent()
+    BeginComponent(HotKey)
+        RegisterArrayProperty(InputState, HotKeyStates)
+        RegisterProperty(float, HotKeyValue)
+    EndComponent()
 
     SetAppLoopOrder(AppLoopOf_InputPoll(), AppLoopOrder_Input);
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_InputStateValue()), OnInputStateChanged, 0)
 EndUnit()

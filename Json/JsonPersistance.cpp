@@ -56,7 +56,7 @@ const StringRef jsonTypeNames[] = {
         if(READER.Is ## JSONREADFUNC ()) {\
             *(TYPE*)&value.data = READER.Get ## JSONREADFUNC ();\
         } else {\
-            Log(0, LogSeverity_Error, "Property '%s %s' could not be deserialized: Type is %s but %s was expected.", GetTypeName(GetPropertyType(property)), GetName(property), jsonTypeNames[READER.GetType()], #JSONREADFUNC);\
+            Log(0, LogSeverity_Error, "Property '%s %s' could not be deserialized: Type is %s but %s was expected.", GetTypeName(GetPropertyType(property)), GetUuid(property), jsonTypeNames[READER.GetType()], #JSONREADFUNC);\
         }\
         break;
 
@@ -114,51 +114,6 @@ const StringRef jsonTypeNames[] = {
         }\
         break;
 
-#define ReadMat3If(TYPE, JSONREADFUNC, READER)\
-    case TypeOf_ ## TYPE:\
-        {\
-        TYPE v;\
-        if(READER.IsArray()) {\
-            v.x.x = READER.GetArray()[0].Get ## JSONREADFUNC ();\
-            v.x.y = READER.GetArray()[1].Get ## JSONREADFUNC ();\
-            v.x.z = READER.GetArray()[2].Get ## JSONREADFUNC ();\
-            v.y.x = READER.GetArray()[3].Get ## JSONREADFUNC ();\
-            v.y.y = READER.GetArray()[4].Get ## JSONREADFUNC ();\
-            v.y.z = READER.GetArray()[5].Get ## JSONREADFUNC ();\
-            v.z.x = READER.GetArray()[6].Get ## JSONREADFUNC ();\
-            v.z.y = READER.GetArray()[7].Get ## JSONREADFUNC ();\
-            v.z.z = READER.GetArray()[8].Get ## JSONREADFUNC ();\
-        }\
-        *(TYPE*)&value.data = v;\
-        }\
-        break;
-
-#define ReadMat4If(TYPE, JSONREADFUNC, READER)\
-    case TypeOf_ ## TYPE:\
-        {\
-        TYPE v;\
-        if(READER.IsArray()) {\
-            v.x.x = READER.GetArray()[0].Get ## JSONREADFUNC ();\
-            v.x.y = READER.GetArray()[1].Get ## JSONREADFUNC ();\
-            v.x.z = READER.GetArray()[2].Get ## JSONREADFUNC ();\
-            v.x.w = READER.GetArray()[3].Get ## JSONREADFUNC ();\
-            v.y.x = READER.GetArray()[4].Get ## JSONREADFUNC ();\
-            v.y.y = READER.GetArray()[5].Get ## JSONREADFUNC ();\
-            v.y.z = READER.GetArray()[6].Get ## JSONREADFUNC ();\
-            v.y.w = READER.GetArray()[7].Get ## JSONREADFUNC ();\
-            v.z.x = READER.GetArray()[8].Get ## JSONREADFUNC ();\
-            v.z.y = READER.GetArray()[9].Get ## JSONREADFUNC ();\
-            v.z.z = READER.GetArray()[10].Get ## JSONREADFUNC ();\
-            v.z.w = READER.GetArray()[11].Get ## JSONREADFUNC ();\
-            v.w.x = READER.GetArray()[12].Get ## JSONREADFUNC ();\
-            v.w.y = READER.GetArray()[13].Get ## JSONREADFUNC ();\
-            v.w.z = READER.GetArray()[14].Get ## JSONREADFUNC ();\
-            v.w.w = READER.GetArray()[15].Get ## JSONREADFUNC ();\
-        }\
-        *(TYPE*)&value.data = v;\
-        }\
-        break;
-
 #define WriteIf(TYPE, JSONWRITEFUNC)\
     case TypeOf_ ## TYPE:\
         writer.JSONWRITEFUNC(*(TYPE*)&value.data);\
@@ -169,8 +124,8 @@ const StringRef jsonTypeNames[] = {
         {\
             auto v2 = *(TYPE*)&value.data;\
             writer.StartArray();\
-            writer.JSONWRITEFUNC(isfinite(v2.x) ? v2.x : 0.0);\
-            writer.JSONWRITEFUNC(isfinite(v2.y) ? v2.y : 0.0);\
+            writer.JSONWRITEFUNC(isfinite((double)v2.x) ? v2.x : 0.0);\
+            writer.JSONWRITEFUNC(isfinite((double)v2.y) ? v2.y : 0.0);\
             writer.EndArray();\
         }\
         break;
@@ -180,9 +135,9 @@ const StringRef jsonTypeNames[] = {
 {\
         auto v3 = *(TYPE*)&value.data;\
         writer.StartArray();\
-        writer.JSONWRITEFUNC(isfinite(v3.x) ? v3.x : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.y) ? v3.y : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.z) ? v3.z : 0.0);\
+        writer.JSONWRITEFUNC(isfinite((double)v3.x) ? v3.x : 0.0);\
+        writer.JSONWRITEFUNC(isfinite((double)v3.y) ? v3.y : 0.0);\
+        writer.JSONWRITEFUNC(isfinite((double)v3.z) ? v3.z : 0.0);\
         writer.EndArray();\
         }\
         break;
@@ -192,62 +147,20 @@ const StringRef jsonTypeNames[] = {
 {\
         auto v4 = *(TYPE*)&value.data;\
         writer.StartArray();\
-        writer.JSONWRITEFUNC(isfinite(v4.x) ? v4.x : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.y) ? v4.y : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.z) ? v4.z : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.w) ? v4.w : 0.0);\
+        writer.JSONWRITEFUNC(isfinite((double)v4.x) ? v4.x : 0.0);\
+        writer.JSONWRITEFUNC(isfinite((double)v4.y) ? v4.y : 0.0);\
+        writer.JSONWRITEFUNC(isfinite((double)v4.z) ? v4.z : 0.0);\
+        writer.JSONWRITEFUNC(isfinite((double)v4.w) ? v4.w : 0.0);\
         writer.EndArray();\
         }\
         break;
 
-#define WriteMat3If(TYPE, JSONWRITEFUNC)\
-    case TypeOf_ ## TYPE:\
-{\
-        auto v3 = *(TYPE*)&value.data;\
-        writer.StartArray();\
-        writer.JSONWRITEFUNC(isfinite(v3.x.x) ? v3.x.x : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.x.y) ? v3.x.y : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.x.z) ? v3.x.z : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.y.x) ? v3.y.x : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.y.y) ? v3.y.y : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.y.z) ? v3.y.z : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.z.x) ? v3.z.x : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.z.y) ? v3.z.y : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v3.z.z) ? v3.z.z : 0.0);\
-        writer.EndArray();\
-        }\
-        break;
 
-#define WriteMat4If(TYPE, JSONWRITEFUNC)\
-    case TypeOf_ ## TYPE:\
-{\
-        auto v4 = *(TYPE*)&value.data;\
-        writer.StartArray();\
-        writer.JSONWRITEFUNC(isfinite(v4.x.x) ? v4.x.x : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.x.y) ? v4.x.y : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.x.z) ? v4.x.z : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.x.w) ? v4.x.w : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.y.x) ? v4.y.x : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.y.y) ? v4.y.y : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.y.z) ? v4.y.z : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.y.w) ? v4.y.w : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.z.x) ? v4.z.x : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.z.y) ? v4.z.y : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.z.z) ? v4.z.z : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.z.w) ? v4.z.w : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.w.x) ? v4.w.x : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.w.y) ? v4.w.y : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.w.z) ? v4.w.z : 0.0);\
-        writer.JSONWRITEFUNC(isfinite(v4.w.w) ? v4.w.w : 0.0);\
-        writer.EndArray();\
-        }\
-        break;
-
-static bool SerializeNode(Entity parent, Entity root, WriterType& writer, s16 includeChildLevels, s16 includeReferenceLevels, bool includePersistedChildren, bool includeNativeEntities);
+static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, WriterType& writer, s16 includeChildLevels, s16 includeReferenceLevels, bool includePersistedChildren, bool includeNativeEntities);
 static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapidjson::Document& document, rapidjson::Value& reader);
 static Entity ResolveEntity(Entity stream, StringRef uuid, rapidjson::Document& document);
 
-static bool SerializeValue(Entity entity, Entity property, Entity root, WriterType& writer) {
+static bool SerializeValue(JsonSettings *settings, Entity entity, Entity property, Entity root, WriterType& writer) {
     Variant value = GetPropertyValue(property, entity);
     auto type = GetPropertyType(property);
 
@@ -258,11 +171,11 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, WriterTy
         writer.String("value");
     }
 
-    if(type == TypeOf_double && !isfinite(value.as_double)) {
+    if(type == TypeOf_double && !isfinite((double)value.as_double)) {
         value.as_double = 0.0;
     }
 
-    if(type == TypeOf_float && !isfinite(value.as_float)) {
+    if(type == TypeOf_float && !isfinite((double)value.as_float)) {
         value.as_float = 0.0f;
     }
 
@@ -276,7 +189,6 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, WriterTy
         WriteIf(s16, Int)
         WriteIf(s32, Int)
         WriteIf(s64, Int64)
-        WriteIf(StringRef, String)
         WriteIf(float, Double)
         WriteIf(double, Double)
         WriteIf(bool, Bool)
@@ -287,9 +199,10 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, WriterTy
         WriteVec3If(v3i, Int)
         WriteVec4If(v4i, Int)
         WriteVec4If(rgba32, Double)
-        WriteMat3If(m3x3f, Double)
-        WriteMat4If(m4x4f, Double)
         WriteVec4If(rgba8, Int)
+        case TypeOf_StringRef:\
+            writer.String(value.as_StringRef ? value.as_StringRef : "");\
+            break;
         case TypeOf_NativePtr:
             writer.Uint64((u64)value.as_NativePtr);
             break;
@@ -308,7 +221,7 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, WriterTy
 
             break;
         default:
-            Log(entity, LogSeverity_Warning, "Unsupported type when serializing property '%s': %s", GetName(property), GetTypeName(value.type));
+            Log(entity, LogSeverity_Warning, "Unsupported type when serializing property '%s': %s", GetUuid(property), GetTypeName(value.type));
             writer.Null();
     }
 
@@ -319,13 +232,12 @@ static bool SerializeValue(Entity entity, Entity property, Entity root, WriterTy
     return true;
 }
 
-static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, WriterType& writer, s16 includeChildLevels, s16 includeReferenceLevels, bool includePersistedChildren, bool includeNativeEntities) {
+static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, StringRef parentProperty, WriterType& writer, u32 level) {
     bool result = true;
 
     // Only serialize if max child level has not been reached
-    if(includeChildLevels > 0 && (includeNativeEntities || !GetUniqueEntityName(parent))) {
-        writer.StartObject();
-        {
+    if(!settings || level <= settings->JsonSettingsMaxRecursiveLevels) {
+        if(!settings || settings->JsonSettingsExplicitComponents) {
             writer.String("$components");
             writer.StartArray();
             for_entity(component, componentData, Component) {
@@ -336,8 +248,75 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
             writer.EndArray();
         }
 
-        writer.String("$handle");
-        writer.Uint64(parent);
+        writer.StartObject();
+
+        if(settings->JsonSettingsExplicitHandle) {
+            writer.String("$handle");
+            writer.Uint64(parent);
+        }
+
+        auto& bindingData = GetBindingData(parent);
+        if(bindingData.Bindings.size() && settings->JsonSettingsExplicitBindings) {
+            writer.String("$bindings");
+            writer.StartArray();
+            for(auto& binding : bindingData.Bindings) {
+                writer.StartObject();
+
+                writer.String("BindingTargetProperty");
+                auto uuid = GetUuid(binding.BindingTargetProperty);
+                writer.String(uuid ? uuid : "<None>");
+
+                writer.String("BindingSourceEntity");
+                uuid = GetUuid(binding.BindingSourceEntity);
+                writer.String(uuid ? uuid : "<None>");
+
+                writer.String("BindingIndirections");
+                writer.StartArray();
+                for(auto& indirection : binding.BindingIndirections) {
+                    writer.StartObject();
+
+                    writer.String("IndirectionProperty");
+                    uuid = GetUuid(indirection.IndirectionProperty);
+                    writer.String(uuid ? uuid : "<None>");
+
+                    writer.String("ListenerEntity");
+                    uuid = GetUuid(indirection.ListenerEntity);
+                    writer.String(uuid ? uuid : "<None>");
+
+                    writer.EndObject();
+                }
+                writer.EndArray();
+
+                writer.EndObject();
+            }
+            writer.EndArray();
+        }
+
+        if(bindingData.Listeners.size() && settings->JsonSettingsExplicitBindings) {
+            writer.String("$bindingListeners");
+            writer.StartArray();
+            for(auto& listener : bindingData.Listeners) {
+                writer.StartObject();
+
+                writer.String("BindingTargetProperty");
+                auto uuid = GetUuid(listener.BindingTargetProperty);
+                writer.String(uuid ? uuid : "<None>");
+
+                writer.String("ListenerProperty");
+                uuid = GetUuid(listener.ListenerProperty);
+                writer.String(uuid ? uuid : "<None>");
+
+                writer.String("BindingEntity");
+                uuid = GetUuid(listener.BindingEntity);
+                writer.String(uuid ? uuid : "<None>");
+
+                writer.String("BindingIndirectionIndex");
+                writer.Uint(listener.BindingIndirectionIndex);
+
+                writer.EndObject();
+            }
+            writer.EndArray();
+        }
 
         for_entity(component, componentData, Component) {
             if(!HasComponent(parent, component)
@@ -353,8 +332,6 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
             for(auto pi = 0; pi < numProperties; ++pi) {
                 auto property = properties[pi];
 
-                if(property == PropertyOf_Bindings()) continue; // Bindings are shown as binding strings on their values
-
                 StringRef uuid = GetUuid(property);
                 StringRef name = strrchr(uuid, '.');
                 name = name ? (name + 1) : uuid;
@@ -362,16 +339,14 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
                 auto kind = GetPropertyKind(property);
 
                 auto binding = GetBinding(parent, property);
-                /*if(binding && kind == PropertyKind_Value) {
-                    auto bindingString = GetBindingString(binding);
+                if(binding && kind == PropertyKind_Value && (!settings || !settings->JsonSettingsResolveBindings)) {
+                    auto bindingString = GetBindingString(*binding);
                     writer.String(name);
                     writer.String(bindingString);
                     continue;
-                }*/
+                }
 
-
-                // Eventually skip child and array entities if they are persisted elsewhere
-                if(!includePersistedChildren && HasComponent(parent, ComponentOf_PersistancePoint()) && kind != PropertyKind_Value && parent != root) {
+                if(GetPropertyReadOnly(property) && settings && settings->JsonSettingsIgnoreReadOnly) {
                     continue;
                 }
 
@@ -379,17 +354,7 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
                     case PropertyKind_Value:
                         writer.String(name);
 
-                        if(includeReferenceLevels > 0 && GetPropertyType(property) == TypeOf_Entity) {
-                            Entity child = GetPropertyValue(property, parent).as_Entity;
-
-                            if(IsEntityValid(child)) {
-                                result &= SerializeNode(child, root, name, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0), includePersistedChildren, includeNativeEntities);
-                            } else {
-                                writer.Null();
-                            }
-                        } else {
-                            result &= SerializeValue(parent, property, root, writer);
-                        }
+                        result &= SerializeValue(settings, parent, property, root, writer);
 
                         break;
                     case PropertyKind_Child:
@@ -397,7 +362,7 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
                         Entity child = GetPropertyValue(property, parent).as_Entity;
                         if(IsEntityValid(child)) {
                             writer.String(name);
-                            result &= SerializeNode(child, root, name, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0), includePersistedChildren, includeNativeEntities);
+                            result &= SerializeNode(settings, child, root, name, writer, level + 1);
                         }
                     }
                         break;
@@ -405,11 +370,11 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
                     {
                         writer.String(name);
 
-                        /*if(binding) {
-                            auto bindingString = GetBindingString(binding);
+                        if(binding && (!settings || !settings->JsonSettingsResolveBindings)) {
+                            auto bindingString = GetBindingString(*binding);
                             writer.String(bindingString);
                             break;
-                        }*/
+                        }
 
                         auto count = GetArrayPropertyCount(property, parent);
                         writer.StartArray();
@@ -417,7 +382,7 @@ static bool SerializeNode(Entity parent, Entity root, StringRef parentProperty, 
                         for(auto i = 0; i < count; ++i) {
                             auto child = GetArrayPropertyElement(property, parent, i);
                             if(IsEntityValid(child)) {
-                                result &= SerializeNode(child, root, name, writer, Max(includeChildLevels - 1, 0), Max(includeReferenceLevels - 1, 0), includePersistedChildren, includeNativeEntities);
+                                result &= SerializeNode(settings, child, root, name, writer, level + 1);
                             } else {
                                 writer.Null();
                             }
@@ -571,20 +536,15 @@ static bool DeserializeEntity(Entity stream, Entity entity, rapidjson::Value& va
                 break;
             case PropertyKind_Array:
                 if(!reader.IsArray()) {
-                    Log(entity, LogSeverity_Error, "Property %s is an array property, but JSON value is %s. Skipping this property", GetName(property), GetJsonTypeName(reader));
+                    Log(entity, LogSeverity_Error, "Property %s is an array property, but JSON value is %s. Skipping this property", GetUuid(property), GetJsonTypeName(reader));
                     continue;
                 }
 
-                auto binding = GetBinding(entity, property);
-                if(binding) {
-                    RemoveBindingsByValue(entity, binding);
-                }
-
                 auto count = reader.Size();
-                SetArrayPropertyCount(property, entity, count);
 
                 for(auto i = 0; i < count; ++i) {
-                    Entity child = GetArrayPropertyElement(property, entity, i);
+                    auto index = AddArrayPropertyElement(property, entity);
+                    Entity child = GetArrayPropertyElement(property, entity, index);
                     DeserializeEntity(stream, child, reader[i], document);
                 }
                 break;
@@ -602,7 +562,7 @@ static bool ParseBinding(Entity stream, StringRef bindingString, Entity parent, 
     memcpy(bindingWithoutCurlyBraces, bindingString + 1, len - 2);
     bindingWithoutCurlyBraces[len - 2] = '\0';
 
-    return Bind(parent, parentProperty, bindingWithoutCurlyBraces);
+    return BindByString(parent, parentProperty, bindingWithoutCurlyBraces);
 }
 
 static Type GetVariantType(const rapidjson::Value& value) {
@@ -664,14 +624,13 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
     auto typeName = GetTypeName(type);
 
     auto enu = GetPropertyEnum(property);
-    auto hasEnum = HasComponent(enu, ComponentOf_Enum());
-    if(hasEnum && reader.GetType() == rapidjson::kStringType) {
-        auto flagString = Intern(reader.GetString());
+    if(enu && reader.GetType() == rapidjson::kStringType) {
+        auto flagString = reader.GetString();
         u32 cnt = 0;
         auto flags = GetEnumFlags(enu, &cnt);
         u64 value = 0;
         for(auto i = 0; i < cnt; ++i) {
-            auto flagName = GetName(flags[i]);
+            auto flagName = strrchr(GetUuid(flags[i]), '.') + 1;
             auto foundStr = strstr(flagString, flagName);
             if(foundStr) {
                 auto endChar = *(foundStr + strlen(flagName));
@@ -739,8 +698,6 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
         ReadVec3If(v3i, Int, jsonValue)
         ReadVec4If(v4i, Int, jsonValue)
         ReadVec4If(rgba8, Int, jsonValue)
-        ReadMat3If(m3x3f, Double, jsonValue)
-        ReadMat4If(m4x4f, Double, jsonValue)
         case TypeOf_Type:
             if(!jsonValue.IsString()) {
                 Log(parent, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's type name.", GetUuid(property));
@@ -762,9 +719,6 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
             auto id = jsonValue.GetString();
 
             Entity entity = FindEntityByUuid(id);
-            if(!IsEntityValid(entity) && id[0] == '/') {
-                entity = FindEntityByPath(id);
-            }
 
             value.as_Entity = entity;
             if(!IsEntityValid(entity)) {
@@ -811,11 +765,11 @@ API_EXPORT bool DeserializeJsonFromString(Entity stream, Entity entity, StringRe
     return true;
 }
 
-API_EXPORT bool SerializeJson(Entity stream, Entity entity, s16 includeChildLevels, s16 includeReferenceLevels, bool includePersistedChildren, bool includeNativeEntities) {
+API_EXPORT bool SerializeJson(Entity stream, Entity entity, Entity jsonSettings) {
     rapidjson::StringBuffer buffer;
     WriterType writer(buffer);
 
-    auto result = SerializeNode(entity, entity, "", writer, includeChildLevels, includeReferenceLevels, includePersistedChildren, includeNativeEntities);
+    auto result = SerializeNode(GetJsonSettingsData(jsonSettings), entity, entity, "", writer, 0);
 
     writer.Flush();
 
@@ -887,7 +841,7 @@ API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
 }
 
 static bool Serialize(Entity persistancePoint) {
-    return SerializeJson(persistancePoint, persistancePoint, INT16_MAX, 0, false, false);
+    return SerializeJson(persistancePoint, persistancePoint, persistancePoint);
 }
 
 static bool Deserialize(Entity persistancePoint) {
@@ -895,6 +849,15 @@ static bool Deserialize(Entity persistancePoint) {
 }
 
 BeginUnit(JsonPersistance)
+    BeginComponent(JsonSettings)
+        RegisterProperty(bool, JsonSettingsResolveBindings)
+        RegisterProperty(bool, JsonSettingsIgnoreReadOnly)
+        RegisterProperty(u8, JsonSettingsMaxRecursiveLevels)
+        RegisterProperty(bool, JsonSettingsExplicitComponents)
+        RegisterProperty(bool, JsonSettingsExplicitBindings)
+        RegisterProperty(bool, JsonSettingsExplicitHandle)
+    EndComponent()
+
     RegisterSerializer(JsonSerializer, "application/json")
 
 	ModuleData(

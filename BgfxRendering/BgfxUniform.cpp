@@ -56,10 +56,6 @@ LocalFunction(OnUniformValidation, void, Entity component) {
             case TypeOf_rgba32:
                 type = bgfx::UniformType::Vec4;
                 break;
-            case TypeOf_m3x3f:
-            case TypeOf_m4x4f:
-                type = bgfx::UniformType::Mat4;
-                break;
             case TypeOf_Entity:
                 type = bgfx::UniformType::Int1;
                 break;

@@ -1,0 +1,9 @@
+{
+    "Uuid": "Component.CommandGroup",
+    "Properties": [
+        {
+            "Uuid": "Property.CommandGroupCommands",
+            "PropertyKind": "PropertyKind_Array"
+        }
+    ]
+}

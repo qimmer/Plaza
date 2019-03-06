@@ -257,7 +257,7 @@ API_EXPORT Variant Cast(Variant v, Type type_to) {
     }
 
     Variant newVar;
-    memset(&newVar.data, 0, sizeof(m4x4f));
+    memset(&newVar.data, 0, sizeof(v4i));
     newVar.type = type_to;
 
     if(!v.type) return newVar; // Return default value if source is unknown

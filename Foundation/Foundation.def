@@ -14,4 +14,3 @@ EXPORTS
 	GetParentFolder
 	StreamCopy
 	StreamDelete
-	RunMainAppLoop

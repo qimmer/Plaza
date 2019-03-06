@@ -8,19 +8,6 @@
 #include <EASTL/unordered_map.h>
 #include <EASTL/string.h>
 
-API_EXPORT Variant CallNativeFunction(
-        Entity function,
-        u32 numArguments,
-        const Variant *arguments
-) {
-    auto data = GetNativeFunctionData(function);
-
-    if(!data->NativeFunctionInvoker) return Variant_Empty;
-
-    auto invoker = (NativeFunctionInvokerType)data->NativeFunctionInvoker;
-    return invoker(data->NativeFunctionPointer, arguments);
-}
-
 static eastl::unordered_map<eastl::string, NativePtr> functionSignatureInvokers;
 
 // Removes argument names from argument lists to only conserve argument types in the comma separated argument list
@@ -71,16 +58,6 @@ API_EXPORT void SetNativeFunctionInvokerBySignature(Entity function, StringRef s
         return;
     }
 
-    SetNativeFunctionInvoker(function, it->second);
+    SetFunctionCaller(function, it->second);
 }
 
-__PropertyCoreImpl(NativePtr, NativeFunctionPointer, NativeFunction)
-__PropertyCoreImpl(NativePtr, NativeFunctionInvoker, NativeFunction)
-
-BeginUnit(NativeFunction)
-    BeginComponent(NativeFunction)
-        RegisterBase(Function)
-        RegisterProperty(NativePtr, NativeFunctionPointer)
-        RegisterProperty(NativePtr, NativeFunctionInvoker)
-    EndComponent()
-EndUnit()

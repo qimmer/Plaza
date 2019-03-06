@@ -2,6 +2,7 @@
 // Created by Kim Johannsen on 03/01/2018.
 //
 
+#include "NativeUtils.h"
 #include "Vector.h"
 #include "Types.h"
 #include "Algorithms.h"

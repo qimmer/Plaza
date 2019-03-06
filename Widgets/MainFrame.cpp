@@ -41,7 +41,12 @@ BeginUnit(MainFrame)
                     "InputStateKey": "MOUSEBUTTON_0"
                 }
             },
-            "LayoutChildWeight": [1.0, 1.0]
+            "LayoutChildWeight": [1.0, 1.0],
+              "LayoutChildOrder": [
+                  {
+                      "LayoutChildOrderingProperty": "Property.Children"
+                  }
+              ]
         })
 
     EndComponent()

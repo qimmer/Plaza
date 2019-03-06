@@ -1,0 +1,3 @@
+LIBRARY Box2DCollision
+EXPORTS
+	ModuleOf_Box2DCollision

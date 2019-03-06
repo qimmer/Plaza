@@ -1,0 +1,3 @@
+LIBRARY Animation
+EXPORTS
+	ModuleOf_Animation

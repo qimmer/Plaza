@@ -30,6 +30,11 @@ struct HttpRequest {
     Entity HttpRequestContentStream;
 };
 
+struct HttpParameter {
+    StringRef HttpParameterName;
+    StringRef HttpParameterValue;
+};
+
 struct HttpResponse {
     Entity HttpResponseCode;
     Entity HttpResponseContentStream;
@@ -59,6 +64,7 @@ API_EXPORT Entity FindResponseCode(u16 responseCodeNumber) {
 BeginUnit(HttpRequest)
     BeginComponent(HttpHeaderType)
         RegisterProperty(StringRef, HttpHeaderTypeIdentifier)
+        RegisterArrayProperty(HttpParameter, HttpRequestParameters)
     EndComponent()
 
     BeginComponent(HttpResponseCode)
@@ -83,5 +89,10 @@ BeginUnit(HttpRequest)
         RegisterReferenceProperty(HttpResponseCode, HttpResponseCode)
         RegisterArrayProperty(HttpHeader, HttpResponseHeaders)
         RegisterChildProperty(Stream, HttpResponseContentStream)
+    EndComponent()
+
+    BeginComponent(HttpParameter)
+        RegisterProperty(StringRef, HttpParameterName)
+        RegisterProperty(StringRef, HttpParameterValue)
     EndComponent()
 EndUnit()

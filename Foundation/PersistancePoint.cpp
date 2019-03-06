@@ -102,7 +102,6 @@ LocalFunction(OnPersistancePointLoadingChanged, void, Entity persistancePoint, b
             snprintf(taskName, 64, "LoadTask_%llu", persistancePoint);
 
             auto task = AddQueuedTasks(ModuleOf_Foundation());
-            SetName(task, taskName);
             SetInvocationFunction(task, FunctionOf_Load());
             TaskSchedule(task);
         } else {

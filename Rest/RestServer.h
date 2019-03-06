@@ -7,6 +7,9 @@
 
 #include <Core/NativeUtils.h>
 
+struct RestServer {
+};
+
 Unit(RestServer)
     Component(RestServer)
         ArrayProperty(RestRouting, RestServerRoutes)

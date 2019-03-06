@@ -7,9 +7,14 @@
 
 #include <Core/NativeUtils.h>
 
-struct Invocation {
+struct FunctionInvocation {
     Entity InvocationFunction;
     Variant InvocationResult;
+};
+
+struct PropertyInvocation {
+    Entity InvocationProperty, InvocationTarget;
+    Variant InvocationValue;
 };
 
 struct InvocationArgument {
@@ -24,10 +29,15 @@ Unit(Invocation)
     Component(InvocationArgument)
         Property(Variant, InvocationArgumentValue);
 
-    Component(Invocation)
+    Component(FunctionInvocation)
         ReferenceProperty(Function, InvocationFunction)
         Property(Variant, InvocationResult)
         ArrayProperty(InvocationArgument, InvocationArguments)
+
+    Component(PropertyInvocation)
+        ReferenceProperty(Property, InvocationProperty)
+        Property(Entity, InvocationTarget)
+        Property(Variant, InvocationValue)
 
     Component(InvocationToggle)
         Property(bool, InvocationToggleState)

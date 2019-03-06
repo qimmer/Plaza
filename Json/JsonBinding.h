@@ -7,7 +7,7 @@
 
 #include <Core/NativeUtils.h>
 
-Function(Bind, bool, Entity entity, Entity property, StringRef sourceBindingString)
-Function(GetBindingString, StringRef, Entity binding)
+Function(BindByString, bool, Entity entity, Entity property, StringRef sourceBindingString)
+StringRef GetBindingString(const struct Binding& binding);
 
 #endif //PLAZA_JSONBINDING_H

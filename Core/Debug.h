@@ -8,15 +8,13 @@
 #include <stdio.h>
 #include <Core/NativeUtils.h>
 
-extern const char* VerboseTag;
-
 #define Assert(CONTEXT, x) \
     if(!(x)) {\
         Log( CONTEXT, LogSeverity_Fatal, "Assertion failed for %s at line %d in %s: %s\n\n%s", GetDebugName(CONTEXT), __LINE__, __FILE__, #x, GetStackTrace());\
         Exit(-1);\
      } do{} while(false)
 
-#ifndef NDEBUG
+#ifdef NDEBUGG
 #define Verbose(verboseTag, fmt, ...) if(VerboseTag && strstr(verboseTag, VerboseTag)) { printf(fmt "\n", ##__VA_ARGS__); } do {} while(false)
 #else
 #define Verbose(verboseLevel, fmt, ...)

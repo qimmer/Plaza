@@ -1,4 +1,4 @@
-﻿$input v_texcoord0, v_color
+﻿$input v_texcoord0, v_color0
 
 #include <common.sh>
 
@@ -8,5 +8,5 @@ void main()
 {
 	float a = texture2D(s_fontAtlas, v_texcoord0).a;
 
-	gl_FragColor = vec4(1, 1, 1, a) * v_color;
+	gl_FragColor = vec4(1, 1, 1, a) * v_color0;
 }

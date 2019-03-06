@@ -16,6 +16,11 @@
         {
             "LayoutMode": "LayoutMode_Horizontal",
             "LayoutChildWeight": [1.0, 1.0],
+            "LayoutChildOrder": [
+                {
+                    "LayoutChildOrderingProperty": "Property.Children"
+                }
+            ],
             "Children": [
                 {
                     "$components": ["Component.Panel"],

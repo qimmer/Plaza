@@ -8,7 +8,6 @@
 #define ASIO_NO_EXCEPTIONS 1
 #define _WIN32_WINNT 0x0501
 
-#include <unistd.h>
 #include <asio.hpp>
 
 #include <Foundation/Stream.h>

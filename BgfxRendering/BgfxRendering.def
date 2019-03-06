@@ -1,0 +1,3 @@
+LIBRARY BgfxRendering
+EXPORTS
+	ModuleOf_BgfxRendering

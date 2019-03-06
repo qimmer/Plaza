@@ -8,16 +8,18 @@
 #include <Core/NativeUtils.h>
 
 struct Frustum {
-    m4x4f FrustumViewMatrix, FrustumInvViewProjectionMatrix, FrustumProjectionMatrix;
+	v4f FrustumViewMatrix[4];
+	v4f FrustumInvViewProjectionMatrix[4];
+	v4f FrustumProjectionMatrix[4];
     float FrustumNearClip, FrustumFarClip;
 };
 
 Unit(Frustum)
     Component(Frustum)
-        Property(m4x4f, FrustumViewMatrix)
-        Property(m4x4f, FrustumProjectionMatrix)
-        Property(m4x4f, FrustumInvViewProjectionMatrix)
         Property(float, FrustumNearClip)
         Property(float, FrustumFarClip)
+
+	Declare(AppLoop, FrustumTransformUpdate)
+#define AppLoopOrder_FrustumTransformUpdate (AppLoopOrder_TransformUpdate + 0.1f)
 
 #endif //PLAZA_CAMERA_H

@@ -11,6 +11,10 @@
 #define PropertyKind_Child 1
 #define PropertyKind_Array 2
 
+struct ArrayChild {
+    StringRef Name;
+};
+
 struct Ownership {
     Entity Owner, OwnerProperty;
 };
@@ -22,6 +26,10 @@ struct Property {
     u8 PropertyKind;
     bool PropertyReadOnly;
 };
+
+void EmitChangedEvent(Entity entity, Entity property, Property *propertyData, Variant oldValueData, Variant newValueData);
+
+#include <Core/Component.h>
 
 Unit(Property)
 
@@ -40,6 +48,9 @@ Component(Property)
 Component(Ownership)
     __PropertyCoreGetOnly(Ownership, Entity, Owner, PropertyFlag_ReadOnly, PropertyFlag_Transient)
     __PropertyCoreGetOnly(Ownership, Entity, OwnerProperty, PropertyFlag_ReadOnly, PropertyFlag_Transient)
+
+Component(ArrayChild)
+    //__PropertyCore(ArrayChild, StringRef, Name)
 
 Function(IsOwnedBy, bool, Entity entity, Entity owner)
     void SetOwner(Entity entity, Entity owner, Entity ownerProperty);
@@ -72,8 +83,6 @@ void __InitializeString();
 void AddElementFromDecl(Entity property, Entity module, StringRef decl);
 void SetChildFromDecl(Entity property, Entity module, StringRef decl);
 
-void EmitChangedEvent(Entity entity, Entity property, Property *propertyData, Variant oldValueData, Variant newValueData);
-
 Function(MergeArray, void, Entity property, Entity left, Entity right, Entity destination)
 Function(ConcatArray, void, Entity property, Entity source, Entity destination)
 Function(ClearArray, void, Entity property, Entity entity)
@@ -85,5 +94,6 @@ void DumpTree(Entity entity);
 typedef void(*GenericPropertyChangedListener)(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue);
 
 void RegisterGenericPropertyChangedListener(GenericPropertyChangedListener listener);
+Vector<GenericPropertyChangedListener, 64>& GetGenericPropertyChangedListeners();
 
 #endif //PLAZA_PROPERTY_H

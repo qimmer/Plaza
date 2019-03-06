@@ -5,6 +5,7 @@
             "LayoutChildWeight": [1.0, 1.0],
             "Children": [
                 {
+                    "$components": ["Component.EntityLabel"],
                     "EntityLabelEntity": "ModuleRoot"
                 }
             ]
