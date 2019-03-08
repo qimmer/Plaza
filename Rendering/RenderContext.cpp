@@ -24,6 +24,8 @@ BeginUnit(RenderContext)
         RegisterProperty(bool, RenderContextShowStats)
     EndComponent()
 
+    SetAppLoopOrder(AppLoopOf_ResourcePreparation(), AppLoopOrder_ResourcePrePreparation);
+    SetAppLoopOrder(AppLoopOf_ResourcePreparation(), AppLoopOrder_ResourcePreparation);
     SetAppLoopOrder(AppLoopOf_ResourceSubmission(), AppLoopOrder_ResourceSubmission);
     SetAppLoopOrder(AppLoopOf_ResourceDownload(), AppLoopOrder_ResourceDownload);
     SetAppLoopOrder(AppLoopOf_Present(), AppLoopOrder_Present);

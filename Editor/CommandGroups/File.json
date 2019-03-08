@@ -1,0 +1,83 @@
+{
+    "Uuid": "CommandGroup.File",
+    "CommandGroupCommands": [
+        {
+            "Uuid": "Command.FileNew",
+            "CommandText": "New ...",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_N"
+                    }
+                ]
+            }
+        },
+        {
+            "Uuid": "Command.FileOpen",
+            "CommandText": "Open ...",
+            "CommandIcon": "\uF07C",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_O"
+                    }
+                ]
+            }
+        },
+        {
+            "Uuid": "Command.FileSave",
+            "CommandText": "Save",
+            "CommandIcon": "\uF0C7",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_S"
+                    }
+                ]
+            }
+        },
+        {
+            "Uuid": "Command.FileSaveAll",
+            "CommandText": "Save All",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftShift"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_S"
+                    }
+                ]
+            }
+        }
+    ]
+}

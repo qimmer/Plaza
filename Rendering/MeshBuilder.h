@@ -18,6 +18,7 @@ struct MeshBuilderIndex {
 };
 
 struct MeshBuilder {
+    bool MeshBuilderInvalidated;
 };
 
 Unit(MeshBuilder)

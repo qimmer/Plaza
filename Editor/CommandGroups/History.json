@@ -1,0 +1,47 @@
+{
+    "Uuid": "CommandGroup.History",
+    "CommandGroupCommands": [
+        {
+            "Uuid": "Command.Undo",
+            "CommandText": "Undo",
+            "CommandIcon": "\uF0E2",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_Z"
+                    }
+                ]
+            }
+        },
+        {
+            "Uuid": "Command.Redo",
+            "CommandText": "Redo",
+            "CommandIcon": "\uF01E",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftShift"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_Z"
+                    }
+                ]
+            }
+        }
+    ]
+}

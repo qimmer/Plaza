@@ -6,12 +6,19 @@
 #include "Identification.h"
 #include "Component.h"
 
+#include <EASTL/map.h>
+#include <EASTL/fixed_map.h>
 
 static bool __isComponentInitialized = false;
 
 #define Verbose_Component "component"
 
-static ComponentTypeData ComponentDataList[SHRT_MAX];
+static const u32 expectedMaxComponentCount = 256;
+
+static eastl::fixed_map<Entity, ComponentTypeData, expectedMaxComponentCount> ComponentDataMap;
+static eastl::fixed_map<Entity, eastl::vector<Entity>, expectedMaxComponentCount> componentDependees;
+
+static eastl::map<Entity, EntityComponentList> entityComponents;
 
 struct Extension {
     Entity ExtensionComponent, ExtensionExtenderComponent;
@@ -28,12 +35,12 @@ struct Component {
     bool ComponentExplicitSize;
 };
 
-API_EXPORT ComponentTypeData* GetComponentType(u16 componentEntityIndex) {
-	return &ComponentDataList[componentEntityIndex];
+API_EXPORT ComponentTypeData* GetComponentType(Entity componentEntity) {
+	return &ComponentDataMap[componentEntity];
 }
 
 API_EXPORT bool HasComponent (Entity entity, Entity component) {
-    auto componentData = GetComponentType(GetEntityIndex(component));
+    auto componentData = GetComponentType(component);
     auto count = componentData->EntityComponentIndices.Count;
     auto entityIndex = GetEntityIndex(entity);
 
@@ -56,7 +63,7 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
             return false;
         }
 
-        auto componentData = GetComponentType(GetEntityIndex(component));
+        auto componentData = GetComponentType(component);
 
         auto componentIndex = componentData->DataBuffer.Add();
         auto entityIndex = GetEntityIndex(entity);
@@ -75,6 +82,8 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
         if(dataSize > 0) {
             memset(componentData->DataBuffer[componentIndex] + sizeof(Entity)*2, 0, dataSize);
         }
+		
+		entityComponents[entity].push_back(component);
 
         if(__isComponentInitialized) {
             Variant arguments[] = {MakeVariant(Entity, component), MakeVariant(Entity, entity)};
@@ -140,6 +149,14 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
     }
 
     if(HasComponent(entity, component)) {
+		auto entityIndex = GetEntityIndex(entity);
+
+		for (auto& dependees : componentDependees[component]) {
+			RemoveComponent(entity, dependees);
+		}
+
+		eastl::remove(entityComponents[entity].begin(), entityComponents[entity].end(), component);
+
         for_entity(extension, extensionData, Extension) {
             if(extensionData->ExtensionComponent == component) {
                 if(!extensionData->ExtensionDisabled) {
@@ -152,43 +169,49 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
 		const Variant values[] = { MakeVariant(Entity, component), MakeVariant(Entity, entity) };
 		FireEventFast(EventOf_EntityComponentRemoved(), 2, values);
 
-        if(HasComponent(entity, component)) {
-            auto componentData = GetComponentType(GetEntityIndex(component));
-            auto componentIndex = _GetComponentIndex(componentData, GetEntityIndex(entity));
-            auto deletionEntityIndex = GetEntityIndex(entity);
-            auto deletionComponentIndex = GetVector(componentData->EntityComponentIndices)[deletionEntityIndex];
+		if (HasComponent(entity, component)) {
+			auto componentData = GetComponentType(component);
+			auto componentIndex = _GetComponentIndex(componentData, entityIndex);
+			auto deletionEntityIndex = entityIndex;
+			auto deletionComponentIndex = GetVector(componentData->EntityComponentIndices)[deletionEntityIndex];
 
-            u32 count = 0;
-            auto properties = GetProperties(component, &count);
-            for(u32 i = 0; i < count; ++i) {
-                auto property = properties[i];
-                auto propertyData = GetPropertyData(property);
+			auto& properties = GetProperties(component);
+			for (u32 i = 0; i < properties.size(); ++i) {
+				auto property = properties[i];
+				auto propertyData = GetPropertyData(property);
 
-                auto kind = propertyData->PropertyKind;
+				auto kind = propertyData->PropertyKind;
 
-                if(kind == PropertyKind_Child) {
-                    auto offset = propertyData->PropertyOffset;
-                    auto childEntity = *(Entity*)(componentData->DataBuffer[componentIndex] + sizeof(Entity)*2 + offset);
+				if (kind == PropertyKind_Child) {
+					auto offset = propertyData->PropertyOffset;
+					auto childEntity = *(Entity*)(componentData->DataBuffer[componentIndex] + sizeof(Entity) * 2 + offset);
 
-                    EmitChangedEvent(entity, property, propertyData, MakeVariant(Entity, childEntity), Variant_Default);
-                    DestroyEntity(childEntity);
-                } else if(kind == PropertyKind_Array) {
-                    while(GetArrayPropertyCount(property, entity)) {
-                        RemoveArrayPropertyElement(property, entity, 0);
-                    }
-                } else {
-                    auto empty = Variant_Empty;
-                    empty.type = propertyData->PropertyType;
-                    SetPropertyValue(property, entity, empty); // Reset value to default before removal
-                }
-            }
+					EmitChangedEvent(entity, property, propertyData, MakeVariant(Entity, childEntity), Variant_Default);
+					DestroyEntity(childEntity);
+				}
+				else if (kind == PropertyKind_Array) {
+					while (GetArrayPropertyCount(property, entity)) {
+						RemoveArrayPropertyElement(property, entity, 0);
+					}
+				}
+				else {
+					auto empty = Variant_Empty;
+					empty.type = propertyData->PropertyType;
 
-            GetVector(componentData->EntityComponentIndices)[deletionEntityIndex] = InvalidIndex;
+					if (propertyData->PropertyType == TypeOf_StringRef) {
+						auto stringValue = *(StringRef*)(componentData->DataBuffer[componentIndex] + sizeof(Entity) * 2 + propertyData->PropertyOffset);
+						ReleaseStringRef(stringValue);
+					}
+					//SetPropertyValue(property, entity, empty); // Reset value to default before removal
+				}
+			}
 
-            memset(componentData->DataBuffer[deletionComponentIndex], 0, componentData->DataBuffer.GetElementSize());
+			GetVector(componentData->EntityComponentIndices)[deletionEntityIndex] = InvalidIndex;
 
-            componentData->DataBuffer.Remove(deletionComponentIndex);
-        }
+			memset(componentData->DataBuffer[deletionComponentIndex], 0, componentData->DataBuffer.GetElementSize());
+
+			componentData->DataBuffer.Remove(deletionComponentIndex);
+		}
 
         Verbose(Verbose_Component, "Component %s has been removed from Entity %s.", GetDebugName(component), GetDebugName(entity));
 
@@ -207,7 +230,7 @@ API_EXPORT void SetComponentSize(Entity component, u16 value) {
 
     newValue = MakeVariant(u16, value);
 
-    auto componentData = GetComponentType(GetEntityIndex(component));
+    auto componentData = GetComponentType(component);
     componentData->DataBuffer.SetElementSize(value + sizeof(Entity)*2);
 
     if(__isComponentInitialized) {
@@ -216,25 +239,23 @@ API_EXPORT void SetComponentSize(Entity component, u16 value) {
 }
 
 API_EXPORT u32 GetComponentIndex(Entity component, Entity entity) {
-	auto type = GetComponentType(GetEntityIndex(component));
+	auto type = GetComponentType(component);
 	return _GetComponentIndex(type, GetEntityIndex(entity));
 }
 
 API_EXPORT Entity GetComponentEntity(Entity component, u32 componentIndex) {
-	auto type = GetComponentType(GetEntityIndex(component));
+	auto type = GetComponentType(component);
 	return _GetComponentEntity(type, componentIndex);
+}
+
+API_EXPORT const EntityComponentList& GetEntityComponents(Entity entity) {
+	return entityComponents[entity];
 }
 
 __PropertyCoreGet(u16, ComponentSize, Component)
 __PropertyCoreImpl(bool, ComponentExplicitSize, Component)
 __ArrayPropertyCoreImpl(Property, Properties, Component)
 __ArrayPropertyCoreImpl(Base, Bases, Component)
-
-LocalFunction(OnEntityDestroyed, void, Entity entity) {
-    for_entity(component, data, Component) {
-        RemoveComponent(entity, component);
-    }
-}
 
 static void RemoveExtensions(Entity component, Entity extensionComponent) {
     for_entity_abstract(entity, data, component) {
@@ -284,6 +305,22 @@ LocalFunction(OnExtensionExtenderComponentChanged,
     }
 }
 
+LocalFunction(OnBaseComponentChanged, void, Entity base, Entity oldComponent, Entity newComponent) {
+	if (oldComponent) {
+		auto& arr = componentDependees[oldComponent];
+
+		eastl::remove(arr.begin(), arr.end(), GetOwner(base));
+	}
+
+	if (newComponent) {
+		componentDependees[newComponent].push_back(GetOwner(base));
+	}
+}
+
+LocalFunction(OnBaseRemoved, void, Entity component, Entity base) {
+	OnBaseComponentChanged(base, GetBaseComponent(base), 0);
+}
+
 BeginUnit(Component)
     BeginComponent(Base)
         RegisterReferenceProperty(Component, BaseComponent)
@@ -308,11 +345,12 @@ BeginUnit(Component)
 
     __isComponentInitialized = true;
 
-    RegisterSubscription(EventOf_EntityDestroyed(), OnEntityDestroyed, 0)
-
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ExtensionDisabled()), OnExtensionDisabledChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ExtensionComponent()), OnExtensionComponentChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ExtensionExtenderComponent()), OnExtensionExtenderComponentChanged, 0)
+
+	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BaseComponent()), OnBaseComponentChanged, 0)
+	RegisterSubscription(EventOf_EntityComponentRemoved(), OnBaseRemoved, ComponentOf_Base())
 EndUnit()
 
 
@@ -320,10 +358,10 @@ void __InitializeComponent() {
     auto component = ComponentOf_Component();
     AddComponent(component, ComponentOf_Component());
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_Properties(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Property(), PropertyKind_Array);
-    __Property(PropertyOf_ComponentSize(), offsetof(Component, ComponentSize), sizeof(Component::ComponentSize), TypeOf_u16, component, 0, PropertyKind_Value);
+    __Property(PropertyOf_Properties(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Property(), PropertyKind_Array, "Properties");
+    __Property(PropertyOf_ComponentSize(), offsetof(Component, ComponentSize), sizeof(Component::ComponentSize), TypeOf_u16, component, 0, PropertyKind_Value, "ComponentSize");
+	SetUuid(component, "Component.Component");
 }
 
 void __PreInitialize() {
-    memset(ComponentDataList, 0, sizeof(ComponentDataList));
 }

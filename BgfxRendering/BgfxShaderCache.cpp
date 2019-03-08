@@ -3,7 +3,6 @@
 //
 
 #include <Foundation/Stream.h>
-#include <Foundation/Invalidation.h>
 #include <Core/Debug.h>
 #include "BgfxShaderCache.h"
 #include "BgfxResource.h"
@@ -14,12 +13,15 @@
 struct BgfxBinaryProgram {
 };
 
-LocalFunction(OnBgfxBinaryProgramRemoved, void, Entity entity) {
-    bgfx::ProgramHandle handle = { GetBgfxResourceHandle(entity) };
+LocalFunction(OnBgfxBinaryProgramRemoved, void, Entity component, Entity entity) {
+	auto resourceData = GetBgfxResourceData(entity);
+	bgfx::UniformHandle handle = { resourceData->BgfxResourceHandle };
 
     if(bgfx::isValid(handle)) {
         bgfx::destroy(handle);
     }
+
+	resourceData->BgfxResourceHandle = bgfx::kInvalidHandle;
 }
 
 static void free_func(void* mem, void *userdata) {
@@ -28,7 +30,7 @@ static void free_func(void* mem, void *userdata) {
 
 static void CompileProgram(Entity entity) {
     // Eventually free old buffers
-    OnBgfxBinaryProgramRemoved(entity);
+    OnBgfxBinaryProgramRemoved(0, entity);
 
     auto binaryVertexShader = GetBinaryProgramVertexShader(entity);
     if(!StreamOpen(binaryVertexShader, StreamMode_Read)) {
@@ -64,10 +66,8 @@ static void CompileProgram(Entity entity) {
     SetBgfxResourceHandle(entity, programHandle.idx);
 }
 
-LocalFunction(OnBinaryProgramValidation, void, Entity component) {
-    for_entity(entity, data, BgfxBinaryProgram) {
-        if(!IsDirty(entity)) continue;
-
+LocalFunction(OnBinaryProgramValidation, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxBinaryProgram())) {
         CompileProgram(entity);
     }
 }
@@ -78,5 +78,5 @@ BeginUnit(BgfxShaderCache)
     EndComponent()
 
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxBinaryProgramRemoved, ComponentOf_BgfxBinaryProgram())
-    RegisterSubscription(EventOf_Validate(), OnBinaryProgramValidation, ComponentOf_BinaryProgram())
+    RegisterSubscription(EventOf_StreamContentChanged(), OnBinaryProgramValidation, 0)
 EndUnit()

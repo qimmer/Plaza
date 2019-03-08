@@ -121,9 +121,8 @@ static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
         return FindResponseCode(403);
     }
 
-    u32 numChildren = 0;
-    auto children = GetArrayPropertyElements(property, parent, &numChildren);
-    for(auto i = 0; i < numChildren; ++i) {
+    auto& children = GetArrayPropertyElements(property, parent);
+    for(auto i = 0; i < children.size(); ++i) {
         if(children[i] == existing) {
 			if (!RemoveArrayPropertyElement(property, parent, i)) {
 				return FindResponseCode(500);

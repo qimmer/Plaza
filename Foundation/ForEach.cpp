@@ -6,8 +6,21 @@
 #include <Core/Property.h>
 #include <Core/Instance.h>
 
-static eastl::vector<Vector<Entity, 4>> entityForEachListeners;
+#include <EASTL/map.h>
 
+static eastl::map<Entity, Vector<Entity, 4>> entityForEachListeners;
+
+static void ReplicateChildren(Entity forEach, ForEach *forEachData, Entity sourceProperty) {
+	for_children_abstract(sourceChild, sourceProperty, forEachData->ForEachSourceEntity) {
+		auto instanceChildIndex = AddArrayPropertyElement(forEachData->ForEachDestinationArrayProperty, forEachData->ForEachDestinationEntity);
+		auto instanceChild = GetArrayPropertyElement(forEachData->ForEachDestinationArrayProperty, forEachData->ForEachDestinationEntity, instanceChildIndex);
+
+		SetForEach(instanceChild, forEach);
+		SetForEachSource(instanceChild, sourceChild);
+
+		SetInstanceTemplate(instanceChild, forEachData->ForEachTemplate);
+	}
+}
 static void ForEachChanged(
         Entity forEach,
         ForEach *forEachData,
@@ -16,13 +29,7 @@ static void ForEachChanged(
         Entity oldSource
 ) {
     if(oldSource) {
-        auto entityIndex = GetEntityIndex(oldSource);
-
-        if(entityForEachListeners.size() <= entityIndex) {
-            entityForEachListeners.resize(entityIndex + 1);
-        }
-
-        eastl::remove(entityForEachListeners[entityIndex].begin(), entityForEachListeners[entityIndex].end(), forEach);
+        eastl::remove(entityForEachListeners[oldSource].begin(), entityForEachListeners[oldSource].end(), forEach);
 
         // Remove replicated children
         Vector<Entity, 32> childrenToDestroy;
@@ -40,30 +47,27 @@ static void ForEachChanged(
     }
 
     if(forEachData->ForEachEnabled
-        && forEachData->ForEachSourceArrayProperty
         && forEachData->ForEachSourceEntity
         && forEachData->ForEachDestinationArrayProperty
         && forEachData->ForEachDestinationEntity
         && forEachData->ForEachTemplate) {
-
-        auto entityIndex = GetEntityIndex(forEachData->ForEachSourceEntity);
-
-        if(entityForEachListeners.size() <= entityIndex) {
-            entityForEachListeners.resize(entityIndex + 1);
-        }
-
-        entityForEachListeners[entityIndex].push_back(forEach);
+		
+        entityForEachListeners[forEachData->ForEachSourceEntity].push_back(forEach);
 
         // Replicate children
-        for_children_abstract(sourceChild, forEachData->ForEachSourceArrayProperty, forEachData->ForEachSourceEntity) {
-            auto instanceChildIndex = AddArrayPropertyElement(forEachData->ForEachDestinationArrayProperty, forEachData->ForEachDestinationEntity);
-            auto instanceChild = GetArrayPropertyElement(forEachData->ForEachDestinationArrayProperty, forEachData->ForEachDestinationEntity, instanceChildIndex);
+		if (forEachData->ForEachSourceArrayProperty) {
+			ReplicateChildren(forEach, forEachData, forEachData->ForEachSourceArrayProperty);
+		}
+		else {
+			auto components = GetEntityComponents(forEachData->ForEachSourceEntity);
 
-            SetForEach(instanceChild, forEach);
-            SetForEachSource(instanceChild, sourceChild);
-
-            SetInstanceTemplate(instanceChild, forEachData->ForEachTemplate);
-        }
+			for (auto i = 0; i < components.size(); ++i) {
+				for_children(property, Properties, components[i]) {
+					ReplicateChildren(forEach, forEachData, property);
+				}
+			}
+			
+		}
     }
 }
 
@@ -97,6 +101,13 @@ LocalFunction(OnForEachEnabledChanged, void, Entity forEach, Entity oldValue, En
     ForEachChanged(forEach, forEachData, forEachData->ForEachDestinationArrayProperty, forEachData->ForEachDestinationEntity, forEachData->ForEachSourceEntity);
 }
 
+LocalFunction(OnRemoved, void, Entity component, Entity forEach) {
+	auto forEachData = GetForEachData(forEach);
+	forEachData->ForEachEnabled = false;
+
+	ForEachChanged(forEach, forEachData, forEachData->ForEachDestinationArrayProperty, forEachData->ForEachDestinationEntity, forEachData->ForEachSourceEntity);
+}
+
 BeginUnit(ForEach)
     BeginComponent(ForEach)
         RegisterProperty(bool, ForEachEnabled)
@@ -118,4 +129,6 @@ BeginUnit(ForEach)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ForEachDestinationArrayProperty()), OnForEachDestinationArrayPropertyChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ForEachTemplate()), OnForEachTemplateChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ForEachEnabled()), OnForEachEnabledChanged, 0)
+
+	RegisterSubscription(EventOf_EntityComponentRemoved(), OnRemoved, ComponentOf_ForEach())
 EndUnit()

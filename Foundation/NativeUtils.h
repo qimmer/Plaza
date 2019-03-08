@@ -12,6 +12,7 @@
 #define RegisterStreamProtocol(COMPONENT, IDENTIFIER) \
     {\
         auto protocol = GetUniqueEntity("Protocol." #COMPONENT, NULL );\
+        SetUuid(protocol, "Protocol." #COMPONENT);\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
         AddChild(PropertyOf_ModuleStreamProtocols(), module, protocol, true); \
         SetStreamProtocolIdentifier(protocol, IDENTIFIER); \
@@ -31,6 +32,7 @@
 #define RegisterStreamCompressor(COMPONENT, MIMETYPE) \
     {\
         auto compressor = GetUniqueEntity("Compressor." #COMPONENT, NULL );\
+        SetUuid(compressor, "Compressor." #COMPONENT);\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
         AddChild(PropertyOf_ModuleStreamCompressors(), module, compressor, true); \
         SetStreamCompressorMimeType(compressor, MIMETYPE); \
@@ -42,6 +44,7 @@
 #define RegisterSerializer(NAME, MIMETYPE) \
     {\
         auto serializer = GetUniqueEntity("Serializer." #NAME, NULL);\
+        SetUuid(serializer, "Serializer." #NAME);\
         AddComponent(module, ComponentOf_StreamExtensionModule());\
         AddChild(PropertyOf_ModuleSerializers(), module, serializer, true); \
         SetSerializerMimeType(serializer, MIMETYPE); \

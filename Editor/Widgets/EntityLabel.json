@@ -22,7 +22,6 @@
         "EntityLabelChildForEach": {
             "ForEachEnabled": "{Owner.ListItemExpanded}",
             "ForEachSourceEntity": "{Owner.EntityLabelEntity}",
-            "ForEachSourceArrayProperty": "Property.Modules",
             "ForEachDestinationEntity": "{Owner}",
             "ForEachDestinationArrayProperty": "Property.Children",
             "ForEachTemplate": "Template.EntityLabelChild"

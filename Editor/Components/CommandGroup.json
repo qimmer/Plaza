@@ -3,7 +3,9 @@
     "Properties": [
         {
             "Uuid": "Property.CommandGroupCommands",
-            "PropertyKind": "PropertyKind_Array"
+            "PropertyType": "Entity",
+            "PropertyKind": "PropertyKind_Array",
+            "PropertyChildComponent": "Component.Command"
         }
     ]
 }

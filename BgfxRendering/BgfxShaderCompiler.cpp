@@ -18,7 +18,6 @@
 #include <climits>
 #include <Core/Identification.h>
 #include <Rendering/ShaderCache.h>
-#include <Foundation/Invalidation.h>
 
 #ifdef _MSC_VER
 #define popen _popen
@@ -238,7 +237,8 @@ LocalFunction(OnShaderCompile, void, Entity binaryProgram) {
             profile,
             shaderDefines);
 
-    Invalidate(binaryProgram);
+    Variant var = MakeVariant(Entity, binaryProgram);
+    FireEventFast(EventOf_StreamContentChanged(), 1, &var);
 }
 
 BeginUnit(BgfxShaderCompiler)

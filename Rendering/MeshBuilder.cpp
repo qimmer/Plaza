@@ -3,35 +3,36 @@
 //
 
 #include <Foundation/Stream.h>
-#include <Foundation/Invalidation.h>
+#include <Foundation/AppLoop.h>
 #include "MeshBuilder.h"
 #include "Mesh.h"
+#include <Rendering/RenderContext.h>
+
+static eastl::set<Entity> invalidatedMeshes;
 
 static void BuildVertexBuffer(Entity mesh) {
-    u32 numAttribs = 0;
-    u32 numVertices = 0;
     auto vb = GetMeshVertexBuffer(mesh);
     auto decl = GetVertexBufferDeclaration(vb);
-    auto attribs = GetVertexDeclarationAttributes(decl, &numAttribs);
-    auto vertices = GetMeshBuilderVertices(mesh, &numVertices);
+    auto& attribs = GetVertexDeclarationAttributes(decl);
+    auto& vertices = GetMeshBuilderVertices(mesh);
 
     auto vertexStride = 0;
-    for(auto i = 0; i < numAttribs; ++i) {
+    for(auto i = 0; i < attribs.size(); ++i) {
         vertexStride += GetTypeSize(GetVertexAttributeType(attribs[i]));
     }
 
-    auto vertexBufferSize = vertexStride * numVertices;
+    auto vertexBufferSize = vertexStride * vertices.size();
     auto vertexData = (char*)malloc(vertexBufferSize);
 
     auto attribOffset = 0;
-    for(auto i = 0; i < numAttribs; ++i) {
+    for(auto i = 0; i < attribs.size(); ++i) {
         auto vertexOffset = 0;
 
         auto attribUsage = GetVertexAttributeUsage(attribs[i]);
         auto attribType = GetVertexAttributeType(attribs[i]);
         auto attribSize = GetTypeSize(attribType);
 
-        for(auto v = 0; v < numVertices; ++v) {
+        for(auto v = 0; v < vertices.size(); ++v) {
             auto vertex = GetMeshBuilderVertexData(vertices[v]);
             auto offset = vertexOffset + attribOffset;
 
@@ -87,23 +88,22 @@ static void BuildVertexBuffer(Entity mesh) {
 static void BuildIndexBuffer(Entity mesh) {
     auto ib = GetMeshIndexBuffer(mesh);
 
-    u32 numIndices = 0;
-    auto indices = GetMeshBuilderIndices(mesh, &numIndices);
+    auto indices = GetMeshBuilderIndices(mesh);
     auto isIndexLong = GetIndexBufferLong(ib);
 
-    auto indexBufferSize = (isIndexLong ? 4 : 2) * numIndices;
+    auto indexBufferSize = (isIndexLong ? 4 : 2) * indices.size();
     auto indexData = (char*)malloc(indexBufferSize);
 
     auto offset = 0;
     if(isIndexLong) {
-        for(auto i = 0; i < numIndices; ++i) {
+        for(auto i = 0; i < indices.size(); ++i) {
             auto index = GetMeshBuilderIndexData(indices[i]);
 
             *(u32*)(indexData + offset) = index->MeshBuilderIndexVertexIndex;
             offset += 4;
         }
     } else {
-        for(auto i = 0; i < numIndices; ++i) {
+        for(auto i = 0; i < indices.size(); ++i) {
             auto index = GetMeshBuilderIndexData(indices[i]);
 
             *(u16*)(indexData + offset) = (u16)index->MeshBuilderIndexVertexIndex;
@@ -127,36 +127,37 @@ static void BuildIndexBuffer(Entity mesh) {
 }
 
 static void BuildMesh(Entity mesh) {
+    auto data = GetMeshBuilderData(mesh);
     BuildVertexBuffer(mesh);
     BuildIndexBuffer(mesh);
 }
 
-LocalFunction(OnMeshBuilderChildChanged, void, Entity vertex) {
-    auto mesh = GetOwner(vertex);
-    Invalidate(mesh);
-}
-
-LocalFunction(OnMeshValidation, void, Entity component) {
-    for_entity(entity, data, MeshBuilder) {
-        if(!IsDirty(entity)) continue;
-
-        BuildMesh(entity);
+LocalFunction(OnMeshValidation, void) {
+    for(auto& mesh : invalidatedMeshes) {
+        BuildMesh(mesh);
     }
+
+    invalidatedMeshes.clear();
 }
 
-LocalFunction(OnVertexDeclarationValidation, void, Entity component) {
-    for_entity(entity, vdData, VertexDeclaration) {
-        if(!IsDirty(entity)) continue;
+LocalFunction(OnVertexDeclarationChanged, void, Entity vertexDecl) {
+    for_entity(mb, data, MeshBuilder) {
+        auto vb = GetMeshVertexBuffer(mb);
+        auto vd = GetVertexBufferDeclaration(vb);
 
-        for_entity(mb, data, MeshBuilder) {
-            auto vb = GetMeshVertexBuffer(mb);
-            auto vd = GetVertexBufferDeclaration(vb);
-
-            if(vd == entity) {
-                BuildMesh(GetOwner(vb));
-            }
+        if(vd == vertexDecl) {
+            invalidatedMeshes.insert(mb);
         }
     }
+}
+
+LocalFunction(OnMeshBuilderChildChanged, void, Entity child) {
+    auto mesh = GetOwner(child);
+    invalidatedMeshes.insert(mesh);
+}
+
+LocalFunction(OnMeshBuilderChanged, void, Entity mb) {
+    invalidatedMeshes.insert(mb);
 }
 
 BeginUnit(MeshBuilder)
@@ -185,8 +186,8 @@ BeginUnit(MeshBuilder)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertexColor0()), OnMeshBuilderChildChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderIndexVertexIndex()), OnMeshBuilderChildChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_IndexBufferLong()), OnMeshBuilderChildChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertices()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderIndices()), Invalidate, 0)
-    RegisterSubscription(EventOf_Validate(), OnMeshValidation, ComponentOf_Mesh())
-    RegisterSubscription(EventOf_Validate(), OnVertexDeclarationValidation, ComponentOf_VertexDeclaration())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderVertices()), OnMeshBuilderChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MeshBuilderIndices()), OnMeshBuilderChanged, 0)
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnMeshValidation, AppLoopOf_ResourcePreparation())
 EndUnit()

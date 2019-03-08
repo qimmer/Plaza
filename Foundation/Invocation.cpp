@@ -22,12 +22,11 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
 
     if(functionInvocation) {
         Variant result;
-        u32 count = 0;
 
-        auto invocationArguments = GetInvocationArguments(invocationEntity, &count);
+        auto& invocationArguments = GetInvocationArguments(invocationEntity);
 
-        auto arguments = (Variant*)alloca(sizeof(Variant) * count);
-        for(int i = 0; i < count; ++i) {
+        auto arguments = (Variant*)alloca(sizeof(Variant) * invocationArguments.size());
+        for(int i = 0; i < invocationArguments.size(); ++i) {
             auto argument = GetInvocationArgumentData(invocationArguments[i]);
 
             arguments[i] = argument->InvocationArgumentValue;
@@ -36,7 +35,7 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
         if(HasComponent(functionInvocation->InvocationFunction, ComponentOf_Function())) {
             result = CallFunction(
                     functionInvocation->InvocationFunction,
-                    count,
+					invocationArguments.size(),
                     arguments
             );
 
@@ -48,7 +47,7 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
         } else if (HasComponent(functionInvocation->InvocationFunction, ComponentOf_Event())) {
             FireEventFast(
                     functionInvocation->InvocationFunction,
-                    count,
+					invocationArguments.size(),
                     arguments
             );
 

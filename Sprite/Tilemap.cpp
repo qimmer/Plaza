@@ -26,10 +26,9 @@ static void UpdateTileFrame(Entity atlas, Entity frame) {
 }
 
 static void UpdateTileAtlas(Entity atlas) {
-    u32 numFrames = 0;
-    auto frames = GetTextureAtlasSubTextures(atlas, &numFrames);
+    auto& frames = GetTextureAtlasSubTextures(atlas);
 
-    for(auto i = 0; i < numFrames; ++i) {
+    for(auto i = 0; i < frames.size(); ++i) {
         auto frame = frames[i];
         UpdateTileFrame(atlas, frame);
     }
@@ -37,7 +36,7 @@ static void UpdateTileAtlas(Entity atlas) {
 
 static void InstantiateTileGrid(Entity grid, Entity tileSet, v2i dimensions, u8 numChannels, const u8* buffer) {
     u32 numTiles = 0;
-    auto tiles = GetTileSetTiles(tileSet, &numTiles);
+    auto& tiles = GetTileSetTiles(tileSet);
     auto spacing = GetTileGridSpacing(grid);
     auto depth = GetTileGridDepth(grid);
     auto offset = 0;

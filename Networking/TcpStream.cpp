@@ -216,9 +216,8 @@ LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 new
 
     // Remove closed clients from server
     for_entity(server, serverData, TcpServer) {
-        u32 count = 0;
-        auto clients = GetTcpServerClients(server, &count);
-        for(auto i = 0; i < count; ++i) {
+        auto& clients = GetTcpServerClients(server);
+        for(auto i = 0; i < clients.size(); ++i) {
             auto client = clients[i];
             if(!IsOpen(client)) {
 				Verbose(Verbose_TcpClient, "Client %u disconnected: %s", GetComponentIndex(ComponentOf_TcpStream(), client), GetStreamPath(client));

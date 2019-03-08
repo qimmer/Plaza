@@ -29,10 +29,12 @@ static v2i CalculateMinimumSize(Entity layout) {
         if(!HasComponent(property, ComponentOf_Property())) continue;
 
         u32 numChildWidgets = 0;
-        Entity *childWidgets;
+        const Entity* childWidgets;
         Entity singleChild;
         if(GetPropertyKind(property) == PropertyKind_Array) {
-            childWidgets = GetArrayPropertyElements(property, layout, &numChildWidgets);
+			auto& array = GetArrayPropertyElements(property, layout);
+            childWidgets = array.data();
+			numChildWidgets = array.size();
         } else {
             singleChild = GetPropertyValue(property, layout).as_Entity;
             childWidgets = &singleChild;
@@ -151,10 +153,12 @@ static void ExpandChildLayouts(Entity layout) {
             if(!HasComponent(property, ComponentOf_Property())) continue;
 
             u32 numChildWidgets = 0;
-            Entity *childWidgets;
+            const Entity *childWidgets;
             Entity singleChild;
             if(GetPropertyKind(property) == PropertyKind_Array) {
-                childWidgets = GetArrayPropertyElements(property, layout, &numChildWidgets);
+				auto& array = GetArrayPropertyElements(property, layout);
+                childWidgets = array.data();
+				numChildWidgets = array.size();
             } else {
                 singleChild = GetPropertyValue(property, layout).as_Entity;
                 childWidgets = &singleChild;
@@ -200,34 +204,35 @@ static void ExpandChildLayouts(Entity layout) {
         owner = GetOwner(owner);
     }
 
-    auto layoutDistanceFactor = 1.0f / (float)(10 ^ layer);
-    auto childDistanceFactor = 1.0f / (float)(10 ^ (layer + 1));
-
     for_children(ordering, LayoutChildOrder, layout) {
         auto property = GetLayoutChildOrderingProperty(ordering);
         if(!HasComponent(property, ComponentOf_Property())) continue;
 
-        u32 numChildWidgets = 0;
-        Entity *childWidgets;
-        Entity singleChild;
-        if(GetPropertyKind(property) == PropertyKind_Array) {
-            childWidgets = GetArrayPropertyElements(property, layout, &numChildWidgets);
-        } else {
-            singleChild = GetPropertyValue(property, layout).as_Entity;
-            childWidgets = &singleChild;
-            numChildWidgets = 1;
-        }
+		u32 numChildWidgets = 0;
+		const Entity *childWidgets;
+		Entity singleChild;
+		if (GetPropertyKind(property) == PropertyKind_Array) {
+			auto& array = GetArrayPropertyElements(property, layout);
+			childWidgets = array.data();
+			numChildWidgets = array.size();
+		}
+		else {
+			singleChild = GetPropertyValue(property, layout).as_Entity;
+			childWidgets = &singleChild;
+			numChildWidgets = 1;
+		}
 
         for (auto j = 0; j < numChildWidgets; ++j) {
             auto childWidget = childWidgets[j];
             auto size = GetSize2D(childWidget);
             auto hiddenState = GetWidgetState(childWidget).z;
-            auto localLayer = (float)j / numChildWidgets;
-
+            auto localLayer = (float)j / (numChildWidgets + 1);
+			
+			auto depth = -GetWidgetDepthOrder(childWidget) - localLayer;
             SetPosition3D(childWidget, {
                     (float) position.x,
                     (float) position.y,
-                    -GetWidgetDepthOrder(childWidget) -layoutDistanceFactor -localLayer
+					depth
             });
 
             auto childWeight = GetLayoutChildWeight(childWidget);
@@ -304,6 +309,14 @@ LocalFunction(OnSize2DChanged, void, Entity widget, v2i oldSize, v2i newSize) {
     }
 }
 
+LocalFunction(OnRect2DRemoved, void, Entity component, Entity entity) {
+    auto owner = GetOwner(entity);
+	if (HasComponent(owner, ComponentOf_Layout())) {
+		ExpandChildLayouts(owner);
+		Shrink(owner);
+	}
+}
+
 BeginUnit(Layout)
     BeginComponent(LayoutChildOrdering)
         RegisterReferenceProperty(Property, LayoutChildOrderingProperty)
@@ -332,4 +345,5 @@ BeginUnit(Layout)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutSpacing()), OnLayoutModeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutPadding()), OnLayoutModeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutChildOrderingProperty()), OnLayoutChildOrderingChanged, 0)
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnRect2DRemoved, ComponentOf_Rect2D())
 EndUnit()

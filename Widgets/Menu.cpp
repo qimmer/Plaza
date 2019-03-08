@@ -9,6 +9,7 @@
 #include <Scene/Transform.h>
 #include <Json/NativeUtils.h>
 #include <Foundation/Visibility.h>
+#include <Foundation/AppNode.h>
 
 static void RepositionMenu(Entity menu, bool vertical) {
     if(HasComponent(menu, ComponentOf_Menu()) && !HasComponent(menu, ComponentOf_MainMenu())) {
@@ -44,10 +45,10 @@ LocalFunction(OnMenuChanged, void, Entity entity) {
 LocalFunction(OnClickedChanged, void, Entity entity, bool oldClicked, bool newClicked) {
     if(newClicked && HasComponent(entity, ComponentOf_MainMenuItem())) {
         auto menu = GetOwner(entity);
-        u32 numItems = 0;
-        auto menuItems = GetMenuItems(menu, &numItems);
+
+        auto& menuItems = GetChildren(menu);
         auto alreadySelected = GetWidgetSelected(entity);
-        for(auto i = 0; i < numItems; ++i) {
+        for(auto i = 0; i < menuItems.size(); ++i) {
             auto selected = menuItems[i] == entity && !alreadySelected;
             auto subMenu = GetMenuItemSubMenu(menuItems[i]);
             SetHidden(subMenu, !selected);
@@ -59,11 +60,10 @@ LocalFunction(OnClickedChanged, void, Entity entity, bool oldClicked, bool newCl
 LocalFunction(OnHoveredChanged, void, Entity entity, bool oldHovered, bool newHovered) {
     if(newHovered && HasComponent(entity, ComponentOf_MenuItem())) {
         auto menu = GetOwner(entity);
-        u32 numItems = 0;
-        auto menuItems = GetMenuItems(menu, &numItems);
+        auto& menuItems = GetChildren(menu);
 
         bool anyMenuOpen = false;
-        for(auto i = 0; i < numItems; ++i) {
+        for(auto i = 0; i < menuItems.size(); ++i) {
             if(GetWidgetSelected(menuItems[i])) {
                 anyMenuOpen = true;
                 break;
@@ -72,7 +72,7 @@ LocalFunction(OnHoveredChanged, void, Entity entity, bool oldHovered, bool newHo
 
         if(!anyMenuOpen) return;
 
-        for(auto i = 0; i < numItems; ++i) {
+        for(auto i = 0; i < menuItems.size(); ++i) {
             auto selected = menuItems[i] == entity;
             auto subMenu = GetMenuItemSubMenu(menuItems[i]);
             SetHidden(subMenu, !selected);
@@ -95,9 +95,14 @@ BeginUnit(Menu)
         RegisterProperty(v4i, MainMenuStylePadding)
     EndComponent()
 
+    BeginComponent(SeparatorStyle)
+        RegisterProperty(v4i, SeparatorStylePadding)
+        RegisterChildProperty(WidgetMesh, SeparatorStyleVerticalMesh)
+        RegisterChildProperty(WidgetMesh, SeparatorStyleHorizontalMesh)
+    EndComponent()
+
     BeginComponent(Menu)
         RegisterBase(Widget)
-        RegisterArrayProperty(MenuItem, MenuItems)
         ComponentTemplate({
             "WidgetDepthOrder": 10.0,
             "LayoutMode": "LayoutMode_Vertical",
@@ -106,7 +111,7 @@ BeginUnit(Menu)
             "LayoutChildWeight": [0.0, 0.0],
             "LayoutChildOrder": [
                 {
-                    "LayoutChildOrderingProperty": "Property.MenuItems"
+                    "LayoutChildOrderingProperty": "Property.Children"
                 }
             ]
         })
@@ -162,8 +167,22 @@ BeginUnit(Menu)
         })
     EndComponent()
 
-    BeginComponent(Separator)
+    BeginComponent(VerticalSeparator)
         RegisterBase(Widget)
+        ComponentTemplate({
+          "RenderableSubMesh": "{SceneNodeScene.SceneStyle.SeparatorStyleVerticalMesh}",
+          "LayoutPadding": "{SceneNodeScene.SceneStyle.SeparatorStylePadding}",
+          "LayoutChildWeight": [1.0, 0.0]
+        })
+    EndComponent()
+
+    BeginComponent(HorizontalSeparator)
+        RegisterBase(Widget)
+        ComponentTemplate({
+              "RenderableSubMesh": "{SceneNodeScene.SceneStyle.SeparatorStyleHorizontalMesh}",
+              "LayoutPadding": "{SceneNodeScene.SceneStyle.SeparatorStylePadding}",
+              "LayoutChildWeight": [0.0, 1.0]
+          })
     EndComponent()
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Size2D()), OnSize2DChanged, 0)

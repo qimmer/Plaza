@@ -14,7 +14,6 @@ struct UnicodeRange {
 
 struct TrueTypeFont {
     float TrueTypeFontSize;
-    Entity TrueTypeFontFont;
 };
 
 struct TrueTypeFontRange {
@@ -31,7 +30,6 @@ Unit(StbTrueTypePersistance)
 
     Component(TrueTypeFont)
         Property(float, TrueTypeFontSize)
-        ChildProperty(Font, TrueTypeFontFont)
         ArrayProperty(TrueTypeFontRange, TrueTypeFontRanges)
 
 #endif //PLAZA_STBTRUETYPEPERSISTANCE_H

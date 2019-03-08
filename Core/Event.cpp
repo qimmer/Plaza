@@ -15,17 +15,14 @@
 
 #include <stdarg.h>
 #include <EASTL/fixed_vector.h>
+#include <EASTL/fixed_map.h>
 
 #define Verbose_Event "event"
 
-static eastl::vector<SubscriptionCacheVector> EventSubscriptionCache;
+static eastl::fixed_map<Entity, SubscriptionCacheVector, 256> EventSubscriptionCache;
 
-API_EXPORT SubscriptionCacheVector& GetSubscriptionCache(u32 eventEntityIndex) {
-    if(EventSubscriptionCache.size() <= eventEntityIndex) {
-        EventSubscriptionCache.resize(eventEntityIndex + 1);
-    }
-
-    return EventSubscriptionCache[eventEntityIndex];
+API_EXPORT SubscriptionCacheVector& GetSubscriptionCache(Entity event) {
+    return EventSubscriptionCache[event];
 }
 
 LocalFunction(OnEventArgumentTypeChanged, void, Entity argument, Type oldType, Type newType) {
@@ -48,9 +45,7 @@ LocalFunction(OnSubscriptionHandlerChanged, void, Entity context, Entity oldValu
     if(IsEntityValid(subscription->SubscriptionEvent)) {
         AddComponent(subscription->SubscriptionEvent, ComponentOf_Event ());
 
-        auto eventIndex = GetEntityIndex(subscription->SubscriptionEvent);
-
-        auto& cache = GetSubscriptionCache(eventIndex);
+        auto& cache = GetSubscriptionCache(subscription->SubscriptionEvent);
         for(auto i = 0; i < cache.size(); ++i) {
             if(cache[i].SubscriptionHandler == oldValue) {
                 cache.erase(cache.begin() + i);
@@ -69,9 +64,7 @@ LocalFunction(OnSubscriptionSenderChanged, void, Entity context, Entity oldValue
 
     if(IsEntityValid(subscription->SubscriptionEvent)) {
         AddComponent(subscription->SubscriptionEvent, ComponentOf_Event ());
-        auto eventIndex = GetEntityIndex(subscription->SubscriptionEvent);
-
-        auto& cache = GetSubscriptionCache(eventIndex);
+        auto& cache = GetSubscriptionCache(subscription->SubscriptionEvent);
         for(auto i = 0; i < cache.size(); ++i) {
             if(cache[i].SubscriptionSender == oldValue) {
                 cache[i].SubscriptionSender = newValue;
@@ -87,8 +80,7 @@ LocalFunction(OnSubscriptionEventChanged, void, Entity context, Entity oldValue,
     if(IsEntityValid(oldValue)) {
         AddComponent(oldValue, ComponentOf_Event ());
 
-        auto eventIndex = GetEntityIndex(oldValue);
-        auto& cache = GetSubscriptionCache(eventIndex);
+        auto& cache = GetSubscriptionCache(oldValue);
 
         for(auto i = 0; i < cache.size(); ++i) {
             if(cache[i].SubscriptionEvent == subscription->SubscriptionEvent) {
@@ -101,8 +93,7 @@ LocalFunction(OnSubscriptionEventChanged, void, Entity context, Entity oldValue,
     if(IsEntityValid(newValue) && IsEntityValid(subscription->SubscriptionEvent)) {
         AddComponent(newValue, ComponentOf_Event());
 
-        auto eventIndex = GetEntityIndex(newValue);
-        auto& cache = GetSubscriptionCache(eventIndex);
+        auto& cache = GetSubscriptionCache(newValue);
 
         cache.push_back(*subscription);
     }
@@ -113,48 +104,50 @@ void __InitializeEvent() {
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(Event));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
+	SetUuid(component, "Component.Event");
 
     component = ComponentOf_EventArgument();
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(EventArgument));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_EventArgumentOffset(), offsetof(EventArgument, EventArgumentOffset), sizeof(EventArgument::EventArgumentOffset), TypeOf_u32,  component, 0, PropertyKind_Value);
-    __Property(PropertyOf_EventArgumentType(), offsetof(EventArgument, EventArgumentType), sizeof(EventArgument::EventArgumentType), TypeOf_Type,  component, 0, PropertyKind_Value);
+	SetUuid(component, "Component.EventArgument");
+    __Property(PropertyOf_EventArgumentOffset(), offsetof(EventArgument, EventArgumentOffset), sizeof(EventArgument::EventArgumentOffset), TypeOf_u32,  component, 0, PropertyKind_Value, "EventArgumentOffset");
+    __Property(PropertyOf_EventArgumentType(), offsetof(EventArgument, EventArgumentType), sizeof(EventArgument::EventArgumentType), TypeOf_Type,  component, 0, PropertyKind_Value, "EventArgumentType");
 
     component = ComponentOf_Subscription();
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(Subscription));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_SubscriptionEvent(), offsetof(Subscription, SubscriptionEvent), sizeof(Subscription::SubscriptionEvent), TypeOf_Entity,  component, ComponentOf_Event(), PropertyKind_Value);
-    __Property(PropertyOf_SubscriptionHandler(), offsetof(Subscription, SubscriptionHandler), sizeof(Subscription::SubscriptionHandler), TypeOf_Entity,  component, ComponentOf_Function(), PropertyKind_Value);
-    __Property(PropertyOf_SubscriptionSender(), offsetof(Subscription, SubscriptionSender), sizeof(Subscription::SubscriptionSender), TypeOf_Entity,  component, 0, PropertyKind_Value);
+	SetUuid(component, "Component.Subscription");
+    __Property(PropertyOf_SubscriptionEvent(), offsetof(Subscription, SubscriptionEvent), sizeof(Subscription::SubscriptionEvent), TypeOf_Entity,  component, ComponentOf_Event(), PropertyKind_Value, "SubscriptionEvent");
+    __Property(PropertyOf_SubscriptionHandler(), offsetof(Subscription, SubscriptionHandler), sizeof(Subscription::SubscriptionHandler), TypeOf_Entity,  component, ComponentOf_Function(), PropertyKind_Value, "SubscriptionHandler");
+    __Property(PropertyOf_SubscriptionSender(), offsetof(Subscription, SubscriptionSender), sizeof(Subscription::SubscriptionSender), TypeOf_Entity,  component, 0, PropertyKind_Value, "SubscriptionSender");
 }
 
-API_EXPORT Variant FireEventFast(Entity event, u32 numArguments, const Variant* arguments) {
+API_EXPORT void FireEventFast(Entity event, u32 numArguments, const Variant* arguments) {
 
     Verbose(Verbose_Event, "Firing event %llu ...", event);
 
     auto data = GetEventData(event);
 
-    auto eventIndex = GetEntityIndex(event);
-    auto& cache = GetSubscriptionCache(eventIndex);
-
-    Variant returnData;
-    memset(&returnData, 0, sizeof(Variant));
+    auto& cache = GetSubscriptionCache(event);
 
     if(data) {
         auto sender = arguments[0].as_Entity;
-        for(auto i = 0; i < cache.size(); ++i) {
+		auto register size = cache.size();
+        for(auto i = 0; i < size; ++i) {
             auto& subscription = cache[i];
             if(!subscription.SubscriptionSender || !sender || subscription.SubscriptionSender == sender) {
-                if(IsEntityValid(subscription.SubscriptionHandler)) {
-                    returnData = CallFunction(subscription.SubscriptionHandler, numArguments, arguments);
-                }
+				auto functionData = GetFunctionData(subscription.SubscriptionHandler);
+				if (functionData) {
+					((FunctionCallerType)functionData->FunctionCaller)(
+						functionData->FunctionPtr,
+						arguments
+						);
+				}
             }
         }
     }
-
-    return returnData;
 }
 
 API_EXPORT Entity GetSubscriptionHandler(Entity entity) {

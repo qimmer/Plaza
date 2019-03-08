@@ -19,6 +19,7 @@ Unit(AppLoop)
 
     Function(RunAppLoops, void)
     Function(Quit, void)
+    Function(UpdateAppLoops, bool)
 
 #define AppLoopOrder_Rendering 10.0f
 #define AppLoopOrder_Update 1.0f

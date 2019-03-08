@@ -24,7 +24,7 @@ static bool Lex(Entity lexer, StringRef cppCode) {
 
     SetNumLexerTokens(lexer, generator.size());
 
-    auto tokens = GetLexerTokens(lexer, NULL);
+    auto tokens = GetLexerTokens(lexer);
     for(auto i = 0; i < generator.size(); ++i) {
         auto& entry = generator[i];
 

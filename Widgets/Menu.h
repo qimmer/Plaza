@@ -24,8 +24,10 @@ struct MenuItem {
     Entity MenuItemLabel, MenuItemSubMenu;
 };
 
-struct Separator {
+struct VerticalSeparator {
+};
 
+struct HorizontalSeparator {
 };
 
 struct MainMenuItemStyle {
@@ -41,9 +43,13 @@ struct MainMenuStyle {
     v4i MainMenuStylePadding;
 };
 
+struct SeparatorStyle {
+    v4i SeparatorStylePadding;
+    Entity SeparatorStyleVerticalMesh, SeparatorStyleHorizontalMesh;
+};
+
 Unit(Menu)
     Component(Menu)
-        ArrayProperty(MenuItem, MenuItems)
 
     Component(MenuItem)
         Property(StringRef, MenuItemTitle)
@@ -54,7 +60,8 @@ Unit(Menu)
 
     Component(MainMenuItem)
 
-    Component(Separator)
+    Component(VerticalSeparator)
+    Component(HorizontalSeparator)
 
     Component(MainMenuItemStyle)
         ChildProperty(WidgetMesh, MainMenuItemStyleMesh)
@@ -65,5 +72,10 @@ Unit(Menu)
 
     Component(MainMenuStyle)
         Property(v4i, MainMenuStylePadding)
+
+    Component(SeparatorStyle)
+        Property(v4i, SeparatorStylePadding)
+        ChildProperty(WidgetMesh, SeparatorStyleVerticalMesh)
+        ChildProperty(WidgetMesh, SeparatorStyleHorizontalMesh)
 
 #endif //PLAZA_MENU_H

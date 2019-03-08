@@ -16,9 +16,9 @@ struct EventArgument {
     u8 EventArgumentType;
 };
 
-typedef eastl::vector<Subscription> SubscriptionCacheVector;
+typedef Vector<Subscription, 4> SubscriptionCacheVector;
 
-SubscriptionCacheVector& GetSubscriptionCache(u32 eventEntityIndex);
+SubscriptionCacheVector& GetSubscriptionCache(Entity event);
 
 #include <Core/Component.h>
 
@@ -37,7 +37,7 @@ Unit(Event)
 
 void SetEventArgsByDecl(Entity entity, StringRef decl);
 
-Variant FireEventFast(
+void FireEventFast(
     Entity event,
     u32 numArguments,
     const Variant *arguments

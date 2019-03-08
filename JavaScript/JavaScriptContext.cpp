@@ -55,20 +55,19 @@ static duk_ret_t CallFunc(duk_context *ctx) {
 
     auto numJsArguments = duk_get_top(ctx);
 
-    u32 numFunctionArguments = 0;
-    auto arguments = GetFunctionArguments(function, &numFunctionArguments);
+    auto& arguments = GetFunctionArguments(function);
 
-    if(numJsArguments != numFunctionArguments) {
+    if(numJsArguments != arguments.size()) {
         Log(0, LogSeverity_Error, "Incorrect number of arguments passed to native function %s.", GetUuid(GetComponentEntity(ComponentOf_Function(), functionIndex)));
         return -1;
     }
 
-    Variant *finalArguments = (Variant*)alloca(numFunctionArguments * sizeof(Variant));
+    Variant *finalArguments = (Variant*)alloca(arguments.size() * sizeof(Variant));
 
     u32 numArgs = 0;
-    auto functionArguments = GetFunctionArguments(function, &numArgs);
+    auto& functionArguments = GetFunctionArguments(function);
     for(auto i = 0; i < numArgs; ++i) {
-        if(i >= numFunctionArguments) {
+        if(i >= functionArguments.size()) {
             finalArguments[i] = Variant_Empty;
         } else {
             auto type = GetFunctionArgumentType(functionArguments[i]);
@@ -76,7 +75,7 @@ static duk_ret_t CallFunc(duk_context *ctx) {
         }
     }
 
-    for(auto i = 0; i < numFunctionArguments; ++i) {
+    for(auto i = 0; i < functionArguments.size(); ++i) {
         auto type = GetFunctionArgumentType(arguments[i]);
         switch(type) {
             HandleArgument(bool, BOOLEAN, boolean)
@@ -101,7 +100,7 @@ static duk_ret_t CallFunc(duk_context *ctx) {
         }
     }
 
-    auto returnValue = CallFunction(function, numFunctionArguments, finalArguments);
+    auto returnValue = CallFunction(function, functionArguments.size(), finalArguments);
 
     switch(returnValue.type) {
         HandleReturnType(bool, BOOLEAN, boolean)

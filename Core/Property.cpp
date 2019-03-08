@@ -15,6 +15,7 @@
 #include "Property.h"
 #include "Instance.h"
 
+#include <EASTL/map.h>
 
 #include <malloc.h>
 #include <memory.h>
@@ -32,37 +33,15 @@ struct EntityVectorStruct {
 	Entity StaBuf[1];
 };
 
-struct EntityChildren {
-    EntityChildren() : StartIndex(0), Count(0) {}
-
-    u32 StartIndex;
-    u32 Count;
-    eastl::vector<Entity> children;
-};
-
 struct PropertyChildArray {
-    eastl::vector<Entity> ChildrenPool;
-    eastl::vector<EntityChildren> PerEntityChildrenInfo;
+    eastl::map<Entity, ChildArray> PerEntityChildrenInfo;
 };
 
-static eastl::vector<PropertyChildArray> PerPropertyChildrenInfo;
+static eastl::map<Entity, PropertyChildArray> PerPropertyChildrenInfo;
 static Vector<GenericPropertyChangedListener, 64> PropertyChangedListeners;
 
-static inline PropertyChildArray *GetPropertyChildren(Entity property) {
-    static auto propertyComponent = ComponentOf_Property();
-    static auto propertyComponentEntityIndex = GetEntityIndex(propertyComponent);
-	static auto type = GetComponentType(propertyComponentEntityIndex);
-    auto propertyIndex = _GetComponentIndex(type, GetEntityIndex(property));
-
-    if(propertyIndex == InvalidIndex) {
-        return NULL;
-    }
-
-    if(PerPropertyChildrenInfo.size() <= propertyIndex) {
-        PerPropertyChildrenInfo.resize(propertyIndex + 1);
-    }
-
-    return &PerPropertyChildrenInfo[propertyIndex];
+static inline PropertyChildArray& GetPropertyChildren(Entity property) {
+    return PerPropertyChildrenInfo[property];
 }
 
 API_EXPORT Vector<GenericPropertyChangedListener, 64>& GetGenericPropertyChangedListeners() {
@@ -75,10 +54,7 @@ API_EXPORT u32 AddChild(Entity property, Entity entity, Entity child, bool takeO
         return InvalidIndex;
     }
 
-    auto propertyChildren = GetPropertyChildren(property);
-    if(!propertyChildren) {
-        return InvalidIndex;
-    }
+    auto& propertyChildren = GetPropertyChildren(property);
 
     Verbose(Verbose_Children, "Added %s '%s' to '%s'", GetDebugName(property), GetDebugName(child), GetDebugName(entity));
 
@@ -91,48 +67,27 @@ API_EXPORT u32 AddChild(Entity property, Entity entity, Entity child, bool takeO
         RemoveChild(ownerProperty, owner, index);
     }
 
-    auto entityIndex = GetEntityIndex(entity);
-    auto& perEntityChildrenInfo = propertyChildren->PerEntityChildrenInfo;
-    if(perEntityChildrenInfo.size() <= entityIndex) {
-        perEntityChildrenInfo.resize(entityIndex + 1);
-
-        if(perEntityChildrenInfo.size() > 1) {
-            perEntityChildrenInfo[entityIndex].StartIndex = perEntityChildrenInfo[entityIndex - 1].StartIndex + perEntityChildrenInfo[entityIndex - 1].Count;
-        }
-    }
-
-    auto& info = propertyChildren->PerEntityChildrenInfo[entityIndex];
-
-    // Tell all subsequent child arrays to index additional one entity
-    for(auto i = entityIndex + 1; i < propertyChildren->PerEntityChildrenInfo.size(); ++i) {
-        propertyChildren->PerEntityChildrenInfo[i].StartIndex++;
-    }
+    auto& info = propertyChildren.PerEntityChildrenInfo[entity];
 
     // Insert child into end of child array, pushing all subsequent entries one index
     //propertyChildren->ChildrenPool.insert(propertyChildren->ChildrenPool.begin() + info.StartIndex + info.Count, child);
 
-    propertyChildren->PerEntityChildrenInfo[entityIndex].children.push_back(child);
-
-    info.Count++;
+    info.push_back(child);
 
     if(takeOwnership) {
         SetOwner(child, entity, property);
     }
 
-    return info.Count - 1;
+    return info.size() - 1;
 }
 
 API_EXPORT bool RemoveChild(Entity property, Entity entity, u32 index) {
-    auto propertyChildren = GetPropertyChildren(property);
-    if(!propertyChildren) return false;
+    auto& propertyChildren = GetPropertyChildren(property);
 
-    auto entityIndex = GetEntityIndex(entity);
-    if(propertyChildren->PerEntityChildrenInfo.size() <= entityIndex) return false;
+    auto& info = propertyChildren.PerEntityChildrenInfo[entity];
+    if(index >= info.size()) return false;
 
-    auto& info = propertyChildren->PerEntityChildrenInfo[entityIndex];
-    if(index >= info.Count) return false;
-
-    auto child = propertyChildren->PerEntityChildrenInfo[entityIndex].children[index];//propertyChildren->ChildrenPool[info.StartIndex + index];
+    auto child = info[index];//propertyChildren->ChildrenPool[info.StartIndex + index];
 
     Verbose(Verbose_Children, "Removed %s '%s' to '%s'", GetDebugName(property), GetDebugName(child), GetDebugName(entity));
 
@@ -140,56 +95,34 @@ API_EXPORT bool RemoveChild(Entity property, Entity entity, u32 index) {
         SetOwner(child, 0, 0);
     }
 
-    // Tell all subsequent child arrays to index one entity less
-    for(auto i = entityIndex + 1; i < propertyChildren->PerEntityChildrenInfo.size(); ++i) {
-        propertyChildren->PerEntityChildrenInfo[i].StartIndex--;
-    }
-
-    // Remove child from array, popping all subsequent entries one index
-    //propertyChildren->ChildrenPool.erase(propertyChildren->ChildrenPool.begin() + info.StartIndex + index);
-
-    info.Count--;
-
-    propertyChildren->PerEntityChildrenInfo[entityIndex].children.erase(propertyChildren->PerEntityChildrenInfo[entityIndex].children.begin()  + index);
+    info.erase(info.begin()  + index);
 
     return true;
 }
 
-API_EXPORT u32 GetChildIndex(Entity property, Entity entity, Entity child) {
-    u32 count = 0;
-    auto children = GetChildArray(property, entity, &count);
-    if(!children) return InvalidIndex;
+static const eastl::vector<Entity> emptyArray;
 
-    for(u32 i = 0; i < count; ++i) {
+API_EXPORT u32 GetChildIndex(Entity property, Entity entity, Entity child) {
+    auto& children = GetChildArray(property, entity);
+
+    for(u32 i = 0; i < children.size(); ++i) {
         if(children[i] == child) return i;
     }
 
     return InvalidIndex;
 }
 
-API_EXPORT Entity* GetChildArray(Entity property, Entity entity, u32 *count) {
-    auto propertyChildren = GetPropertyChildren(property);
-    if(!propertyChildren) return NULL;
+API_EXPORT const ChildArray& GetChildArray(Entity property, Entity entity) {
+    auto& propertyChildren = GetPropertyChildren(property);
 
-    auto entityIndex = GetEntityIndex(entity);
-    if(propertyChildren->PerEntityChildrenInfo.size() <= entityIndex) return NULL;
-
-    auto& info = propertyChildren->PerEntityChildrenInfo[entityIndex];
-
-    if(!info.Count) return NULL;
-
-    if(count) {
-        *count = (u32)propertyChildren->PerEntityChildrenInfo[entityIndex].children.size();
-    }
-
-    return propertyChildren->PerEntityChildrenInfo[entityIndex].children.data(); //&propertyChildren->ChildrenPool[info.StartIndex];
+    auto& info = propertyChildren.PerEntityChildrenInfo[entity];
+    return info;
 }
 
 API_EXPORT void EmitChangedEvent(Entity entity, Entity property, Property *propertyData, Variant oldValueData, Variant newValueData) {
     if(!propertyData) return;
 
-    auto eventIndex = GetEntityIndex(propertyData->PropertyChangedEvent);
-    auto& cache = GetSubscriptionCache(eventIndex);
+    auto& cache = GetSubscriptionCache(propertyData->PropertyChangedEvent);
 
     Variant arguments[] = { MakeVariant(Entity, entity), oldValueData, newValueData};
 
@@ -219,8 +152,7 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newVal
 
     u32 offset = propertyData->PropertyOffset;
     Entity component = GetOwner(property);
-    auto componentEntityIndex = GetEntityIndex(component);
-    auto type = GetComponentType(componentEntityIndex);
+    auto type = GetComponentType(component);
     auto size = GetTypeSize(propertyData->PropertyType);
 	auto isString = propertyData->PropertyType == TypeOf_StringRef;
 	auto isVariant = propertyData->PropertyType == TypeOf_Variant;
@@ -287,8 +219,7 @@ API_EXPORT Variant GetPropertyValue(Entity property, Entity context) {
     }
 
     auto propertyData = GetPropertyData(property);
-    auto componentEntityIndex = GetEntityIndex(component);
-    auto type = GetComponentType(componentEntityIndex);
+    auto type = GetComponentType(component);
         
     auto componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
     if(componentIndex == InvalidIndex) return Variant_Default;
@@ -301,9 +232,7 @@ API_EXPORT Variant GetPropertyValue(Entity property, Entity context) {
 
 
 API_EXPORT u32 GetArrayPropertyCount(Entity property, Entity entity) {
-    u32 count = 0;
-    GetChildArray(property, entity, &count);
-    return count;
+    return GetChildArray(property, entity).size();
 }
 
 API_EXPORT bool SetArrayPropertyCount(Entity property, Entity entity, u32 count) {
@@ -360,10 +289,9 @@ API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity) {
 API_EXPORT bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 index) {
     if(!HasComponent(property, ComponentOf_Property())) return false;
 
-    u32 count = 0;
-    auto children = GetChildArray(property, entity, &count);
+    auto& children = GetChildArray(property, entity);
 
-    if(index >= count) return false;
+	if(index >= children.size()) return false;
 
     auto child = children[index];
 
@@ -384,21 +312,20 @@ API_EXPORT u32 GetArrayPropertyIndex(Entity property, Entity entity, Entity elem
 }
 
 API_EXPORT Entity GetArrayPropertyElement(Entity property, Entity entity, u32 index) {
-    u32 count = 0;
-    auto children = GetChildArray(property, entity, &count);
-    if(!children) return 0;
-    if(index >= count) return 0;
+    auto& children = GetChildArray(property, entity);
+    if(index >= children.size()) return 0;
 
     return children[index];
 }
 
-API_EXPORT Entity *GetArrayPropertyElements(Entity property, Entity entity, u32 *count) {
-    return GetChildArray(property, entity, count);
+API_EXPORT const ChildArray& GetArrayPropertyElements(Entity property, Entity entity) {
+    return GetChildArray(property, entity);
 }
 
-void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind) {
+void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind, StringRef name) {
     AddComponent(property, ComponentOf_Property());
     SetOwner(property, component, PropertyOf_Properties());
+	SetUuid(property, StringFormatV("Property.%s", name));
     auto data = GetPropertyData(property);
     data->PropertyOffset = offset;
     data->PropertySize = size;
@@ -412,18 +339,20 @@ void __InitializeProperty() {
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(Property));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_PropertyOffset(), offsetof(Property, PropertyOffset), sizeof(Property::PropertyOffset), TypeOf_u32,  component, 0, PropertyKind_Value);
-    __Property(PropertyOf_PropertySize(),   offsetof(Property, PropertySize),   sizeof(Property::PropertySize),   TypeOf_u32,  component, 0, PropertyKind_Value);
-    __Property(PropertyOf_PropertyType(),   offsetof(Property, PropertyType),   sizeof(Property::PropertyType),   TypeOf_Type, component, 0, PropertyKind_Value);
-    __Property(PropertyOf_PropertyKind(),   offsetof(Property, PropertyKind),   sizeof(Property::PropertyKind),   TypeOf_u8, component, 0, PropertyKind_Value);
-    __Property(PropertyOf_PropertyChangedEvent(), offsetof(Property, PropertyChangedEvent), sizeof(Property::PropertyChangedEvent), TypeOf_Entity,  component, ComponentOf_Event(), PropertyKind_Child);
+	SetUuid(component, "Component.Property");
+    __Property(PropertyOf_PropertyOffset(), offsetof(Property, PropertyOffset), sizeof(Property::PropertyOffset), TypeOf_u32,  component, 0, PropertyKind_Value, "PropertyOffset");
+    __Property(PropertyOf_PropertySize(),   offsetof(Property, PropertySize),   sizeof(Property::PropertySize),   TypeOf_u32,  component, 0, PropertyKind_Value, "PropertySize");
+    __Property(PropertyOf_PropertyType(),   offsetof(Property, PropertyType),   sizeof(Property::PropertyType),   TypeOf_Type, component, 0, PropertyKind_Value, "PropertyType");
+    __Property(PropertyOf_PropertyKind(),   offsetof(Property, PropertyKind),   sizeof(Property::PropertyKind),   TypeOf_u8, component, 0, PropertyKind_Value, "PropertyKind");
+    __Property(PropertyOf_PropertyChangedEvent(), offsetof(Property, PropertyChangedEvent), sizeof(Property::PropertyChangedEvent), TypeOf_Entity,  component, ComponentOf_Event(), PropertyKind_Child, "PropertyChangedEvent");
 
     component = ComponentOf_Ownership();
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(Ownership));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_Owner(), offsetof(Ownership, Owner), sizeof(Ownership::Owner), TypeOf_Entity, component, 0, PropertyKind_Value);
-    __Property(PropertyOf_OwnerProperty(), offsetof(Ownership, OwnerProperty), sizeof(Ownership::OwnerProperty), TypeOf_Entity, component, 0, PropertyKind_Value);
+	SetUuid(component, "Component.Ownership");
+    __Property(PropertyOf_Owner(), offsetof(Ownership, Owner), sizeof(Ownership::Owner), TypeOf_Entity, component, 0, PropertyKind_Value, "Owner");
+    __Property(PropertyOf_OwnerProperty(), offsetof(Ownership, OwnerProperty), sizeof(Ownership::OwnerProperty), TypeOf_Entity, component, 0, PropertyKind_Value, "OwnerProperty");
 }
 
 __PropertyCoreGet(Entity, Owner, Ownership)

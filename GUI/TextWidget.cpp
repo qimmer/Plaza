@@ -3,14 +3,15 @@
 //
 
 #include <Foundation/Stream.h>
+#include <Foundation/AppLoop.h>
 #include <Rendering/Texture2D.h>
 #include <Rendering/Texture.h>
 #include <Rendering/Material.h>
 #include <Rendering/Uniform.h>
 #include <Rendering/Mesh.h>
 #include <Rendering/Renderable.h>
+#include <Rendering/RenderContext.h>
 #include <Core/Debug.h>
-#include <Foundation/Invalidation.h>
 #include <Core/Algorithms.h>
 #include <Core/Identification.h>
 #include "Font.h"
@@ -18,24 +19,26 @@
 #include "TextWidget.h"
 #include <Json/NativeUtils.h>
 
+static eastl::set<Entity> invalidatedTextWidgets;
+
 static void RebuildTextWidget(Entity entity) {
-    Vector<v4f> colors;
+    Vector<v4f, 512> colors;
 
     if (!HasComponent(entity, ComponentOf_TextWidget())) return;
 
+	static auto vertexDecl = FindEntityByUuid("Gui.Font.VertexDeclaration");
+
     auto data = GetTextWidgetData(entity);
 
-    auto font = GetTextWidgetFont(entity);
-    auto text = GetTextWidgetText(entity);
+	auto font = data->TextWidgetFont;
+    auto text = data->TextWidgetText;
 
     if (IsEntityValid(font)) {
         auto length = text ? strlen(text) : 0;
 
-        colors.resize(length);
-        for(auto i = 0; i < length; ++i) {
-            colors[i] = *(v4f*)&data->TextWidgetColor;
-        }
-        auto vertices = (FontVertex *) malloc(sizeof(FontVertex) * length * 6);
+        colors.resize(length, *(v4f*)&data->TextWidgetColor);
+        
+        auto vertices = (FontVertex *) alloca(sizeof(FontVertex) * length * 6);
         v2f size;
         auto numVertices = GetFontGlyphData(font, text, colors.data(), {0.0f, 0.0f}, &size, vertices,
                                             length * 6);
@@ -52,9 +55,9 @@ static void RebuildTextWidget(Entity entity) {
         // Set size to text extent
         SetSize2D(entity, {Max(s32(size.x), 0), Max(s32(size.y), 0)});
 
-        auto textWidgetMesh = GetTextWidgetMesh(entity);
+        auto textWidgetMesh = data->TextWidgetMesh;
         auto vertexBuffer = GetMeshVertexBuffer(textWidgetMesh);
-        SetVertexBufferDeclaration(vertexBuffer, FindEntityByUuid("Gui.Font.VertexDeclaration"));
+        SetVertexBufferDeclaration(vertexBuffer, vertexDecl);
 
         auto currentPath = GetStreamPath(vertexBuffer);
         if(!currentPath || !strlen(currentPath)) {
@@ -64,7 +67,6 @@ static void RebuildTextWidget(Entity entity) {
         }
 
         if(!StreamOpen(vertexBuffer, StreamMode_Write)) {
-            free(vertices);
             return;
         }
 
@@ -72,38 +74,24 @@ static void RebuildTextWidget(Entity entity) {
         StreamClose(vertexBuffer);
 
         SetNumMeshSubMeshes(textWidgetMesh, 1);
-        auto subMesh = *GetMeshSubMeshes(textWidgetMesh, NULL);
+        auto subMesh = GetMeshSubMeshes(textWidgetMesh)[0];
 
         SetSubMeshNumVertices(subMesh, numVertices);
         SetSubMeshPrimitiveType(subMesh, PrimitiveType_TRIANGLELIST);
-        free(vertices);
-
         SetRenderableSubMesh(entity, subMesh);
     }
 }
 
-LocalFunction(OnValidateMeshes, void, Entity component) {
-    for_entity(textWidget, data, TextWidget) {
-        if(IsDirty(textWidget)) {
-            RebuildTextWidget(textWidget);
-        }
+LocalFunction(OnValidateMeshes, void) {
+    for(auto& textWidget : invalidatedTextWidgets) {
+        RebuildTextWidget(textWidget);
     }
-}
 
-LocalFunction(OnValidateTextures, void, Entity component) {
-    for_entity(font, data, Font) {
-        if(IsDirty(font)) {
-            for_entity(textWidget, data2, TextWidget) {
-                    if(GetTextWidgetFont(textWidget) == font) {
-                        RebuildTextWidget(textWidget);
-                    }
-            }
-        }
-    }
+    invalidatedTextWidgets.clear();
 }
 
 LocalFunction(OnTextWidgetChanged, void, Entity textWidget) {
-    RebuildTextWidget(textWidget);
+    invalidatedTextWidgets.insert(textWidget);
 }
 
 BeginUnit(TextWidget)
@@ -122,6 +110,6 @@ BeginUnit(TextWidget)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextWidgetText()), OnTextWidgetChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextWidgetFont()), OnTextWidgetChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextWidgetColor()), OnTextWidgetChanged, 0)
-    RegisterSubscription(EventOf_Validate(), OnValidateMeshes, ComponentOf_Mesh())
-    RegisterSubscription(EventOf_Validate(), OnValidateTextures, ComponentOf_Texture())
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnValidateMeshes, AppLoopOf_ResourcePreparation())
 EndUnit()

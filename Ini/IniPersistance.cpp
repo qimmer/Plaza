@@ -14,16 +14,15 @@
 API_EXPORT bool SerializeIni(Entity stream) {
     std::stringstream ss;
 
-    u32 numSettings = 0, numSettingGroups = 0;
-    auto iniSettingGroups = GetIniFileSettingGroups(stream, &numSettingGroups);
-    for(auto i = 0; i < numSettingGroups; ++i) {
+    auto& iniSettingGroups = GetIniFileSettingGroups(stream);
+    for(auto i = 0; i < iniSettingGroups.size(); ++i) {
         auto settingGroup = iniSettingGroups[i];
 
         auto data = GetIniSettingGroupData(settingGroup);
         ss << "[" << GetUuid(data->IniSettingGroupEntity) << "]" << std::endl;
 
-        auto iniSettings = GetIniSettingGroupSettings(settingGroup, &numSettings);
-        for(auto j = 0; j < numSettings; ++j) {
+        auto& iniSettings = GetIniSettingGroupSettings(settingGroup);
+        for(auto j = 0; j < iniSettings.size(); ++j) {
             auto setting = iniSettings[j];
             auto property = GetIniSettingProperty(setting);
 

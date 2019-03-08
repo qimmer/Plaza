@@ -1,0 +1,21 @@
+{
+    "Uuid": "CommandGroup.Application",
+    "CommandGroupCommands": [
+        {
+            "Uuid": "Command.Quit",
+            "CommandText": "Quit",
+            "CommandIcon": "\uF2F5",
+            "CommandInvocation": {
+                "InvocationFunction": "Function.Quit"
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_WINDOW_CLOSE"
+                    }
+                ]
+            }
+        }
+    ]
+}

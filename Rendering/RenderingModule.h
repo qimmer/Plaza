@@ -9,11 +9,10 @@
 
 Module(Rendering)
     Unit(Rendering)
-        Component(Rendering)
-            ChildProperty(Uniform, RenderingUvOffsetScaleUniform)
-
         Declare(Texture, White)
 
+#define AppLoopOrder_ResourcePrePreparation (AppLoopOrder_Rendering * 0.42f)
+#define AppLoopOrder_ResourcePreparation (AppLoopOrder_Rendering * 0.45f)
 #define AppLoopOrder_ResourceSubmission (AppLoopOrder_Rendering * 0.5f)
 #define AppLoopOrder_BatchSubmission (AppLoopOrder_Rendering * 1.5f)
 #define AppLoopOrder_ResourceDownload (AppLoopOrder_Rendering * 1.75f)

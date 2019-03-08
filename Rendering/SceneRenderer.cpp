@@ -20,8 +20,8 @@ static void SyncBatches(Entity commandList) {
     auto sceneRenderer = GetOwner(commandList);
     auto scene = GetSceneRendererScene(sceneRenderer);
 
-    u32 numExisting = 0;
-    GetCommandListBatches(commandList, &numExisting);
+    u32 numExisting = GetCommandListBatches(commandList).size();
+    
     u32 numBatches = 0;
     {
         for_entity(renderable, data, Renderable) {
@@ -33,7 +33,7 @@ static void SyncBatches(Entity commandList) {
 
     SetArrayPropertyCount(PropertyOf_CommandListBatches(), commandList, numBatches);
 
-    auto batches = GetCommandListBatches(commandList, &numBatches);
+    auto& batches = GetCommandListBatches(commandList);
     {
         auto i = 0;
         for_entity(renderable, data, Renderable) {
@@ -53,12 +53,11 @@ static void SyncCommandLists(Entity sceneRenderer) {
 
     if(!renderPathData) return;
 
-    u32 numRenderPasses = 0;
-    auto renderPasses = GetRenderPathPasses(renderPath, &numRenderPasses);
+    auto& renderPasses = GetRenderPathPasses(renderPath);
 
-    SetArrayPropertyCount(PropertyOf_SceneRendererCommandLists(), sceneRenderer, numRenderPasses);
-    auto commandLists = GetSceneRendererCommandLists(sceneRenderer, &numRenderPasses);
-    for(auto i = 0; i < numRenderPasses; ++i) {
+    SetArrayPropertyCount(PropertyOf_SceneRendererCommandLists(), sceneRenderer, renderPasses.size());
+    auto& commandLists = GetSceneRendererCommandLists(sceneRenderer);
+    for(auto i = 0; i < renderPasses.size(); ++i) {
         SetCommandListPass(commandLists[i], renderPasses[i]);
 
         SyncBatches(commandLists[i]);
@@ -109,20 +108,12 @@ LocalFunction(OnRenderPathPassesChanged, void, Entity renderPath, Entity oldPass
     }
 }
 
-LocalFunction(OnSceneNodeSceneChanged, void, Entity sceneNode, Entity oldScene, Entity newScene) {
-    if(HasComponent(sceneNode, ComponentOf_Renderable())) {
-        for_entity(sceneRenderer, data, SceneRenderer) {
-            if((oldScene && data->SceneRendererScene == oldScene) || (newScene && data->SceneRendererScene == newScene)) {
-                for_children(commandList, SceneRendererCommandLists, sceneRenderer) {
-                    SyncBatches(commandList);
-                }
-            }
-        }
-    }
-}
-
-LocalFunction(OnRenderableAdded, void, Entity component, Entity renderable) {
-    OnSceneNodeSceneChanged(renderable, GetSceneNodeScene(renderable), GetSceneNodeScene(renderable));
+LocalFunction(OnSyncCommandLists, void) {
+	for_entity(sceneRenderer, data, SceneRenderer) {
+		for_children(commandList, SceneRendererCommandLists, sceneRenderer) {
+			SyncBatches(commandList);
+		}
+	}
 }
 
 BeginUnit(SceneRenderer)
@@ -181,12 +172,12 @@ BeginUnit(SceneRenderer)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneRendererPath()), OnSceneRendererPathChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneRendererScene()), OnSceneRendererSceneChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneNodeScene()), OnSceneNodeSceneChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderPathPasses()), OnRenderPathPassesChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BatchRenderable()), OnBatchRenderableChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderableMaterial()), OnRenderableMaterialChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MaterialProgram()), OnMaterialProgramChanged, 0)
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnRenderableAdded, ComponentOf_Renderable())
 
     SetAppLoopOrder(AppLoopOf_BatchSubmission(), AppLoopOrder_BatchSubmission);
+
+	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnSyncCommandLists, AppLoopOf_BatchSubmission())
 EndUnit()

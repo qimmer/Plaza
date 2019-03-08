@@ -39,8 +39,7 @@ struct TaskQueue {
 
 static void TaskFunc(void* taskIndexPtr, struct scheduler*, struct sched_task_partition, sched_uint thread_num) {
     static auto taskComponent = ComponentOf_Task();
-    auto componentEntityIndex = GetEntityIndex(taskComponent);
-    auto task = GetComponentEntity(componentEntityIndex, (size_t)taskIndexPtr);
+    auto task = GetComponentEntity(taskComponent, (size_t)taskIndexPtr);
     Invoke(task);
 }
 

@@ -18,7 +18,7 @@ struct Binding {
     Binding() : BindingTargetProperty(0), BindingSourceEntity(0) {}
 
     Entity BindingTargetProperty, BindingSourceEntity;
-    Vector<Indirection, 8> BindingIndirections;
+	eastl::vector<Indirection> BindingIndirections;
 };
 
 struct Listener {
@@ -31,8 +31,8 @@ struct Listener {
 };
 
 struct EntityBindingData {
-    Vector<Listener, 4> Listeners;
-    Vector<Binding, 4> Bindings;
+    eastl::vector<Listener> Listeners;
+	eastl::vector<Binding> Bindings;
 };
 
 Unit(Binding)

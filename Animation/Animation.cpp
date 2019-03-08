@@ -98,9 +98,9 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
         return Variant_Empty;
     }
 
-    u32 numFrames = 0;
-    auto frames = GetAnimationTrackFrames(animationTrack, &numFrames);
-    if(!numFrames) {
+	auto& frames = GetAnimationTrackFrames(animationTrack);
+    
+    if(!frames.size()) {
         return Variant_Empty;
     }
 
@@ -111,7 +111,7 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     double duration = 0.0, sum = 0.0;
 
     // Find accumulated duration
-    for_children(frame, AnimationTrackFrames, animationTrack) {
+    for(auto frame : frames) {
         auto frameData = GetAnimationFrameData(frame);
         if(!frameData) continue;
 
@@ -127,7 +127,8 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     }
 
     // Find first frame
-    for_children(frame2, AnimationTrackFrames, animationTrack) {
+	for(auto i = 0; i < frames.size(); ++i) {
+		auto frame2 = frames[i];
         auto frameData = GetAnimationFrameData(frame2);
         if(!frameData) continue;
 
@@ -137,7 +138,7 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
         if(!firstFrame && time >= startTime && time < sum) {
             firstFrame = frame2;
             firstTime = startTime;
-            lastFrame = _entriesframe2[(_iframe2 + 1) % _countframe2];
+            lastFrame = frames[(i + 1) % frames.size()];
             lastTime = sum;
             break;
         }

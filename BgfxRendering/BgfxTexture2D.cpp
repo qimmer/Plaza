@@ -10,21 +10,33 @@
 #include <Rendering/Texture.h>
 #include <Rendering/OffscreenRenderTarget.h>
 #include <Rendering/Texture2D.h>
-#include <Foundation/Invalidation.h>
+#include <Rendering/RenderContext.h>
+#include <Foundation/AppLoop.h>
 
 struct BgfxTexture2D {
     u32 size, flag;
 };
 
-LocalFunction(OnTexture2DRemoved, void, Entity entity) {
-    bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
+static eastl::set<Entity> invalidatedTextures;
+
+LocalFunction(OnTexture2DRemoved, void, Entity component, Entity entity) {
+	auto resourceData = GetBgfxResourceData(entity);
+    bgfx::TextureHandle handle = { resourceData->BgfxResourceHandle };
 
     if(bgfx::isValid(handle)) {
         bgfx::destroy(handle);
     }
+
+	resourceData->BgfxResourceHandle = bgfx::kInvalidHandle;
 }
 
-static void ValidateTexture(Entity entity, BgfxTexture2D *data) {
+LocalFunction(OnTexture2DAdded, void, Entity component, Entity entity) {
+	invalidatedTextures.insert(entity);
+}
+
+static void ValidateTexture(Entity entity) {
+    auto data = GetBgfxTexture2DData(entity);
+
     bgfx::TextureHandle handle = { GetBgfxResourceHandle(entity) };
 
     if(!StreamOpen(entity, StreamMode_Read)) {
@@ -44,7 +56,7 @@ static void ValidateTexture(Entity entity, BgfxTexture2D *data) {
 
     // Eventually free old buffers
     if((data->flag != flag || data->size != info.storageSize || !GetTextureDynamic(entity)) || !bgfx::isValid(handle)) {
-        OnTexture2DRemoved(entity);
+        OnTexture2DRemoved(0, entity);
 
         auto textureHandle = (flag & TextureFlag_READ_BACK || flag & TextureFlag_RT)
             ? bgfx::createTexture2D(dimensions.x, dimensions.y, GetTextureMipLevels(entity) > 1, 1, format, flag).idx
@@ -62,10 +74,20 @@ static void ValidateTexture(Entity entity, BgfxTexture2D *data) {
 }
 
 LocalFunction(OnValidation, void, Entity component) {
-    for_entity(entity, data, BgfxTexture2D) {
-        if(IsDirty(entity)) {
-            ValidateTexture(entity, data);
-        }
+    for(auto& entity : invalidatedTextures) {
+        ValidateTexture(entity);
+    }
+
+	invalidatedTextures.clear();
+}
+
+LocalFunction(Invalidate, void, Entity entity) {
+    invalidatedTextures.insert(entity);
+}
+
+LocalFunction(OnStreamContentChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxTexture2D())) {
+        invalidatedTextures.insert(entity);
     }
 }
 
@@ -74,11 +96,14 @@ BeginUnit(BgfxTexture2D)
         RegisterBase(BgfxResource)
     EndComponent()
 
+	RegisterSubscription(EventOf_EntityComponentAdded(), OnTexture2DAdded, ComponentOf_BgfxTexture2D())
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnTexture2DRemoved, ComponentOf_BgfxTexture2D())
-    RegisterSubscription(EventOf_Validate(), OnValidation, ComponentOf_Texture())
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureSize2D()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureFormat()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureFlag()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureDynamic()), Invalidate, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureMipLevels()), Invalidate, 0)
+    RegisterSubscription(EventOf_StreamContentChanged(), OnStreamContentChanged, 0)
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnValidation, AppLoopOf_ResourceSubmission())
 EndUnit()

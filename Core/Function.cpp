@@ -191,14 +191,16 @@ void __InitializeFunction() {
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(Function));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_FunctionReturnType(), offsetof(Function, FunctionReturnType), sizeof(Function::FunctionReturnType), TypeOf_Type,  component, 0, PropertyKind_Value);
-    __Property(PropertyOf_FunctionArguments(), InvalidIndex, 0, TypeOf_Entity,  component, ComponentOf_FunctionArgument(), PropertyKind_Array);
+	SetUuid(component, "Component.Function");
+    __Property(PropertyOf_FunctionReturnType(), offsetof(Function, FunctionReturnType), sizeof(Function::FunctionReturnType), TypeOf_Type,  component, 0, PropertyKind_Value, "FunctionReturnType");
+    __Property(PropertyOf_FunctionArguments(), InvalidIndex, 0, TypeOf_Entity,  component, ComponentOf_FunctionArgument(), PropertyKind_Array, "FunctionArguments");
 
     component = ComponentOf_FunctionArgument();
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(FunctionArgument));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component, 0, PropertyKind_Value);
+	SetUuid(component, "Component.FunctionArgument");
+    __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component, 0, PropertyKind_Value, "FunctionArgumentType");
 	
     RegisterCommonSignatures();
 }

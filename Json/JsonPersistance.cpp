@@ -213,7 +213,8 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
         {
             auto entity = value.as_Entity;
             if(IsEntityValid(entity)) {
-                writer.String(GetUuid(entity));
+                auto uuid = GetUuid(entity);
+                writer.String(uuid ? uuid : "");
             } else {
                 writer.Null();
             }
@@ -325,11 +326,8 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
                 continue;
             }
 
-
-
-            u32 numProperties = 0;
-            auto properties = GetProperties(component, &numProperties);
-            for(auto pi = 0; pi < numProperties; ++pi) {
+            auto properties = GetProperties(component);
+            for(auto pi = 0; pi < properties.size(); ++pi) {
                 auto property = properties[pi];
 
                 StringRef uuid = GetUuid(property);
@@ -626,10 +624,9 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
     auto enu = GetPropertyEnum(property);
     if(enu && reader.GetType() == rapidjson::kStringType) {
         auto flagString = reader.GetString();
-        u32 cnt = 0;
-        auto flags = GetEnumFlags(enu, &cnt);
+        auto& flags = GetEnumFlags(enu);
         u64 value = 0;
-        for(auto i = 0; i < cnt; ++i) {
+        for(auto i = 0; i < flags.size(); ++i) {
             auto flagName = strrchr(GetUuid(flags[i]), '.') + 1;
             auto foundStr = strstr(flagString, flagName);
             if(foundStr) {

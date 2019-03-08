@@ -12,6 +12,14 @@
             "PropertyKind": "PropertyKind_Child",
             "PropertyType": "Entity",
             "PropertyChildComponent": "Component.HotKey"
+        },
+        {
+            "Uuid": "Property.CommandText",
+            "PropertyType": "StringRef"
+        },
+        {
+            "Uuid": "Property.CommandIcon",
+            "PropertyType": "StringRef"
         }
     ],
     "ComponentTemplate": {

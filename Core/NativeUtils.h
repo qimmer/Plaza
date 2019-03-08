@@ -22,6 +22,8 @@ typedef u64 Entity;
 
 typedef bool(*FunctionCaller)(u64 functionImplementation, Type returnArgumentTypeIndex, void *returnData, u32 numArguments, const Type *argumentTypes, const void **argumentDataPtrs);
 
+typedef eastl::fixed_vector<Entity, 8> ChildArray;
+
 #define PropertyKind_Value 0
 #define PropertyKind_Child 1
 #define PropertyKind_Array 2
@@ -34,7 +36,7 @@ u32 AddArrayPropertyElement(Entity property, Entity entity);
 u32 GetArrayPropertyIndex(Entity property, Entity entity, Entity element);
 bool RemoveArrayPropertyElement(Entity property, Entity entity, u32 index);
 Entity GetArrayPropertyElement(Entity property, Entity entity, u32 index);
-Entity *GetArrayPropertyElements(Entity property, Entity entity, u32 *count);
+const ChildArray& GetArrayPropertyElements(Entity property, Entity entity);
 
 void SetModuleSourcePath(Entity module, StringRef sourcePath);
 void SetModuleVersion(Entity module, StringRef version);
@@ -70,7 +72,7 @@ void Log(Entity context, int severity, StringRef format, ...);
 void Info(Entity context, StringRef format, ...);
 void Warning(Entity context, StringRef format, ...);
 void Error(Entity context, StringRef format, ...);
-Variant FireEventFast(
+void FireEventFast(
         Entity event,
         u32 numArguments,
         const Variant *arguments
@@ -114,8 +116,7 @@ StringRef GetUniqueEntityName(Entity entity);
     Declare(Component, NAME)\
     inline NAME * Get ## NAME ## Data(Entity entity) {\
         static auto component = ComponentOf_ ## NAME ();\
-        static auto componentEntityIndex = GetEntityIndex(component);\
-        static auto type = GetComponentType(componentEntityIndex);\
+        static auto type = GetComponentType(component);\
         auto componentIndex = _GetComponentIndex(type, GetEntityIndex(entity));\
 		if(componentIndex == InvalidIndex) return NULL;\
         return (NAME*)_GetComponentData(type, componentIndex);\
@@ -171,8 +172,7 @@ StringRef GetUniqueEntityName(Entity entity);
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         static u32 offset = GetPropertyOffset(prop);\
         static Entity component = GetOwner(prop);\
-        static auto componentEntityIndex = GetEntityIndex(component);\
-        static auto type = GetComponentType(componentEntityIndex);\
+        static auto type = GetComponentType(component);\
         \
         auto componentIndex = _GetComponentIndex(type, GetEntityIndex(entity));\
         if(componentIndex == InvalidIndex) return PROPERTYTYPE ## _Default;\
@@ -184,8 +184,7 @@ StringRef GetUniqueEntityName(Entity entity);
 		static auto propertyData = GetPropertyData(property);\
         static u32 offset = propertyData->PropertyOffset;\
         static Entity component = GetOwner(property);\
-        static auto componentEntityIndex = GetEntityIndex(component);\
-        static auto type = GetComponentType(componentEntityIndex);\
+        static auto type = GetComponentType(component);\
         static auto size = sizeof(PROPERTYTYPE);\
 		const auto isString = propertyData->PropertyType == TypeOf_StringRef;\
 		const auto isVariant = propertyData->PropertyType == TypeOf_Variant;\
@@ -218,8 +217,7 @@ StringRef GetUniqueEntityName(Entity entity);
 			}\
             memcpy(valueData, &newValue, size);\
             \
-            static auto eventIndex = GetEntityIndex(propertyData->PropertyChangedEvent);\
-            auto& cache = GetSubscriptionCache(eventIndex);\
+            auto& cache = GetSubscriptionCache(propertyData->PropertyChangedEvent);\
             \
             Variant arguments[] = { MakeVariant(Entity, entity), oldValueData, newValueVar};\
             \
@@ -251,8 +249,7 @@ StringRef GetUniqueEntityName(Entity entity);
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         static u32 offset = GetPropertyOffset(prop);\
         static Entity component = GetOwner(prop);\
-        static auto componentEntityIndex = GetEntityIndex(component);\
-        static auto type = GetComponentType(componentEntityIndex);\
+        static auto type = GetComponentType(component);\
         \
         auto componentIndex = _GetComponentIndex(type, GetEntityIndex(entity));\
         if(componentIndex == InvalidIndex) return Entity_Default;\
@@ -278,9 +275,9 @@ StringRef GetUniqueEntityName(Entity entity);
 #define ArrayProperty(ELEMENTCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
     static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
-    inline const Entity* Get ## PROPERTYNAME(Entity entity, u32 *count) {\
+    inline const ChildArray& Get ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        return GetArrayPropertyElements(prop, entity, count);\
+        return GetArrayPropertyElements(prop, entity);\
     }\
     inline Entity Add ## PROPERTYNAME(Entity entity) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
@@ -309,7 +306,7 @@ StringRef GetUniqueEntityName(Entity entity);
 #define __ArrayPropertyCore(ELEMENTCOMPONENT, PROPERTYNAME, ...) \
     Declare(Property, PROPERTYNAME) \
     static const StringRef __ ## PROPERTYNAME ## __Meta = (#__VA_ARGS__ "");\
-    const Entity* Get ## PROPERTYNAME(Entity entity, u32 *count);\
+    const ChildArray& Get ## PROPERTYNAME(Entity entity);\
     Entity Add ## PROPERTYNAME(Entity entity);\
     inline void Remove ## PROPERTYNAME(Entity entity, u32 index) {\
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
@@ -317,8 +314,8 @@ StringRef GetUniqueEntityName(Entity entity);
     }
 
 #define __ArrayPropertyCoreImpl(ELEMENTCOMPONENT, PROPERTYNAME, COMPONENT) \
-    API_EXPORT const Entity* Get ## PROPERTYNAME(Entity entity, u32 *count) {\
-        return GetChildArray(PropertyOf_ ## PROPERTYNAME(), entity, count);\
+    API_EXPORT const ChildArray& Get ## PROPERTYNAME(Entity entity) {\
+        return GetChildArray(PropertyOf_ ## PROPERTYNAME(), entity);\
     }\
     API_EXPORT Entity Add ## PROPERTYNAME(Entity entity) {\
         auto element = CreateEntity();\
@@ -457,6 +454,7 @@ StringRef GetUniqueEntityName(Entity entity);
             if(firstTime) {\
                 SetModuleSourcePath(module, __FILE__);\
                 SetModuleVersion(module, __DATE__ " " __TIME__);\
+				SetUuid(module, "Module." #NAME);\
                 AddChild(PropertyOf_Modules(), GetModuleRoot(), module, true);\
                 auto moduleVar = MakeVariant(Entity, module);\
                 FireEventFast(EventOf_ModuleLoadStarted(), 1, &moduleVar);\
@@ -622,14 +620,13 @@ StringRef GetUniqueEntityName(Entity entity);
     }
 
 #define for_children(VARNAME, PROPERTY, PARENTENTITY) \
-        u32 _count ## VARNAME = 0, _i ## VARNAME = 0;\
-        auto _entries ## VARNAME = PARENTENTITY ? Get ## PROPERTY (PARENTENTITY, &_count ## VARNAME) : 0;\
-        for(Entity VARNAME = (_entries ## VARNAME ? (_entries ## VARNAME[_i ## VARNAME]) : 0); _i ## VARNAME < _count ## VARNAME; VARNAME = (++_i ## VARNAME == _count ## VARNAME) ? 0 : Get ## PROPERTY (PARENTENTITY, &_count ## VARNAME) [_i ## VARNAME])
+        const auto& _entries ## VARNAME = Get ## PROPERTY (PARENTENTITY);\
+        for(Entity VARNAME : _entries ## VARNAME)
 
 #define for_children_abstract(VARNAME, PROPERTY, PARENTENTITY) \
         u32 _count ## VARNAME = 0, _i ## VARNAME = 0;\
-        auto _entries ## VARNAME = PARENTENTITY ? GetArrayPropertyElements(PROPERTY, PARENTENTITY, &_count ## VARNAME) : 0;\
-        for(Entity VARNAME = (_entries ## VARNAME ? (_entries ## VARNAME[_i ## VARNAME]) : 0); _i ## VARNAME < _count ## VARNAME; VARNAME = (++_i ## VARNAME == _count ## VARNAME) ? 0 : GetArrayPropertyElements(PROPERTY, PARENTENTITY, &_count ## VARNAME) [_i ## VARNAME])
+        const auto& _entries ## VARNAME = GetArrayPropertyElements(PROPERTY, PARENTENTITY);\
+        for(Entity VARNAME : _entries ## VARNAME)
 
 #include <Core/Event.h>
 #include <Core/Property.h>

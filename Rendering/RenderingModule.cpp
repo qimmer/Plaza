@@ -45,23 +45,9 @@ BeginModule(Rendering)
     RegisterUnit(SceneRenderer)
     RegisterUnit(MeshBuilder)
     RegisterUnit(Rendering)
-
-    ModuleData({
-        "RenderingUvOffsetScaleUniform": {
-
-        }
-    })
 EndModule()
 
-struct Rendering {
-    Entity RenderingUvOffsetScaleUniform;
-};
-
 BeginUnit(Rendering)
-    BeginComponent(Rendering)
-        RegisterChildProperty(Uniform, RenderingUvOffsetScaleUniform)
-    EndComponent()
-
     ModuleData(
             {
                 "FileTypes": [

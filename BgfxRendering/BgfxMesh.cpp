@@ -9,7 +9,10 @@
 
 #include <bgfx/bgfx.h>
 #include <Foundation/Stream.h>
-#include <Foundation/Invalidation.h>
+#include <Rendering/RenderContext.h>
+#include <Foundation/AppLoop.h>
+
+static eastl::set<Entity> invalidatedVertexBuffers, invalidatedIndexBuffers, invalidatedVertexDecls;
 
 struct BgfxVertexDeclaration {
     bgfx::VertexDecl decl;
@@ -27,10 +30,11 @@ struct BgfxIndexBuffer {
     bool isLong;
 };
 
-LocalFunction(OnBgfxVertexBufferRemoved, void, Entity entity) {
+LocalFunction(OnBgfxVertexBufferRemoved, void, Entity component, Entity entity) {
     auto data = GetBgfxVertexBufferData(entity);
+	auto resourceData = GetBgfxResourceData(entity);
     if(data) {
-        bgfx::DynamicVertexBufferHandle dynHandle = { GetBgfxResourceHandle(entity) };
+        bgfx::DynamicVertexBufferHandle dynHandle = { resourceData->BgfxResourceHandle };
         bgfx::VertexBufferHandle staHandle = { dynHandle.idx };
 
         if(data->dynamic) {
@@ -42,11 +46,14 @@ LocalFunction(OnBgfxVertexBufferRemoved, void, Entity entity) {
                 bgfx::destroy(staHandle);
             }
         }
+
+		resourceData->BgfxResourceHandle = bgfx::kInvalidHandle;
     }
 }
 
-LocalFunction(OnBgfxIndexBufferRemoved, void, Entity entity) {
+LocalFunction(OnBgfxIndexBufferRemoved, void, Entity component, Entity entity) {
     auto data = GetBgfxIndexBufferData(entity);
+	auto resourceData = GetBgfxResourceData(entity);
     if(data) {
         bgfx::DynamicIndexBufferHandle dynHandle = { GetBgfxResourceHandle(entity) };
         bgfx::IndexBufferHandle staHandle = { dynHandle.idx };
@@ -60,7 +67,21 @@ LocalFunction(OnBgfxIndexBufferRemoved, void, Entity entity) {
                 bgfx::destroy(staHandle);
             }
         }
+
+		resourceData->BgfxResourceHandle = bgfx::kInvalidHandle;
     }
+}
+
+LocalFunction(OnBgfxVertexDeclarationAdded, void, Entity component, Entity entity) {
+	invalidatedVertexDecls.insert(entity);
+}
+
+LocalFunction(OnBgfxVertexBufferAdded, void, Entity component, Entity entity) {
+	invalidatedVertexBuffers.insert(entity);
+}
+
+LocalFunction(OnBgfxIndexBufferAdded, void, Entity component, Entity entity) {
+	invalidatedIndexBuffers.insert(entity);
 }
 
 static void CalculateAABB(Entity vertexBuffer, const char *vertexData, u32 vertexDataSize) {
@@ -99,7 +120,7 @@ static void ValidateVertexBuffer(Entity entity) {
         return;
     }
 
-    auto buffer = malloc(size);
+    auto buffer = alloca(size);
     StreamSeek(entity, 0);
     StreamRead(entity, size, buffer);
     StreamClose(entity);
@@ -112,7 +133,7 @@ static void ValidateVertexBuffer(Entity entity) {
         auto handle = GetBgfxResourceHandle(entity);
 
         if(handle != bgfx::kInvalidHandle || !data->dynamic || data->declHash != declData->decl.m_hash) {
-            OnBgfxVertexBufferRemoved(entity);
+            OnBgfxVertexBufferRemoved(0, entity);
             SetBgfxResourceHandle(entity, bgfx::createDynamicVertexBuffer(bgfx::copy(buffer, size), declData->decl).idx);
         } else {
             bgfx::DynamicVertexBufferHandle specHandle = {handle};
@@ -121,7 +142,7 @@ static void ValidateVertexBuffer(Entity entity) {
 
         data->dynamic = true;
     } else {
-        OnBgfxVertexBufferRemoved(entity);
+        OnBgfxVertexBufferRemoved(0, entity);
         SetBgfxResourceHandle(entity, bgfx::createVertexBuffer(bgfx::copy(buffer, size), declData->decl).idx);
 
         data->dynamic = false;
@@ -129,8 +150,6 @@ static void ValidateVertexBuffer(Entity entity) {
 
     data->size = size;
     data->declHash = declData->decl.m_hash;
-    
-    free(buffer);
 }
 
 static void ValidateIndexBuffer(Entity entity) {
@@ -147,7 +166,7 @@ static void ValidateIndexBuffer(Entity entity) {
         return;
     }
 
-    auto buffer = malloc(size);
+    auto buffer = alloca(size);
     StreamSeek(entity, 0);
     StreamRead(entity, size, buffer);
     StreamClose(entity);
@@ -160,7 +179,7 @@ static void ValidateIndexBuffer(Entity entity) {
         auto handle = GetBgfxResourceHandle(entity);
 
         if(handle != bgfx::kInvalidHandle || !data->dynamic || data->isLong != isLong) {
-            OnBgfxIndexBufferRemoved(entity);
+            OnBgfxIndexBufferRemoved(0, entity);
             SetBgfxResourceHandle(entity, bgfx::createDynamicIndexBuffer(bgfx::copy(buffer, size), isLong ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE).idx);
         } else {
             bgfx::DynamicIndexBufferHandle specHandle = {handle};
@@ -169,7 +188,7 @@ static void ValidateIndexBuffer(Entity entity) {
 
         data->dynamic = true;
     } else {
-        OnBgfxIndexBufferRemoved(entity);
+        OnBgfxIndexBufferRemoved(0, entity);
         SetBgfxResourceHandle(entity, bgfx::createIndexBuffer(bgfx::copy(buffer, size), isLong ? BGFX_BUFFER_INDEX32 : BGFX_BUFFER_NONE).idx);
 
         data->dynamic = false;
@@ -177,8 +196,6 @@ static void ValidateIndexBuffer(Entity entity) {
 
     data->size = size;
     data->isLong = isLong;
-
-    free(buffer);
 }
 
 static void ValidateVertexDeclaration(Entity entity) {
@@ -222,32 +239,51 @@ static void ValidateVertexDeclaration(Entity entity) {
 
         data->decl.end();
     }
-
-    for_entity(vertexBuffer, vertexBufferData, VertexBuffer) {
-        if(GetVertexBufferDeclaration(vertexBuffer) == entity) {
-            Invalidate(vertexBuffer);
-        }
-    }
 }
 
-LocalFunction(OnVertexDeclarationValidation, void, Entity component) {
-    for_entity(entity, data, VertexDeclaration) {
-        if(!IsDirty(entity)) continue;
+LocalFunction(OnValidation, void) {
+    for(auto& entity : invalidatedVertexDecls) {
         ValidateVertexDeclaration(entity);
     }
+    invalidatedVertexDecls.clear();
+
+    for(auto& entity : invalidatedVertexBuffers) {
+        ValidateVertexBuffer(entity);
+    }
+
+    invalidatedVertexBuffers.clear();
+    for(auto& entity : invalidatedIndexBuffers) {
+        ValidateIndexBuffer(entity);
+    }
+    invalidatedIndexBuffers.clear();
 }
 
-LocalFunction(OnVertexBufferValidation, void, Entity component) {
-    for_entity(entity, data, VertexBuffer) {
-        if(!IsDirty(entity)) continue;
-        ValidateVertexBuffer(entity);
+LocalFunction(OnStreamContentChanged, void, Entity entity) {
+    if(HasComponent(entity, ComponentOf_BgfxVertexBuffer())) {
+        invalidatedVertexBuffers.insert(entity);
+    }
+
+    if(HasComponent(entity, ComponentOf_BgfxIndexBuffer())) {
+        invalidatedIndexBuffers.insert(entity);
     }
 }
 
-LocalFunction(OnIndexBufferValidation, void, Entity component) {
-    for_entity(entity, data, IndexBuffer) {
-        if(!IsDirty(entity)) continue;
-        ValidateIndexBuffer(entity);
+LocalFunction(InvalidateVertexBuffer, void, Entity vb) {
+    invalidatedVertexBuffers.insert(vb);
+}
+
+LocalFunction(InvalidateIndexBuffer, void, Entity ib) {
+    invalidatedIndexBuffers.insert(ib);
+}
+
+LocalFunction(InvalidateAttribute, void, Entity attr) {
+    auto decl = GetOwner(attr);
+    invalidatedVertexDecls.insert(decl);
+
+    for_entity(vertexBuffer, data, BgfxVertexBuffer) {
+        if(GetVertexBufferDeclaration(vertexBuffer) == decl) {
+            InvalidateVertexBuffer(vertexBuffer);
+        }
     }
 }
 
@@ -262,9 +298,23 @@ BeginUnit(BgfxMesh)
         RegisterBase(BgfxResource)
     EndComponent()
 
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxIndexBufferRemoved, ComponentOf_BgfxIndexBuffer())
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxVertexBufferRemoved, ComponentOf_BgfxVertexBuffer())
-    RegisterSubscription(EventOf_Validate(), OnVertexDeclarationValidation, ComponentOf_VertexDeclaration())
-    RegisterSubscription(EventOf_Validate(), OnVertexBufferValidation, ComponentOf_VertexBuffer())
-    RegisterSubscription(EventOf_Validate(), OnIndexBufferValidation, ComponentOf_IndexBuffer())
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnBgfxIndexBufferAdded, ComponentOf_BgfxIndexBuffer())
+    RegisterSubscription(EventOf_EntityComponentAdded(), OnBgfxVertexBufferAdded, ComponentOf_BgfxVertexBuffer())
+	RegisterSubscription(EventOf_EntityComponentAdded(), OnBgfxVertexDeclarationAdded, ComponentOf_BgfxVertexDeclaration())
+	RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxIndexBufferRemoved, ComponentOf_BgfxIndexBuffer())
+	RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxVertexBufferRemoved, ComponentOf_BgfxVertexBuffer())
+    RegisterSubscription(EventOf_StreamContentChanged(), OnStreamContentChanged, 0)
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexAttributeType()), InvalidateAttribute, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexAttributeUsage()), InvalidateAttribute, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexAttributeNormalize()), InvalidateAttribute, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexAttributeAsInt()), InvalidateAttribute, 0)
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexBufferDeclaration()), InvalidateVertexBuffer, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexBufferDynamic()), InvalidateVertexBuffer, 0)
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_IndexBufferLong()), InvalidateIndexBuffer, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_IndexBufferDynamic()), InvalidateIndexBuffer, 0)
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnValidation, AppLoopOf_ResourceSubmission())
 EndUnit()

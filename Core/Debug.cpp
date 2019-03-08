@@ -160,9 +160,8 @@ static void PrintNode(int level, Entity entity) {
     for_entity(component, componentData, Component) {
         if(!HasComponent(entity, component)) continue;
 
-        u32 numProperties = 0;
-        auto properties = GetProperties(component, &numProperties);
-        for(u32 i = 0; i < numProperties; ++i) {
+        auto& properties = GetProperties(component);
+        for(u32 i = 0; i < properties.size(); ++i) {
             auto property = properties[i];
             auto value = GetPropertyValue(property, entity);
             switch(GetPropertyKind(property)) {
@@ -172,9 +171,8 @@ static void PrintNode(int level, Entity entity) {
                     break;
                 case PropertyKind_Array:
                     printf("%*s%s: [\n", (level + 1) * identation, " ", GetDebugName(property));
-                    u32 count = 0;
-                    auto elements = GetArrayPropertyElements(property, entity, &count);
-                    for(u32 j = 0; j < count; ++j) {
+                    auto elements = GetArrayPropertyElements(property, entity);
+                    for(u32 j = 0; j < elements.size(); ++j) {
                         printf("%*s [%d]: ", (level + 2) * identation, " ", j);
                         PrintNode(level+2, elements[j]);
                     }

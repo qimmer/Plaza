@@ -47,16 +47,23 @@ BeginUnit(AppLoop)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopOrder()), OnSortAppLoops, 0)
 EndUnit()
 
+API_EXPORT bool UpdateAppLoops() {
+    bool any = false;
+
+    for(auto i = 0; i < sortedAppLoops.size(); ++i) {
+        if(IsEntityValid(sortedAppLoops[i])) {
+            any = true;
+            SetAppLoopFrame(sortedAppLoops[i], GetAppLoopFrame(sortedAppLoops[i]) + 1);
+        }
+    }
+
+    return any;
+}
+
 API_EXPORT void RunAppLoops() {
     while(!quit) {
-        bool any = false;
 
-        for(auto i = 0; i < sortedAppLoops.size(); ++i) {
-            if(IsEntityValid(sortedAppLoops[i])) {
-                any = true;
-                SetAppLoopFrame(sortedAppLoops[i], GetAppLoopFrame(sortedAppLoops[i]) + 1);
-            }
-        }
+        auto any = UpdateAppLoops();
 
         CleanupStrings();
 

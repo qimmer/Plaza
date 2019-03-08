@@ -166,6 +166,28 @@
                     7,
                     7
                 ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.VerticalSeparator",
+                "SubTexture2DOffset": [
+                    14,
+                    10
+                ],
+                "SubTexture2DSize": [
+                    4,
+                    4
+                ]
+            },
+            {
+                "Uuid": "Style.Default.StyleSheet.HorizontalSeparator",
+                "SubTexture2DOffset": [
+                    14,
+                    5
+                ],
+                "SubTexture2DSize": [
+                    4,
+                    4
+                ]
             }
         ]
     },
@@ -198,6 +220,20 @@
         "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.ItemWell",
         "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.ItemWell",
         "WidgetMeshFixedBorderWidth": 3
+    },
+    
+    "SeparatorStyleVerticalMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.VerticalSeparator",
+        "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.VerticalSeparator",
+        "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.VerticalSeparator",
+        "WidgetMeshFixedBorderWidth": 2
+    },
+    
+    "SeparatorStyleHorizontalMesh": {
+        "WidgetMeshEnabledTexture": "Style.Default.StyleSheet.HorizontalSeparator",
+        "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.HorizontalSeparator",
+        "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.HorizontalSeparator",
+        "WidgetMeshFixedBorderWidth": 2
     },
     
     "ButtonStyleMesh": {
@@ -257,7 +293,7 @@
         "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.Item",
         "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.MenuItem.Selected",
         
-        "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.Item",
+        "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.MenuItem.Selected",
         "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
         "WidgetMeshClickedTexture": "Style.Default.StyleSheet.MenuItem.Selected",
         "WidgetMeshFixedBorderWidth": 1,

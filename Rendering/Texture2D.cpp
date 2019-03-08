@@ -4,7 +4,6 @@
 
 #include "Texture2D.h"
 #include "Texture.h"
-#include <Foundation/Invalidation.h>
 
 BeginUnit(Texture2D)
     BeginComponent(Texture2D)
@@ -20,6 +19,4 @@ BeginUnit(Texture2D)
         RegisterBase(Texture2D)
         RegisterArrayProperty(SubTexture2D, TextureAtlasSubTextures)
     EndComponent()
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureSize2D()), Invalidate, 0)
 EndUnit()

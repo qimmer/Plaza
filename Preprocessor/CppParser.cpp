@@ -57,8 +57,6 @@ static u32 ParseScope(Entity scope, const Entity *tokens, u32 numTokens, u32 sco
 }
 
 static void Parse(Entity lexer) {
-    u32 numTokens = 0;
-    auto tokens = GetLexerTokens(lexer, &numTokens);
-
+    
     //ParseScope(tokens, numTokens, 0);
 }

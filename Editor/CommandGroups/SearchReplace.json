@@ -1,0 +1,47 @@
+{
+    "Uuid": "CommandGroup.SearchReplace",
+    "CommandGroupCommands": [
+        {
+            "Uuid": "Command.Find",
+            "CommandText": "Find ...",
+            "CommandIcon": "\uF002",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_F"
+                    }
+                ]
+            }
+        },
+        {
+            "Uuid": "Command.Replace",
+            "CommandText": "Replace ...",
+            "CommandIcon": "\uF3EB",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftShift"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_F"
+                    }
+                ]
+            }
+        }
+    ]
+}

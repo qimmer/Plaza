@@ -1,17 +1,16 @@
 {
     "Children": [
-        {
-            "$include": "file://Editor/Widgets/EntityLabel.json"
-        },
-        {
-            "$include": "file://Editor/Components/Command.json"
-        },
-        {
-            "$include": "file://Editor/Styles/Default.json"
-        },
-        {
-            "$include": "file://Editor/Commands/Quit.json"
-        }
+        { "$include": "file://Editor/Widgets/EntityLabel.json" },
+        { "$include": "file://Editor/Components/Command.json" },
+        { "$include": "file://Editor/Components/CommandGroup.json" },
+        
+        { "$include": "file://Editor/Styles/Default.json" },
+        
+        { "$include": "file://Editor/CommandGroups/Application.json" },
+        { "$include": "file://Editor/CommandGroups/Clipboard.json" },
+        { "$include": "file://Editor/CommandGroups/File.json" },
+        { "$include": "file://Editor/CommandGroups/History.json" },
+        { "$include": "file://Editor/CommandGroups/SearchReplace.json" }
     ],
     "EditorMainFrame": {
         "$include": "file://Editor/Views/MainFrame.json"

@@ -10,7 +10,6 @@
 #include <Rendering/Mesh.h>
 #include <Rendering/Renderable.h>
 #include <Core/Debug.h>
-#include <Foundation/Invalidation.h>
 #include <Core/Algorithms.h>
 #include <Core/Identification.h>
 #include "Font.h"
@@ -74,7 +73,7 @@ static int intFromUtf8(unsigned int *out_char, const char *in_text, const char *
     return 0;
 }
 
-static void GetBakedQuad(const Glyph *b, int pw, int ph, float *xpos, float *ypos, v4f color, FontVertex *vertices) {
+inline void GetBakedQuad(const Glyph *b, int pw, int ph, float *xpos, float *ypos, v4f color, FontVertex *vertices) {
     float ipw = 1.0f / pw, iph = 1.0f / ph;
     int round_x = (int) floor((*xpos + b->GlyphOffset.x));
     int round_y = (int) floor((*ypos + b->GlyphOffset.y));
@@ -147,6 +146,13 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
     origin.y += data->FontAscent;
 
     auto i = 0;
+
+	auto& fontGlyphs = GetFontGlyphs(font);
+	auto glyphsData = (Glyph*)alloca(sizeof(Glyph) * fontGlyphs.size());
+	for (auto j = 0; j < fontGlyphs.size(); ++j) {
+		glyphsData[j] = *GetGlyphData(fontGlyphs[j]);
+	}
+
     while (text < end) {
         Assert(font, (numVertices + 6) <= maxVertices);
         u32 ch = 0;
@@ -158,15 +164,14 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
             continue;
         }
 
-        Glyph *glyphData = NULL;
-        for_children(glyph, FontGlyphs, font) {
-            glyphData = GetGlyphData(glyph);
-            if (glyphData->GlyphCode == ch) {
-                break;
-            }
-            glyphData = NULL;
-        }
-
+		Glyph *glyphData = NULL;
+		for (auto j = 0; j < fontGlyphs.size(); ++j) {
+			if (glyphsData[j].GlyphCode == ch) {
+				glyphData = &glyphsData[j];
+				break;
+			}
+		}
+        
         if (glyphData) {
             GetBakedQuad(glyphData, textureSize.x, textureSize.y, &origin.x, &origin.y, colors[i], vertices);//1=opengl & d3d10+,0=d3d9
 
@@ -202,7 +207,4 @@ BeginUnit(Font)
         RegisterProperty(s32, FontDescent)
         RegisterProperty(s32, FontLineGap)
     EndComponent()
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FontGlyphs()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_GlyphCode()), InvalidateParent, 0)
 EndUnit()

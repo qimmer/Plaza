@@ -60,7 +60,7 @@ StringRef Intern(StringRef sourceString);
 Function(SetPropertyValue, void, Entity property, Entity entity, Variant valueData)
 Function(GetPropertyValue, Variant, Entity property, Entity entity)
 
-Entity *GetArrayPropertyElements(Entity property, Entity entity, u32 *count);
+const ChildArray& GetArrayPropertyElements(Entity property, Entity entity);
 
 Function(GetArrayPropertyCount, u32, Entity property, Entity entity);
 Function(AddArrayPropertyElement, u32, Entity property, Entity entity);
@@ -71,12 +71,12 @@ Function(GetArrayPropertyElement, Entity, Entity property, Entity entity, u32 in
 
 u32 AddChild(Entity property, Entity entity, Entity child, bool takeOwnership);
 bool RemoveChild(Entity property, Entity entity, u32 index);
-Entity* GetChildArray(Entity property, Entity entity, u32 *count);
+const ChildArray& GetChildArray(Entity property, Entity entity);
 u32 GetChildIndex(Entity property, Entity entity, Entity child);
 
 void SetPropertyMeta(Entity property, StringRef metaString);
 
-void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind);
+void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind, StringRef name);
 void __InitializeProperty();
 void __InitializeString();
 

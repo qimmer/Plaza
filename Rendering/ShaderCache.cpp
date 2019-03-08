@@ -10,7 +10,6 @@
 #include <EASTL/map.h>
 #include <Core/Identification.h>
 #include <Core/Enum.h>
-#include <Foundation/Invalidation.h>
 
 using namespace eastl;
 
@@ -74,8 +73,6 @@ static void InvalidateBinaryProgram(Entity binaryProgram) {
     Variant argument = MakeVariant(Entity, binaryProgram);
 
     FireEventFast(EventOf_ShaderCompile(), 1, &argument);
-
-    Invalidate(binaryProgram);
 }
 
 LocalFunction(OnStreamChanged, void,

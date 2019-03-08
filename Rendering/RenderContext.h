@@ -21,6 +21,8 @@ Unit(RenderContext)
         Property(bool, RenderContextShowDebug)
         Property(bool, RenderContextShowStats)
 
+    Declare(AppLoop, ResourcePrePreparation)
+    Declare(AppLoop, ResourcePreparation)
     Declare(AppLoop, ResourceSubmission)
     Declare(AppLoop, ResourceDownload)
     Declare(AppLoop, Present)

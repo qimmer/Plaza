@@ -13,9 +13,8 @@ struct RestRouting {
 };
 
 LocalFunction(OnHttpServerRequest, void, Entity server, Entity request, Entity response) {
-    u32 numRoutes = 0;
-    auto routes = GetRestServerRoutes(server, &numRoutes);
-    for(auto i = 0; i < numRoutes; ++i) {
+    auto& routes = GetRestServerRoutes(server);
+    for(auto i = 0; i < routes.size(); ++i) {
         auto data = GetRestRoutingData(routes[i]);
         if(data) {
             auto requestUrl = GetHttpRequestUrl(request);

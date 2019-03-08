@@ -28,9 +28,9 @@ static StringRef FormatArguments(Entity format) {
             memcpy(argIndexString, textEnd + 1, argIndexStringLen);
             argIndexString[argIndexStringLen] = '\0';
             auto argIndex = strtoul(argIndexString, NULL, 10);
-            u32 argCount = 0;
-            auto arguments = GetFormatArguments(format, &argCount);
-            if(argIndex < argCount) {
+
+            auto& arguments = GetFormatArguments(format);
+            if(argIndex < arguments.size()) {
                 auto argumentValue = GetFormatArgumentValue(arguments[argIndex]);
                 argumentValue = Cast(argumentValue, TypeOf_StringRef);
                 formattedText.insert(formattedText.end(), argumentValue.as_StringRef, argumentValue.as_StringRef + strlen(argumentValue.as_StringRef));

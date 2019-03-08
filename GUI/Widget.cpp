@@ -7,13 +7,13 @@
 #include <Rendering/Mesh.h>
 #include <Rendering/MeshBuilder.h>
 #include <Rendering/Renderable.h>
+#include <Rendering/RenderContext.h>
 #include <Foundation/Stream.h>
 #include <Rendering/Uniform.h>
 #include <Rendering/Material.h>
 #include <Rendering/Texture.h>
 #include <Rendering/Texture2D.h>
 #include <Core/Identification.h>
-#include <Foundation/Invalidation.h>
 #include <Foundation/Visibility.h>
 #include <Animation/Transition.h>
 #include <Json/NativeUtils.h>
@@ -23,6 +23,8 @@
 #include "Font.h"
 
 #include <cglm/cglm.h>
+
+static eastl::set<Entity> invalidatedWidgetMeshes;
 
 static void UpdateWidgetBounds(Entity widget) {
     auto widgetSize = GetSize2D(widget);
@@ -136,23 +138,23 @@ LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
     }
 
     SetNumMeshSubMeshes(mesh, 1);
-    auto subMesh = GetMeshSubMeshes(mesh, NULL)[0];
+    auto subMesh = GetMeshSubMeshes(mesh)[0];
     SetSubMeshPrimitiveType(subMesh, PrimitiveType_TRIANGLELIST);
     SetSubMeshNumIndices(subMesh, sizeof(indices) / sizeof(u16));
     SetSubMeshNumVertices(subMesh, 4*4);
 }
 
-LocalFunction(OnValidateMeshes, void, Entity component) {
-    for_entity(mesh, meshData, WidgetMesh) {
-        if(IsDirty(mesh)) {
-            RebuildWidgetMesh(mesh);
-        }
+LocalFunction(OnValidateMeshes, void) {
+    for(auto& mesh : invalidatedWidgetMeshes) {
+        RebuildWidgetMesh(mesh);
     }
+
+    invalidatedWidgetMeshes.clear();
 }
 
 LocalFunction(OnWidgetMeshAdded, void, Entity component, Entity entity) {
     SetNumMeshSubMeshes(entity, 1);
-    Invalidate(entity);
+    invalidatedWidgetMeshes.insert(entity);
 }
 
 LocalFunction(OnStateChanged, void, Entity entity) {
@@ -211,6 +213,10 @@ LocalFunction(OnStateUpdated, void, Entity entity) {
     glm_vec4_lerp(&color.r, &widgetMeshData->WidgetMeshDisabledColor.r, state.x, &color.x);
 
     SetWidgetStateColor(entity, color);
+}
+
+LocalFunction(InvalidateWidgetMesh, void, Entity entity) {
+    invalidatedWidgetMeshes.insert(entity);
 }
 
 BeginUnit(Widget)
@@ -277,13 +283,13 @@ BeginUnit(Widget)
 
 	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnBoundsUpdate, AppLoopOf_BoundsUpdate())
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshFixedBorderWidth()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshEnabledTexture()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshDisabledTexture()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshSelectedTexture()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshHoveredTexture()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshFocusedTexture()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshClickedTexture()), Invalidate, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshFixedBorderWidth()), InvalidateWidgetMesh, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshEnabledTexture()), InvalidateWidgetMesh, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshDisabledTexture()), InvalidateWidgetMesh, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshSelectedTexture()), InvalidateWidgetMesh, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshHoveredTexture()), InvalidateWidgetMesh, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshFocusedTexture()), InvalidateWidgetMesh, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshClickedTexture()), InvalidateWidgetMesh, 0)
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetDisabled()), OnStateChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetSelected()), OnStateChanged, 0)
@@ -296,6 +302,7 @@ BeginUnit(Widget)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetInteractionState()), OnStateUpdated, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderableSubMesh()), OnStateUpdated, 0)
 
-    RegisterSubscription(EventOf_Validate(), OnValidateMeshes, ComponentOf_Mesh())
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnValidateMeshes, AppLoopOf_ResourcePreparation())
+
     RegisterSubscription(EventOf_EntityComponentAdded(), OnWidgetMeshAdded, ComponentOf_WidgetMesh())
 EndUnit()

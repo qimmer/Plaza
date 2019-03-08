@@ -17,13 +17,10 @@ LocalFunction(OnOffscreenRenderTargetTexturesChanged, void, Entity stage, Entity
 }
 
 LocalFunction(OnRenderTargetSizeChanged, void, Entity entity, v2i oldSize, v2i newSize) {
-    u32 numStages = 0;
-    auto stages = GetOffscreenRenderTargetTextures(entity, &numStages);
-    if(stages) {
-        for(auto i = 0; i < numStages; ++i) {
-            SetTextureSize2D(stages[i], newSize);
-        }
-    }
+    auto& stages = GetOffscreenRenderTargetTextures(entity);
+	for (auto i = 0; i < stages.size(); ++i) {
+		SetTextureSize2D(stages[i], newSize);
+	}
 }
 
 BeginUnit(OffscreenRenderTarget)

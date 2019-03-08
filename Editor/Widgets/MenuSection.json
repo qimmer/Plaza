@@ -1,0 +1,47 @@
+{
+    "Uuid": "Component.MenuSection",
+    "Properties": [
+        {
+            "Uuid": "Property.MenuSectionCommandGroup",
+            "PropertyType": "Entity",
+            "PropertyChildComponent": "Component.CommandGroup"
+        },
+        {
+            "Uuid": "Property.MenuSectionChildForEach",
+            "PropertyType": "Entity",
+            "PropertyKind": "PropertyKind_Child",
+            "PropertyChildComponent": "Component.ForEach"
+        }
+    ],
+    "Bases": [
+        {
+            "BaseComponent": "Component.Layout"
+        }
+    ],
+    "Children": [
+        {
+            "Uuid": "Template.MenuSectionChild",
+            "MenuItemTitle": "{ForEachSource.CommandText}"
+        }
+    ],
+    "ComponentTemplate": {
+        "LayoutChildOrder": [
+            {
+                "LayoutChildOrderingProperty": "Property.Children"
+            }
+        ],
+        "Children": [
+            {
+            
+            }
+        ],
+        "EntityLabelChildForEach": {
+            "ForEachEnabled": true,
+            "ForEachSourceEntity": "{Owner.MenuSectionCommandGroup}",
+            "ForEachSourceProperty": "Property.CommandGroupCommands",
+            "ForEachDestinationEntity": "{Owner}",
+            "ForEachDestinationArrayProperty": "Property.Children",
+            "ForEachTemplate": "Template.MenuSectionChild"
+        }
+    }
+}

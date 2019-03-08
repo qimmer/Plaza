@@ -68,9 +68,9 @@ API_EXPORT StringRef CalculateEntityPath(Entity entity, bool preferNamesToIndice
             case PropertyKind_Array:
             {
                 unsigned long index = -1;
-                u32 count = 0;
-                auto elements = GetArrayPropertyElements(ownerProperty, owner, &count);
-                for(u32 i = 0; i < count; ++i) {
+
+                auto& elements = GetArrayPropertyElements(ownerProperty, owner);
+                for(u32 i = 0; i < elements.size(); ++i) {
                     if(elements[i] == entity) {
                         index = i;
                         break;
@@ -139,30 +139,19 @@ API_EXPORT StringRef GetEntityRelativePath(StringRef entityPath, Entity relative
 
 void __InitializeNode() {
     auto component = ComponentOf_Identification();
-    __Property(PropertyOf_Uuid(), offsetof(Identification, Uuid), sizeof(Identification::Uuid), TypeOf_StringRef,  component, 0, 0);
+	SetUuid(component, "Component.Identification");
+    __Property(PropertyOf_Uuid(), offsetof(Identification, Uuid), sizeof(Identification::Uuid), TypeOf_StringRef,  component, 0, 0, "Uuid");
 }
 
 API_EXPORT StringRef GetUuid(Entity entity)  {
     if(!IsEntityValid(entity)) {
-        return "";
+        return 0;
     }
 
     auto data = GetIdentificationData(entity);
     if (!data || !data->Uuid || !data->Uuid[0]) {
 
-        auto uniqueName = GetUniqueEntityName(entity);
-        if(uniqueName) {
-            SetUuid(entity, uniqueName);
-        } else {
-            auto owner = GetOwner(entity);
-            if(IsEntityValid(owner)) {
-                SetUuid(entity, StringFormatV("%s.%s", GetUuid(owner), CreateGuid()));
-            } else {
-                SetUuid(entity, CreateGuid());
-            }
-        }
-
-        data = GetIdentificationData(entity);
+		return 0;
     }
 
     return data->Uuid;
@@ -195,6 +184,16 @@ API_EXPORT void SetUuid(Entity entity, StringRef value) {
 
         EmitChangedEvent(entity, PropertyOf_Uuid(), GetPropertyData(PropertyOf_Uuid()), MakeVariant(StringRef, oldValue), MakeVariant(StringRef, value));
     }
+}
+
+LocalFunction(OnRemoved, void, Entity component, Entity entity) {
+	auto data = GetIdentificationData(entity);
+	auto oldValue = data->Uuid;
+
+	auto oldIt = uuidTable.find(oldValue);
+	if (oldIt != uuidTable.end()) {
+		uuidTable.erase(oldIt);
+	}
 }
 
 API_EXPORT bool GetParentPath(StringRef childPath, u32 bufLen, char *parentPath) {
@@ -248,4 +247,5 @@ BeginUnit(Identification)
     EndComponent()
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Uuid()), OnUuidChanged, 0)
+	RegisterSubscription(EventOf_EntityComponentRemoved(), OnRemoved, ComponentOf_Identification())
 EndUnit()

@@ -3,7 +3,6 @@
 //
 
 #include <Foundation/Stream.h>
-#include <Foundation/Invalidation.h>
 #include "Mesh.h"
 #include "Material.h"
 
@@ -54,8 +53,6 @@ BeginUnit(Mesh)
 
     BeginComponent(VertexDeclaration)
         RegisterArrayProperty(VertexAttribute, VertexDeclarationAttributes)
-
-        RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexDeclarationAttributes()), Invalidate, 0)
     EndComponent()
 
     BeginComponent(VertexAttribute)
@@ -63,29 +60,18 @@ BeginUnit(Mesh)
         RegisterPropertyEnum(u8, VertexAttributeUsage, VertexAttributeUsage)
         RegisterProperty(bool, VertexAttributeNormalize)
         RegisterProperty(bool, VertexAttributeAsInt)
-
-        RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexAttributeType()), InvalidateParent, 0)
-        RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexAttributeUsage()), InvalidateParent, 0)
-        RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexAttributeNormalize()), InvalidateParent, 0)
-        RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexAttributeAsInt()), InvalidateParent, 0)
     EndComponent()
 
     BeginComponent(VertexBuffer)
         RegisterBase(Stream)
         RegisterReferenceProperty(VertexDeclaration, VertexBufferDeclaration)
         RegisterProperty(bool, VertexBufferDynamic)
-
-        RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexBufferDeclaration()), Invalidate, 0)
-        RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VertexBufferDynamic()), Invalidate, 0)
     EndComponent()
 
     BeginComponent(IndexBuffer)
         RegisterBase(Stream)
         RegisterProperty(bool, IndexBufferDynamic)
         RegisterProperty(bool, IndexBufferLong)
-
-        RegisterSubscription(GetPropertyChangedEvent(PropertyOf_IndexBufferDynamic()), Invalidate, 0)
-        RegisterSubscription(GetPropertyChangedEvent(PropertyOf_IndexBufferLong()), Invalidate, 0)
     EndComponent()
 
     BeginComponent(Mesh)

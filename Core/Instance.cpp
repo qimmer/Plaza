@@ -7,9 +7,11 @@
 #include "Binding.h"
 #include "Debug.h"
 
+#include <EASTL/map.h>
+
 #define Verbose_Instance "instance"
 
-static eastl::vector<eastl::vector<Entity>> templateInstances;
+static eastl::map<Entity, eastl::vector<Entity>> templateInstances;
 
 static bool TryResolve(Entity unresolvedReference, UnresolvedReference *data) {
     auto entity = GetOwner(unresolvedReference);
@@ -25,9 +27,7 @@ static bool TryResolve(Entity unresolvedReference, UnresolvedReference *data) {
 
     RemoveUnresolvedReferencesByValue(entity, unresolvedReference);
 
-
-    u32 count = 0;
-    if(GetUnresolvedReferences(entity, &count) && count == 0) {
+    if(GetUnresolvedReferences(entity).size() == 0) {
         RemoveComponent(entity, ComponentOf_UnresolvedEntity());
     }
 
@@ -47,13 +47,13 @@ API_EXPORT void ResolveReferences() {
 
 LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate, Entity newTemplate) {
     if(oldTemplate) {
-        auto oldTemplateIndex = GetEntityIndex(oldTemplate);
+        eastl::remove(templateInstances[oldTemplate].begin(), templateInstances[oldTemplate].end(), entity);
 
-        if(templateInstances.size() > oldTemplateIndex) {
-            eastl::remove(templateInstances[oldTemplateIndex].begin(), templateInstances[oldTemplateIndex].end(), entity);
-        }
-
-        for_entity(component, componentData, Component) {
+		auto components = GetEntityComponents(oldTemplate);
+		
+		for (auto i = 0; i < components.size(); ++i) {
+			auto& component = components[i];
+		
             if(component == ComponentOf_Identification()
                || component == ComponentOf_Ownership()
                || component == ComponentOf_UnresolvedEntity()
@@ -61,41 +61,39 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
                 continue;
             }
 
-            if(HasComponent(oldTemplate, component)) {
-                for_children(property, Properties, component) {
-                    auto propertyData = GetPropertyData(property);
+            for_children(property, Properties, component) {
+                auto propertyData = GetPropertyData(property);
 
-                    if(propertyData->PropertyReadOnly) continue;
+                if(propertyData->PropertyReadOnly) continue;
 
-                    if(propertyData->PropertyKind == PropertyKind_Child) {
-                        auto instanceChild = GetPropertyValue(property, entity).as_Entity;
+                if(propertyData->PropertyKind == PropertyKind_Child) {
+                    auto instanceChild = GetPropertyValue(property, entity).as_Entity;
 
-                        if(instanceChild) {
-                            SetInstanceTemplate(instanceChild, 0);
+                    if(instanceChild) {
+                        SetInstanceTemplate(instanceChild, 0);
+                    }
+                } else if (propertyData->PropertyKind == PropertyKind_Array) {
+                    // Remove children determined by old template
+
+                    Vector<Entity, 32> childrenToRemove;
+
+                    for_children_abstract(child, property, entity) {
+                        auto childTemplate = GetInstanceTemplate(child);
+                        auto childTemplateOwner = GetOwner(childTemplate);
+                        if (childTemplateOwner == oldTemplate) {
+                            childrenToRemove.push_back(child);
                         }
-                    } else if (propertyData->PropertyKind == PropertyKind_Array) {
-                        // Remove children determined by old template
+                    }
 
-                        Vector<Entity, 32> childrenToRemove;
+                    for (auto &child : childrenToRemove) {
+                        auto index = GetArrayPropertyIndex(property, entity, child);
+                        RemoveArrayPropertyElement(property, entity, index);
+                    }
+                } else {
+                    auto templateBinding = GetBinding(newTemplate, property);
 
-                        for_children_abstract(child, property, entity) {
-                            auto childTemplate = GetInstanceTemplate(child);
-                            auto childTemplateOwner = GetOwner(childTemplate);
-                            if (childTemplateOwner == oldTemplate) {
-                                childrenToRemove.push_back(child);
-                            }
-                        }
-
-                        for (auto &child : childrenToRemove) {
-                            auto index = GetArrayPropertyIndex(property, entity, child);
-                            RemoveArrayPropertyElement(property, entity, index);
-                        }
-                    } else {
-                        auto templateBinding = GetBinding(newTemplate, property);
-
-                        if(templateBinding) {
-                            Unbind(entity, property);
-                        }
+                    if(templateBinding) {
+                        Unbind(entity, property);
                     }
                 }
             }
@@ -103,15 +101,13 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
     }
 
     if(newTemplate) {
-        auto newTemplateIndex = GetEntityIndex(newTemplate);
+        templateInstances[newTemplate].push_back(entity);
 
-        if(templateInstances.size() <= newTemplateIndex) {
-            templateInstances.resize(newTemplateIndex + 1);
-        }
-
-        templateInstances[newTemplateIndex].push_back(entity);
-
-        for_entity(component, componentData2, Component) {
+		auto components = GetEntityComponents(newTemplate);
+		
+		for (auto i = 0; i < components.size(); ++i) {
+			auto& component = components[i];
+        
             if (component == ComponentOf_Identification()
                 || component == ComponentOf_Ownership()
                 || component == ComponentOf_UnresolvedEntity()
@@ -119,53 +115,51 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
                 continue;
             }
 
-            if (HasComponent(newTemplate, component)) {
-                AddComponent(entity, component);
-            }
+			AddComponent(entity, component);
         }
 
-        for_entity(component, componentData, Component) {
+		for (auto i = 0; i < components.size(); ++i) {
+			auto& component = components[i];
+
             if(component == ComponentOf_Identification()
                || component == ComponentOf_Ownership()
                || component == ComponentOf_UnresolvedEntity()
                || component == ComponentOf_Instance()) {
                 continue;
             }
+            
+            for_children(property, Properties, component) {
+                auto propertyData = GetPropertyData(property);
 
-            if(HasComponent(newTemplate, component)) {
-                for_children(property, Properties, component) {
-                    auto propertyData = GetPropertyData(property);
+                if(propertyData->PropertyReadOnly) continue;
 
-                    if(propertyData->PropertyReadOnly) continue;
+                if(propertyData->PropertyKind == PropertyKind_Child) {
+                    auto instanceChild = GetPropertyValue(property, entity).as_Entity;
+                    auto templateChild = GetPropertyValue(property, newTemplate).as_Entity;
 
-                    if(propertyData->PropertyKind == PropertyKind_Child) {
-                        auto instanceChild = GetPropertyValue(property, entity).as_Entity;
-                        auto templateChild = GetPropertyValue(property, newTemplate).as_Entity;
-
+                    SetInstanceTemplate(instanceChild, templateChild);
+                } else if(propertyData->PropertyKind == PropertyKind_Array) {
+                    for_children_abstract(templateChild, property, newTemplate) {
+                        auto instanceChildIndex = AddArrayPropertyElement(property, entity);
+                        auto instanceChild = GetArrayPropertyElement(property, entity, instanceChildIndex);
                         SetInstanceTemplate(instanceChild, templateChild);
-                    } else if(propertyData->PropertyKind == PropertyKind_Array) {
-                        for_children_abstract(templateChild, property, newTemplate) {
-                            auto instanceChildIndex = AddArrayPropertyElement(property, entity);
-                            auto instanceChild = GetArrayPropertyElement(property, entity, instanceChildIndex);
-                            SetInstanceTemplate(instanceChild, templateChild);
+                    }
+                } else {
+                    auto templateBinding = GetBinding(newTemplate, property);
+
+                    if(templateBinding && !templateBinding->BindingSourceEntity) {
+                        // Template has relative binding. Imitate relative binding here and don't bind directly to template value
+
+                        auto indirections = (Entity*)alloca(sizeof(Entity) * templateBinding->BindingIndirections.size());
+                        for(auto i = 0; i < templateBinding->BindingIndirections.size(); ++i) {
+                            indirections[i] = templateBinding->BindingIndirections[i].IndirectionProperty;
                         }
+
+                        Bind(entity, property, 0, indirections, (u32)templateBinding->BindingIndirections.size());
                     } else {
-                        auto templateBinding = GetBinding(newTemplate, property);
+                        // Template has absolute binding or no binding at all. Bind to template value
 
-                        if(templateBinding && !templateBinding->BindingSourceEntity) {
-                            // Template has relative binding. Imitate relative binding here and don't bind directly to template value
-
-                            auto indirections = (Entity*)alloca(sizeof(Entity) * templateBinding->BindingIndirections.size());
-                            for(auto i = 0; i < templateBinding->BindingIndirections.size(); ++i) {
-                                indirections[i] = templateBinding->BindingIndirections[i].IndirectionProperty;
-                            }
-
-                            Bind(entity, property, 0, indirections, (u32)templateBinding->BindingIndirections.size());
-                        } else {
-                            // Template has absolute binding or no binding at all. Bind to template value
-
-                            Bind(entity, property, newTemplate, &property, 1);
-                        }
+                        Bind(entity, property, newTemplate, &property, 1);
                     }
                 }
             }
@@ -175,31 +169,30 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
 
 static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue) {
     if(valueType == TypeOf_Entity && GetPropertyKind(property) == PropertyKind_Array) {
-        auto entityIndex = GetEntityIndex(entity);
+		auto it = templateInstances.find(entity);
+		if (it != templateInstances.end()) {
+			for (auto& instance : it->second) {
+				if (newValue.as_Entity) {
+					// New child added
 
-        if(templateInstances.size() > entityIndex) {
-            for(auto& instance : templateInstances[entityIndex]) {
-                if(newValue.as_Entity) {
-                    // New child added
+					auto instanceChildIndex = AddArrayPropertyElement(property, instance);
+					auto instanceChild = GetArrayPropertyElement(property, instance, instanceChildIndex);
+					SetInstanceTemplate(instanceChild, newValue.as_Entity);
+				}
 
-                    auto instanceChildIndex = AddArrayPropertyElement(property, instance);
-                    auto instanceChild = GetArrayPropertyElement(property, instance, instanceChildIndex);
-                    SetInstanceTemplate(instanceChild, newValue.as_Entity);
-                }
+				else if (oldValue.as_Entity) {
+					// Existing child removed
 
-                else if(oldValue.as_Entity) {
-                    // Existing child removed
-
-                    for_children_abstract(child, property, instance) {
-                        auto childTemplate = GetInstanceTemplate(child);
-                        if (childTemplate == oldValue.as_Entity) {
-                            RemoveArrayPropertyElement(property, instance, _ichild);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+					for_children_abstract(child, property, instance) {
+						auto childTemplate = GetInstanceTemplate(child);
+						if (childTemplate == oldValue.as_Entity) {
+							RemoveArrayPropertyElement(property, instance, _ichild);
+							break;
+						}
+					}
+				}
+			}
+		}
     }
 }
 
@@ -232,4 +225,5 @@ BeginUnit(Instance)
     RegisterGenericPropertyChangedListener(OnPropertyChanged);
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_InstanceTemplate()), OnInstanceTemplateChanged, 0)
     RegisterSubscription(EventOf_EntityComponentAdding(), OnComponentAdding, 0)
+	//RegisterSubscription(EventOf_EntityComponentRemoved(), OnInstanceRemoved, ComponentOf_Instance())
 EndUnit()

@@ -1,6 +1,5 @@
 #include "Frustum.h"
 #include <Scene/Transform.h>
-#include <Foundation/Invalidation.h>
 
 #include <cglm/cglm.h>
 
@@ -28,7 +27,4 @@ BeginUnit(Frustum)
 	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnFrustumTransformUpdate, AppLoopOf_FrustumTransformUpdate())
 
 	SetAppLoopOrder(AppLoopOf_FrustumTransformUpdate(), AppLoopOrder_FrustumTransformUpdate);
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumNearClip()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumFarClip()), Invalidate, 0)
 EndUnit()

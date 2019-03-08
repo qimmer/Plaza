@@ -1,45 +1,35 @@
 {
     "$components": ["Component.MainMenu"],
-    "MenuItems": [
+    "Children": [
         {
             "$components": ["Component.MainMenuItem"],
             "MenuItemTitle": "File",
             "MenuItemSubMenu": {
-                "MenuItems": [
+                "Children": [
                     {
-                        "MenuItemTitle": "New ..."
+                        "MenuSectionCommandGroup": "CommandGroup.File"
                     },
                     {
-                        "MenuItemTitle": "Opening ..."
-                    },
-                    {
-                        "MenuItemTitle": "Save"
-                    },
-                    {
-                        "MenuItemTitle": "Quit"
+                        "MenuSectionCommandGroup": "CommandGroup.Application"
                     }
                 ]
             }
         },
         {
-            "$components": ["Component.MainMenuItem"],
+            "$components": [
+                "Component.MainMenuItem"
+            ],
             "MenuItemTitle": "Edit",
             "MenuItemSubMenu": {
-                "MenuItems": [
+                "Children": [
                     {
-                        "MenuItemTitle": "Undo"
+                        "MenuSectionCommandGroup": "CommandGroup.History"
                     },
                     {
-                        "MenuItemTitle": "Redo"
+                        "MenuSectionCommandGroup": "CommandGroup.Clipboard"
                     },
                     {
-                        "MenuItemTitle": "Cut"
-                    },
-                    {
-                        "MenuItemTitle": "Copy"
-                    },
-                    {
-                        "MenuItemTitle": "Paste"
+                        "MenuSectionCommandGroup": "CommandGroup.SearchReplace"
                     }
                 ]
             }

@@ -139,18 +139,20 @@ void __InitializeModule() {
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(Module));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_Components(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Component(), PropertyKind_Array);
-    __Property(PropertyOf_Events(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Event(), PropertyKind_Array);
-    __Property(PropertyOf_Functions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Function(), PropertyKind_Array);
-    __Property(PropertyOf_Extensions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Extension(), PropertyKind_Array);
-    __Property(PropertyOf_Subscriptions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Subscription(), PropertyKind_Array);
-    __Property(PropertyOf_Dependencies(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
+	SetUuid(component, "Component.Module");
+    __Property(PropertyOf_Components(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Component(), PropertyKind_Array, "Components");
+    __Property(PropertyOf_Events(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Event(), PropertyKind_Array, "Events");
+    __Property(PropertyOf_Functions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Function(), PropertyKind_Array, "Functions");
+    __Property(PropertyOf_Extensions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Extension(), PropertyKind_Array, "Extensions");
+    __Property(PropertyOf_Subscriptions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Subscription(), PropertyKind_Array, "Subscriptions");
+    __Property(PropertyOf_Dependencies(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array, "Dependencies");
 
     component = ComponentOf_ModuleRoot();
     AddComponent(component, ComponentOf_Component());
     SetComponentSize(component, sizeof(ModuleRoot));
     SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_Modules(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array);
+	SetUuid(component, "Component.ModuleRoot");
+    __Property(PropertyOf_Modules(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array, "Modules");
 
     RegisterFunctionSignature(NativeFunctionInvoker_bool_StringRef, bool, StringRef);
 }

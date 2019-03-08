@@ -1,0 +1,62 @@
+{
+    "Uuid": "CommandGroup.Clipboard",
+    "CommandGroupCommands": [
+        {
+            "Uuid": "Command.Cut",
+            "CommandText": "Cut",
+            "CommandIcon": "\uF0C4",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_X"
+                    }
+                ]
+            }
+        },
+        {
+            "Uuid": "Command.Copy",
+            "CommandText": "Copy",
+            "CommandIcon": "\uF0C5",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_C"
+                    }
+                ]
+            }
+        },
+        {
+            "Uuid": "Command.Paste",
+            "CommandText": "Paste",
+            "CommandIcon": "\uF0EA",
+            "CommandInvocation": {
+            },
+            "CommandHotKey": {
+                "HotKeyStates": [
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_LeftControl"
+                    },
+                    {
+                        "InputStateContext": "Module.Editor.EditorMainFrame",
+                        "InputStateKey": "KEY_V"
+                    }
+                ]
+            }
+        }
+    ]
+}

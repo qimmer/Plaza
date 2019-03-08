@@ -34,7 +34,6 @@
 
 #include <bgfx/bgfx.h>
 #include <Rendering/RenderTarget.h>
-#include <Foundation/Invalidation.h>
 #include <omp.h>
 #include <Rendering/Texture.h>
 #include <Core/Debug.h>
@@ -146,9 +145,8 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
 
     // Support setting submesh to a mesh and then use first submesh, just for convenience
     if(HasComponent(subMesh, ComponentOf_Mesh())) {
-        u32 numSubMeshes = 0;
-        auto subMeshes = GetMeshSubMeshes(subMesh, &numSubMeshes);
-        if(numSubMeshes < 1) return;
+        auto& subMeshes = GetMeshSubMeshes(subMesh);
+        if(subMeshes.size() < 1) return;
 
         subMesh = subMeshes[0];
     }
@@ -269,7 +267,6 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
     }
 
     SetShaderCacheProfile(shaderCache, shaderProfile);
-    Validate(ComponentOf_BinaryProgram()); // Validate, as shaders could have changed after profile changed
 
     v2i renderTargetSize;
     if(IsEntityValid(renderTarget)) {
@@ -328,17 +325,15 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
         SetUniformState(uniform2, camera, primaryEncoder, uvOffsetSizePerSampler);
     }
 
-    u32 numBatches = 0;
-    auto batches = GetCommandListBatches(commandList, &numBatches);
+    auto& batches = GetCommandListBatches(commandList);
 
-    if(numBatches > 0) {
         if(false) {
             #pragma omp parallel
             {
                 auto threadnum = omp_get_thread_num();
                 auto numthreads = omp_get_num_threads();
-                auto low = numBatches*threadnum/numthreads;
-                auto high = numBatches*(threadnum+1)/numthreads;
+                auto low = batches.size()*threadnum/numthreads;
+                auto high = batches.size()*(threadnum+1)/numthreads;
 
                 auto encoder = bgfx::begin();
 
@@ -349,11 +344,11 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
                 bgfx::end(encoder);
             }
         } else {
-            for (auto i=0; i < numBatches; i++) {
+            for (auto i=0; i < batches.size(); i++) {
                 RenderBatch(viewId, primaryEncoder, batches[i], renderState, pass, uvOffsetSizePerSampler);
             }
         }
-    }
+    
 
     bgfx::end(primaryEncoder);
 }

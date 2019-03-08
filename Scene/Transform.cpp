@@ -3,7 +3,6 @@
 //
 
 #include <cglm/cglm.h>
-#include <Foundation/Invalidation.h>
 #include <Foundation/AppNode.h>
 #include "Transform.h"
 #include "Scene.h"
@@ -166,7 +165,6 @@ static void CalculateHierarchyLevel(Entity entity) {
         }
 
         GetTransformData(entity)->TransformHierarchyLevel = level;
-        Invalidate(entity);
 
         for_children(child, Children, entity) {
             CalculateHierarchyLevel(child);
@@ -241,7 +239,6 @@ LocalFunction(OnAdded, void, Entity component, Entity entity) {
     SetScale3D(entity, {1.0f, 1.0f, 1.0f});
 
     CalculateHierarchyLevel(entity);
-    Invalidate(entity);
 }
 
 LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOwner) {

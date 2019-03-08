@@ -26,7 +26,6 @@
 
 #include <Core/Debug.h>
 #include <Foundation/AppLoop.h>
-#include <Foundation/Invalidation.h>
 
 #include <Input/InputContext.h>
 #include <Input/Key.h>
@@ -79,6 +78,7 @@ struct BgfxRenderContext {
 
 static u32 NumContexts = 0, Frame = 0;
 static Entity PrimaryContext = 0;
+static bool isInsidePoll = false;
 
 bgfx::UniformHandle u_uvOffsetSizePerSampler;
 
@@ -103,17 +103,6 @@ static void UpdateTextureReadBack(Entity readBack, TextureReadBack *data) {
     }
 }
 
-LocalFunction(OnResourceSubmission, void, Entity appLoop) {
-    Validate(ComponentOf_Texture());
-    Validate(ComponentOf_OffscreenRenderTarget());
-    Validate(ComponentOf_BinaryProgram());
-    Validate(ComponentOf_Uniform());
-    Validate(ComponentOf_VertexDeclaration());
-    Validate(ComponentOf_Mesh());
-    Validate(ComponentOf_VertexBuffer());
-    Validate(ComponentOf_IndexBuffer());
-}
-
 LocalFunction(OnTextureReadBack, void, Entity appLoop) {
     for_entity(readBack, data, TextureReadBack) {
         UpdateTextureReadBack(readBack, data);
@@ -121,7 +110,10 @@ LocalFunction(OnTextureReadBack, void, Entity appLoop) {
 }
 
 LocalFunction(OnInputPoll, void, Entity appLoop) {
+    if(isInsidePoll) return;
+
     auto numContexts = 0;
+    isInsidePoll = true;
 
     for_entity(context, contextData, BgfxRenderContext) {
         numContexts++;
@@ -195,8 +187,11 @@ LocalFunction(OnInputPoll, void, Entity appLoop) {
     }
 
     if(numContexts) {
-        glfwPollEvents();
+        glfwPostEmptyEvent();
+        glfwWaitEvents();
     }
+
+    isInsidePoll = false;
 }
 
 LocalFunction(OnPresent, void, Entity appLoop) {
@@ -276,6 +271,15 @@ LocalFunction(OnCharPressed, void, GLFWwindow *window, unsigned int c) {
     SetInputContextLastCharacter(entity, c);
 }
 
+LocalFunction(OnGlfwFramebufferResized, void, GLFWwindow *window, int w, int h) {
+
+}
+
+LocalFunction(OnGlfwWindowRefresh, void, GLFWwindow *window) {
+
+}
+
+
 LocalFunction(OnKey, void, GLFWwindow *window, int key, int scanCode, int action, int mods) {
     auto context = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
 
@@ -345,6 +349,8 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
     glfwSetScrollCallback(window, OnMouseScroll);
     glfwSetCursorPosCallback(window, OnMouseMove);
     glfwSetMouseButtonCallback(window, OnMouseButton);
+    glfwSetFramebufferSizeCallback(window, OnGlfwFramebufferResized);
+    glfwSetWindowRefreshCallback(window, OnGlfwWindowRefresh);
 
     data->window = window;
 
@@ -453,7 +459,6 @@ BeginUnit(BgfxRenderContext)
     RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxRenderContextRemoved, ComponentOf_BgfxRenderContext())
 
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnInputPoll, AppLoopOf_InputPoll())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnResourceSubmission, AppLoopOf_ResourceSubmission())
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnTextureReadBack, AppLoopOf_ResourceDownload())
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnPresent, AppLoopOf_Present())
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderTargetSize()), OnContextResized, 0)

@@ -7,6 +7,10 @@
 
 #include <Core/NativeUtils.h>
 
+struct BgfxResource {
+	u16 BgfxResourceHandle;
+};
+
 Unit(BgfxResource)
     Component(BgfxResource)
         Property(u16, BgfxResourceHandle)

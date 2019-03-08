@@ -4,16 +4,19 @@
 
 #include "StbTrueTypePersistance.h"
 #include <Foundation/NativeUtils.h>
+#include <Foundation/AppLoop.h>
 #include <Gui/Font.h>
 #include <Rendering/Texture2D.h>
 #include <Rendering/Texture.h>
-#include <Foundation/Invalidation.h>
+#include <Rendering/RenderContext.h>
 #include <Core/Algorithms.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
 
 #include "stb_truetype.h"
+
+static eastl::set<Entity> invalidatedFonts;
 
 static bool Serialize(Entity texture) {
     return false;
@@ -52,7 +55,7 @@ static bool Deserialize(Entity texture) {
     }
 
     SetNumFontGlyphs(texture, numGlyphs);
-    auto glyphs = GetFontGlyphs(texture, &numGlyphs);
+    auto& glyphs = GetFontGlyphs(texture);
 
     auto glyphIndex = 0;
     for_children(fontRange2, TrueTypeFontRanges, texture) {
@@ -173,8 +176,7 @@ static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
     StreamRead(entity, fontDataSize, fontData);
     StreamClose(entity);
 
-    u32 numGlyphs = 0;
-    auto glyphs = GetFontGlyphs(entity, &numGlyphs);
+    auto& glyphs = GetFontGlyphs(entity);
 
     auto pixel_height = GetTrueTypeFontSize(entity);
     {
@@ -190,7 +192,7 @@ static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
 
         scale = stbtt_ScaleForPixelHeight(&f, pixel_height);
 
-        for (i=0; i < numGlyphs; ++i) {
+        for (i=0; i < glyphs.size(); ++i) {
             int advance, lsb, x0,y0,x1,y1,gw,gh;
             auto glyphData = GetGlyphData(glyphs[i]);
             auto glyphIndex = stbtt_FindGlyphIndex(&f, glyphData->GlyphCode);
@@ -202,7 +204,7 @@ static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
             if (x + gw + 1 >= textureSize.x)
                 y = bottom_y, x = 1; // advance to next row
             if (y + gh + 1 >= textureSize.y) {
-                Warning(entity, "Font texture size is not big enough to fit all glyphs. %d glyphs rendered, %d are still missing.", i, numGlyphs - i);
+                Warning(entity, "Font texture size is not big enough to fit all glyphs. %d glyphs rendered, %d are still missing.", i, glyphs.size() - i);
                 return true;
             }
 
@@ -226,9 +228,12 @@ LocalFunction(ReloadFont, void, Entity font) {
 }
 
 LocalFunction(OnRangeChanged, void, Entity entity) {
-    ReloadFont(GetOwner(entity));
+    invalidatedFonts.insert(GetOwner(entity));
 }
 
+LocalFunction(OnFontChanged, void, Entity entity) {
+    invalidatedFonts.insert(entity);
+}
 LocalFunction(OnUnicodeRangeChanged, void, Entity entity) {
     for_entity(range, data, TrueTypeFontRange) {
         if(data->TrueTypeUnicodeRange == entity) {
@@ -237,6 +242,13 @@ LocalFunction(OnUnicodeRangeChanged, void, Entity entity) {
     }
 }
 
+LocalFunction(OnFontValidation, void) {
+    for(auto& font : invalidatedFonts) {
+        ReloadFont(font);
+    }
+
+    invalidatedFonts.clear();
+}
 
 BeginUnit(StbTrueTypePersistance)
     BeginComponent(UnicodeRange)
@@ -250,15 +262,16 @@ BeginUnit(StbTrueTypePersistance)
 
     BeginComponent(TrueTypeFont)
         RegisterProperty(float, TrueTypeFontSize)
-        RegisterChildProperty(Font, TrueTypeFontFont)
         RegisterArrayProperty(TrueTypeFontRange, TrueTypeFontRanges)
     EndComponent()
 
     RegisterStreamCompressor(ComponentOf_Font(), "font/ttf")
     RegisterSerializer(TTF, "font/ttf")
 
-	RegisterSubscription(EventOf_Validate(), ReloadFont, ComponentOf_Font())
 	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UnicodeRangeStart()), OnUnicodeRangeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UnicodeRangeEnd()), OnUnicodeRangeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TrueTypeUnicodeRange()), OnRangeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TrueTypeFontSize()), OnFontChanged, 0)
+
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnFontValidation, AppLoopOf_ResourcePrePreparation())
 EndUnit()

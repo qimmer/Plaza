@@ -17,7 +17,6 @@
 #include <Foundation/ValueConverter.h>
 #include <Foundation/VirtualPath.h>
 #include <Foundation/Visibility.h>
-#include <Foundation/Invalidation.h>
 #include <Foundation/AppNode.h>
 #include <Foundation/MathOperation.h>
 #include <Foundation/Switch.h>
@@ -55,7 +54,6 @@ BeginModule(Foundation)
     RegisterUnit(ValueConverter)
     RegisterUnit(VirtualPath)
     RegisterUnit(Visibility)
-    RegisterUnit(Invalidation)
     RegisterUnit(AppNode)
     RegisterUnit(MathOperation)
     RegisterUnit(ForEach)

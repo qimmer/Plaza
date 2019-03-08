@@ -8,7 +8,9 @@
 #include "Identification.h"
 #include "Instance.h"
 
-static eastl::vector<EntityBindingData> BindingData;
+#include <EASTL/map.h>
+
+static eastl::map<Entity, EntityBindingData> BindingData;
 
 struct ChangingBinding {
     Entity Entity, Property;
@@ -17,13 +19,7 @@ struct ChangingBinding {
 static Vector<ChangingBinding, 32> currentChangingBindings;
 
 API_EXPORT EntityBindingData& GetBindingData(Entity entity) {
-    auto index = GetEntityIndex(entity);
-
-    if(BindingData.size() <= index) {
-		BindingData.resize(index + 1);
-    }
-
-    return BindingData[index];
+    return BindingData[entity];
 }
 
 static inline void UpdateValue(const Listener& listener) {

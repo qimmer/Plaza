@@ -58,6 +58,8 @@ void __InitModule_Core (Entity module) {
     __PreInitialize();
     __InitializeBase();
     AddComponent(module, ComponentOf_Module());
+	SetUuid(module, "Module.Core");
+
     RegisterUnit(Module)
     RegisterUnit(Component)
     RegisterUnit(Enum)
@@ -72,6 +74,7 @@ void __InitModule_Core (Entity module) {
     RegisterUnit(Instance)
 
     AddComponent(GetModuleRoot(), ComponentOf_ModuleRoot());
+	SetUuid(GetModuleRoot(), "ModuleRoot");
 
     AddChild(PropertyOf_Modules(), GetModuleRoot(), module, true);
     SetOwner(module, GetModuleRoot(), PropertyOf_Modules());

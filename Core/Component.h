@@ -26,7 +26,7 @@ struct ComponentTypeData {
     Vector(EntityComponentIndices, u32, 1);
 };
 
-ComponentTypeData* GetComponentType(u16 componentEntityIndex);
+ComponentTypeData* GetComponentType(Entity component);
 
 inline Entity _GetComponentEntity(ComponentTypeData *componentData, u32 componentIndex) {
     auto entity = *(Entity*)componentData->DataBuffer[componentIndex];
@@ -49,13 +49,13 @@ inline u32 _GetComponentIndex(ComponentTypeData *componentData, u32 entityIndex)
 	return index;
 }
 
-inline u32 _GetNumComponentPages(u32 componentEntityIndex) {
-    auto componentData = GetComponentType(componentEntityIndex);
+inline u32 _GetNumComponentPages(Entity component) {
+    auto componentData = GetComponentType(component);
     return componentData->DataBuffer.GetNumPages();
 }
 
-inline char *_GetComponentPage(u32 componentEntityIndex, u32 index, u32 *elementStride) {
-    auto componentData = GetComponentType(componentEntityIndex);
+inline char *_GetComponentPage(Entity component, u32 index, u32 *elementStride) {
+    auto componentData = GetComponentType(component);
     *elementStride = componentData->DataBuffer.GetBlockSize();
     return componentData->DataBuffer.GetPage(index);
 }
@@ -74,14 +74,17 @@ void __PreInitialize();
 u32 GetComponentIndex(Entity component, Entity entity);
 Entity GetComponentEntity(Entity component, u32 componentIndex);
 
-inline Entity GetNextEntity(Entity *index, u32 componentEntityIndex, void **data) {
-    auto numPages = _GetNumComponentPages(componentEntityIndex);
+typedef Vector<Entity, 4> EntityComponentList;
+const EntityComponentList& GetEntityComponents(Entity entity);
+
+inline Entity GetNextEntity(Entity *index, Entity component, void **data) {
+    auto numPages = _GetNumComponentPages(component);
 
     auto elementIndex = *index - ((*index / PoolPageElements) * PoolPageElements);
 
     for(auto pageIndex = *index / PoolPageElements; pageIndex < numPages; ++pageIndex) {
         u32 stride;
-        auto pageData = _GetComponentPage(componentEntityIndex, (u32)pageIndex, &stride);
+        auto pageData = _GetComponentPage(component, (u32)pageIndex, &stride);
 
         for(; elementIndex < PoolPageElements; ++elementIndex) {
             auto element = &pageData[elementIndex * stride];
@@ -125,25 +128,24 @@ Unit(Component)
 
 #define for_entity(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
     COMPONENTTYPE *DATAVAR;\
-    for(Entity __i = 0, __component = ComponentOf_ ## COMPONENTTYPE(), __componentEntityIndex = (Entity)GetEntityIndex(__component), ENTITYVAR = GetNextEntity(&__i, (u32)__componentEntityIndex, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity(&__i, (u32)__componentEntityIndex, (void**)&DATAVAR))
+    for(Entity __i = 0, __component = ComponentOf_ ## COMPONENTTYPE(), ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR))
 
 #define for_entity_abstract(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
     char *DATAVAR;\
-    for(Entity __i = 0, __component = COMPONENTTYPE, __componentEntityIndex = GetEntityIndex(__component), ENTITYVAR = GetNextEntity(&__i, (u32)__componentEntityIndex, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity(&__i, (u32)__componentEntityIndex, (void**)&DATAVAR))
+    for(Entity __i = 0, __component = COMPONENTTYPE, ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR))
 
 
 #define for_entity_parallel(ENTITYVAR, DATAVAR, COMPONENTTYPE, CONTENTS) \
     {\
         auto __component = ComponentOf_ ## COMPONENTTYPE ();\
-        auto __componentEntityIndex = GetEntityIndex(__component);\
-        auto __numPages = _GetNumComponentPages(__componentEntityIndex);\
+        auto __numPages = _GetNumComponentPages(__component);\
         auto threadnum = omp_get_thread_num();\
         auto numthreads = omp_get_num_threads();\
         auto low = __numPages *threadnum/numthreads;\
         auto high = __numPages *(threadnum+1)/numthreads;\
         for (auto __pageIndex=low; __pageIndex<high; __pageIndex++) {\
             u32 __elementStride;\
-            auto __pageData = _GetComponentPage(__componentEntityIndex, __pageIndex, &__elementStride);\
+            auto __pageData = _GetComponentPage(__component, __pageIndex, &__elementStride);\
             for(auto __elementIndex = 0; __elementIndex < PoolPageElements; ++__elementIndex) {\
                 auto __element = &__pageData [__elementIndex * __elementStride];\
                 Entity ENTITYVAR = *(Entity*)__element;\

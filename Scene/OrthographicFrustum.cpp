@@ -4,7 +4,6 @@
 
 #include "OrthographicFrustum.h"
 #include "Frustum.h"
-#include <Foundation/Invalidation.h>
 
 #include <cglm/cglm.h>
 
@@ -29,8 +28,6 @@ LocalFunction(UpdateProjectionMatrix, void, Entity entity) {
 
     vec3 scale = {1.0f, 1.0f, -1.0f};
     glm_scale((vec4*)&frustumData->FrustumProjectionMatrix[0].x, scale);
-	
-	Invalidate(entity);
 }
 
 LocalFunction(OnOrthographicFrustumAdded, void, Entity component, Entity entity) {

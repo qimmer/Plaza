@@ -33,9 +33,7 @@ LocalFunction(OnUpdateTransitions, void) {
         auto context = GetOwner(finished);
         RemoveActiveTransitionsByValue(context, finished);
 
-        u32 numActive = 0;
-        GetActiveTransitions(context, &numActive);
-        if(numActive == 0) {
+        if(GetActiveTransitions(context).size()) {
             RemoveComponent(context, ComponentOf_TransitioningEntity());
         }
     }
