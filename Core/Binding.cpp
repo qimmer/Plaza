@@ -10,7 +10,7 @@
 
 #include <EASTL/map.h>
 
-static eastl::map<Entity, EntityBindingData> BindingData;
+static eastl::vector<PropertyBindingData> BindingData;
 
 struct ChangingBinding {
     Entity Entity, Property;
@@ -18,32 +18,35 @@ struct ChangingBinding {
 
 static Vector<ChangingBinding, 32> currentChangingBindings;
 
-API_EXPORT EntityBindingData& GetBindingData(Entity entity) {
-    return BindingData[entity];
+API_EXPORT PropertyBindingData& GetBindingData(Entity property) {
+    auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
+    if(BindingData.size() <= propertyIndex) {
+        BindingData.resize(propertyIndex + 1);
+    }
+    return BindingData[propertyIndex];
 }
 
 static inline void UpdateValue(const Listener& listener) {
-    auto& bindings = GetBindingData(listener.BindingEntity).Bindings;
-    auto binding = std::find_if(bindings.begin(), bindings.end(), [=](const Binding& binding) {
-        return binding.BindingTargetProperty == listener.BindingTargetProperty;
-    });
+    auto& bindingData = GetBindingData(listener.BindingTargetProperty);
 
-    auto& indirection = binding->BindingIndirections[listener.BindingIndirectionIndex];
+    auto& binding = bindingData.Bindings[listener.BindingEntity];
+
+    auto& indirection = binding.BindingIndirections[listener.BindingIndirectionIndex];
 
     if(!IsEntityValid(indirection.ListenerEntity)) return;
 
-    auto propertyData = GetPropertyData(binding->BindingTargetProperty);
+    auto propertyData = GetPropertyData(binding.BindingTargetProperty);
 
     auto value = GetPropertyValue(indirection.IndirectionProperty, indirection.ListenerEntity);
 
     // Do we need a cast?
-    auto targetType = GetPropertyType(binding->BindingTargetProperty);
+    auto targetType = GetPropertyType(binding.BindingTargetProperty);
     if(propertyData->PropertyKind == PropertyKind_Value && targetType != value.type) {
         value = Cast(value, targetType);
     }
 
-    currentChangingBindings.push_back({listener.BindingEntity, binding->BindingTargetProperty}); // Allow change without breaking the binding
-    SetPropertyValue(binding->BindingTargetProperty, listener.BindingEntity, value);
+    currentChangingBindings.push_back({listener.BindingEntity, binding.BindingTargetProperty}); // Allow change without breaking the binding
+    SetPropertyValue(binding.BindingTargetProperty, listener.BindingEntity, value);
     currentChangingBindings.pop_back();
 }
 
@@ -54,18 +57,7 @@ static void RemoveListeners(Entity self, const Binding& binding) {
     for(u32 i = 0; i < numIndirections; ++i) {
         auto& indirection = indirections[i];
 
-        auto& listenerData = GetBindingData(indirection.ListenerEntity);
-
-        // Find listener related to binding and indirection
-        s32 listenerIndex = -1;
-        for(auto j = 0; j < listenerData.Listeners.size(); j++) {
-            auto& listener = listenerData.Listeners[j];
-            if(listener.ListenerProperty == indirection.IndirectionProperty && listener.BindingEntity == self && listener.BindingIndirectionIndex == i) {
-                listenerIndex = j;
-            }
-        }
-
-        listenerData.Listeners.erase(listenerData.Listeners.begin() + listenerIndex);
+        GetBindingData(indirection.IndirectionProperty).Listeners.erase(indirection.ListenerEntity);
     }
 }
 
@@ -97,15 +89,11 @@ static void AddListeners(Entity self, Binding& binding) {
 
         auto& indirection = indirections[reverseIndex];
 
-        auto& sourceBindingData = GetBindingData(sourceEntity);
-
-        Listener listener;
+        auto& listener = GetBindingData(indirection.IndirectionProperty).Listeners[sourceEntity];
         listener.BindingEntity = self;
         listener.BindingTargetProperty = binding.BindingTargetProperty;
         listener.BindingIndirectionIndex = (u16)reverseIndex;
         listener.ListenerProperty = indirection.IndirectionProperty;
-
-        sourceBindingData.Listeners.push_back(listener);
 
         indirection.ListenerEntity = sourceEntity;
 
@@ -143,32 +131,21 @@ static inline void HandleListener(Entity self, const Listener& listener, Variant
 }
 
 static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue) {
-    auto& bindingData = GetBindingData(entity);
-    if(bindingData.Listeners.size()) {
-        auto listeners = bindingData.Listeners;
-
-        for(auto i = 0; i < listeners.size(); ++i) {
-            auto& listener = listeners[i];
-
-            if(property != listener.ListenerProperty) continue;
-
-            HandleListener(entity, listener, oldValue, newValue);
-        }
+    auto& bindingData = GetBindingData(property);
+    auto& listeners = bindingData.Listeners;
+    auto listenerIt = listeners.find(entity);
+    if(listenerIt != listeners.end()) {
+        HandleListener(entity, listenerIt->second, oldValue, newValue);
     }
 
-    auto& bindings = GetBindingData(entity).Bindings;
-    auto binding = std::find_if(bindings.begin(), bindings.end(), [=](const Binding& binding) {
-        return binding.BindingTargetProperty == property;
-    });
-
     // If this property is bound and the change was not triggered by a binding value update, break the binding!
-    if(binding != bindings.end() && currentChangingBindings.back().Entity != entity && currentChangingBindings.back().Property != property) {
-        auto targetProperty = binding->BindingTargetProperty;
+    auto binding = bindingData.Bindings.find(entity);
+    if(binding != bindingData.Bindings.end() && currentChangingBindings.back().Entity != entity && currentChangingBindings.back().Property != property) {
+        auto targetProperty = binding->second.BindingTargetProperty;
         if(GetPropertyKind(targetProperty) == PropertyKind_Value) {
-            RemoveListeners(entity, *binding);
+            RemoveListeners(entity, binding->second);
 
-            bindings.erase(binding);
-
+            bindingData.Bindings.erase(entity);
             return;
         }
     }
@@ -182,24 +159,24 @@ LocalFunction(OnComponentRemoved, void, Entity component, Entity entity) {
 }
 
 API_EXPORT void Bind(Entity entity, Entity property, Entity sourceEntity, const Entity* indirections, u32 numIndirections) {
-    auto& bindings = GetBindingData(entity).Bindings;
-    auto existingBinding = std::find_if(bindings.begin(), bindings.end(), [&](const Binding& binding) {
-        return binding.BindingTargetProperty == property;
-    });
+
+    auto& bindings = GetBindingData(property).Bindings;
+    auto existingBinding = bindings.find(entity);
 
     if(existingBinding != bindings.end()) {
-        RemoveListeners(entity, *existingBinding);
-        existingBinding->BindingSourceEntity = sourceEntity;
+        auto& binding = existingBinding->second;
+        RemoveListeners(entity, binding);
+        binding.BindingSourceEntity = sourceEntity;
 
-        existingBinding->BindingIndirections.resize(numIndirections);
+        binding.BindingIndirections.resize(numIndirections);
         for(auto i = 0; i < numIndirections; ++i) {
-            existingBinding->BindingIndirections[i].IndirectionProperty = indirections[i];
+            binding.BindingIndirections[i].IndirectionProperty = indirections[i];
         }
 
-        EvaluateIndirections(entity, *existingBinding);
-        AddListeners(entity, *existingBinding);
+        EvaluateIndirections(entity, binding);
+        AddListeners(entity, binding);
     } else {
-        Binding binding;
+        auto& binding = bindings[entity];
         binding.BindingTargetProperty = property;
         binding.BindingSourceEntity = sourceEntity;
 
@@ -208,30 +185,29 @@ API_EXPORT void Bind(Entity entity, Entity property, Entity sourceEntity, const 
             binding.BindingIndirections[i].IndirectionProperty = indirections[i];
         }
 
-        bindings.push_back(binding);
-        EvaluateIndirections(entity, bindings.back());
-        AddListeners(entity, bindings.back());
+        EvaluateIndirections(entity, binding);
+        AddListeners(entity, binding);
     }
 }
 
 API_EXPORT const Binding* GetBinding(Entity entity, Entity property) {
-    auto& bindings = GetBindingData(entity).Bindings;
-    auto binding = std::find_if(bindings.begin(), bindings.end(), [=](const Binding& binding) {
-        return binding.BindingTargetProperty == property;
-    });
+    auto& bindings = GetBindingData(property).Bindings;
+    auto existingBinding = bindings.find(entity);
 
-    return binding == bindings.end() ? NULL : &*binding;
+    if(existingBinding != bindings.end()) {
+        return &existingBinding->second;
+    }
+
+    return 0;
 }
 
 API_EXPORT void Unbind(Entity entity, Entity property) {
-    auto& bindings = GetBindingData(entity).Bindings;
-    auto binding = std::find_if(bindings.begin(), bindings.end(), [=](const Binding& binding) {
-        return binding.BindingTargetProperty == property;
-    });
+    auto& bindings = GetBindingData(property).Bindings;
+    auto existingBinding = bindings.find(entity);
 
-    if(binding != bindings.end()) {
-        RemoveListeners(entity, *binding);
-        bindings.erase(binding);
+    if(existingBinding != bindings.end()) {
+        RemoveListeners(entity, existingBinding->second);
+        bindings.erase(existingBinding);
     }
 }
 

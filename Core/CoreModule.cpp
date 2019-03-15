@@ -21,20 +21,6 @@
 bool __IsCoreInitialized = false;
 
 void __InitializeBase() {
-    SetComponentSize(ComponentOf_Component(), 500);
-    SetComponentSize(ComponentOf_Property(), 38);
-    SetComponentSize(ComponentOf_Ownership(), 16);
-    SetComponentSize(ComponentOf_Identification(), 1024);
-    SetComponentSize(ComponentOf_Event(), 1000);
-    SetComponentSize(ComponentOf_EventArgument(), 5);
-    SetComponentSize(ComponentOf_Subscription(), 24);
-    SetComponentSize(ComponentOf_Function(), 250);
-    SetComponentSize(ComponentOf_FunctionArgument(), 8);
-    SetComponentSize(ComponentOf_Module(), 8196);
-    SetComponentSize(ComponentOf_ModuleRoot(), 720);
-    SetComponentSize(ComponentOf_Enum(), 4);
-    SetComponentSize(ComponentOf_EnumFlag(), 4);
-
     __InitializeComponent();
     __InitializeModule();
     __InitializeProperty();

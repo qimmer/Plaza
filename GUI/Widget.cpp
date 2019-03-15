@@ -44,9 +44,9 @@ static void UpdateWidgetBounds(Entity widget) {
 }
 
 LocalFunction(OnBoundsUpdate, void) {
-	for_entity_parallel(widget, data, Widget, {
+	for_entity(widget, data, Widget) {
 		UpdateWidgetBounds(widget);
-	});
+	};
 }
 
 LocalFunction(RebuildWidgetMesh, void, Entity mesh) {

@@ -27,10 +27,6 @@
 #include <uuid/uuid.h>
 #endif
 
-struct Identification {
-    StringRef Name, Uuid;
-};
-
 static std::map<const void*, Entity> uuidTable;
 
 API_EXPORT StringRef CalculateEntityPath(Entity entity, bool preferNamesToIndices) {
@@ -166,7 +162,7 @@ API_EXPORT void SetUuid(Entity entity, StringRef value) {
 
     if(data->Uuid != value) {
         auto newUuidIt = uuidTable.find(value);
-        if(newUuidIt != uuidTable.end()) {
+        if(newUuidIt != uuidTable.end() && newUuidIt->second != entity) {
             Log(entity, LogSeverity_Error, "Uuid '%s' is already occupied by '%s'. Uuid has not changed.", value, GetDebugName(newUuidIt->second));
             return;
         }

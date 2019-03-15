@@ -49,11 +49,11 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
     if(oldTemplate) {
         eastl::remove(templateInstances[oldTemplate].begin(), templateInstances[oldTemplate].end(), entity);
 
-		auto components = GetEntityComponents(oldTemplate);
-		
-		for (auto i = 0; i < components.size(); ++i) {
-			auto& component = components[i];
-		
+		auto& components = GetEntityComponents(oldTemplate);
+
+        for (auto it = components.begin(); it != components.end(); ++it) {
+            auto& component = it->first;
+
             if(component == ComponentOf_Identification()
                || component == ComponentOf_Ownership()
                || component == ComponentOf_UnresolvedEntity()
@@ -105,8 +105,8 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
 
 		auto components = GetEntityComponents(newTemplate);
 		
-		for (auto i = 0; i < components.size(); ++i) {
-			auto& component = components[i];
+		for (auto it = components.begin(); it != components.end(); ++it) {
+			auto& component = it->first;
         
             if (component == ComponentOf_Identification()
                 || component == ComponentOf_Ownership()
@@ -118,8 +118,8 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
 			AddComponent(entity, component);
         }
 
-		for (auto i = 0; i < components.size(); ++i) {
-			auto& component = components[i];
+        for (auto it = components.begin(); it != components.end(); ++it) {
+            auto& component = it->first;
 
             if(component == ComponentOf_Identification()
                || component == ComponentOf_Ownership()

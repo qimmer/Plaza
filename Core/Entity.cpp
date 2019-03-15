@@ -93,8 +93,9 @@ API_EXPORT void DestroyEntity(Entity entity) {
 
 	auto components = GetEntityComponents(entity);
 
-	for (auto i = 0; i < components.size(); ++i) {
-        RemoveComponent(entity, components[i]);
+    for (auto it = components.begin(); it != components.end(); ++it) {
+        auto& component = it->first;
+        RemoveComponent(entity, component);
     }
 
     auto argument = MakeVariant(Entity, entity);

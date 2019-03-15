@@ -152,7 +152,6 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newVal
 
     u32 offset = propertyData->PropertyOffset;
     Entity component = GetOwner(property);
-    auto type = GetComponentType(component);
     auto size = GetTypeSize(propertyData->PropertyType);
 	auto isString = propertyData->PropertyType == TypeOf_StringRef;
 	auto isVariant = propertyData->PropertyType == TypeOf_Variant;
@@ -161,14 +160,14 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newVal
 	    newValueData = Cast(newValueData, propertyData->PropertyType);
 	}
         
-    auto componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
+    auto componentIndex = GetComponentIndex(component, context);
         
     if(componentIndex == InvalidIndex) {
         AddComponent(context, component);
-        componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
+        componentIndex = GetComponentIndex(component, context);
     }
         
-    auto componentData = _GetComponentData(type, componentIndex);
+    auto componentData = GetComponentData(component, componentIndex);
     auto valueData = componentData + offset;
 
     if(propertyData->PropertyType == TypeOf_StringRef || (propertyData->PropertyType == TypeOf_Variant && ((Variant*)valueData)->type == TypeOf_StringRef)) {
@@ -219,11 +218,10 @@ API_EXPORT Variant GetPropertyValue(Entity property, Entity context) {
     }
 
     auto propertyData = GetPropertyData(property);
-    auto type = GetComponentType(component);
-        
-    auto componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
+
+    auto componentIndex = GetComponentIndex(component, context);
     if(componentIndex == InvalidIndex) return Variant_Default;
-    auto componentData = _GetComponentData(type, componentIndex);
+    auto componentData = GetComponentData(component, componentIndex);
 
     auto valueData = componentData + propertyData->PropertyOffset;
 	

@@ -18,21 +18,21 @@ struct Binding {
     Binding() : BindingTargetProperty(0), BindingSourceEntity(0) {}
 
     Entity BindingTargetProperty, BindingSourceEntity;
-	eastl::vector<Indirection> BindingIndirections;
+	eastl::fixed_vector<Indirection, 4> BindingIndirections;
 };
 
 struct Listener {
     Listener() : BindingEntity(0), BindingIndirectionIndex(0), BindingTargetProperty(0), ListenerProperty(0) {}
 
     Entity BindingEntity;
-    u16 BindingIndirectionIndex;
     Entity BindingTargetProperty;
     Entity ListenerProperty;
+	u16 BindingIndirectionIndex;
 };
 
-struct EntityBindingData {
-    eastl::vector<Listener> Listeners;
-	eastl::vector<Binding> Bindings;
+struct PropertyBindingData {
+    eastl::map<Entity, Listener> Listeners;
+	eastl::map<Entity, Binding> Bindings;
 };
 
 Unit(Binding)
@@ -40,7 +40,5 @@ Unit(Binding)
 void Bind(Entity entity, Entity property, Entity sourceEntity, const Entity* indirections, u32 numIndirections);
 const Binding* GetBinding(Entity entity, Entity property);
 void Unbind(Entity entity, Entity property);
-
-EntityBindingData& GetBindingData(Entity entity);
 
 #endif //PLAZA_BINDING_H

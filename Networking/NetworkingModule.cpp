@@ -25,10 +25,10 @@ BeginModule(Networking)
     RegisterDependency(Foundation)
     RegisterDependency(Json)
 
+	RegisterUnit(Server)
+	RegisterUnit(TcpStream)
     RegisterUnit(HttpRequest)
     RegisterUnit(HttpServer)
-    RegisterUnit(Server)
-    RegisterUnit(TcpStream)
     RegisterUnit(Networking)
     RegisterUnit(Replication)
 

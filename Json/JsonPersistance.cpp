@@ -256,7 +256,7 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
             writer.Uint64(parent);
         }
 
-        auto& bindingData = GetBindingData(parent);
+        /*auto& bindingData = GetBindingData(parent);
         if(bindingData.Bindings.size() && settings->JsonSettingsExplicitBindings) {
             writer.String("$bindings");
             writer.StartArray();
@@ -317,7 +317,7 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
                 writer.EndObject();
             }
             writer.EndArray();
-        }
+        }*/
 
         for_entity(component, componentData, Component) {
             if(!HasComponent(parent, component)

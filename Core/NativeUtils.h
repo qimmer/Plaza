@@ -116,10 +116,8 @@ StringRef GetUniqueEntityName(Entity entity);
     Declare(Component, NAME)\
     inline NAME * Get ## NAME ## Data(Entity entity) {\
         static auto component = ComponentOf_ ## NAME ();\
-        static auto type = GetComponentType(component);\
-        auto componentIndex = _GetComponentIndex(type, GetEntityIndex(entity));\
-		if(componentIndex == InvalidIndex) return NULL;\
-        return (NAME*)_GetComponentData(type, componentIndex);\
+        auto componentIndex = GetComponentIndex(component, entity);\
+        return (NAME*)GetComponentData(component, componentIndex);\
     }
 
 
@@ -172,11 +170,9 @@ StringRef GetUniqueEntityName(Entity entity);
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         static u32 offset = GetPropertyOffset(prop);\
         static Entity component = GetOwner(prop);\
-        static auto type = GetComponentType(component);\
-        \
-        auto componentIndex = _GetComponentIndex(type, GetEntityIndex(entity));\
+        auto componentIndex = GetComponentIndex(component, entity);\
         if(componentIndex == InvalidIndex) return PROPERTYTYPE ## _Default;\
-        auto componentData = _GetComponentData(type, componentIndex);\
+        auto componentData = GetComponentData(component, componentIndex);\
         return *((PROPERTYTYPE*)(componentData + offset));\
     }\
     inline void Set ## PROPERTYNAME(Entity entity, PROPERTYTYPE newValue) {\
@@ -184,19 +180,18 @@ StringRef GetUniqueEntityName(Entity entity);
 		static auto propertyData = GetPropertyData(property);\
         static u32 offset = propertyData->PropertyOffset;\
         static Entity component = GetOwner(property);\
-        static auto type = GetComponentType(component);\
         static auto size = sizeof(PROPERTYTYPE);\
 		const auto isString = propertyData->PropertyType == TypeOf_StringRef;\
 		const auto isVariant = propertyData->PropertyType == TypeOf_Variant;\
         \
-        auto componentIndex = _GetComponentIndex(type, GetEntityIndex(entity));\
+        auto componentIndex = GetComponentIndex(component, entity);\
         \
         if(componentIndex == InvalidIndex) {\
             AddComponent(entity, component);\
-            componentIndex = _GetComponentIndex(type, GetEntityIndex(entity));\
+            componentIndex = GetComponentIndex(component, entity);\
         }\
         \
-        auto componentData = _GetComponentData(type, componentIndex);\
+        auto componentData = GetComponentData(component, componentIndex);\
         auto valueData = componentData + offset;\
         \
         if(isString || (isVariant && ((Variant*)valueData)->type == TypeOf_StringRef)) {\
@@ -249,11 +244,10 @@ StringRef GetUniqueEntityName(Entity entity);
         static Entity prop = PropertyOf_ ## PROPERTYNAME();\
         static u32 offset = GetPropertyOffset(prop);\
         static Entity component = GetOwner(prop);\
-        static auto type = GetComponentType(component);\
         \
-        auto componentIndex = _GetComponentIndex(type, GetEntityIndex(entity));\
+        auto componentIndex = GetComponentIndex(component, entity);\
         if(componentIndex == InvalidIndex) return Entity_Default;\
-        auto componentData = _GetComponentData(type, componentIndex);\
+        auto componentData = GetComponentData(component, componentIndex);\
         return *((Entity*)(componentData + offset));\
     }
 
