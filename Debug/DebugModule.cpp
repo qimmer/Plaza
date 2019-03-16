@@ -142,17 +142,14 @@ BeginUnit(DebugModule)
                 "HttpServerKeepAliveMaxConnections": 100,
                 "RestServerRoutes": [
                     {
-                        "Name": "WebRoute",
                         "RestResourceRoutingRoot": "file://Debug/wwwroot",
                         "RestRoutingRoute": "/"
                     },
                     {
-                        "Name": "AssetRoute",
                         "RestResourceRoutingRoot": "file://",
                         "RestRoutingRoute": "/asset/"
                     },
                     {
-                        "Name": "EntityRoute",
                         "RestRoutingRoute": "/api/entity",
                         "RestEntityRoutingJsonSettings": {
                             "JsonSettingsResolveBindings": true,
@@ -162,22 +159,18 @@ BeginUnit(DebugModule)
                         }
                     },
                     {
-                        "Name": "SessionRoute",
                         "RestFunctionRoutingFunction": "Function.DebugCreateSession",
                         "RestRoutingRoute": "/api/session"
                     },
                     {
-                        "Name": "ChangesRoute",
                         "RestFunctionRoutingFunction": "Function.DebugGetChanges",
                         "RestRoutingRoute": "/api/changes"
                     },
                     {
-                        "Name": "AddComponentRoute",
                         "RestFunctionRoutingFunction": "Function.DebugAddComponent",
                         "RestRoutingRoute": "/api/addcomponent"
                     },
                     {
-                        "Name": "RemoveComponentRoute",
                         "RestFunctionRoutingFunction": "Function.DebugRemoveComponent",
                         "RestRoutingRoute": "/api/removecomponent"
                     }
