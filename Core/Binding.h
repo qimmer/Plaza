@@ -31,7 +31,7 @@ struct Listener {
 };
 
 struct PropertyBindingData {
-    eastl::map<Entity, Listener> Listeners;
+    eastl::map<Entity, eastl::fixed_vector<Listener, 8>> Listeners;
 	eastl::map<Entity, Binding> Bindings;
 };
 
@@ -40,5 +40,6 @@ Unit(Binding)
 void Bind(Entity entity, Entity property, Entity sourceEntity, const Entity* indirections, u32 numIndirections);
 const Binding* GetBinding(Entity entity, Entity property);
 void Unbind(Entity entity, Entity property);
+PropertyBindingData& GetBindingData(Entity property);
 
 #endif //PLAZA_BINDING_H

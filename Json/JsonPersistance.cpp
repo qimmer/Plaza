@@ -164,6 +164,44 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
     Variant value = GetPropertyValue(property, entity);
     auto type = GetPropertyType(property);
 
+	bool hasBindingData = false;
+	if (settings->JsonSettingsExplicitBindings) {
+		auto& bindings = GetBindingData(property).Bindings;
+		auto& listeners = GetBindingData(property).Listeners;
+		auto bindingIt = bindings.find(entity);
+		auto listenerIt = listeners.find(entity);
+
+		if (bindingIt != bindings.end()) {
+			hasBindingData = true;
+
+			writer.StartObject();
+			writer.String("Binding");
+			writer.String(GetBindingString(bindingIt->second));
+		}
+
+		if (listenerIt != listeners.end()) {
+			if (!hasBindingData) {
+				writer.StartObject();
+			}
+
+			writer.String("Listeners");
+			writer.StartArray();
+			for (auto& listener : listenerIt->second) {
+				writer.StartObject();
+				writer.String("BindingEntity");
+				writer.Uint64(listener.BindingEntity);
+				writer.String("IndirectionIndex");
+				writer.Uint64(listener.BindingIndirectionIndex);
+				writer.String("BindingTargetProperty");
+				writer.Uint64(listener.BindingTargetProperty);
+				writer.String("ListenerProperty");
+				writer.Uint64(listener.ListenerProperty);
+				writer.EndObject();
+			}
+			writer.EndArray();
+		}
+	}
+
     if(type == TypeOf_Variant) {
         writer.StartObject();
         writer.String("type");
@@ -230,6 +268,10 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
         writer.EndObject();
     }
 
+	if (hasBindingData) {
+		writer.EndObject();
+	}
+
     return true;
 }
 
@@ -238,22 +280,30 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
 
     // Only serialize if max child level has not been reached
     if(!settings || level <= settings->JsonSettingsMaxRecursiveLevels) {
+		writer.StartObject();
+
         if(!settings || settings->JsonSettingsExplicitComponents) {
             writer.String("$components");
             writer.StartArray();
-            for_entity(component, componentData, Component) {
-                if(HasComponent(parent, component)) {
-                    writer.String(GetUuid(component));
-                }
-            }
+
+			for (auto& component : GetEntityComponents(parent)) {
+				auto uuid = GetUuid(component.first);
+				writer.String(uuid ? uuid : "");
+			}
+            
             writer.EndArray();
         }
 
-        writer.StartObject();
-
         if(settings->JsonSettingsExplicitHandle) {
             writer.String("$handle");
-            writer.Uint64(parent);
+			writer.StartObject();
+			writer.String("Handle");
+			writer.Uint64(parent);
+			writer.String("Index");
+			writer.Uint(GetEntityIndex(parent));
+			writer.String("Generation");
+			writer.Uint(GetEntityGeneration(parent));
+			writer.EndObject();
         }
 
         /*auto& bindingData = GetBindingData(parent);
@@ -319,12 +369,9 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
             writer.EndArray();
         }*/
 
-        for_entity(component, componentData, Component) {
-            if(!HasComponent(parent, component)
-               || (parent == root && (component == ComponentOf_PersistancePoint()))
-               || component == ComponentOf_Ownership()) {
-                continue;
-            }
+		auto& components = GetEntityComponents(parent);
+        for(auto it : components) {
+			auto component = it.first;
 
             auto properties = GetProperties(component);
             for(auto pi = 0; pi < properties.size(); ++pi) {

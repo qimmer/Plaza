@@ -365,7 +365,7 @@ EndUnit()
 		entityComponentIndices[GetEntityIndex(entity)][ComponentOf_Component()] = componentIndex;\
 		\
 		componentIndex = componentData[0].DataPool.Add();\
-	    Component *data = (Component*)componentData[0].DataPool[componentIndex] + sizeof(Entity) * 2;\
+	    Component *data = (Component*)(componentData[0].DataPool[componentIndex] + sizeof(Entity) * 2);\
 		((Entity*)data)[-2] = entity;\
 		data->ComponentExplicitSize = true;\
 		data->ComponentSize = sizeof(COMPONENT);\

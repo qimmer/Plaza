@@ -55,7 +55,8 @@ static void RemoveListeners(Entity self, const Binding& binding) {
     for(u32 i = 0; i < numIndirections; ++i) {
         auto& indirection = indirections[i];
 
-        GetBindingData(indirection.IndirectionProperty).Listeners.erase(indirection.ListenerEntity);
+        auto& listeners = GetBindingData(indirection.IndirectionProperty).Listeners[indirection.ListenerEntity];
+		std::remove_if(listeners.begin(), listeners.end(), [&](auto& value) { return value.BindingEntity == self; });
     }
 }
 
@@ -87,11 +88,12 @@ static void AddListeners(Entity self, Binding& binding) {
 
         auto& indirection = indirections[reverseIndex];
 
-        auto& listener = GetBindingData(indirection.IndirectionProperty).Listeners[sourceEntity];
+		Listener listener;
         listener.BindingEntity = self;
         listener.BindingTargetProperty = binding.BindingTargetProperty;
         listener.BindingIndirectionIndex = (u16)reverseIndex;
         listener.ListenerProperty = indirection.IndirectionProperty;
+		GetBindingData(indirection.IndirectionProperty).Listeners[sourceEntity].push_back(listener);
 
         indirection.ListenerEntity = sourceEntity;
 
@@ -124,7 +126,9 @@ static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Va
     auto& listeners = bindingData.Listeners;
     auto listenerIt = listeners.find(entity);
     if(listenerIt != listeners.end()) {
-        HandleListener(entity, listenerIt->second, oldValue, newValue);
+		for (auto& listener : listenerIt->second) {
+			HandleListener(entity, listener, oldValue, newValue);
+		}
     }
 
     // If this property is bound and the change was not triggered by a binding value update, break the binding!
