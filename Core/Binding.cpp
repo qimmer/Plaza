@@ -27,9 +27,7 @@ API_EXPORT PropertyBindingData& GetBindingData(Entity property) {
 }
 
 static inline void UpdateValue(const Listener& listener) {
-    auto& bindingData = GetBindingData(listener.BindingTargetProperty);
-
-    auto& binding = bindingData.Bindings[listener.BindingEntity];
+    auto& binding = GetBindingData(listener.BindingTargetProperty).Bindings[listener.BindingEntity];
 
     auto& indirection = binding.BindingIndirections[listener.BindingIndirectionIndex];
 
@@ -109,21 +107,12 @@ static void AddListeners(Entity self, Binding& binding) {
 
 static inline void HandleListener(Entity self, const Listener& listener, Variant oldValue, Variant newValue) {
     if(listener.BindingIndirectionIndex > 0) {
-        auto& bindings = GetBindingData(listener.BindingEntity).Bindings;
-
-        s32 bindingIndex = -1;
-        for(auto i = 0; i < bindings.size(); ++i) {
-            auto& binding = bindings[i];
-            if(binding.BindingTargetProperty == listener.BindingTargetProperty) {
-                bindingIndex = i;
-                break;
-            }
-        }
+        auto& binding = GetBindingData(listener.BindingTargetProperty).Bindings[listener.BindingEntity];
 
         // If an indirection changed, re-evaluate listeners
-        RemoveListeners(listener.BindingEntity, bindings[bindingIndex]);
-        EvaluateIndirections(listener.BindingEntity, bindings[bindingIndex]);
-        AddListeners(listener.BindingEntity, bindings[bindingIndex]);
+        RemoveListeners(listener.BindingEntity, binding);
+        EvaluateIndirections(listener.BindingEntity, binding);
+        AddListeners(listener.BindingEntity, binding);
     } else {
         // No indirection, so this is a value update, re-evaluate value
         UpdateValue(listener);
