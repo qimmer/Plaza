@@ -156,6 +156,7 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     if(!subMeshData) return;
 
     auto material = GetRenderableMaterial(renderable);
+    auto scissor = GetRenderableScissor(renderable);
 
     auto mesh = GetOwner(subMesh);
     auto meshData = GetMeshData(mesh);
@@ -191,6 +192,10 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
        subMeshData->SubMeshCullMode |
        subMeshData->SubMeshPrimitiveType
     );
+
+    if(scissor.z != 0 || scissor.w != 0) {
+        encoder->setScissor(scissor.x, scissor.y, scissor.z, scissor.w);
+    }
 
     encoder->setTransform(&transformData->TransformGlobalMatrix[0].x);
 

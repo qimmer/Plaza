@@ -293,16 +293,16 @@
         "WidgetMeshDisabledTexture": "Style.Default.StyleSheet.Item",
         "WidgetMeshSelectedTexture": "Style.Default.StyleSheet.MenuItem.Selected",
         
-        "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.MenuItem.Selected",
-        "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.MenuItem.Enabled",
-        "WidgetMeshClickedTexture": "Style.Default.StyleSheet.MenuItem.Selected",
+        "WidgetMeshHoveredTexture": "Style.Default.StyleSheet.Item",
+        "WidgetMeshFocusedTexture": "Style.Default.StyleSheet.Item",
+        "WidgetMeshClickedTexture": "Style.Default.StyleSheet.Item",
         "WidgetMeshFixedBorderWidth": 1,
         "WidgetMeshEnabledColor": [0.0, 0.0, 0.0, 1.0],
         "WidgetMeshDisabledColor": [0.3, 0.3, 0.3, 1.0],
         "WidgetMeshSelectedColor": [1.0, 1.0, 1.0, 1.0],
         "WidgetMeshFocusedColor": [0.0, 0.0, 0.0, 1.0],
         "WidgetMeshHoveredColor": [0.0, 0.0, 0.0, 1.0],
-        "WidgetMeshClickedColor": [1.0, 1.0, 1.0, 1.0]
+        "WidgetMeshClickedColor": [0.0, 0.0, 0.0, 1.0]
     },
     
     "ButtonStylePadding": [5, 3, 5, 3],

@@ -8,6 +8,7 @@
 #include "Uniform.h"
 #include "Texture.h"
 #include "Texture2D.h"
+#include "TextureReadBack.h"
 #include "RenderTarget.h"
 #include "RenderState.h"
 #include "Mesh.h"
@@ -41,6 +42,7 @@ BeginModule(Rendering)
     RegisterUnit(ShaderCache)
     RegisterUnit(Texture)
     RegisterUnit(Texture2D)
+	RegisterUnit(TextureReadBack)
     RegisterUnit(Uniform)
     RegisterUnit(SceneRenderer)
     RegisterUnit(MeshBuilder)

@@ -7,58 +7,16 @@
 
 #include <Core/Pool.h>
 #include <omp.h>
+#include <EASTL/fixed_map.h>
 
 #define InvalidIndex 0xFFFFFFFF
 #define PoolPageElements 256
 
+typedef eastl::fixed_vector<u16, 256> EntityComponentIndexVector;
+
 Function(AddComponent, bool, Entity entity, Entity componentType)
 Function(RemoveComponent, bool, Entity entity, Entity componentType)
 Function(HasComponent, bool, Entity entity, Entity componentType)
-
-struct ComponentTypeData {
-	ComponentTypeData() {
-		this->EntityComponentIndices.Count = 0;
-		this->EntityComponentIndices.DynCapacity = 0;
-		this->EntityComponentIndices.DynBuf = NULL;
-	}
-
-    Pool DataBuffer;
-    Vector(EntityComponentIndices, u32, 1);
-};
-
-ComponentTypeData* GetComponentType(Entity component);
-
-inline Entity _GetComponentEntity(ComponentTypeData *componentData, u32 componentIndex) {
-    auto entity = *(Entity*)componentData->DataBuffer[componentIndex];
-    return entity;
-}
-
-inline char* _GetComponentData(ComponentTypeData *componentData, u32 componentIndex) {
-    return componentData->DataBuffer[componentIndex] + sizeof(Entity)*2;
-}
-
-inline u32 _GetComponentIndex(ComponentTypeData *componentData, u32 entityIndex) {
-    auto count = componentData->EntityComponentIndices.Count;
-    if (count <= entityIndex) {
-        auto newCount = UpperPowerOf2(Max(entityIndex + 1, 8));
-        SetVectorAmount(componentData->EntityComponentIndices, newCount);
-        memset(&GetVector(componentData->EntityComponentIndices)[count], 0xff, sizeof(u32) * (newCount - count));
-    }
-
-    auto index = GetVector(componentData->EntityComponentIndices)[entityIndex];
-	return index;
-}
-
-inline u32 _GetNumComponentPages(Entity component) {
-    auto componentData = GetComponentType(component);
-    return componentData->DataBuffer.GetNumPages();
-}
-
-inline char *_GetComponentPage(Entity component, u32 index, u32 *elementStride) {
-    auto componentData = GetComponentType(component);
-    *elementStride = componentData->DataBuffer.GetBlockSize();
-    return componentData->DataBuffer.GetPage(index);
-}
 
 bool IsEntityValid(Entity entity);
 
@@ -71,27 +29,30 @@ struct ComponentPageElement {
 void __InitializeComponent();
 void __PreInitialize();
 
+Entity ComponentOf_Component();
+
 u32 GetComponentIndex(Entity component, Entity entity);
-Entity GetComponentEntity(Entity component, u32 componentIndex);
+u32 GetComponentIndexByIndex(u32 componentInfoIndex, Entity entity);
+Entity GetComponentEntity(u32 componentInfoIndex, u32 componentIndex);
+Pool& GetComponentPool(u32 componentInfoIndex);
+char* GetComponentInstanceData(u32 componentInfoIndex, u32 componentDataIndex);
 
-typedef Vector<Entity, 4> EntityComponentList;
-const EntityComponentList& GetEntityComponents(Entity entity);
+inline Entity GetNextEntity(u32 *componentIndex, u32 componentTypeIndex, void **data) {
+	auto& pool = GetComponentPool(componentTypeIndex);
+    auto numPages = pool.GetNumPages();
+	u32 stride = pool.GetBlockSize();
 
-inline Entity GetNextEntity(Entity *index, Entity component, void **data) {
-    auto numPages = _GetNumComponentPages(component);
+    auto elementIndex = *componentIndex % PoolPageElements;
 
-    auto elementIndex = *index - ((*index / PoolPageElements) * PoolPageElements);
-
-    for(auto pageIndex = *index / PoolPageElements; pageIndex < numPages; ++pageIndex) {
-        u32 stride;
-        auto pageData = _GetComponentPage(component, (u32)pageIndex, &stride);
+    for(u32 pageIndex = *componentIndex / PoolPageElements; pageIndex < numPages; ++pageIndex) {
+        auto pageData = pool.GetPage(pageIndex);
 
         for(; elementIndex < PoolPageElements; ++elementIndex) {
             auto element = &pageData[elementIndex * stride];
             auto entity = *(Entity*)element;
 
             if(IsEntityValid(entity)) {
-                *index = pageIndex * PoolPageElements + elementIndex + 1;
+                *componentIndex = pageIndex * PoolPageElements + elementIndex + 1;
                 *data = element + sizeof(Entity) * 2;
                 return entity;
             }
@@ -106,6 +67,21 @@ inline Entity GetNextEntity(Entity *index, Entity component, void **data) {
 #include <Core/Property.h>
 #include <Core/Function.h>
 #include <Core/NativeUtils.h>
+
+struct Extension {
+	Entity ExtensionComponent, ExtensionExtenderComponent;
+	bool ExtensionDisabled;
+};
+
+struct Base {
+	Entity BaseComponent;
+};
+
+struct Component {
+	u16 ComponentDataIndex;
+	u16 ComponentSize;
+	bool ComponentExplicitSize;
+};
 
 Unit(Component)
     Component(Extension)
@@ -128,11 +104,11 @@ Unit(Component)
 
 #define for_entity(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
     COMPONENTTYPE *DATAVAR;\
-    for(Entity __i = 0, __component = ComponentOf_ ## COMPONENTTYPE(), ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR))
+    for(Entity __i = 0, __componentTypeIndex = (Entity)GetComponentIndexByIndex(0, ComponentOf_ ## COMPONENTTYPE()), ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, (void**)&DATAVAR))
 
 #define for_entity_abstract(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
     char *DATAVAR;\
-    for(Entity __i = 0, __component = COMPONENTTYPE, ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity(&__i, __component, (void**)&DATAVAR))
+    for(Entity __i = 0, __componentTypeIndex = (Entity)GetComponentIndexByIndex(0, COMPONENTTYPE), ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, (void**)&DATAVAR))
 
 
 #define for_entity_parallel(ENTITYVAR, DATAVAR, COMPONENTTYPE, CONTENTS) \

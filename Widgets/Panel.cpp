@@ -58,7 +58,7 @@ BeginUnit(Panel)
     BeginComponent(ItemWell)
         RegisterBase(Widget)
         ComponentTemplate({
-            "$components": ["Component.Widget"],
+            "$components": ["Component.Widget", "Component.ScrollableLayout"],
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.ItemWellStyleMesh}",
             "LayoutPadding": "{SceneNodeScene.SceneStyle.ItemWellStylePadding}",
               "LayoutChildOrder": [

@@ -164,6 +164,47 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
     Variant value = GetPropertyValue(property, entity);
     auto type = GetPropertyType(property);
 
+	bool hasBindingData = false;
+	if (settings->JsonSettingsExplicitBindings) {
+		static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+		auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
+
+		auto& bindings = GetBindingData(entity).Bindings;
+		auto& listeners = GetBindingData(entity).Listeners;
+		auto bindingIt = bindings.find(propertyIndex);
+		auto listenerIt = listeners.find(propertyIndex);
+
+		if (bindingIt != bindings.end()) {
+			hasBindingData = true;
+
+			writer.StartObject();
+			writer.String("Binding");
+			writer.String(GetBindingString(bindingIt->second));
+		}
+
+		if (listenerIt != listeners.end()) {
+			if (!hasBindingData) {
+				writer.StartObject();
+			}
+
+			writer.String("Listeners");
+			writer.StartArray();
+			for (auto& listener : listenerIt->second) {
+				writer.StartObject();
+				writer.String("BindingEntity");
+				writer.Uint64(listener.BindingEntity);
+				writer.String("IndirectionIndex");
+				writer.Uint64(listener.BindingIndirectionIndex);
+				writer.String("BindingTargetProperty");
+				writer.Uint64(listener.BindingTargetProperty);
+				writer.String("ListenerProperty");
+				writer.Uint64(listener.ListenerProperty);
+				writer.EndObject();
+			}
+			writer.EndArray();
+		}
+	}
+
     if(type == TypeOf_Variant) {
         writer.StartObject();
         writer.String("type");
@@ -230,6 +271,10 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
         writer.EndObject();
     }
 
+	if (hasBindingData) {
+		writer.EndObject();
+	}
+
     return true;
 }
 
@@ -238,25 +283,35 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
 
     // Only serialize if max child level has not been reached
     if(!settings || level <= settings->JsonSettingsMaxRecursiveLevels) {
+		writer.StartObject();
+
         if(!settings || settings->JsonSettingsExplicitComponents) {
             writer.String("$components");
             writer.StartArray();
-            for_entity(component, componentData, Component) {
-                if(HasComponent(parent, component)) {
-                    writer.String(GetUuid(component));
-                }
-            }
+
+			for_entity(component, data, Component) {
+				if (!HasComponent(parent, component)) continue;
+
+				auto uuid = GetUuid(component);
+				writer.String(uuid ? uuid : "");
+			}
+            
             writer.EndArray();
         }
 
-        writer.StartObject();
-
         if(settings->JsonSettingsExplicitHandle) {
             writer.String("$handle");
-            writer.Uint64(parent);
+			writer.StartObject();
+			writer.String("Handle");
+			writer.Uint64(parent);
+			writer.String("Index");
+			writer.Uint(GetEntityIndex(parent));
+			writer.String("Generation");
+			writer.Uint(GetEntityGeneration(parent));
+			writer.EndObject();
         }
 
-        auto& bindingData = GetBindingData(parent);
+        /*auto& bindingData = GetBindingData(parent);
         if(bindingData.Bindings.size() && settings->JsonSettingsExplicitBindings) {
             writer.String("$bindings");
             writer.StartArray();
@@ -317,14 +372,10 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
                 writer.EndObject();
             }
             writer.EndArray();
-        }
+        }*/
 
-        for_entity(component, componentData, Component) {
-            if(!HasComponent(parent, component)
-               || (parent == root && (component == ComponentOf_PersistancePoint()))
-               || component == ComponentOf_Ownership()) {
-                continue;
-            }
+		for_entity(component, data, Component) {
+			if (!HasComponent(parent, component)) continue;
 
             auto properties = GetProperties(component);
             for(auto pi = 0; pi < properties.size(); ++pi) {

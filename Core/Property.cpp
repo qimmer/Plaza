@@ -78,7 +78,7 @@ API_EXPORT u32 AddChild(Entity property, Entity entity, Entity child, bool takeO
         SetOwner(child, entity, property);
     }
 
-    return info.size() - 1;
+    return (u32)info.size() - 1;
 }
 
 API_EXPORT bool RemoveChild(Entity property, Entity entity, u32 index) {
@@ -152,7 +152,6 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newVal
 
     u32 offset = propertyData->PropertyOffset;
     Entity component = GetOwner(property);
-    auto type = GetComponentType(component);
     auto size = GetTypeSize(propertyData->PropertyType);
 	auto isString = propertyData->PropertyType == TypeOf_StringRef;
 	auto isVariant = propertyData->PropertyType == TypeOf_Variant;
@@ -161,14 +160,15 @@ API_EXPORT void SetPropertyValue(Entity property, Entity context, Variant newVal
 	    newValueData = Cast(newValueData, propertyData->PropertyType);
 	}
         
-    auto componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
+	auto componentInfoIndex = GetComponentIndexByIndex(0, component);
+    auto componentIndex = GetComponentIndexByIndex(componentInfoIndex, context);
         
     if(componentIndex == InvalidIndex) {
         AddComponent(context, component);
-        componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
+		componentIndex = GetComponentIndexByIndex(componentInfoIndex, context);
     }
         
-    auto componentData = _GetComponentData(type, componentIndex);
+    auto componentData = GetComponentInstanceData(componentInfoIndex, componentIndex);
     auto valueData = componentData + offset;
 
     if(propertyData->PropertyType == TypeOf_StringRef || (propertyData->PropertyType == TypeOf_Variant && ((Variant*)valueData)->type == TypeOf_StringRef)) {
@@ -219,11 +219,15 @@ API_EXPORT Variant GetPropertyValue(Entity property, Entity context) {
     }
 
     auto propertyData = GetPropertyData(property);
-    auto type = GetComponentType(component);
-        
-    auto componentIndex = _GetComponentIndex(type, GetEntityIndex(context));
-    if(componentIndex == InvalidIndex) return Variant_Default;
-    auto componentData = _GetComponentData(type, componentIndex);
+
+	auto componentInfoIndex = GetComponentIndexByIndex(0, component);
+	auto componentIndex = GetComponentIndexByIndex(componentInfoIndex, context);
+
+	if (componentIndex == InvalidIndex) {
+		return Variant_Default;
+	}
+
+	auto componentData = GetComponentInstanceData(componentInfoIndex, componentIndex);
 
     auto valueData = componentData + propertyData->PropertyOffset;
 	
@@ -232,7 +236,7 @@ API_EXPORT Variant GetPropertyValue(Entity property, Entity context) {
 
 
 API_EXPORT u32 GetArrayPropertyCount(Entity property, Entity entity) {
-    return GetChildArray(property, entity).size();
+    return (u32)GetChildArray(property, entity).size();
 }
 
 API_EXPORT bool SetArrayPropertyCount(Entity property, Entity entity, u32 count) {
@@ -490,6 +494,12 @@ LocalFunction(OnPropertyOffsetChanged, void, Entity property, u32 oldValue, u32 
     }
 }
 
+LocalFunction(OnNameChanged, void, Entity entity, StringRef oldName, StringRef newName) {
+    if(newName && strlen(newName)) {
+        SetUuid(entity, StringFormatV("%s.%s", GetUuid(GetOwner(entity)), newName));
+    }
+}
+
 BeginUnit(Property)
     BeginEnum(PropertyKind, false)
         RegisterFlag(PropertyKind_Value)
@@ -511,7 +521,7 @@ BeginUnit(Property)
         RegisterReferenceProperty(Property, OwnerProperty)
     EndComponent()
     BeginComponent(ArrayChild)
-        //RegisterProperty(StringRef, Name)
+        RegisterProperty(StringRef, Name)
     EndComponent()
 
     RegisterFunction(SetPropertyValue)
@@ -523,6 +533,8 @@ BeginUnit(Property)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PropertySize()), OnPropertyChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PropertyOffset()), OnPropertyOffsetChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ComponentExplicitSize()), OnComponentExplicitSizeChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Name()), OnNameChanged, 0)
+    //RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Uuid()), OnUuidChanged, 0)
 EndUnit()
 
 static void DumpEntity(Entity entity, u32 indentLevel) {

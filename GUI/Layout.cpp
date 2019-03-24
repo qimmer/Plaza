@@ -11,6 +11,7 @@
 #include <Core/Algorithms.h>
 #include <Json/NativeUtils.h>
 #include <Scene/Scene.h>
+#include <Foundation/Visibility.h>
 
 static v2i CalculateMinimumSize(Entity layout) {
     if(!HasComponent(layout, ComponentOf_Layout())) return GetSize2D(layout);
@@ -43,6 +44,8 @@ static v2i CalculateMinimumSize(Entity layout) {
 
         for(auto i = 0; i < numChildWidgets; ++i) {
             auto childWidget = childWidgets[i];
+
+            if(GetHidden(childWidget)) continue;
 
             v2i childSize = GetSize2D(childWidget);
 
@@ -137,6 +140,9 @@ static void ExpandChildLayouts(Entity layout) {
     auto parentData = GetLayoutData(layout);
     if(!parentData) return;
 
+
+    auto scrollOffset = GetLayoutScrollOffset(layout);
+
     auto parentSize = GetSize2D(layout);
     auto minimumSize = CalculateMinimumSize(layout);
 
@@ -167,9 +173,12 @@ static void ExpandChildLayouts(Entity layout) {
 
             for(auto i = 0; i < numChildWidgets; ++i) {
                 auto childWidget = childWidgets[i];
+                if(!childWidget) continue;
+
                 auto childSize = GetSize2D(childWidget);
                 auto childWeight = GetLayoutChildWeight(childWidget);
-                auto hiddenState = GetWidgetState(childWidget).z;
+
+                if(GetHidden(childWidget)) continue;
 
                 if(parentData->LayoutMode == LayoutMode_Horizontal) {
                     if(childWeight.x > 0.0f) {
@@ -224,14 +233,19 @@ static void ExpandChildLayouts(Entity layout) {
 
         for (auto j = 0; j < numChildWidgets; ++j) {
             auto childWidget = childWidgets[j];
+            if(!childWidget) continue;
+
             auto size = GetSize2D(childWidget);
-            auto hiddenState = GetWidgetState(childWidget).z;
+
+            if(GetHidden(childWidget)) continue;
+
             auto localLayer = (float)j / (numChildWidgets + 1);
 			
 			auto depth = -GetWidgetDepthOrder(childWidget) - localLayer;
+
             SetPosition3D(childWidget, {
-                    (float) position.x,
-                    (float) position.y,
+                    (float) position.x + scrollOffset.x,
+                    (float) position.y + scrollOffset.y,
 					depth
             });
 
@@ -266,10 +280,41 @@ static void ExpandChildLayouts(Entity layout) {
     }
 }
 
+LocalFunction(OnScrollOffsetChanged, void, Entity layout, v2i oldOffset, v2i newOffset) {
+    for_children(ordering, LayoutChildOrder, layout) {
+        auto property = GetLayoutChildOrderingProperty(ordering);
+        if(!HasComponent(property, ComponentOf_Property())) continue;
+
+        u32 numChildWidgets = 0;
+        const Entity *childWidgets;
+        Entity singleChild;
+        if (GetPropertyKind(property) == PropertyKind_Array) {
+            auto& array = GetArrayPropertyElements(property, layout);
+            childWidgets = array.data();
+            numChildWidgets = array.size();
+        }
+        else {
+            singleChild = GetPropertyValue(property, layout).as_Entity;
+            childWidgets = &singleChild;
+            numChildWidgets = 1;
+        }
+
+        for (auto j = 0; j < numChildWidgets; ++j) {
+            auto childWidget = childWidgets[j];
+            auto position = GetPosition2D(childWidget);
+
+            position.x += newOffset.x - oldOffset.x;
+            position.y += newOffset.y - oldOffset.y;
+
+            SetPosition2D(childWidget, position);
+        }
+    }
+}
 
 LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOwner) {
     Shrink(entity);
     Shrink(oldOwner);
+    Shrink(newOwner);
     ExpandChildLayouts(oldOwner);
     ExpandChildLayouts(newOwner);
 }
@@ -312,8 +357,8 @@ LocalFunction(OnSize2DChanged, void, Entity widget, v2i oldSize, v2i newSize) {
 LocalFunction(OnRect2DRemoved, void, Entity component, Entity entity) {
     auto owner = GetOwner(entity);
 	if (HasComponent(owner, ComponentOf_Layout())) {
+        Shrink(owner);
 		ExpandChildLayouts(owner);
-		Shrink(owner);
 	}
 }
 
@@ -332,6 +377,10 @@ BeginUnit(Layout)
         RegisterPropertyEnum(u8, LayoutMode, LayoutMode)
         RegisterArrayProperty(LayoutChildOrdering, LayoutChildOrder)
     EndComponent()
+    BeginComponent(ScrollableLayout)
+        RegisterBase(Layout)
+        RegisterProperty(v2i, LayoutScrollOffset)
+    EndComponent()
     BeginComponent(LayoutChild)
         RegisterProperty(v2f, LayoutChildWeight)
     EndComponent()
@@ -339,11 +388,13 @@ BeginUnit(Layout)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutChildWeight()), OnWeightChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Size2D()), OnSize2DChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutScrollOffset()), OnScrollOffsetChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetState()), OnWeightChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetDepthOrder()), OnWidgetDepthOrderChanged, 0)
+    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Hidden()), OnWeightChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutMode()), OnLayoutModeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutSpacing()), OnLayoutModeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutPadding()), OnLayoutModeChanged, 0)
     RegisterSubscription(GetPropertyChangedEvent(PropertyOf_LayoutChildOrderingProperty()), OnLayoutChildOrderingChanged, 0)
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnRect2DRemoved, ComponentOf_Rect2D())
+    RegisterSubscription(EventOf_EntityComponentRemoved(), OnRect2DRemoved, ComponentOf_Ownership())
 EndUnit()

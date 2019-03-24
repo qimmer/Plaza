@@ -23,6 +23,9 @@ Unit(InputContext)
         ArrayProperty(InputState, HotKeyStates)
         Property(float, HotKeyValue)
 
+    Component(InputMapping)
+        ArrayProperty(InputState, InputMappings)
+
     Declare(AppLoop, InputPoll)
 
     Function(SetInputStateValueByKey, void, Entity context, u16 key, float value)

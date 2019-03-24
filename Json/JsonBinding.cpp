@@ -30,6 +30,7 @@ static void Split(char* string, char delimeter, StringRef* left, StringRef* righ
 
 static bool ParseBinding(Entity entity, Entity targetProperty, StringRef sourceBindingString) {
     Vector<Entity, 16> indirections;
+    Vector<StringRef, 16> indirectionArrayNames;
 
     auto len = strlen(sourceBindingString);
     auto buffer = (char*)alloca(len + 1);
@@ -41,6 +42,18 @@ static bool ParseBinding(Entity entity, Entity targetProperty, StringRef sourceB
     StringRef propertyName;
     do {
         propertyName = Tokenize((char*)propertiesString, '.');
+
+        auto nameStart = strchr(propertyName, '[');
+        auto nameEnd = strchr(propertyName, ']');
+        if(nameStart && nameEnd) {
+            *nameStart = '\0';
+            *nameEnd = '\0';
+            auto name = Intern(nameStart + 1);
+            indirectionArrayNames.push_back(name);
+        } else {
+            indirectionArrayNames.push_back(0);
+        }
+
         auto prototypeNameLen = strlen(propertyName);
 
         char *propertyUuid = (char*)alloca(prototypeNameLen + 1 + 9);
@@ -63,10 +76,10 @@ static bool ParseBinding(Entity entity, Entity targetProperty, StringRef sourceB
             return false;
         }
 
-        Bind(entity, targetProperty, sourceEntity, indirections.data(), indirections.size());
+        Bind(entity, targetProperty, sourceEntity, indirections.data(), indirectionArrayNames.data(), indirections.size());
     } else {
         // If no '@', we use self as our source entity
-        Bind(entity, targetProperty, 0, indirections.data(), indirections.size());
+        Bind(entity, targetProperty, 0, indirections.data(), indirectionArrayNames.data(), indirections.size());
     }
 
     return true;

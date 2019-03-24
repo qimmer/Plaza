@@ -7,6 +7,10 @@
 
 #include <Core/NativeUtils.h>
 
+struct Identification {
+	StringRef Name, Uuid;
+};
+
 Unit(Identification)
     Component(Identification)
         static StringRef __Uuid__Meta = "";

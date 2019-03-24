@@ -105,7 +105,7 @@
         {
           "Uuid": "TestGui.Scene.Picker",
           "PickRaySceneRenderer": "TestGui.Renderer",
-          "GuiPickRayClickState": {
+          "GuiControllerClickState": {
             "InputStateContext": "TestGui.Context",
             "InputStateKey": "MOUSEBUTTON_0"
           }

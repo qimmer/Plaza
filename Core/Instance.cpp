@@ -49,17 +49,15 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
     if(oldTemplate) {
         eastl::remove(templateInstances[oldTemplate].begin(), templateInstances[oldTemplate].end(), entity);
 
-		auto components = GetEntityComponents(oldTemplate);
-		
-		for (auto i = 0; i < components.size(); ++i) {
-			auto& component = components[i];
-		
-            if(component == ComponentOf_Identification()
-               || component == ComponentOf_Ownership()
-               || component == ComponentOf_UnresolvedEntity()
-               || component == ComponentOf_Instance()) {
-                continue;
-            }
+        for_entity (component, data, Component) {
+			if (component == ComponentOf_Identification()
+				|| component == ComponentOf_Ownership()
+				|| component == ComponentOf_UnresolvedEntity()
+				|| component == ComponentOf_Instance()) {
+				continue;
+			}
+
+			if (!HasComponent(oldTemplate, component)) continue;
 
             for_children(property, Properties, component) {
                 auto propertyData = GetPropertyData(property);
@@ -103,31 +101,29 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
     if(newTemplate) {
         templateInstances[newTemplate].push_back(entity);
 
-		auto components = GetEntityComponents(newTemplate);
-		
-		for (auto i = 0; i < components.size(); ++i) {
-			auto& component = components[i];
-        
-            if (component == ComponentOf_Identification()
-                || component == ComponentOf_Ownership()
-                || component == ComponentOf_UnresolvedEntity()
-                || component == ComponentOf_Instance()) {
-                continue;
-            }
+		for_entity(component, data, Component) {
+			if (component == ComponentOf_Identification()
+				|| component == ComponentOf_Ownership()
+				|| component == ComponentOf_UnresolvedEntity()
+				|| component == ComponentOf_Instance()) {
+				continue;
+			}
+
+			if (!HasComponent(newTemplate, component)) continue;
 
 			AddComponent(entity, component);
         }
 
-		for (auto i = 0; i < components.size(); ++i) {
-			auto& component = components[i];
+		for_entity(component, data2, Component) {
+			if (component == ComponentOf_Identification()
+				|| component == ComponentOf_Ownership()
+				|| component == ComponentOf_UnresolvedEntity()
+				|| component == ComponentOf_Instance()) {
+				continue;
+			}
 
-            if(component == ComponentOf_Identification()
-               || component == ComponentOf_Ownership()
-               || component == ComponentOf_UnresolvedEntity()
-               || component == ComponentOf_Instance()) {
-                continue;
-            }
-            
+			if (!HasComponent(newTemplate, component)) continue;
+
             for_children(property, Properties, component) {
                 auto propertyData = GetPropertyData(property);
 
@@ -151,15 +147,17 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
                         // Template has relative binding. Imitate relative binding here and don't bind directly to template value
 
                         auto indirections = (Entity*)alloca(sizeof(Entity) * templateBinding->BindingIndirections.size());
+                        auto indirectionArrayNames = (StringRef*)alloca(sizeof(StringRef) * templateBinding->BindingIndirections.size());
                         for(auto i = 0; i < templateBinding->BindingIndirections.size(); ++i) {
                             indirections[i] = templateBinding->BindingIndirections[i].IndirectionProperty;
+                            indirectionArrayNames[i] = templateBinding->BindingIndirections[i].IndirectionArrayName;
                         }
 
-                        Bind(entity, property, 0, indirections, (u32)templateBinding->BindingIndirections.size());
+                        Bind(entity, property, 0, indirections, indirectionArrayNames, (u32)templateBinding->BindingIndirections.size());
                     } else {
                         // Template has absolute binding or no binding at all. Bind to template value
 
-                        Bind(entity, property, newTemplate, &property, 1);
+                        Bind(entity, property, newTemplate, &property, 0, 1);
                     }
                 }
             }

@@ -6,6 +6,10 @@
 #include "Key.h"
 #include "AppLoop.h"
 
+struct InputMapping {
+
+};
+
 struct InputState {
     float InputStateValue;
     u16 InputStateKey;
@@ -62,6 +66,9 @@ BeginUnit(InputContext)
     BeginComponent(HotKey)
         RegisterArrayProperty(InputState, HotKeyStates)
         RegisterProperty(float, HotKeyValue)
+    EndComponent()
+    BeginComponent(InputMapping)
+        RegisterArrayProperty(InputState, InputMappings)
     EndComponent()
 
     SetAppLoopOrder(AppLoopOf_InputPoll(), AppLoopOrder_Input);
