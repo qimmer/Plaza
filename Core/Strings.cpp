@@ -30,7 +30,7 @@ API_EXPORT void CleanupStrings() {
             }
         }
 
-        lastCleanupSize = lookup.size();
+        lastCleanupSize = (u32)lookup.size();
     }
 }
 

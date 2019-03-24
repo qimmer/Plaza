@@ -46,13 +46,13 @@ void __InitModule_Core (Entity module) {
     AddComponent(module, ComponentOf_Module());
 	SetUuid(module, "Module.Core");
 
-    RegisterUnit(Module)
-    RegisterUnit(Component)
-    RegisterUnit(Enum)
+	RegisterUnit(Entity)
+	RegisterUnit(Component)
+	RegisterUnit(Enum)
+	RegisterUnit(Property)
 	RegisterUnit(Function)
-    RegisterUnit(Property)
-    RegisterUnit(Event)
-    RegisterUnit(Entity)
+	RegisterUnit(Event)
+    RegisterUnit(Module)
     RegisterUnit(Date)
     RegisterUnit(Debug)
     RegisterUnit(Identification)

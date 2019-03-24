@@ -11,7 +11,7 @@
 #include "Widget.h"
 #include "TextWidget.h"
 #include "Font.h"
-#include "GuiPickRay.h"
+#include "GuiController.h"
 #include "DragHandle.h"
 #include "Layout.h"
 
@@ -24,7 +24,7 @@ BeginModule(Gui)
     RegisterUnit(Layout)
     RegisterUnit(Font)
     RegisterUnit(TextWidget)
-    RegisterUnit(GuiPickRay)
+    RegisterUnit(GuiController)
     RegisterUnit(DragHandle)
 
     ModuleData({

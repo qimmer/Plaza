@@ -91,10 +91,7 @@ API_EXPORT void DestroyEntity(Entity entity) {
         return;
     }
 
-	auto components = GetEntityComponents(entity);
-
-    for (auto it = components.begin(); it != components.end(); ++it) {
-        auto& component = it->first;
+    for_entity(component, data, Component) {
         RemoveComponent(entity, component);
     }
 

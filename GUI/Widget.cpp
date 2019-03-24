@@ -47,6 +47,31 @@ LocalFunction(OnBoundsUpdate, void) {
 	for_entity(widget, data, Widget) {
 		UpdateWidgetBounds(widget);
 	};
+
+    for_entity(widget, data2, Widget) {
+        if(GetWidgetDepthOrder(widget) != 0.0f) {
+            SetRenderableScissor(widget, {0, 0, 0, 0});
+            continue;
+        }
+        auto owner = GetOwner(widget);
+        auto ownerRect = GetRect2DData(owner);
+        v4i scissor = {INT_MIN, INT_MIN, INT_MAX, INT_MAX};
+        while(ownerRect) {
+            auto transform = GetTransformData(owner);
+            scissor.x = Max(scissor.x, transform->TransformGlobalMatrix[3].x);
+            scissor.y = Max(scissor.y, transform->TransformGlobalMatrix[3].y);
+            scissor.z = Min(scissor.z, transform->TransformGlobalMatrix[3].x + ownerRect->Size2D.x);
+            scissor.w = Min(scissor.w, transform->TransformGlobalMatrix[3].y + ownerRect->Size2D.y);
+
+            owner = GetOwner(owner);
+            ownerRect = GetRect2DData(owner);
+        }
+
+        scissor.z -= scissor.x;
+        scissor.w -= scissor.y;
+
+        SetRenderableScissor(widget, scissor);
+    };
 }
 
 LocalFunction(RebuildWidgetMesh, void, Entity mesh) {

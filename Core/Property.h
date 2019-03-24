@@ -50,7 +50,7 @@ Component(Ownership)
     __PropertyCoreGetOnly(Ownership, Entity, OwnerProperty, PropertyFlag_ReadOnly, PropertyFlag_Transient)
 
 Component(ArrayChild)
-    //__PropertyCore(ArrayChild, StringRef, Name)
+    __PropertyCore(ArrayChild, StringRef, Name)
 
 Function(IsOwnedBy, bool, Entity entity, Entity owner)
     void SetOwner(Entity entity, Entity owner, Entity ownerProperty);

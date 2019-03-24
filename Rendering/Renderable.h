@@ -10,6 +10,7 @@
 struct Renderable {
     Entity RenderableMaterial, RenderableSubMesh;
     v3f RenderableAABBMin, RenderableAABBMax;
+    v4i RenderableScissor;
 };
 
 Unit(Renderable)
@@ -19,6 +20,7 @@ Component(Renderable)
     ReferenceProperty(SubMesh, RenderableSubMesh)
     Property(v3f, RenderableAABBMin)
     Property(v3f, RenderableAABBMax)
+    Property(v4i, RenderableScissor)
 
 	Declare(AppLoop, BoundsUpdate)
 

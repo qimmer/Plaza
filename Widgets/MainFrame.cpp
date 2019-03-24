@@ -7,7 +7,7 @@
 #include <Rendering/RenderContext.h>
 #include <Scene/Scene.h>
 #include <Scene/Camera.h>
-#include <Gui/GuiPickRay.h>
+#include <Gui/GuiController.h>
 #include <Gui/Widget.h>
 #include <Json/NativeUtils.h>
 
@@ -15,7 +15,7 @@ BeginUnit(MainFrame)
     BeginComponent(MainFrame)
         RegisterBase(Scene)
         RegisterChildProperty(SceneRenderer, MainFrameRenderer)
-        RegisterChildProperty(GuiPickRay, MainFramePicker)
+        RegisterChildProperty(GuiController, MainFrameController)
         RegisterChildProperty(Camera, MainFrameCamera)
 
         ComponentTemplate({
@@ -34,12 +34,39 @@ BeginUnit(MainFrame)
                 "OrthographicFrustumBottomRight": "{Owner.MainFrameRenderer.SceneRendererTarget.RenderTargetSize}",
                 "Position3D": [0, 0, -100]
             },
-            "MainFramePicker": {
-                "PickRaySceneRenderer": "{Owner.MainFrameRenderer}",
-                "GuiPickRayClickState": {
-                    "InputStateContext": "{Owner.Owner}",
+            "InputMappings": [
+                {
+                    "Name": "LeftClick",
+                    "InputStateContext": "{Owner}",
                     "InputStateKey": "MOUSEBUTTON_0"
+                },
+                {
+                    "Name": "RightClick",
+                    "InputStateContext": "{Owner}",
+                    "InputStateKey": "MOUSEBUTTON_1"
+                },
+                {
+                    "Name": "ScrollUp",
+                    "InputStateContext": "{Owner}",
+                    "InputStateKey": "MOUSE_SCROLL_UP"
+                },
+                {
+                    "Name": "ScrollDown",
+                    "InputStateContext": "{Owner}",
+                    "InputStateKey": "MOUSE_SCROLL_DOWN"
                 }
+            ],
+            "MainFrameController": {
+                "GuiControllerWidgetPicker": {
+                    "PickRaySceneRenderer": "{Owner.Owner.MainFrameRenderer}"
+                },
+                "GuiControllerScrollablePicker": {
+                    "PickRaySceneRenderer": "{Owner.Owner.MainFrameRenderer}"
+                },
+                "GuiControllerLeftClicked": "{Owner.InputMappings[LeftClick].InputStateValue}",
+                "GuiControllerRightClicked": "{Owner.InputMappings[RightClick].InputStateValue}",
+                "GuiControllerScrollDown": "{Owner.InputMappings[ScrollDown].InputStateValue}",
+                "GuiControllerScrollUp": "{Owner.InputMappings[ScrollUp].InputStateValue}"
             },
             "LayoutChildWeight": [1.0, 1.0],
               "LayoutChildOrder": [

@@ -10,7 +10,7 @@
 
 #include <EASTL/map.h>
 
-static eastl::vector<PropertyBindingData> BindingData;
+static eastl::vector<EntityBindingData> BindingData;
 
 struct ChangingBinding {
     Entity Entity, Property;
@@ -18,16 +18,21 @@ struct ChangingBinding {
 
 static Vector<ChangingBinding, 32> currentChangingBindings;
 
-API_EXPORT PropertyBindingData& GetBindingData(Entity property) {
-    auto propertyIndex = GetComponentIndex(ComponentOf_Property(), property);
-    if(BindingData.size() <= propertyIndex) {
-        BindingData.resize(propertyIndex + 1);
-    }
-    return BindingData[propertyIndex];
+API_EXPORT EntityBindingData& GetBindingData(Entity entity) {
+	auto entityIndex = GetEntityIndex(entity);
+
+	if (BindingData.size() <= entityIndex) {
+		BindingData.resize(entityIndex + 1);
+	}
+    
+    return BindingData[entityIndex];
 }
 
 static inline void UpdateValue(const Listener& listener) {
-    auto& binding = GetBindingData(listener.BindingTargetProperty).Bindings[listener.BindingEntity];
+	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+
+	auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, listener.BindingTargetProperty);
+    auto& binding = GetBindingData(listener.BindingEntity).Bindings[propertyIndex];
 
     auto& indirection = binding.BindingIndirections[listener.BindingIndirectionIndex];
 
@@ -35,7 +40,24 @@ static inline void UpdateValue(const Listener& listener) {
 
     auto propertyData = GetPropertyData(binding.BindingTargetProperty);
 
-    auto value = GetPropertyValue(indirection.IndirectionProperty, indirection.ListenerEntity);
+    Variant value = Variant_Default;
+
+    if(GetPropertyKind(indirection.IndirectionProperty) == PropertyKind_Array) {
+        auto nameToFind = indirection.IndirectionArrayName;
+        auto elements = GetArrayPropertyElements(indirection.IndirectionProperty, indirection.ListenerEntity);
+        auto numElements = GetArrayPropertyCount(indirection.IndirectionProperty, indirection.ListenerEntity);
+        for(auto j = 0; j < numElements; ++j) {
+            auto name = GetName(elements[j]);
+            if(name == nameToFind) {
+                value = MakeVariant(Entity, elements[j]);
+                break;
+            }
+        }
+        Error(indirection.ListenerEntity, "Error resolving binding: Entity %s has no array element named %s.", GetUuid(indirection.ListenerEntity), nameToFind);
+    } else {
+        value = GetPropertyValue(indirection.IndirectionProperty, indirection.ListenerEntity);
+    }
+
 
     // Do we need a cast?
     auto targetType = GetPropertyType(binding.BindingTargetProperty);
@@ -49,14 +71,24 @@ static inline void UpdateValue(const Listener& listener) {
 }
 
 static void RemoveListeners(Entity self, const Binding& binding) {
+	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+
     auto& indirections = binding.BindingIndirections;
 
     auto numIndirections = indirections.size();
     for(u32 i = 0; i < numIndirections; ++i) {
         auto& indirection = indirections[i];
 
-        auto& listeners = GetBindingData(indirection.IndirectionProperty).Listeners[indirection.ListenerEntity];
-		std::remove_if(listeners.begin(), listeners.end(), [&](auto& value) { return value.BindingEntity == self; });
+		auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, indirection.IndirectionProperty);
+        auto& listeners = GetBindingData(indirection.ListenerEntity).Listeners[propertyIndex];
+		auto size = listeners.size();
+		for (u32 j = 0; j < size; ++j) {
+			if (listeners[j].BindingEntity == self) {
+				listeners[j] = listeners[size - 1];
+				listeners.pop_back();
+				break;
+			}
+		}
     }
 }
 
@@ -72,12 +104,33 @@ static void EvaluateIndirections(Entity self, Binding& binding) {
         indirection.ListenerEntity = sourceEntity;
 
         if(sourceEntity && i < (numIndirections - 1)) {
-            sourceEntity = GetPropertyValue(indirection.IndirectionProperty, sourceEntity).as_Entity;
+            if(GetPropertyKind(indirection.IndirectionProperty) == PropertyKind_Array) {
+                auto nameToFind = indirection.IndirectionArrayName;
+                auto elements = GetArrayPropertyElements(indirection.IndirectionProperty, sourceEntity);
+                auto numElements = GetArrayPropertyCount(indirection.IndirectionProperty, sourceEntity);
+                bool found = false;
+                for(auto j = 0; j < numElements; ++j) {
+                    auto name = GetName(elements[j]);
+                    if(name == nameToFind) {
+                        sourceEntity = elements[j];
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) {
+                    Error(self, "Error binding: Entity %s has no array element named %s.", GetUuid(sourceEntity), nameToFind);
+                    sourceEntity = 0;
+                }
+            } else {
+                sourceEntity = GetPropertyValue(indirection.IndirectionProperty, sourceEntity).as_Entity;
+            }
         }
     }
 }
 
 static void AddListeners(Entity self, Binding& binding) {
+	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+
     auto sourceEntity = binding.BindingSourceEntity ? binding.BindingSourceEntity : self;
 
     auto& indirections = binding.BindingIndirections;
@@ -93,13 +146,34 @@ static void AddListeners(Entity self, Binding& binding) {
         listener.BindingTargetProperty = binding.BindingTargetProperty;
         listener.BindingIndirectionIndex = (u16)reverseIndex;
         listener.ListenerProperty = indirection.IndirectionProperty;
-		GetBindingData(indirection.IndirectionProperty).Listeners[sourceEntity].push_back(listener);
+
+		auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, indirection.IndirectionProperty);
+		GetBindingData(sourceEntity).Listeners[propertyIndex].push_back(listener);
 
         indirection.ListenerEntity = sourceEntity;
 
         if(sourceEntity) {
             if(i < (numIndirections - 1)) {
-                sourceEntity = GetPropertyValue(indirection.IndirectionProperty, sourceEntity).as_Entity;
+                if(GetPropertyKind(indirection.IndirectionProperty) == PropertyKind_Array) {
+                    auto nameToFind = indirection.IndirectionArrayName;
+                    auto elements = GetArrayPropertyElements(indirection.IndirectionProperty, sourceEntity);
+                    auto numElements = GetArrayPropertyCount(indirection.IndirectionProperty, sourceEntity);
+                    bool found = false;
+                    for(auto j = 0; j < numElements; ++j) {
+                        auto name = GetName(elements[j]);
+                        if(name == nameToFind) {
+                            sourceEntity = elements[j];
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(!found) {
+                        Error(self, "Error binding: Entity %s has no array element named %s.", GetUuid(sourceEntity), nameToFind);
+                        sourceEntity = 0;
+                    }
+                } else {
+                    sourceEntity = GetPropertyValue(indirection.IndirectionProperty, sourceEntity).as_Entity;
+                }
             } else {
                 UpdateValue(listener);
             }
@@ -108,8 +182,12 @@ static void AddListeners(Entity self, Binding& binding) {
 }
 
 static inline void HandleListener(Entity self, const Listener& listener, Variant oldValue, Variant newValue) {
+	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+
     if(listener.BindingIndirectionIndex > 0) {
-        auto& binding = GetBindingData(listener.BindingTargetProperty).Bindings[listener.BindingEntity];
+		auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, listener.BindingTargetProperty);
+
+        auto& binding = GetBindingData(listener.BindingEntity).Bindings[propertyIndex];
 
         // If an indirection changed, re-evaluate listeners
         RemoveListeners(listener.BindingEntity, binding);
@@ -122,23 +200,29 @@ static inline void HandleListener(Entity self, const Listener& listener, Variant
 }
 
 static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue) {
-    auto& bindingData = GetBindingData(property);
+	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+	auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
+
+    auto& bindingData = GetBindingData(entity);
     auto& listeners = bindingData.Listeners;
-    auto listenerIt = listeners.find(entity);
+
+    auto listenerIt = listeners.find(propertyIndex);
     if(listenerIt != listeners.end()) {
 		for (auto& listener : listenerIt->second) {
 			HandleListener(entity, listener, oldValue, newValue);
+            bindingData = GetBindingData(entity);
+            listeners = bindingData.Listeners;
 		}
     }
 
     // If this property is bound and the change was not triggered by a binding value update, break the binding!
-    auto binding = bindingData.Bindings.find(entity);
+    auto binding = bindingData.Bindings.find(propertyIndex);
     if(binding != bindingData.Bindings.end() && currentChangingBindings.back().Entity != entity && currentChangingBindings.back().Property != property) {
         auto targetProperty = binding->second.BindingTargetProperty;
         if(GetPropertyKind(targetProperty) == PropertyKind_Value) {
             RemoveListeners(entity, binding->second);
 
-            bindingData.Bindings.erase(entity);
+            bindingData.Bindings.erase(propertyIndex);
             return;
         }
     }
@@ -151,10 +235,13 @@ LocalFunction(OnComponentRemoved, void, Entity component, Entity entity) {
     }
 }
 
-API_EXPORT void Bind(Entity entity, Entity property, Entity sourceEntity, const Entity* indirections, u32 numIndirections) {
+API_EXPORT void Bind(Entity entity, Entity property, Entity sourceEntity, const Entity* indirections, const StringRef* indirectionArrayNames, u32 numIndirections) {
 
-    auto& bindings = GetBindingData(property).Bindings;
-    auto existingBinding = bindings.find(entity);
+    auto& bindings = GetBindingData(entity).Bindings;
+	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+	auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
+
+    auto existingBinding = bindings.find(propertyIndex);
 
     if(existingBinding != bindings.end()) {
         auto& binding = existingBinding->second;
@@ -162,20 +249,22 @@ API_EXPORT void Bind(Entity entity, Entity property, Entity sourceEntity, const 
         binding.BindingSourceEntity = sourceEntity;
 
         binding.BindingIndirections.resize(numIndirections);
-        for(auto i = 0; i < numIndirections; ++i) {
+        for(u32 i = 0; i < numIndirections; ++i) {
             binding.BindingIndirections[i].IndirectionProperty = indirections[i];
+            binding.BindingIndirections[i].IndirectionArrayName = indirectionArrayNames ? indirectionArrayNames[i] : 0;
         }
 
         EvaluateIndirections(entity, binding);
         AddListeners(entity, binding);
     } else {
-        auto& binding = bindings[entity];
+        auto& binding = bindings[propertyIndex];
         binding.BindingTargetProperty = property;
         binding.BindingSourceEntity = sourceEntity;
 
         binding.BindingIndirections.resize(numIndirections);
-        for(auto i = 0; i < numIndirections; ++i) {
+        for(u32 i = 0; i < numIndirections; ++i) {
             binding.BindingIndirections[i].IndirectionProperty = indirections[i];
+            binding.BindingIndirections[i].IndirectionArrayName = indirectionArrayNames ? indirectionArrayNames[i] : 0;
         }
 
         EvaluateIndirections(entity, binding);
@@ -184,8 +273,11 @@ API_EXPORT void Bind(Entity entity, Entity property, Entity sourceEntity, const 
 }
 
 API_EXPORT const Binding* GetBinding(Entity entity, Entity property) {
-    auto& bindings = GetBindingData(property).Bindings;
-    auto existingBinding = bindings.find(entity);
+	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+	auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
+
+    auto& bindings = GetBindingData(entity).Bindings;
+    auto existingBinding = bindings.find(propertyIndex);
 
     if(existingBinding != bindings.end()) {
         return &existingBinding->second;
@@ -195,8 +287,11 @@ API_EXPORT const Binding* GetBinding(Entity entity, Entity property) {
 }
 
 API_EXPORT void Unbind(Entity entity, Entity property) {
-    auto& bindings = GetBindingData(property).Bindings;
-    auto existingBinding = bindings.find(entity);
+	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+	auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
+
+    auto& bindings = GetBindingData(entity).Bindings;
+    auto existingBinding = bindings.find(propertyIndex);
 
     if(existingBinding != bindings.end()) {
         RemoveListeners(entity, existingBinding->second);

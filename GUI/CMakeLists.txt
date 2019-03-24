@@ -3,7 +3,7 @@ project(Gui)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Gui GuiModule.cpp GuiModule.h Widget.cpp Widget.h Font.cpp Font.h GuiPickRay.cpp GuiPickRay.h DragHandle.cpp DragHandle.h TextWidget.cpp TextWidget.h Layout.cpp Layout.h)
+add_library(Gui GuiModule.cpp GuiModule.h Widget.cpp Widget.h Font.cpp Font.h GuiController.cpp GuiController.h DragHandle.cpp DragHandle.h TextWidget.cpp TextWidget.h Layout.cpp Layout.h)
 
 target_include_directories(Gui PUBLIC ".." ".")
 

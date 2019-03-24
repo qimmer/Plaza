@@ -23,6 +23,10 @@ struct Layout {
     u8 LayoutMode;
 };
 
+struct ScrollableLayout {
+    v2i LayoutScrollOffset;
+};
+
 struct LayoutChild {
     v2f LayoutChildWeight;
 };
@@ -34,6 +38,9 @@ Unit(Layout)
         Property(v2i, LayoutSpacing)
         Property(u8, LayoutMode)
         ArrayProperty(LayoutChildOrdering, LayoutChildOrder)
+
+    Component(ScrollableLayout)
+        Property(v2i, LayoutScrollOffset)
 
     Component(LayoutChildOrdering)
         ReferenceProperty(Property, LayoutChildOrderingProperty)

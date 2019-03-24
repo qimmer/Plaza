@@ -166,10 +166,13 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
 
 	bool hasBindingData = false;
 	if (settings->JsonSettingsExplicitBindings) {
-		auto& bindings = GetBindingData(property).Bindings;
-		auto& listeners = GetBindingData(property).Listeners;
-		auto bindingIt = bindings.find(entity);
-		auto listenerIt = listeners.find(entity);
+		static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+		auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
+
+		auto& bindings = GetBindingData(entity).Bindings;
+		auto& listeners = GetBindingData(entity).Listeners;
+		auto bindingIt = bindings.find(propertyIndex);
+		auto listenerIt = listeners.find(propertyIndex);
 
 		if (bindingIt != bindings.end()) {
 			hasBindingData = true;
@@ -286,8 +289,10 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
             writer.String("$components");
             writer.StartArray();
 
-			for (auto& component : GetEntityComponents(parent)) {
-				auto uuid = GetUuid(component.first);
+			for_entity(component, data, Component) {
+				if (!HasComponent(parent, component)) continue;
+
+				auto uuid = GetUuid(component);
 				writer.String(uuid ? uuid : "");
 			}
             
@@ -369,9 +374,8 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
             writer.EndArray();
         }*/
 
-		auto& components = GetEntityComponents(parent);
-        for(auto it : components) {
-			auto component = it.first;
+		for_entity(component, data, Component) {
+			if (!HasComponent(parent, component)) continue;
 
             auto properties = GetProperties(component);
             for(auto pi = 0; pi < properties.size(); ++pi) {

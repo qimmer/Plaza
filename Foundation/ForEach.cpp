@@ -59,10 +59,8 @@ static void ForEachChanged(
 			ReplicateChildren(forEach, forEachData, forEachData->ForEachSourceArrayProperty);
 		}
 		else {
-			auto& components = GetEntityComponents(forEachData->ForEachSourceEntity);
-
-			for (auto it = components.begin(); it != components.end(); ++it) {
-				auto& component = it->first;
+			for_entity(component, data, Component) {
+				if (!HasComponent(forEachData->ForEachSourceEntity, component)) continue;
 
 				for_children(property, Properties, component) {
 					ReplicateChildren(forEach, forEachData, property);
