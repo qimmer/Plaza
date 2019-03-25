@@ -14,6 +14,7 @@
 #include "Style.h"
 #include "Menu.h"
 #include "ListItem.h"
+#include "Selection.h"
 
 BeginModule(Widgets)
     RegisterDependency(Gui)
@@ -25,6 +26,7 @@ BeginModule(Widgets)
     RegisterUnit(Panel)
     RegisterUnit(Menu)
     RegisterUnit(ListItem)
+    RegisterUnit(Selection)
 
     RegisterUnit(MainFrame)
 EndModule()

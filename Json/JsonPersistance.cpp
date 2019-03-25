@@ -187,6 +187,8 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
 				writer.StartObject();
 			}
 
+            hasBindingData = true;
+
 			writer.String("Listeners");
 			writer.StartArray();
 			for (auto& listener : listenerIt->second) {
@@ -202,6 +204,10 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
 				writer.EndObject();
 			}
 			writer.EndArray();
+		}
+
+		if(hasBindingData) {
+            writer.String("Value");
 		}
 	}
 

@@ -6,7 +6,7 @@
             "Children": [
                 {
                     "$components": ["Component.EntityLabel"],
-                    "EntityLabelEntity": "ModuleRoot"
+                    "WidgetSelectionEntity": "ModuleRoot"
                 }
             ]
         }

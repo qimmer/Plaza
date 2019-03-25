@@ -104,7 +104,6 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
 		for_entity(component, data, Component) {
 			if (component == ComponentOf_Identification()
 				|| component == ComponentOf_Ownership()
-				|| component == ComponentOf_UnresolvedEntity()
 				|| component == ComponentOf_Instance()) {
 				continue;
 			}
@@ -117,7 +116,6 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
 		for_entity(component, data2, Component) {
 			if (component == ComponentOf_Identification()
 				|| component == ComponentOf_Ownership()
-				|| component == ComponentOf_UnresolvedEntity()
 				|| component == ComponentOf_Instance()) {
 				continue;
 			}
@@ -143,9 +141,7 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
                 } else {
                     auto templateBinding = GetBinding(newTemplate, property);
 
-                    if(templateBinding && !templateBinding->BindingSourceEntity) {
-                        // Template has relative binding. Imitate relative binding here and don't bind directly to template value
-
+                    if(templateBinding) {
                         auto indirections = (Entity*)alloca(sizeof(Entity) * templateBinding->BindingIndirections.size());
                         auto indirectionArrayNames = (StringRef*)alloca(sizeof(StringRef) * templateBinding->BindingIndirections.size());
                         for(auto i = 0; i < templateBinding->BindingIndirections.size(); ++i) {
@@ -153,11 +149,10 @@ LocalFunction(OnInstanceTemplateChanged, void, Entity entity, Entity oldTemplate
                             indirectionArrayNames[i] = templateBinding->BindingIndirections[i].IndirectionArrayName;
                         }
 
-                        Bind(entity, property, 0, indirections, indirectionArrayNames, (u32)templateBinding->BindingIndirections.size());
+                        Bind(entity, property, templateBinding->BindingSourceEntity, indirections, indirectionArrayNames, (u32)templateBinding->BindingIndirections.size());
                     } else {
-                        // Template has absolute binding or no binding at all. Bind to template value
-
-                        Bind(entity, property, newTemplate, &property, 0, 1);
+                        SetPropertyValue(property, entity, GetPropertyValue(property, newTemplate));
+                        //Bind(entity, property, newTemplate, &property, 0, 1);
                     }
                 }
             }

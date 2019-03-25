@@ -203,30 +203,37 @@ static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Va
 	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
 	auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
 
-    auto& bindingData = GetBindingData(entity);
-    auto& listeners = bindingData.Listeners;
+    auto* bindingData = &GetBindingData(entity);
 
-    auto listenerIt = listeners.find(propertyIndex);
-    if(listenerIt != listeners.end()) {
-		for (auto& listener : listenerIt->second) {
-			HandleListener(entity, listener, oldValue, newValue);
-            bindingData = GetBindingData(entity);
-            listeners = bindingData.Listeners;
-		}
-    }
+    if(!bindingData->Listeners.empty())
+    {
 
-    // If this property is bound and the change was not triggered by a binding value update, break the binding!
-    auto binding = bindingData.Bindings.find(propertyIndex);
-    if(binding != bindingData.Bindings.end() && currentChangingBindings.back().Entity != entity && currentChangingBindings.back().Property != property) {
-        auto targetProperty = binding->second.BindingTargetProperty;
-        if(GetPropertyKind(targetProperty) == PropertyKind_Value) {
-            RemoveListeners(entity, binding->second);
+        auto& listeners = bindingData->Listeners;
 
-            bindingData.Bindings.erase(propertyIndex);
-            return;
+        auto listenerIt = listeners.find(propertyIndex);
+        if(listenerIt != listeners.end()) {
+            auto listenerVector = listenerIt->second;
+            for (auto listener : listenerVector) {
+                HandleListener(entity, listener, oldValue, newValue);
+            }
+            bindingData = &GetBindingData(entity);
         }
     }
 
+    if(!bindingData->Bindings.empty())
+    {
+        // If this property is bound and the change was not triggered by a binding value update, break the binding!
+        auto binding = bindingData->Bindings.find(propertyIndex);
+        if(binding != bindingData->Bindings.end() && currentChangingBindings.back().Entity != entity && currentChangingBindings.back().Property != property) {
+            auto targetProperty = binding->second.BindingTargetProperty;
+            if(GetPropertyKind(targetProperty) == PropertyKind_Value) {
+                RemoveListeners(entity, binding->second);
+
+                bindingData->Bindings.erase(propertyIndex);
+                return;
+            }
+        }
+    }
 }
 
 LocalFunction(OnComponentRemoved, void, Entity component, Entity entity) {

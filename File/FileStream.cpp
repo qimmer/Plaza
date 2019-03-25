@@ -133,7 +133,7 @@ static bool Close(Entity entity) {
 
 static bool IsOpen(Entity entity) {
     auto data = GetFileStreamData(entity);
-    return data->fd;
+    return data && data->fd;
 }
 
 static bool Delete(Entity entity) {

@@ -228,7 +228,8 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
 					auto stringValue = *(StringRef*)(componentInfo.DataPool[componentIndex] + sizeof(Entity) * 2 + propertyData->PropertyOffset);
 					ReleaseStringRef(stringValue);
 				}
-				//SetPropertyValue(property, entity, empty); // Reset value to default before removal
+
+				SetPropertyValue(property, entity, empty); // Reset value to default before removal
 			}
 		}
 

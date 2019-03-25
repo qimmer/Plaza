@@ -1,0 +1,15 @@
+{
+    "InputMappings": [
+        {
+            "Name": "MultiSelect",
+            "InputStateKey": "KEY_LEFT_CONTROL",
+            "InputStateContext": "Module.Editor.EditorMainFrame"
+        }
+    ],
+    "Children": [
+        {
+            "Uuid": "SelectionContext.Entity",
+            "SelectionContextMulti": "{Owner.InputMappings[MultiSelect].InputStateValue}"
+        }
+    ]
+}

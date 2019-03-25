@@ -2,10 +2,6 @@
     "Uuid": "Component.EntityLabel",
     "Properties": [
         {
-            "Uuid": "Property.EntityLabelEntity",
-            "PropertyType": "Entity"
-        },
-        {
             "Uuid": "Property.EntityLabelChildForEach",
             "PropertyType": "Entity",
             "PropertyKind": "PropertyKind_Child",
@@ -18,10 +14,11 @@
         }
     ],
     "ComponentTemplate": {
-        "ListItemTitle": "{EntityLabelEntity.Uuid}",
+        "ListItemTitle": "{WidgetSelectionEntity.Uuid}",
+        "WidgetSelectionContext": "SelectionContext.Entity",
         "EntityLabelChildForEach": {
             "ForEachEnabled": "{Owner.ListItemExpanded}",
-            "ForEachSourceEntity": "{Owner.EntityLabelEntity}",
+            "ForEachSourceEntity": "{Owner.WidgetSelectionEntity}",
             "ForEachDestinationEntity": "{Owner}",
             "ForEachDestinationArrayProperty": "Property.Children",
             "ForEachTemplate": "Template.EntityLabelChild"
@@ -30,7 +27,8 @@
     "Children": [
         {
             "Uuid": "Template.EntityLabelChild",
-            "EntityLabelEntity": "{ForEachSource}"
+            "$components": ["Component.EntityLabel"],
+            "WidgetSelectionEntity": "{ForEachSource}"
         }
     ]
 }

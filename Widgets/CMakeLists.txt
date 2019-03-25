@@ -3,7 +3,7 @@ project(Widgets)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Widgets WidgetsModule.h WidgetsModule.cpp MainFrame.cpp MainFrame.h Dock.cpp Dock.h Button.cpp Button.h Checkbox.cpp Checkbox.h Style.cpp Style.h Panel.cpp Panel.h Menu.cpp Menu.h ListItem.cpp ListItem.h)
+add_library(Widgets WidgetsModule.h WidgetsModule.cpp MainFrame.cpp MainFrame.h Dock.cpp Dock.h Button.cpp Button.h Checkbox.cpp Checkbox.h Style.cpp Style.h Panel.cpp Panel.h Menu.cpp Menu.h ListItem.cpp ListItem.h Selection.cpp Selection.h)
 
 target_include_directories(Widgets PUBLIC ".." ".")
 target_link_libraries(Widgets Foundation Core Gui Rendering)
