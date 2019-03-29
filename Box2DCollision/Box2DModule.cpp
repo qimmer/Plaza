@@ -44,8 +44,8 @@ public:
         auto shape1 = GetEntityByIndex((u32)(size_t)contact->GetFixtureA()->GetUserData());
         auto shape2 = GetEntityByIndex((u32)(size_t)contact->GetFixtureB()->GetUserData());
 
-        auto body1 = GetOwner(shape1);
-        auto body2 = GetOwner(shape2);
+        auto body1 = GetOwnership(shape1).Owner;
+        auto body2 = GetOwnership(shape2).Owner;
 
         auto contactEntity1 = AddCollisionBodyContacts(body1);
         SetCollisionContactShape(contactEntity1, shape1);
@@ -196,7 +196,7 @@ LocalFunction(OnGravityChanged, void, Entity entity, v3f oldValue, v3f newValue)
 }
 
 LocalFunction(OnShapeChanged, void, Entity entity) {
-    auto body = GetOwner(entity);
+    auto body = GetOwnership(entity).Owner;
     BuildBody(body);
 }
 

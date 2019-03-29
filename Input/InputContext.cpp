@@ -28,7 +28,7 @@ struct HotKey {
 };
 
 LocalFunction(OnInputStateChanged, void, Entity state) {
-    auto hotKey = GetOwner(state);
+    auto hotKey = GetOwnership(state).Owner;
     if(HasComponent(hotKey, ComponentOf_HotKey())) {
         float value = 1.0f;
         for_children(hotKeyState, HotKeyStates, hotKey) {
@@ -42,7 +42,7 @@ LocalFunction(OnInputStateChanged, void, Entity state) {
 }
 
 API_EXPORT void SetInputStateValueByKey(Entity context, u16 key, float value) {
-    for_entity(inputState, data, InputState) {
+    for_entity(inputState, ComponentOf_InputState()) {
         if(!data->InputStateContext || data->InputStateContext == context) {
             if(data->InputStateKey == key) {
                 SetInputStateValue(inputState, value);

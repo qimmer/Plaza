@@ -59,7 +59,7 @@ static void ForEachChanged(
 			ReplicateChildren(forEach, forEachData, forEachData->ForEachSourceArrayProperty);
 		}
 		else {
-			for_entity(component, data, Component) {
+			for_entity(component, ComponentOf_Component()) {
 				if (!HasComponent(forEachData->ForEachSourceEntity, component)) continue;
 
 				for_children(property, Properties, component) {

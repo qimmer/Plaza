@@ -120,7 +120,7 @@ void ApplyResponseContentHeaders(Entity server, Entity request, Entity response)
 
     header = AddHttpResponseHeaders(response);
     SetHttpHeaderType(header, serverHeader);
-    SetHttpHeaderValue(header, GetUuid(server));
+    SetHttpHeaderValue(header, GetIdentification(server).Uuid);
 }
 
 static void ParseQueryParams(Entity request, StringRef queryParams) {

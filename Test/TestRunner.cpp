@@ -24,17 +24,17 @@ int main(int argc, char** argv) { \
     for(auto i = 1; i < argc; ++i) {
         auto module = LoadPlazaModule(argv[i]);
         if(IsEntityValid(module)) {
-            printf("Module '%s' Loaded from '%s'.\n", GetUuid(module), argv[i]);
+            printf("Module '%s' Loaded from '%s'.\n", GetIdentification(module).Uuid, argv[i]);
         }
     }
 
     printf("%s", "\n");
 
     s32 numFailed = 0, numSucceeded = 0;
-    for_entity(entity, data, Test) {
+    for_entity(entity, ComponentOf_Test()) {
         auto argument = MakeVariant(Entity, entity);
         auto result = CallFunction(entity, 1, &argument);
-        printf("%s %s.\n", GetUuid(entity), (result.as_u32 == 0) ? "Succeeded" : "Failed");
+        printf("%s %s.\n", GetIdentification(entity).Uuid, (result.as_u32 == 0) ? "Succeeded" : "Failed");
 
         if(result.as_u32 == 0) {
             numSucceeded++;

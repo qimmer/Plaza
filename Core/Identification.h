@@ -8,24 +8,18 @@
 #include <Core/NativeUtils.h>
 
 struct Identification {
-	StringRef Name, Uuid;
+	StringRef Uuid;
 };
 
 Unit(Identification)
     Component(Identification)
-        static StringRef __Uuid__Meta = "";
-        Declare(Property, Uuid)
-        struct UuidChangedArgs { Entity ChangedEntity; StringRef OldValue; StringRef NewValue; };
-        StringRef GetUuid(Entity entity);
-        void SetUuid(Entity entity, StringRef value);
+        Property(StringRef, Uuid)
 
 StringRef GetEntityRelativePath(StringRef entityPath, Entity relativeTo, bool preferNameToIndex);
 Entity FindEntityByUuid(StringRef uuid);
 
 bool GetParentPath(StringRef childPath, u32 bufLen, char *parentPath);
 StringRef CreateGuidFromPath(StringRef path);
-
-Function(CreateGuid, StringRef)
 
 #define PathMax 512
 

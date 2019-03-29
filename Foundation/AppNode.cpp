@@ -21,13 +21,13 @@ static Entity FindAppRoot(Entity entity) {
         return entity;
     }
 
-    return FindAppRoot(GetOwner(entity));
+    return FindAppRoot(GetOwnership(entity).Owner);
 }
 
 static void SetAppNodeRootRecursive(Entity entity) {
-    SetAppNodeRoot(entity, FindAppRoot(entity));
-    for_entity(child, data, AppNode) {
-        if(GetOwner(child) == entity) {
+    SetAppNode(entity, {FindAppRoot(entity)});
+    for_entity(child, ComponentOf_AppNode()) {
+        if(GetOwnership(child).Owner == entity) {
             SetAppNodeRootRecursive(child);
         }
     }
@@ -40,7 +40,7 @@ LocalFunction(OnOwnerChanged, void, Entity entity) {
 }
 
 LocalFunction(OnAppNodeAdded, void, Entity component, Entity entity) {
-    SetAppNodeRoot(entity, FindAppRoot(entity));
+    SetAppNode(entity, {FindAppRoot(entity)});
 }
 
 LocalFunction(OnAppRootAdded, void, Entity component, Entity entity) {

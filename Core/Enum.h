@@ -7,6 +7,15 @@
 
 #include <Core/NativeUtils.h>
 
+struct Enum {
+    bool EnumCombinable;
+    ChildArray EnumFlags;
+};
+
+struct EnumFlag {
+    u64 EnumFlagValue;
+};
+
 Unit(Enum)
     Component(Enum)
         Property(bool, EnumCombinable)

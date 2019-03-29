@@ -38,30 +38,30 @@ static inline void UpdateValue(const Listener& listener) {
 
     if(!IsEntityValid(indirection.ListenerEntity)) return;
 
-    auto propertyData = GetPropertyData(binding.BindingTargetProperty);
+    auto propertyData = GetProperty(binding.BindingTargetProperty);
 
     Variant value = Variant_Default;
 
-    if(GetPropertyKind(indirection.IndirectionProperty) == PropertyKind_Array) {
+    if(GetProperty(indirection.IndirectionProperty).PropertyType == TypeOf_ChildArray) {
         auto nameToFind = indirection.IndirectionArrayName;
         auto elements = GetArrayPropertyElements(indirection.IndirectionProperty, indirection.ListenerEntity);
         auto numElements = GetArrayPropertyCount(indirection.IndirectionProperty, indirection.ListenerEntity);
         for(auto j = 0; j < numElements; ++j) {
-            auto name = GetName(elements[j]);
+            auto name = GetArrayChild(elements[j]).Name;
             if(name == nameToFind) {
                 value = MakeVariant(Entity, elements[j]);
                 break;
             }
         }
-        Error(indirection.ListenerEntity, "Error resolving binding: Entity %s has no array element named %s.", GetUuid(indirection.ListenerEntity), nameToFind);
+        Error(indirection.ListenerEntity, "Error resolving binding: Entity %s has no array element named %s.", GetIdentification(indirection.ListenerEntity).Uuid, nameToFind);
     } else {
         value = GetPropertyValue(indirection.IndirectionProperty, indirection.ListenerEntity);
     }
 
 
     // Do we need a cast?
-    auto targetType = GetPropertyType(binding.BindingTargetProperty);
-    if(propertyData->PropertyKind == PropertyKind_Value && targetType != value.type) {
+    auto targetType = GetProperty(binding.BindingTargetProperty).PropertyType;
+    if(propertyData.PropertyType != TypeOf_ChildArray && targetType != value.type) {
         value = Cast(value, targetType);
     }
 
@@ -104,13 +104,13 @@ static void EvaluateIndirections(Entity self, Binding& binding) {
         indirection.ListenerEntity = sourceEntity;
 
         if(sourceEntity && i < (numIndirections - 1)) {
-            if(GetPropertyKind(indirection.IndirectionProperty) == PropertyKind_Array) {
+            if(GetProperty(indirection.IndirectionProperty).PropertyType == TypeOf_ChildArray) {
                 auto nameToFind = indirection.IndirectionArrayName;
                 auto elements = GetArrayPropertyElements(indirection.IndirectionProperty, sourceEntity);
                 auto numElements = GetArrayPropertyCount(indirection.IndirectionProperty, sourceEntity);
                 bool found = false;
                 for(auto j = 0; j < numElements; ++j) {
-                    auto name = GetName(elements[j]);
+                    auto name = GetArrayChild(elements[j]).Name;
                     if(name == nameToFind) {
                         sourceEntity = elements[j];
                         found = true;
@@ -118,7 +118,7 @@ static void EvaluateIndirections(Entity self, Binding& binding) {
                     }
                 }
                 if(!found) {
-                    Error(self, "Error binding: Entity %s has no array element named %s.", GetUuid(sourceEntity), nameToFind);
+                    Error(self, "Error binding: Entity %s has no array element named %s.", GetIdentification(sourceEntity).Uuid, nameToFind);
                     sourceEntity = 0;
                 }
             } else {
@@ -154,13 +154,13 @@ static void AddListeners(Entity self, Binding& binding) {
 
         if(sourceEntity) {
             if(i < (numIndirections - 1)) {
-                if(GetPropertyKind(indirection.IndirectionProperty) == PropertyKind_Array) {
+                if(GetProperty(indirection.IndirectionProperty).PropertyType == TypeOf_ChildArray) {
                     auto nameToFind = indirection.IndirectionArrayName;
                     auto elements = GetArrayPropertyElements(indirection.IndirectionProperty, sourceEntity);
                     auto numElements = GetArrayPropertyCount(indirection.IndirectionProperty, sourceEntity);
                     bool found = false;
                     for(auto j = 0; j < numElements; ++j) {
-                        auto name = GetName(elements[j]);
+                        auto name = GetArrayChild(elements[j]).Name;
                         if(name == nameToFind) {
                             sourceEntity = elements[j];
                             found = true;
@@ -168,7 +168,7 @@ static void AddListeners(Entity self, Binding& binding) {
                         }
                     }
                     if(!found) {
-                        Error(self, "Error binding: Entity %s has no array element named %s.", GetUuid(sourceEntity), nameToFind);
+                        Error(self, "Error binding: Entity %s has no array element named %s.", GetIdentification(sourceEntity).Uuid, nameToFind);
                         sourceEntity = 0;
                     }
                 } else {
@@ -181,7 +181,7 @@ static void AddListeners(Entity self, Binding& binding) {
     }
 }
 
-static inline void HandleListener(Entity self, const Listener& listener, Variant oldValue, Variant newValue) {
+static inline void HandleListener(Entity self, const Listener& listener) {
 	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
 
     if(listener.BindingIndirectionIndex > 0) {
@@ -199,46 +199,41 @@ static inline void HandleListener(Entity self, const Listener& listener, Variant
     }
 }
 
-static void OnPropertyChanged(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue) {
-	static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
-	auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
+void OnChanged(Entity entity, Entity component, const void *oldData, const void *newData) {
+    static u32 propertyInfoIndex = GetComponentIndexByIndex(0, ComponentOf_Property());
 
     auto* bindingData = &GetBindingData(entity);
 
-    if(!bindingData->Listeners.empty())
-    {
+    for(auto& listener : bindingData->Listeners) {
+        auto propertyIndex = listener.first;
+        auto property = GetComponentEntity(propertyInfoIndex, propertyIndex);
+        auto propertyComponent = GetOwnership(property).Owner;
 
-        auto& listeners = bindingData->Listeners;
+        if (propertyComponent != component) continue;
 
-        auto listenerIt = listeners.find(propertyIndex);
-        if(listenerIt != listeners.end()) {
-            auto listenerVector = listenerIt->second;
-            for (auto listener : listenerVector) {
-                HandleListener(entity, listener, oldValue, newValue);
-            }
-            bindingData = &GetBindingData(entity);
+        auto listenerVector = listener.second;
+        for (auto listener : listenerVector) {
+            HandleListener(entity, listener);
         }
+        bindingData = &GetBindingData(entity);
     }
 
-    if(!bindingData->Bindings.empty())
-    {
-        // If this property is bound and the change was not triggered by a binding value update, break the binding!
-        auto binding = bindingData->Bindings.find(propertyIndex);
-        if(binding != bindingData->Bindings.end() && currentChangingBindings.back().Entity != entity && currentChangingBindings.back().Property != property) {
-            auto targetProperty = binding->second.BindingTargetProperty;
-            if(GetPropertyKind(targetProperty) == PropertyKind_Value) {
-                RemoveListeners(entity, binding->second);
+    for(auto& binding : bindingData->Bindings) {
+        auto propertyIndex = binding.first;
+        auto property = GetComponentEntity(propertyInfoIndex, propertyIndex);
+        auto propertyComponent = GetOwnership(property).Owner;
+
+        if(propertyComponent != component) continue;
+
+        if(currentChangingBindings.back().Entity != entity && currentChangingBindings.back().Property != property) {
+            auto targetProperty = binding.second.BindingTargetProperty;
+            if(GetProperty(targetProperty).PropertyType != TypeOf_ChildArray) {
+                RemoveListeners(entity, binding.second);
 
                 bindingData->Bindings.erase(propertyIndex);
                 return;
             }
         }
-    }
-}
-
-LocalFunction(OnComponentRemoved, void, Entity component, Entity entity) {
-    for_children(property, Properties, component) {
-        Unbind(entity, property);
     }
 }
 
@@ -307,6 +302,5 @@ API_EXPORT void Unbind(Entity entity, Entity property) {
 }
 
 BeginUnit(Binding)
-    RegisterGenericPropertyChangedListener(OnPropertyChanged);
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnComponentRemoved, 0)
+    RegisterDeferredSystem(OnChanged, 0, 0)
 EndUnit()

@@ -90,7 +90,7 @@ API_EXPORT int GetNumThreads() {
 }
 
 LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    for_entity(task, data, Task) {
+    for_entity(task, ComponentOf_Task()) {
         if(GetTaskRunning(task) || GetTaskFinished(task)) continue;
 
         SetTaskFinished(task, true);

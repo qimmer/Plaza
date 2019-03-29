@@ -271,7 +271,7 @@ API_EXPORT Variant Cast(Variant v, Type type_to) {
     }
 
     if(type_to == TypeOf_StringRef && type_from == TypeOf_Entity) {
-        auto result = GetUuid(v.as_Entity);
+        auto result = GetIdentification(v.as_Entity).Uuid;
         return MakeVariant(StringRef, result);
     }
 

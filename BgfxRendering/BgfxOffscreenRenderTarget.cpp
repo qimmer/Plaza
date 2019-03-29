@@ -53,7 +53,7 @@ LocalFunction(InvalidateTarget, void, Entity entity) {
 }
 
 LocalFunction(InvalidateTexture, void, Entity entity) {
-    auto owner = GetOwner(entity);
+    auto owner = GetOwnership(entity).Owner;
     if(HasComponent(owner, ComponentOf_BgfxOffscreenRenderTarget())) {
         InvalidateTarget(owner);
     }

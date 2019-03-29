@@ -141,7 +141,7 @@ static void UpdateLocalTransform(Entity entity) {
 }
 
 static void ValidateTransform(Entity entity, Transform *transformData) {
-    auto parent = GetOwner(entity);
+    auto parent = GetOwnership(entity).Owner;
 
     if(transformData->TransformHierarchyLevel > 0 && HasComponent(parent, ComponentOf_Transform()) > 0) {
 		auto parentData = GetTransformData(parent);
@@ -157,11 +157,11 @@ static void ValidateTransform(Entity entity, Transform *transformData) {
 
 static void CalculateHierarchyLevel(Entity entity) {
     if(HasComponent(entity, ComponentOf_Transform())) {
-        auto parent = GetOwner(entity);
+        auto parent = GetOwnership(entity).Owner;
         s32 level = 0;
         while(HasComponent(parent, ComponentOf_Transform())) {
             level++;
-            parent = GetOwner(parent);
+            parent = GetOwnership(parent).Owner;
         }
 
         GetTransformData(entity)->TransformHierarchyLevel = level;

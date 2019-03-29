@@ -277,10 +277,10 @@ LocalFunction(InvalidateIndexBuffer, void, Entity ib) {
 }
 
 LocalFunction(InvalidateAttribute, void, Entity attr) {
-    auto decl = GetOwner(attr);
+    auto decl = GetOwnership(attr).Owner;
     invalidatedVertexDecls.insert(decl);
 
-    for_entity(vertexBuffer, data, BgfxVertexBuffer) {
+    for_entity(vertexBuffer, ComponentOf_BgfxVertexBuffer()) {
         if(GetVertexBufferDeclaration(vertexBuffer) == decl) {
             InvalidateVertexBuffer(vertexBuffer);
         }

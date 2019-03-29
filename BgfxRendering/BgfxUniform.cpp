@@ -65,7 +65,7 @@ LocalFunction(OnUniformValidation, void) {
                 type = bgfx::UniformType::Int1;
                 break;
             default:
-                Log(entity, LogSeverity_Error, "Unsupported uniform property type: %s (uniform %s)", GetTypeName(propertyType), GetUuid(entity));
+                Log(entity, LogSeverity_Error, "Unsupported uniform property type: %s (uniform %s)", GetTypeName(propertyType), GetIdentification(entity).Uuid);
                 break;
         }
 

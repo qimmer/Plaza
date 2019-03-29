@@ -58,6 +58,8 @@ API_EXPORT void SetNativeFunctionInvokerBySignature(Entity function, StringRef s
         return;
     }
 
-    SetFunctionCaller(function, it->second);
+    auto functionData = GetFunction(function);
+    functionData.FunctionCaller = it->second;
+    SetFunction(function, functionData);
 }
 

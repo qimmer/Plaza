@@ -20,12 +20,6 @@ Function(HasComponent, bool, Entity entity, Entity componentType)
 
 bool IsEntityValid(Entity entity);
 
-struct ComponentPageElement {
-    Entity Entity;
-    u64 Padding;
-    char Data[1];
-};
-
 void __InitializeComponent();
 void __PreInitialize();
 
@@ -35,9 +29,11 @@ u32 GetComponentIndex(Entity component, Entity entity);
 u32 GetComponentIndexByIndex(u32 componentInfoIndex, Entity entity);
 Entity GetComponentEntity(u32 componentInfoIndex, u32 componentIndex);
 Pool& GetComponentPool(u32 componentInfoIndex);
-char* GetComponentInstanceData(u32 componentInfoIndex, u32 componentDataIndex);
+const void* GetComponentInstanceData(u32 componentInfoIndex, u32 componentDataIndex);
+void SetComponentInstanceData(u32 componentInfoIndex, u32 componentDataIndex, const void *data);
+void SetComponentData(Entity entity, Entity component, const void *data);
 
-inline Entity GetNextEntity(u32 *componentIndex, u32 componentTypeIndex, void **data) {
+inline Entity GetNextEntity(u32 *componentIndex, u32 componentTypeIndex, void *data) {
 	auto& pool = GetComponentPool(componentTypeIndex);
     auto numPages = pool.GetNumPages();
 	u32 stride = pool.GetBlockSize();
@@ -53,7 +49,10 @@ inline Entity GetNextEntity(u32 *componentIndex, u32 componentTypeIndex, void **
 
             if(IsEntityValid(entity)) {
                 *componentIndex = pageIndex * PoolPageElements + elementIndex + 1;
-                *data = element + sizeof(Entity) * 2;
+                if(data) {
+                    memcpy(data, element, pool.GetElementSize());
+                }
+
                 return entity;
             }
         }
@@ -78,6 +77,8 @@ struct Base {
 };
 
 struct Component {
+    ChildArray Properties, Bases;
+
 	u16 ComponentDataIndex;
 	u16 ComponentSize;
 	bool ComponentExplicitSize;
@@ -93,23 +94,16 @@ Unit(Component)
         ReferenceProperty(Component, BaseComponent)
 
     Component(Component)
-        __PropertyCore(Component, u16, ComponentSize)
-        __PropertyCore(Component, bool, ComponentExplicitSize)
-        __ArrayPropertyCore(Property, Properties)
-        __ArrayPropertyCore(Base, Bases)
+        Property(u16, ComponentSize)
+        Property(bool, ComponentExplicitSize)
+        ArrayProperty(Property, Properties)
+        ArrayProperty(Base, Bases)
 
-    Event(EntityComponentAdding, Entity component, Entity entity)
-    Event(EntityComponentAdded, Entity component, Entity entity)
-    Event(EntityComponentRemoved, Entity component, Entity entity)
+#define for_entity(ENTITYVAR, COMPONENTTYPE) \
+    for(Entity __i = 0, __componentTypeIndex = (Entity)GetComponentIndexByIndex(0, COMPONENTTYPE), ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, 0); ENTITYVAR; ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, 0))
 
-#define for_entity(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
-    COMPONENTTYPE *DATAVAR;\
-    for(Entity __i = 0, __componentTypeIndex = (Entity)GetComponentIndexByIndex(0, ComponentOf_ ## COMPONENTTYPE()), ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, (void**)&DATAVAR))
-
-#define for_entity_abstract(ENTITYVAR, DATAVAR, COMPONENTTYPE) \
-    char *DATAVAR;\
-    for(Entity __i = 0, __componentTypeIndex = (Entity)GetComponentIndexByIndex(0, COMPONENTTYPE), ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, (void**)&DATAVAR); ENTITYVAR; ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, (void**)&DATAVAR))
-
+#define for_entity_data(ENTITYVAR, COMPONENTTYPE, DATADESTINATION) \
+    for(Entity __i = 0, __componentTypeIndex = (Entity)GetComponentIndexByIndex(0, COMPONENTTYPE), ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, DATADESTINATION); ENTITYVAR; ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, DATADESTINATION))
 
 #define for_entity_parallel(ENTITYVAR, DATAVAR, COMPONENTTYPE, CONTENTS) \
     {\

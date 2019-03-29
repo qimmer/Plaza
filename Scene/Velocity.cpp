@@ -11,7 +11,7 @@ LocalFunction(OnUpdateMovement, void, Entity appLoop, u64 oldFrame, u64 newFrame
     auto deltaTime = GetStopWatchElapsedSeconds(StopWatchOf_Velocity());
     SetStopWatchElapsedSeconds(StopWatchOf_Velocity(), 0.0);
 
-    for_entity(accelerator, data, Accelerator) {
+    for_entity(accelerator, ComponentOf_Accelerator()) {
         auto movement = data->AcceleratorTarget;
 
         if(HasComponent(movement, ComponentOf_Movement())) {

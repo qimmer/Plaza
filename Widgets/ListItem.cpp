@@ -10,7 +10,7 @@
 #include <Widgets/Style.h>
 
 LocalFunction(OnWidgetClickedChanged, void, Entity listItemContainer, bool oldValue, bool newValue) {
-    auto listItem = GetOwner(listItemContainer);
+    auto listItem = GetOwnership(listItemContainer).Owner;
     if(newValue && HasComponent(listItem, ComponentOf_ListItem())) {
         SetListItemExpanded(listItem, !GetListItemExpanded(listItem));
     }

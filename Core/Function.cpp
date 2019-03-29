@@ -27,8 +27,7 @@
 static char nullData[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
 API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
-	auto functionData = GetFunctionData(f);
-	functionData->NumFunctionArguments = 0;
+	auto functionData = GetFunction(f);
 
     auto len = strlen(arguments);
     auto offset = 0;
@@ -59,9 +58,9 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
             typeSignatureEnd--;
         }
 
-        auto argumentEntity = AddFunctionArguments(f);
+        auto argumentEntity = CreateEntity();
 
-        auto type = 0;
+        Type type = 0;
         for(auto i = 0; i < TypeOf_MAX; ++i) {
             if(strcmp(typeSignature, GetTypeName(i)) == 0) {
                 type = i;
@@ -69,16 +68,15 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
             }
         }
 
-		functionData->FunctionArgumentTypes[functionData->NumFunctionArguments] = type;
-		functionData->NumFunctionArguments++;
-
         if(!type) {
             Log(f, LogSeverity_Error, "Unsupported function argument type: %s", typeSignature);
             return;
         }
 
-        SetFunctionArgumentType(argumentEntity, type);
+        SetFunctionArgument(argumentEntity, {type});
         byteOffset += GetTypeSize(type);
+
+        AddFunctionArguments(f, argumentEntity);
     }
 
 
@@ -92,22 +90,22 @@ API_EXPORT Variant CallFunction(
     thread_local u32 callStackCount = 0;
     static const u32 callStackMax = 128;
 
-    auto data = GetFunctionData(f);
-    if(!data) return Variant_Empty;
+    auto data = GetFunction(f);
+    if(!data.FunctionCaller) return Variant_Empty;
 
     if(callStackCount > callStackMax) {
-        Error(f, "Infinite recursive call. Refusing to call function %s to prevent stack overflow.", GetUuid(f));
+        Error(f, "Infinite recursive call. Refusing to call function %s to prevent stack overflow.", GetIdentification(f).Uuid);
 
         Variant defaultValue;
         memset(&defaultValue.data, 0, sizeof(defaultValue.data));
-        defaultValue.type = data->FunctionReturnType;
+        defaultValue.type = data.FunctionReturnType;
 
         return defaultValue;
     }
 
 	Verbose(Verbose_Function, "Calling function %s ...", GetName(f));
 
-	if (numArguments < data->NumFunctionArguments) {
+	if (numArguments < GetNumFunctionArguments(f)) {
 		Log(f, LogSeverity_Error, "Insufficient function arguments provided when calling %s", GetDebugName(f));
 		return Variant_Empty;
 	}
@@ -141,8 +139,8 @@ API_EXPORT Variant CallFunction(
 #endif
     
     callStackCount++;
-    auto result = ((FunctionCallerType)data->FunctionCaller)(
-            data->FunctionPtr,
+    auto result = ((FunctionCallerType)data.FunctionCaller)(
+            data.FunctionPtr,
 			arguments
     );
     callStackCount--;
@@ -187,21 +185,6 @@ API_EXPORT void ProfileEnd() {
 }
 
 void __InitializeFunction() {
-    auto component = ComponentOf_Function();
-    AddComponent(component, ComponentOf_Component());
-    SetComponentSize(component, sizeof(Function));
-    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-	SetUuid(component, "Component.Function");
-    __Property(PropertyOf_FunctionReturnType(), offsetof(Function, FunctionReturnType), sizeof(Function::FunctionReturnType), TypeOf_Type,  component, 0, PropertyKind_Value, "FunctionReturnType");
-    __Property(PropertyOf_FunctionArguments(), InvalidIndex, 0, TypeOf_Entity,  component, ComponentOf_FunctionArgument(), PropertyKind_Array, "FunctionArguments");
-
-    component = ComponentOf_FunctionArgument();
-    AddComponent(component, ComponentOf_Component());
-    SetComponentSize(component, sizeof(FunctionArgument));
-    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-	SetUuid(component, "Component.FunctionArgument");
-    __Property(PropertyOf_FunctionArgumentType(), offsetof(FunctionArgument, FunctionArgumentType), sizeof(FunctionArgument::FunctionArgumentType), TypeOf_Type,  component, 0, PropertyKind_Value, "FunctionArgumentType");
-	
     RegisterCommonSignatures();
 }
 
@@ -210,11 +193,6 @@ int __ArgStackOffset(int value) {
     auto offset = (s32)((char*)&value - (char*)&val);
     return offset;
 }
-
-__PropertyCoreImpl(NativePtr, FunctionCaller, Function)
-__PropertyCoreImpl(NativePtr, FunctionPtr, Function)
-__PropertyCoreImpl(Type, FunctionReturnType, Function)
-__PropertyCoreImpl(Type, FunctionArgumentType, FunctionArgument)
 
 BeginUnit(Function)
     BeginComponent(Function)

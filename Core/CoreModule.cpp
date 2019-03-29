@@ -9,12 +9,12 @@
 #include <Core/Component.h>
 #include <Core/Entity.h>
 #include <Core/Property.h>
-#include <Core/Event.h>
 #include <Core/Module.h>
 #include <Core/Date.h>
 #include <Core/Debug.h>
 #include <Core/Instance.h>
 #include <Core/Binding.h>
+#include <Core/System.h>
 
 #include <malloc.h>
 
@@ -22,9 +22,6 @@ bool __IsCoreInitialized = false;
 
 void __InitializeBase() {
     __InitializeComponent();
-    __InitializeModule();
-    __InitializeProperty();
-    __InitializeEvent();
     __InitializeFunction();
 }
 
@@ -44,14 +41,14 @@ void __InitModule_Core (Entity module) {
     __PreInitialize();
     __InitializeBase();
     AddComponent(module, ComponentOf_Module());
-	SetUuid(module, "Module.Core");
+	SetIdentification(module, {"Module.Core"});
 
 	RegisterUnit(Entity)
 	RegisterUnit(Component)
 	RegisterUnit(Enum)
 	RegisterUnit(Property)
 	RegisterUnit(Function)
-	RegisterUnit(Event)
+	RegisterUnit(System)
     RegisterUnit(Module)
     RegisterUnit(Date)
     RegisterUnit(Debug)
@@ -59,12 +56,8 @@ void __InitModule_Core (Entity module) {
     RegisterUnit(Binding)
     RegisterUnit(Instance)
 
-    AddComponent(GetModuleRoot(), ComponentOf_ModuleRoot());
-	SetUuid(GetModuleRoot(), "ModuleRoot");
+    AddComponent(GetRoot(), ComponentOf_ModuleRoot());
+    SetIdentification(GetRoot(), {"ModuleRoot"});
 
-    AddChild(PropertyOf_Modules(), GetModuleRoot(), module, true);
-    SetOwner(module, GetModuleRoot(), PropertyOf_Modules());
-
-    SetModuleSourcePath(module, __FILE__);
-    SetModuleVersion(module, __DATE__ " " __TIME__);
+    AddModules(GetRoot(), module);
 EndModule()

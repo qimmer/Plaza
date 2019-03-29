@@ -22,7 +22,7 @@ LocalFunction(OnUpdateTransitions, void) {
 
         auto value = Interpolate(transitionData->ActiveTransitionSourceValue, transitionData->ActiveTransitionDestinationValue, t);
 
-        SetPropertyValue(transitionData->ActiveTransitionProperty, GetOwner(activeTransition), value);
+        SetPropertyValue(transitionData->ActiveTransitionProperty, GetOwnership(activeTransition).Owner, value);
 
         if(t >= 1.0f) {
             finishedTransitions.push_back(activeTransition);
@@ -30,7 +30,7 @@ LocalFunction(OnUpdateTransitions, void) {
     }
 
     for(auto& finished : finishedTransitions) {
-        auto context = GetOwner(finished);
+        auto context = GetOwnership(finished).Owner;
         RemoveActiveTransitionsByValue(context, finished);
 
         if(GetActiveTransitions(context).size()) {

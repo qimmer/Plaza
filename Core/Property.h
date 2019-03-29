@@ -7,10 +7,6 @@
 
 #include <Core/NativeUtils.h>
 
-#define PropertyKind_Value 0
-#define PropertyKind_Child 1
-#define PropertyKind_Array 2
-
 struct ArrayChild {
     StringRef Name;
 };
@@ -20,75 +16,49 @@ struct Ownership {
 };
 
 struct Property {
-    Entity PropertyEnum, PropertyChangedEvent, PropertyChildComponent;
-    u32 PropertyOffset, PropertySize, PropertyFlags;
+    Entity PropertyEnum, PropertyChildComponent;
+    u32 PropertyOffset, PropertySize;
     Type PropertyType;
-    u8 PropertyKind;
     bool PropertyReadOnly;
 };
-
-void EmitChangedEvent(Entity entity, Entity property, Property *propertyData, Variant oldValueData, Variant newValueData);
 
 #include <Core/Component.h>
 
 Unit(Property)
 
-Enum(PropertyKind)
-
 Component(Property)
-    __PropertyCore(Property, u32, PropertyOffset)
-    __PropertyCore(Property, u32, PropertySize)
-    __PropertyCore(Property, Type, PropertyType)
-    __PropertyCore(Property, u8, PropertyKind)
-    __PropertyCore(Property, bool, PropertyReadOnly)
-    __PropertyCore(Property, Entity, PropertyChildComponent)
-    __PropertyCore(Property, Entity, PropertyEnum)
-    __PropertyCore(Property, Entity, PropertyChangedEvent)
+    Property(u32, PropertyOffset)
+    Property(u32, PropertySize)
+    Property(Type, PropertyType)
+    Property(bool, PropertyReadOnly)
+    Property(Entity, PropertyChildComponent)
+    Property(Entity, PropertyEnum)
 
 Component(Ownership)
-    __PropertyCoreGetOnly(Ownership, Entity, Owner, PropertyFlag_ReadOnly, PropertyFlag_Transient)
-    __PropertyCoreGetOnly(Ownership, Entity, OwnerProperty, PropertyFlag_ReadOnly, PropertyFlag_Transient)
+    Property(Entity, Owner)
+    Property(Entity, OwnerProperty)
 
 Component(ArrayChild)
-    __PropertyCore(ArrayChild, StringRef, Name)
+    Property(StringRef, Name)
 
 Function(IsOwnedBy, bool, Entity entity, Entity owner)
-    void SetOwner(Entity entity, Entity owner, Entity ownerProperty);
+
+Function(GetArrayPropertyCount, u32, Entity property, Entity entity);
+Function(AddArrayPropertyElement, u32, Entity property, Entity entity, Entity element);
+Function(RemoveArrayPropertyElement, void, Entity property, Entity entity, u32 index);
+Function(GetArrayPropertyIndex, u32, Entity property, Entity entity, Entity element);
+Function(SetArrayPropertyCount, void, Entity property, Entity entity, u32 count);
+
+Function(SetPropertyValue, void, Entity property, Entity entity, Variant value);
+Function(GetPropertyValue, Variant, Entity property, Entity entity);
+
+const Entity *GetArrayPropertyElements(Entity property, Entity entity);
 
 StringRef Intern(StringRef sourceString);
 
-Function(SetPropertyValue, void, Entity property, Entity entity, Variant valueData)
-Function(GetPropertyValue, Variant, Entity property, Entity entity)
-
-const ChildArray& GetArrayPropertyElements(Entity property, Entity entity);
-
-Function(GetArrayPropertyCount, u32, Entity property, Entity entity);
-Function(AddArrayPropertyElement, u32, Entity property, Entity entity);
-Function(RemoveArrayPropertyElement, bool, Entity property, Entity entity, u32 index);
-Function(GetArrayPropertyIndex, u32, Entity property, Entity entity, Entity element);
-Function(SetArrayPropertyCount, bool, Entity property, Entity entity, u32 count);
-Function(GetArrayPropertyElement, Entity, Entity property, Entity entity, u32 index);
-
-u32 AddChild(Entity property, Entity entity, Entity child, bool takeOwnership);
-bool RemoveChild(Entity property, Entity entity, u32 index);
-const ChildArray& GetChildArray(Entity property, Entity entity);
-u32 GetChildIndex(Entity property, Entity entity, Entity child);
-
-void SetPropertyMeta(Entity property, StringRef metaString);
-
-void __Property(Entity property, u32 offset, u32 size, Type type, Entity component, Entity childComponent, u8 kind, StringRef name);
-void __InitializeProperty();
-void __InitializeString();
-
-void AddElementFromDecl(Entity property, Entity module, StringRef decl);
-void SetChildFromDecl(Entity property, Entity module, StringRef decl);
+Variant GetPropertyValue(Entity property, Entity entity);
+void SetPropertyValue(Entity property, Entity entity, Variant value);
 
 void DumpTree(Entity entity);
-
-
-typedef void(*GenericPropertyChangedListener)(Entity property, Entity entity, Type valueType, Variant oldValue, Variant newValue);
-
-void RegisterGenericPropertyChangedListener(GenericPropertyChangedListener listener);
-Vector<GenericPropertyChangedListener, 64>& GetGenericPropertyChangedListeners();
 
 #endif //PLAZA_PROPERTY_H

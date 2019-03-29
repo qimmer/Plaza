@@ -1,6 +1,8 @@
 #ifndef PLAZA_TYPES_H
 #define PLAZA_TYPES_H
 
+static const int ChildArrayStaticCap = 8;
+
 #if defined(_WIN32) || defined(_WIN64)
 #   if !defined(_MSVC_LANG)
 #       define API_EXPORT __declspec(dllexport)
@@ -35,6 +37,8 @@ typedef signed long long s64;
 typedef u64 Entity;
 typedef u8 Type;
 typedef u64 Date;
+
+typedef char ChildArray[sizeof(u32) * 2 + sizeof(Entity*) + sizeof(Entity) * ChildArrayStaticCap];
 
 typedef struct {
     float x, y;
@@ -172,6 +176,8 @@ enum {
 
     TypeOf_Variant = 27,
     TypeOf_NativePtr = 28,
+
+    TypeOf_ChildArray = 29,
 
     TypeOf_MAX,
 };

@@ -57,7 +57,7 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
             return true;
         }
 
-        Log(invocationEntity, LogSeverity_Error, "Invocation '%s' failed: Invocation function is neither a function or an event.", GetUuid(invocationEntity));
+        Log(invocationEntity, LogSeverity_Error, "Invocation '%s' failed: Invocation function is neither a function or an event.", GetIdentification(invocationEntity).Uuid);
         return false;
     }
 

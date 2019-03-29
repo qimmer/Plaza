@@ -38,6 +38,8 @@ struct EntityBindingData {
 
 Unit(Binding)
 
+void NotifyBindings(Entity entity, Entity property, Variant oldValue, Variant newValue);
+
 void Bind(Entity entity, Entity property, Entity sourceEntity, const Entity* indirections, const StringRef* indirectionArrayNames, u32 numIndirections);
 const Binding* GetBinding(Entity entity, Entity property);
 void Unbind(Entity entity, Entity property);

@@ -113,7 +113,7 @@ static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
         }
 	}
 
-	auto parent = GetOwner(existing);
+	auto parent = GetOwnership(existing).Owner;
 	auto property = GetOwnerProperty(existing);
 
     if(!IsEntityValid(parent) || !IsEntityValid(property) || GetPropertyKind(property) != PropertyKind_Array) {

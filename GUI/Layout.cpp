@@ -80,7 +80,7 @@ static v2i CalculateMinimumSize(Entity layout) {
 
     auto widgetMesh = GetRenderableSubMesh(layout);
     if(HasComponent(widgetMesh, ComponentOf_SubMesh())) {
-        widgetMesh = GetOwner(widgetMesh);
+        widgetMesh = GetOwnership(widgetMesh).Owner;
     }
 
     auto widgetBorderWidth = GetWidgetMeshFixedBorderWidth(widgetMesh);
@@ -207,10 +207,10 @@ static void ExpandChildLayouts(Entity layout) {
     v2i position = {parentData->LayoutPadding.x, parentData->LayoutPadding.y};
 
     auto layer = 0;
-    auto owner = GetOwner(layout);
+    auto owner = GetOwnership(layout).Owner;
     while(owner) {
         layer++;
-        owner = GetOwner(owner);
+        owner = GetOwnership(owner).Owner;
     }
 
     for_children(ordering, LayoutChildOrder, layout) {
@@ -320,7 +320,7 @@ LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOw
 }
 
 LocalFunction(OnWeightChanged, void, Entity entity) {
-    auto owner = GetOwner(entity);
+    auto owner = GetOwnership(entity).Owner;
     Shrink(entity);
     ExpandChildLayouts(owner);
 }
@@ -331,17 +331,17 @@ LocalFunction(OnLayoutModeChanged, void, Entity entity) {
 }
 
 LocalFunction(OnLayoutChildOrderingChanged, void, Entity entity) {
-    auto layout = GetOwner(entity);
+    auto layout = GetOwnership(entity).Owner;
     OnLayoutModeChanged(layout);
 }
 
 LocalFunction(OnWidgetDepthOrderChanged, void, Entity entity) {
-    auto layout = GetOwner(entity);
+    auto layout = GetOwnership(entity).Owner;
     OnLayoutModeChanged(layout);
 }
 
 LocalFunction(OnSize2DChanged, void, Entity widget, v2i oldSize, v2i newSize) {
-    auto owner = GetOwner(widget);
+    auto owner = GetOwnership(widget).Owner;
 
     Shrink(owner);
 
@@ -355,7 +355,7 @@ LocalFunction(OnSize2DChanged, void, Entity widget, v2i oldSize, v2i newSize) {
 }
 
 LocalFunction(OnRect2DRemoved, void, Entity component, Entity entity) {
-    auto owner = GetOwner(entity);
+    auto owner = GetOwnership(entity).Owner;
 	if (HasComponent(owner, ComponentOf_Layout())) {
         Shrink(owner);
 		ExpandChildLayouts(owner);

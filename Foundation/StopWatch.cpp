@@ -80,7 +80,7 @@ static void UpdateStopWatch(Entity stopWatch, StopWatch *data) {
 }
 
 LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    for_entity(stopWatch, data, StopWatch) {
+    for_entity(stopWatch, ComponentOf_StopWatch()) {
         if(data) {
             UpdateStopWatch(stopWatch, data);
         }

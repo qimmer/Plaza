@@ -11,7 +11,7 @@ struct OffscreenRenderTarget {
 };
 
 LocalFunction(OnOffscreenRenderTargetTexturesChanged, void, Entity stage, Entity oldTexture, Entity newTexture) {
-    auto renderTarget = GetOwner(stage);
+    auto renderTarget = GetOwnership(stage).Owner;
 
     SetTextureSize2D(newTexture, GetRenderTargetSize(renderTarget));
 }

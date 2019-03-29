@@ -9,12 +9,11 @@
 #include <EASTL/map.h>
 #include <EASTL/fixed_map.h>
 
-static bool __isComponentInitialized = false;
-
 #define Verbose_Component "component"
 
 struct ComponentInfo {
     Pool DataPool;
+    eastl::vector<Entity> ComponentIndexToEntityTable;
 	eastl::vector<u32> EntityIndexToComponentIndexTable;
 	eastl::vector<Entity> Dependees;
 };
@@ -103,55 +102,32 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
 
     if(indexTableSize <= entityIndex) {
 		componentInfo.EntityIndexToComponentIndexTable.resize(entityIndex + 1, InvalidIndex);
+		componentInfo.ComponentIndexToEntityTable.resize(entityIndex + 1, 0);
     }
 
 	componentInfo.EntityIndexToComponentIndexTable[entityIndex] = componentDataIndex;
+	componentInfo.ComponentIndexToEntityTable[componentDataIndex] = entity;
 
+	// Nullify new component data
 	auto data = pool[componentDataIndex];
 	memset(data, 0, pool.GetElementSize());
-    *(Entity*)data = entity;
 
-    if(__isComponentInitialized) {
-        Variant arguments[] = {MakeVariant(Entity, component), MakeVariant(Entity, entity)};
+    auto& componentComponentData = *(Component*)componentData[0].DataPool[componentInfoIndex];
 
-        auto parentUuid = GetUuid(entity);
+	for(auto base : componentComponentData.Bases) {
+		AddComponent(entity, GetBase(base).BaseComponent);
+	}
 
-        // Initialize children
-        for_children(property, Properties, component) {
-            auto propertyData = GetPropertyData(property);
-            if(propertyData->PropertyKind != PropertyKind_Child) continue;
+    NotifyChange(entity, component, data, data);
 
-            auto child = CreateEntity();
-            auto propertyName = strrchr(GetUuid(property), '.') + 1;
-
-            SetUuid(child, StringFormatV("%s.%s", parentUuid, propertyName));
-
-            auto offset = propertyData->PropertyOffset;
-            *(Entity*)(data + sizeof(Entity)*2 + offset) = child;
-
-            SetOwner(child, entity, property);
-
-            EmitChangedEvent(entity, property, propertyData, Variant_Default, MakeVariant(Entity, child));
-
-            AddComponent(child, propertyData->PropertyChildComponent);
-        }
-
-        FireEventFast(EventOf_EntityComponentAdding(), 2, arguments);
-
-        for_children(base, Bases, component) {
-            AddComponent(entity, GetBaseComponent(base));
-        }
-
-        FireEventFast(EventOf_EntityComponentAdded(), 2, arguments);
-
-        for_entity(extension, extensionData, Extension) {
-            if(extensionData->ExtensionComponent == component) {
-                if(!extensionData->ExtensionDisabled) {
-                    AddComponent(entity, extensionData->ExtensionExtenderComponent);
-                }
+	Extension extensionData;
+	for_entity_data(extension, ComponentOf_Extension(), &extensionData) {
+        if(extensionData.ExtensionComponent == component) {
+            if(!extensionData.ExtensionDisabled) {
+                AddComponent(entity, extensionData.ExtensionExtenderComponent);
             }
         }
-    }
+	}
 
     Verbose(Verbose_Component, "Component %s has been added to Entity %s.", GetDebugName(component), GetDebugName(entity));
 
@@ -184,56 +160,55 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
 		RemoveComponent(entity, dependee);
 	}
 
-	for_entity(extension, extensionData, Extension) {
-		if (extensionData->ExtensionComponent == component) {
-			if (!extensionData->ExtensionDisabled) {
-				RemoveComponent(entity, extensionData->ExtensionExtenderComponent);
+    Extension extensionData;
+    for_entity_data(extension, ComponentOf_Extension(), &extensionData) {
+		if (extensionData.ExtensionComponent == component) {
+			if (!extensionData.ExtensionDisabled) {
+				RemoveComponent(entity, extensionData.ExtensionExtenderComponent);
 			}
 		}
 	}
 
-	Type types[] = { TypeOf_Entity, TypeOf_Entity };
-	const Variant values[] = { MakeVariant(Entity, component), MakeVariant(Entity, entity) };
-	FireEventFast(EventOf_EntityComponentRemoved(), 2, values);
+    auto& componentComponentData = *(Component*)componentData[0].DataPool[componentInfoIndex];
 
-	auto componentIndex = componentInfo.EntityIndexToComponentIndexTable[entityIndex];
+    auto componentIndex = componentInfo.EntityIndexToComponentIndexTable[entityIndex];
 	if (componentIndex != InvalidIndex) {
-		auto deletionEntityIndex = entityIndex;
-		auto deletionComponentIndex = componentIndex;
+	    auto data = componentInfo.DataPool[componentIndex];
 
-		auto& properties = GetProperties(component);
-		for (u32 i = 0; i < properties.size(); ++i) {
-			auto property = properties[i];
-			auto propertyData = GetPropertyData(property);
+	    auto nullData = (char*)alloca(componentInfo.DataPool.GetElementSize());
+	    memset(nullData, 0, componentInfo.DataPool.GetElementSize());
 
-			auto kind = propertyData->PropertyKind;
+        NotifyChange(entity, component, data, nullData);
 
-			if (kind == PropertyKind_Child) {
-				auto offset = propertyData->PropertyOffset;
-				auto childEntity = *(Entity*)(componentInfo.DataPool[componentIndex] + sizeof(Entity) * 2 + offset);
+        for_children(property, PropertyOf_Properties(), component) {
+            auto propertyData = GetProperty(property);
+            if(propertyData.PropertyType == TypeOf_ChildArray) {
+                SetArrayPropertyCount(property, entity, 0);
+            }
 
-				EmitChangedEvent(entity, property, propertyData, MakeVariant(Entity, childEntity), Variant_Default);
-				DestroyEntity(childEntity);
-			}
-			else if (kind == PropertyKind_Array) {
-				while (GetArrayPropertyCount(property, entity)) {
-					RemoveArrayPropertyElement(property, entity, 0);
-				}
-			}
-			else {
-				auto empty = Variant_Empty;
-				empty.type = propertyData->PropertyType;
+            // Handle ref counting for strings
+            else if(propertyData.PropertyType == TypeOf_StringRef) {
+                auto& oldString = *(StringRef*)(data + propertyData.PropertyOffset);
 
-				if (propertyData->PropertyType == TypeOf_StringRef) {
-					auto stringValue = *(StringRef*)(componentInfo.DataPool[componentIndex] + sizeof(Entity) * 2 + propertyData->PropertyOffset);
-					ReleaseStringRef(stringValue);
-				}
+                if(oldString) {
+                    ReleaseStringRef(oldString);
+                }
+            }
 
-				SetPropertyValue(property, entity, empty); // Reset value to default before removal
-			}
-		}
+            else if(propertyData.PropertyType == TypeOf_Entity) {
+                // If a reference was changed and the referred entity is owned by us, destroy it to prevent dangling entity!
+                Entity& oldRef = *(Entity*)(data + propertyData.PropertyOffset);
+                if(IsEntityValid(oldRef)) {
+                    auto refOwnership = GetOwnership(oldRef);
+                    if(refOwnership.Owner == entity && refOwnership.OwnerProperty == property) {
+                        DestroyEntity(oldRef);
+                    }
+                }
+            }
+        }
 
 		componentInfo.EntityIndexToComponentIndexTable[entityIndex] = InvalidIndex;
+		componentInfo.ComponentIndexToEntityTable[componentIndex] = 0;
 		componentInfo.DataPool.Remove(componentIndex);
 	}
 
@@ -242,123 +217,138 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
 	return true;
 }
 
-API_EXPORT void SetComponentSize(Entity component, u16 value) {
-    auto data = GetComponentData(component);
-    Variant oldValue, newValue;
-    if(data) {
-        oldValue = MakeVariant(u16, data->ComponentSize);
-        data->ComponentSize = value;
-    }
-
-    newValue = MakeVariant(u16, value);
-
-	auto componentTypeIndex = GetComponentIndexByIndex(0, component);
-    auto& pool = GetComponentPool(componentTypeIndex);
-    pool.SetElementSize(value + sizeof(Entity)*2);
-
-    if(__isComponentInitialized) {
-        EmitChangedEvent(component, PropertyOf_ComponentSize(), GetPropertyData(PropertyOf_ComponentSize()), oldValue, MakeVariant(u16, value));
-    }
-}
-
 API_EXPORT Entity GetComponentEntity(u32 componentInfoIndex, u32 componentIndex) {
     return *(Entity*)GetComponentPool(componentInfoIndex)[componentIndex];
 }
 
-API_EXPORT char* GetComponentInstanceData(u32 componentInfoIndex, u32 componentIndex) {
+API_EXPORT const void* GetComponentInstanceData(u32 componentInfoIndex, u32 componentIndex) {
 	if (componentIndex == InvalidIndex) return 0;
 
-    return componentData[componentInfoIndex].DataPool[componentIndex] + sizeof(Entity) * 2;
+    return componentData[componentInfoIndex].DataPool[componentIndex];
 }
 
-__PropertyCoreGet(u16, ComponentSize, Component)
-__PropertyCoreImpl(bool, ComponentExplicitSize, Component)
-__ArrayPropertyCoreImpl(Property, Properties, Component)
-__ArrayPropertyCoreImpl(Base, Bases, Component)
+API_EXPORT void SetComponentInstanceData(u32 componentInfoIndex, u32 componentIndex, const void* newData) {
+	if (componentIndex == InvalidIndex) return;
 
-static void RemoveExtensions(Entity component, Entity extensionComponent) {
-    for_entity_abstract(entity, data, component) {
+	auto component = componentData[0].ComponentIndexToEntityTable[componentInfoIndex];
+	auto entity = componentData[componentInfoIndex].ComponentIndexToEntityTable[componentIndex];
+	auto data = componentData[componentInfoIndex].DataPool[componentIndex];
+	auto size = componentData[componentInfoIndex].DataPool.GetElementSize();
+
+	auto oldData = (char*)alloca(size);
+	memcpy(oldData, data, size);
+	memcpy(data, newData, size);
+
+	for_children(property, PropertyOf_Properties(), component) {
+	    auto propertyData = GetProperty(property);
+	    if(propertyData.PropertyType == TypeOf_ChildArray) {
+	        memcpy(data + propertyData.PropertyOffset, oldData + propertyData.PropertyOffset, sizeof(ChildArray));
+	    }
+
+        // Handle ref counting for strings
+        else if(propertyData.PropertyType == TypeOf_StringRef) {
+            auto oldString = *(StringRef*)(oldData + propertyData.PropertyOffset);
+            auto newString = Intern(*(StringRef*)(data + propertyData.PropertyOffset));
+
+            if(newString) {
+                AddStringRef(newString);
+            }
+
+            if(oldString) {
+                ReleaseStringRef(oldString);
+            }
+        }
+
+        else if(propertyData.PropertyType == TypeOf_Entity) {
+            // If a reference was changed and the referred entity is owned by us, release ownership!
+            Entity oldRef = *(Entity*)(oldData + propertyData.PropertyOffset);
+            if(IsEntityValid(oldRef)) {
+                auto refOwnership = GetOwnership(oldRef);
+                if(refOwnership.Owner == entity && refOwnership.OwnerProperty == property) {
+                    SetOwnership(oldRef, {0, 0});
+                }
+            }
+
+            // If new reference has no owner, set ownership to our changing entity!
+            Entity newRef = *(Entity*)(data + propertyData.PropertyOffset);
+            if(IsEntityValid(newRef)) {
+                auto refOwnership = GetOwnership(newRef);
+                if(!refOwnership.Owner || !refOwnership.OwnerProperty) {
+                    refOwnership.Owner = entity;
+                    refOwnership.OwnerProperty = property;
+                    SetOwnership(newRef, refOwnership);
+                }
+            }
+        }
+	}
+
+	NotifyChange(entity, component, oldData, newData);
+}
+
+
+API_EXPORT void SetComponentData(Entity entity, Entity component, const void *data) {
+	auto componentEntityIndex = GetEntityIndex(component);
+	auto componentInfoIndex = componentData[0].EntityIndexToComponentIndexTable[componentEntityIndex];
+
+	SetComponentInstanceData(componentInfoIndex, GetComponentIndexByIndex(componentInfoIndex, entity), data);
+}
+
+static void RemoveComponentExtensions(Entity component, Entity extensionComponent) {
+    for_entity(entity, component) {
         RemoveComponent(entity, extensionComponent);
     }
 }
 
-static void AddExtensions(Entity component, Entity extensionComponent) {
-    for_entity_abstract(entity, data, component) {
+static void AddComponentExtensions(Entity component, Entity extensionComponent) {
+    for_entity(entity, component) {
         AddComponent(entity, extensionComponent);
     }
 }
 
-LocalFunction(OnExtensionDisabledChanged,
-        void,
-        Entity extension,
-        bool oldDisabled,
-        bool newDisabled) {
-	auto extenderComponent = GetExtensionExtenderComponent(extension);
-	auto extensionComponent = GetExtensionComponent(extension);
-
-	if (!extenderComponent || !extensionComponent) return;
-
-    if(!newDisabled) {
-        AddExtensions(extensionComponent, extenderComponent);
-    }
-
-    if(newDisabled) {
-        RemoveExtensions(extensionComponent, extenderComponent);
-    }
+static void OnComponentChanged(Entity component, const Component& value, const Component& oldValue) {
+	if(oldValue.ComponentSize != value.ComponentSize && value.ComponentExplicitSize) {
+		auto componentTypeIndex = GetComponentIndexByIndex(0, component);
+		auto& pool = GetComponentPool(componentTypeIndex);
+		pool.SetElementSize(value.ComponentSize); // Entity, some padding, then new data and last, old data before system update
+	}
 }
 
-LocalFunction(OnExtensionComponentChanged,
-        void,
-        Entity extension,
-        Entity oldValue,
-        Entity newValue) {
-	auto extenderComponent = GetExtensionExtenderComponent(extension);
-
-    if(!GetExtensionDisabled(extension) && extenderComponent) {
-        RemoveExtensions(oldValue, extenderComponent);
-        AddExtensions(newValue, extenderComponent);
-    }
-}
-
-LocalFunction(OnExtensionExtenderComponentChanged,
-        void,
-        Entity extension,
-        Entity oldValue,
-        Entity newValue) {
-	auto extensionComponent = GetExtensionComponent(extension);
-
-    if(!GetExtensionDisabled(extension) && extensionComponent) {
-        RemoveExtensions(extensionComponent, oldValue);
-        AddExtensions(extensionComponent, newValue);
-    }
-}
-
-LocalFunction(OnBaseComponentChanged, void, Entity base, Entity oldComponent, Entity newComponent) {
-	if (oldComponent) {
-		auto componentDataIndex = GetComponentIndexByIndex(0, oldComponent);
-        auto& componentInfo = componentData[componentDataIndex];
-
-		eastl::remove(componentInfo.Dependees.begin(), componentInfo.Dependees.end(), GetOwner(base));
+static void OnExtensionChanged(Entity extension, const Extension& value, const Extension& oldValue) {
+	if(!oldValue.ExtensionDisabled) {
+		RemoveComponentExtensions(oldValue.ExtensionComponent, oldValue.ExtensionExtenderComponent);
 	}
 
-	if (newComponent) {
-		AddComponent(newComponent, ComponentOf_Component());
-		auto componentDataIndex = GetComponentIndexByIndex(0, newComponent);
+	if(!value.ExtensionDisabled) {
+		AddComponentExtensions(value.ExtensionComponent, oldValue.ExtensionExtenderComponent);
+	}
+}
+
+static void OnBaseChanged(Entity base, const Base& value, const Base& oldValue) {
+	if (oldValue.BaseComponent) {
+		auto componentDataIndex = GetComponentIndexByIndex(0, oldValue.BaseComponent);
+        auto& componentInfo = componentData[componentDataIndex];
+
+		eastl::remove(componentInfo.Dependees.begin(), componentInfo.Dependees.end(), GetOwnership(base).Owner);
+	}
+
+	if (value.BaseComponent) {
+		AddComponent(value.BaseComponent, ComponentOf_Component());
+		auto componentDataIndex = GetComponentIndexByIndex(0, value.BaseComponent);
 
 		if (componentDataIndex >= componentData.size() && componentDataIndex != InvalidIndex) {
 			componentData.resize(componentDataIndex + 1);
 		}
 
         auto& componentInfo = componentData[componentDataIndex];
-        componentInfo.Dependees.push_back(GetOwner(base));
+        componentInfo.Dependees.push_back(GetOwnership(base).Owner);
 	}
 }
 
-LocalFunction(OnBaseRemoved, void, Entity component, Entity base) {
-	OnBaseComponentChanged(base, GetBaseComponent(base), 0);
-}
-
 BeginUnit(Component)
+    RegisterSystem(OnComponentChanged, ComponentOf_Component())
+    RegisterSystem(OnExtensionChanged, ComponentOf_Extension())
+    RegisterSystem(OnBaseChanged, ComponentOf_Base())
+
     BeginComponent(Base)
         RegisterReferenceProperty(Component, BaseComponent)
     EndComponent()
@@ -375,19 +365,6 @@ BeginUnit(Component)
         RegisterReferenceProperty(Component, ExtensionExtenderComponent)
         RegisterProperty(bool, ExtensionDisabled)
     EndComponent()
-
-    RegisterEvent(EntityComponentAdded)
-    RegisterEvent(EntityComponentAdding)
-    RegisterEvent(EntityComponentRemoved)
-
-    __isComponentInitialized = true;
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ExtensionDisabled()), OnExtensionDisabledChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ExtensionComponent()), OnExtensionComponentChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ExtensionExtenderComponent()), OnExtensionExtenderComponentChanged, 0)
-
-	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BaseComponent()), OnBaseComponentChanged, 0)
-	RegisterSubscription(EventOf_EntityComponentRemoved(), OnBaseRemoved, ComponentOf_Base())
 EndUnit()
 
 #define BootstrapComponent(COMPONENT) \
@@ -420,10 +397,8 @@ void __InitializeComponent() {
 	BootstrapComponent(Property)
 
     AddComponent(component, ComponentOf_Component());
-    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-    __Property(PropertyOf_Properties(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Property(), PropertyKind_Array, "Properties");
-    __Property(PropertyOf_ComponentSize(), offsetof(Component, ComponentSize), sizeof(Component::ComponentSize), TypeOf_u16, component, 0, PropertyKind_Value, "ComponentSize");
-	SetUuid(component, "Component.Component");
+    SetOwnership(component, {ModuleOf_Core(), PropertyOf_Components()});
+    SetIdentification(component, {"Component.Component"});
 }
 
 void __PreInitialize() {

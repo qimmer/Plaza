@@ -73,7 +73,7 @@ static void BuildVertexBuffer(Entity mesh) {
     auto currentPath = GetStreamPath(vb);
     if(!currentPath || !strlen(currentPath)) {
         char path[1024];
-        snprintf(path, sizeof(path), "memory://%s.vtb", GetUuid(vb));
+        snprintf(path, sizeof(path), "memory://%s.vtb", GetIdentification(vb).Uuid);
         SetStreamPath(vb, path);
     }
 
@@ -114,7 +114,7 @@ static void BuildIndexBuffer(Entity mesh) {
     auto currentPath = GetStreamPath(ib);
     if(!currentPath || !strlen(currentPath)) {
         char path[1024];
-        snprintf(path, sizeof(path), "memory://%s.idb", GetUuid(ib));
+        snprintf(path, sizeof(path), "memory://%s.idb", GetIdentification(ib).Uuid);
         SetStreamPath(ib, path);
     }
 
@@ -141,7 +141,7 @@ LocalFunction(OnMeshValidation, void) {
 }
 
 LocalFunction(OnVertexDeclarationChanged, void, Entity vertexDecl) {
-    for_entity(mb, data, MeshBuilder) {
+    for_entity(mb, ComponentOf_MeshBuilder()) {
         auto vb = GetMeshVertexBuffer(mb);
         auto vd = GetVertexBufferDeclaration(vb);
 
@@ -152,7 +152,7 @@ LocalFunction(OnVertexDeclarationChanged, void, Entity vertexDecl) {
 }
 
 LocalFunction(OnMeshBuilderChildChanged, void, Entity child) {
-    auto mesh = GetOwner(child);
+    auto mesh = GetOwnership(child).Owner;
     invalidatedMeshes.insert(mesh);
 }
 

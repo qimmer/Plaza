@@ -4,7 +4,6 @@
 
 #include <Core/NativeUtils.h>
 #include <Core/Debug.h>
-#include <Core/Event.h>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -124,7 +123,7 @@ API_EXPORT StringRef GetDebugName(Entity entity) {
 
     if(!IsEntityValid(entity)) return "<Invalid>";
 
-    auto name = GetUuid(entity);
+    auto name = GetIdentification(entity).Uuid;
 
     if(!name || name[0] == '\0') {
         name = GetUniqueEntityName(entity);
@@ -150,29 +149,34 @@ static void PrintNode(int level, Entity entity) {
 
     printf("{ (%s) (", GetDebugName(entity));
 
-    for_entity(component2, componentData2, Component) {
-        if (!HasComponent(entity, component2)) continue;
-        printf("%s, ", GetUuid(component2));
+    for_entity(component, ComponentOf_Component()) {
+        if (!HasComponent(entity, component)) continue;
+        printf("%s, ", GetIdentification(component).Uuid);
     }
 
     printf(")\n");
 
-    for_entity(component, componentData, Component) {
+    for_entity(component, ComponentOf_Component()) {
         if(!HasComponent(entity, component)) continue;
 
-        auto& properties = GetProperties(component);
-        for(u32 i = 0; i < properties.size(); ++i) {
+        auto properties = GetProperties(component);
+        auto numProperties = GetNumProperties(component);
+        for(u32 i = 0; i < numProperties; ++i) {
             auto property = properties[i];
+            auto propertyData = GetProperty(property);
             auto value = GetPropertyValue(property, entity);
-            switch(GetPropertyKind(property)) {
-                case PropertyKind_Child:
-                    printf("%*s%s: ", (level + 1) * identation, " ", GetDebugName(property));
-                    PrintNode(level+1, value.as_Entity);
-                    break;
-                case PropertyKind_Array:
+            switch(propertyData.PropertyType) {
+                case TypeOf_Entity:
+                    if(GetOwnership(value.as_Entity).Owner == entity) {
+                        printf("%*s%s: ", (level + 1) * identation, " ", GetDebugName(property));
+                        PrintNode(level+1, value.as_Entity);
+                        break;
+                    }
+                case TypeOf_ChildArray:
                     printf("%*s%s: [\n", (level + 1) * identation, " ", GetDebugName(property));
                     auto elements = GetArrayPropertyElements(property, entity);
-                    for(u32 j = 0; j < elements.size(); ++j) {
+                    auto numElements = GetArrayPropertyCount(property, entity);
+                    for(u32 j = 0; j < numElements; ++j) {
                         printf("%*s [%d]: ", (level + 2) * identation, " ", j);
                         PrintNode(level+2, elements[j]);
                     }
@@ -187,7 +191,7 @@ static void PrintNode(int level, Entity entity) {
 }
 
 API_EXPORT void DumpNode() {
-    PrintNode(0, GetModuleRoot());
+    PrintNode(0, GetRoot());
 }
 
 BeginUnit(Debug)

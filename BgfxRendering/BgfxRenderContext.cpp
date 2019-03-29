@@ -104,7 +104,7 @@ static void UpdateTextureReadBack(Entity readBack, TextureReadBack *data) {
 }
 
 LocalFunction(OnTextureReadBack, void, Entity appLoop) {
-    for_entity(readBack, data, TextureReadBack) {
+    for_entity(readBack, ComponentOf_TextureReadBack()) {
         UpdateTextureReadBack(readBack, data);
     }
 }

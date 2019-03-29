@@ -77,17 +77,17 @@ LocalFunction(Load, void, Entity persistancePoint) {
     SetPersistancePointLoading(persistancePoint, false);
 
     u32 numLoading = 0;
-    for_entity(persistancePoint, data, PersistancePoint) {
+    for_entity(persistancePoint, ComponentOf_PersistancePoint()) {
         if(data->PersistancePointLoading) {
             numLoading++;
         }
     }
 
     if(numLoading == 0) {
-        for_entity(unresolvedReference, data, UnresolvedReference) {
+        for_entity(unresolvedReference, ComponentOf_UnresolvedReference()) {
             Error(unresolvedReference, "Property '%s' of entity '%s' has an unresolved uuid '%s'.",
                   GetUuid(data->UnresolvedReferenceProperty),
-                  GetUuid(GetOwner(unresolvedReference)),
+                  GetUuid(GetOwnership(unresolvedReference).Owner),
                   data->UnresolvedReferenceUuid);
         }
     }

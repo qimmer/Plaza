@@ -98,11 +98,11 @@ LocalFunction(OnTileAtlasDimensionsChanged, void, Entity atlas, v2i oldValue, v2
 }
 
 LocalFunction(OnTileFrameOffsetChanged, void, Entity frame, v2i oldValue, v2i newValue) {
-    UpdateTileFrame(GetOwner(frame), frame);
+    UpdateTileFrame(GetOwnership(frame).Owner, frame);
 }
 
 LocalFunction(OnTileFrameAdded, void, Entity component, Entity entity) {
-    UpdateTileFrame(GetOwner(entity), entity);
+    UpdateTileFrame(GetOwnership(entity).Owner, entity);
 }
 
 LocalFunction(OnTileGridChanged, void, Entity grid) {
@@ -111,7 +111,7 @@ LocalFunction(OnTileGridChanged, void, Entity grid) {
 
 LocalFunction(OnStreamContentChanged, void, Entity stream) {
     if(HasComponent(stream, ComponentOf_Texture2D())) {
-        for_entity(grid, data, TileGrid) {
+        for_entity(grid, ComponentOf_TileGrid()) {
             if(data->TileGridMap == stream) {
                 UpdateTileGrid(grid);
             }

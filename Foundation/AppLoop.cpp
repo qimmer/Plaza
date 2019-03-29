@@ -9,68 +9,35 @@
 #include "FoundationModule.h"
 
 #include <algorithm>
+#include <Core/System.h>
 
-static Vector<Entity> sortedAppLoops;
 static bool quit = false;
 
-static bool CompareAppLoopOrder(const Entity &a, const Entity &b) {
-    return GetAppLoopOrder(a) < GetAppLoopOrder(b);
-}
-
-#define Verbose_AppLoop "apploop"
-
-LocalFunction(OnSortAppLoops, void, Entity changedAppLoop) {
-    sortedAppLoops.clear();
-
-    for_entity(appLoop, appLoopData, AppLoop) {
-        sortedAppLoops.push_back(appLoop);
-    }
-
-    std::sort(sortedAppLoops.begin(), sortedAppLoops.end(), CompareAppLoopOrder);
-
-    Verbose(Verbose_AppLoop, "%s", "Sorting AppLoops ...");
-    for(auto& appLoop : sortedAppLoops) {
-        Verbose(Verbose_AppLoop, "    %s", GetUuid(appLoop));
-    }
-    Verbose(Verbose_AppLoop, "%s", "");
-}
-
 BeginUnit(AppLoop)
+    RegisterFunction(RunAppLoop)
+
     BeginComponent(AppLoop)
         RegisterProperty(u64, AppLoopFrame)
-        RegisterProperty(float, AppLoopOrder)
+        RegisterProperty(bool, AppLoopQuit)
     EndComponent()
-
-    RegisterFunction(RunAppLoops)
-    RegisterFunction(Quit)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopOrder()), OnSortAppLoops, 0)
 EndUnit()
 
-API_EXPORT bool UpdateAppLoops() {
-    bool any = false;
+API_EXPORT void RunAppLoop() {
+    auto appLoop = CreateEntity();
+    SetIdentification(appLoop, {"AppLoop"});
+    SetOwnership(appLoop, {GetRoot(), 0});
 
-    for(auto i = 0; i < sortedAppLoops.size(); ++i) {
-        if(IsEntityValid(sortedAppLoops[i])) {
-            any = true;
-            SetAppLoopFrame(sortedAppLoops[i], GetAppLoopFrame(sortedAppLoops[i]) + 1);
-        }
+    auto appLoopData = GetAppLoop(appLoop);
+    while(!appLoopData.AppLoopQuit) {
+        appLoopData.AppLoopFrame++;
+
+        SetAppLoop(appLoop, appLoopData);
+        ProcessSystems();
+
+        appLoopData = GetAppLoop(appLoop);
     }
 
-    return any;
-}
-
-API_EXPORT void RunAppLoops() {
-    while(!quit) {
-
-        auto any = UpdateAppLoops();
-
-        CleanupStrings();
-
-        if(!any) {
-            break;
-        }
-    }
+    DestroyEntity(appLoop);
 }
 
 API_EXPORT void Quit() {

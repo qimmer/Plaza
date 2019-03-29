@@ -228,14 +228,14 @@ LocalFunction(ReloadFont, void, Entity font) {
 }
 
 LocalFunction(OnRangeChanged, void, Entity entity) {
-    invalidatedFonts.insert(GetOwner(entity));
+    invalidatedFonts.insert(GetOwnership(entity).Owner);
 }
 
 LocalFunction(OnFontChanged, void, Entity entity) {
     invalidatedFonts.insert(entity);
 }
 LocalFunction(OnUnicodeRangeChanged, void, Entity entity) {
-    for_entity(range, data, TrueTypeFontRange) {
+    for_entity(range, ComponentOf_TrueTypeFontRange()) {
         if(data->TrueTypeUnicodeRange == entity) {
             OnRangeChanged(range);
         }

@@ -513,7 +513,7 @@ LocalFunction(OnCompressorChanged, void, Entity compressor) {
 }
 
 LocalFunction(OnReresolvePaths, void) {
-    for_entity(stream, data, Stream) {
+    for_entity(stream, ComponentOf_Stream()) {
         char resolvedPath[PathMax];
         auto streamData = GetStreamData(stream);
         ResolveVirtualPath(GetStreamPath(stream), PathMax, resolvedPath);

@@ -21,13 +21,13 @@ static Entity FindScene(Entity entity) {
         return entity;
     }
 
-    return FindScene(GetOwner(entity));
+    return FindScene(GetOwnership(entity).Owner);
 }
 
 static void SetSceneNodeSceneRecursive(Entity entity) {
     SetSceneNodeScene(entity, FindScene(entity));
-    for_entity(child, data, SceneNode) {
-        if(GetOwner(child) == entity) {
+    for_entity(child, ComponentOf_SceneNode()) {
+        if(GetOwnership(child).Owner == entity) {
             SetSceneNodeSceneRecursive(child);
         }
     }

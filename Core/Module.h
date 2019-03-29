@@ -6,8 +6,27 @@
 #define PLAZA_MODULE_H
 
 #include <Core/NativeUtils.h>
-#include <Core/Event.h>
 #include "Function.h"
+
+struct ModuleRoot {
+    ChildArray Modules, ModuleLoaders;
+};
+
+struct Dependency {
+    Entity DependencyModule;
+};
+
+struct Module {
+    StringRef ModuleVersion;
+    StringRef ModuleSourcePath;
+    StringRef ModuleBinaryPath;
+
+    ChildArray Components, Functions, Systems, Enums, Extensions, Dependencies;
+};
+
+struct ModuleLoader {
+    StringRef ModuleLoaderLibraryPath;
+};
 
 Unit(Module)
 
@@ -27,20 +46,14 @@ Component(Module)
     Property(StringRef, ModuleVersion)
     ArrayProperty(Component, Components)
     ArrayProperty(Function, Functions)
-    ArrayProperty(Event, Events)
+    ArrayProperty(System, Systems)
     ArrayProperty(Enum, Enums)
     ArrayProperty(Extension, Extensions)
-    ArrayProperty(Subscription, Subscriptions)
     ArrayProperty(Dependency, Dependencies)
 
-Event(ModuleLoadStarted)
-Event(ModuleLoadFinished)
-
-Function(GetModuleRoot, Entity)
+Function(GetRoot, Entity)
 Function(LoadPlazaModule, bool, StringRef libraryPath)
 
 NativeFunctionInvoker1(bool, StringRef)
-
-void __InitializeModule();
 
 #endif //PLAZA_MODULE_H

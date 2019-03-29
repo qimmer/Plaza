@@ -13,7 +13,7 @@
 #include <Json/NativeUtils.h>
 
 LocalFunction(OnPickedPointChanged, void, Entity ray, v3f oldPoint, v3f newPoint) {
-    auto controller = GetOwner(ray);
+    auto controller = GetOwnership(ray).Owner;
     if(!HasComponent(controller, ComponentOf_GuiController())) {
         return;
     }
@@ -28,7 +28,7 @@ LocalFunction(OnPickedPointChanged, void, Entity ray, v3f oldPoint, v3f newPoint
 }
 
 LocalFunction(OnPickedWidgetChanged, void, Entity ray, Entity oldWidget, Entity newWidget) {
-    auto controller = GetOwner(ray);
+    auto controller = GetOwnership(ray).Owner;
     if(!HasComponent(controller, ComponentOf_GuiController())) {
         return;
     }

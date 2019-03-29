@@ -12,33 +12,16 @@
 
 typedef Entity(*ModuleOfSignature)();
 
-struct ModuleRoot {
-};
-
-struct Dependency {
-    Entity DependencyModule;
-};
-
-struct Module {
-    StringRef ModuleVersion;
-    StringRef ModuleSourcePath;
-    StringRef ModuleBinaryPath;
-};
-
-struct ModuleLoader {
-    StringRef ModuleLoaderLibraryPath;
-};
-
 LocalFunction(OnModuleLoaderLibraryPathChanged, void, Entity loader, StringRef oldPath, StringRef newPath) {
     LoadPlazaModule(newPath);
 }
 
-API_EXPORT Entity GetModuleRoot() {
+API_EXPORT Entity GetRoot() {
     static Entity root = 0;
     if(root == 0) {
         root = CreateEntity();
         AddComponent(root, ComponentOf_ModuleRoot());
-        SetUuid(root, "ModuleRoot");
+        SetIdentification(root, {"ModuleRoot"});
     }
     return root;
 }
@@ -105,7 +88,9 @@ static Entity LoadModuleWin32(StringRef dllPath) {
             auto procAddress = (PVOID)((LPBYTE)hModule+Address[Ordinal[i]]);
             auto module = ((ModuleOfSignature)procAddress)();
 
-            SetModuleBinaryPath(module, dllPath);
+            auto moduleData = GetModule(module);
+            moduleData.ModuleBinaryPath = dllPath;
+            SetModule(module, moduleData);
             found = true;
         }
     }
@@ -133,31 +118,6 @@ API_EXPORT bool LoadPlazaModule(StringRef libraryPath) {
 #endif
 }
 
-
-void __InitializeModule() {
-    auto component = ComponentOf_Module();
-    AddComponent(component, ComponentOf_Component());
-    SetComponentSize(component, sizeof(Module));
-    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-	SetUuid(component, "Component.Module");
-    __Property(PropertyOf_Components(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Component(), PropertyKind_Array, "Components");
-    __Property(PropertyOf_Events(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Event(), PropertyKind_Array, "Events");
-    __Property(PropertyOf_Functions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Function(), PropertyKind_Array, "Functions");
-    __Property(PropertyOf_Extensions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Extension(), PropertyKind_Array, "Extensions");
-    __Property(PropertyOf_Subscriptions(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Subscription(), PropertyKind_Array, "Subscriptions");
-    __Property(PropertyOf_Dependencies(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array, "Dependencies");
-
-    component = ComponentOf_ModuleRoot();
-    AddComponent(component, ComponentOf_Component());
-    SetComponentSize(component, sizeof(ModuleRoot));
-    SetOwner(component, ModuleOf_Core(), PropertyOf_Components());
-	SetUuid(component, "Component.ModuleRoot");
-    __Property(PropertyOf_Modules(), InvalidIndex, 0, TypeOf_Entity, component, ComponentOf_Module(), PropertyKind_Array, "Modules");
-
-    RegisterFunctionSignature(NativeFunctionInvoker_bool_StringRef, bool, StringRef);
-}
-
-
 BeginUnit(Module)
     BeginComponent(ModuleLoader)
         RegisterProperty(StringRef, ModuleLoaderLibraryPath)
@@ -165,7 +125,6 @@ BeginUnit(Module)
 
     BeginComponent(ModuleRoot)
         RegisterArrayProperty(Module, Modules)
-        Assert(component, GetOwner(PropertyOf_Modules()));
         RegisterArrayProperty(ModuleLoader, ModuleLoaders)
     EndComponent()
 
@@ -179,19 +138,12 @@ BeginUnit(Module)
         RegisterProperty(StringRef, ModuleBinaryPath)
 
         RegisterArrayProperty(Component, Components)
-        RegisterArrayProperty(Event, Events)
         RegisterArrayProperty(Enum, Enums)
         RegisterArrayProperty(Function, Functions)
         RegisterArrayProperty(Extension, Extensions)
-        RegisterArrayProperty(Subscription, Subscriptions)
         RegisterArrayProperty(Dependency, Dependencies)
     EndComponent()
 
-    RegisterFunction(GetModuleRoot)
+    RegisterFunction(GetRoot)
     RegisterFunction(LoadPlazaModule)
-
-    RegisterEvent(ModuleLoadStarted)
-    RegisterEvent(ModuleLoadFinished)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ModuleLoaderLibraryPath()), OnModuleLoaderLibraryPathChanged, 0)
 EndUnit()

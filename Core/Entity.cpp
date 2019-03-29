@@ -2,16 +2,12 @@
 #include <Core/Pool.h>
 #include <Core/Debug.h>
 #include <Core/Function.h>
-#include "Event.h"
 
 BeginUnit(Entity)
     RegisterFunction(IsEntityOccupied)
     RegisterFunction(IsEntityValid)
     RegisterFunction(CreateEntity)
     RegisterFunction(DestroyEntity)
-
-    RegisterEvent(EntityCreated)
-    RegisterEvent(EntityDestroyed)
 EndUnit()
 
 Vector<u32> Generations;
@@ -79,10 +75,6 @@ API_EXPORT Entity CreateEntity() {
 
     Verbose(Verbose_Entity, "Entity Created: %s", GetDebugName(entity));
 
-    if(__IsCoreInitialized) {
-        FireEventFast(EventOf_EntityCreated(), 1, &argument);
-    }
-
     return entity;
 }
 
@@ -91,13 +83,11 @@ API_EXPORT void DestroyEntity(Entity entity) {
         return;
     }
 
-    for_entity(component, data, Component) {
+    for_entity(component, ComponentOf_Component()) {
         RemoveComponent(entity, component);
     }
 
     auto argument = MakeVariant(Entity, entity);
-	FireEventFast(EventOf_EntityDestroyed(), 1, &argument);
-    
     auto index = GetEntityIndex(entity);
 
     // Only reuse entity when in release build. In debug, we want to preserve entity handle id's over time for easier debugging

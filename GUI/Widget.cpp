@@ -44,7 +44,7 @@ static void UpdateWidgetBounds(Entity widget) {
 }
 
 LocalFunction(OnBoundsUpdate, void) {
-	for_entity(widget, data, Widget) {
+	for_entity(widget, ComponentOf_Widget()) {
 		UpdateWidgetBounds(widget);
 	};
 
@@ -53,7 +53,7 @@ LocalFunction(OnBoundsUpdate, void) {
             SetRenderableScissor(widget, {0, 0, 0, 0});
             continue;
         }
-        auto owner = GetOwner(widget);
+        auto owner = GetOwnership(widget).Owner;
         auto ownerRect = GetRect2DData(owner);
         v4i scissor = {INT_MIN, INT_MIN, INT_MAX, INT_MAX};
         while(ownerRect) {
@@ -63,7 +63,7 @@ LocalFunction(OnBoundsUpdate, void) {
             scissor.z = Min(scissor.z, transform->TransformGlobalMatrix[3].x + ownerRect->Size2D.x);
             scissor.w = Min(scissor.w, transform->TransformGlobalMatrix[3].y + ownerRect->Size2D.y);
 
-            owner = GetOwner(owner);
+            owner = GetOwnership(owner).Owner;
             ownerRect = GetRect2DData(owner);
         }
 
@@ -141,7 +141,7 @@ LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
     auto currentPath = GetStreamPath(vb);
     if(!currentPath || !strlen(currentPath)) {
         char path[1024];
-        snprintf(path, sizeof(path), "memory://%s", GetUuid(vb));
+        snprintf(path, sizeof(path), "memory://%s", GetIdentification(vb).Uuid);
         SetStreamPath(vb, path);
     }
 
@@ -153,7 +153,7 @@ LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
     currentPath = GetStreamPath(ib);
     if(!currentPath || !strlen(currentPath)) {
         char path[1024];
-        snprintf(path, sizeof(path), "memory://%s", GetUuid(ib));
+        snprintf(path, sizeof(path), "memory://%s", GetIdentification(ib).Uuid);
         SetStreamPath(ib, path);
     }
 
@@ -216,7 +216,7 @@ LocalFunction(OnStateUpdated, void, Entity entity) {
 
     auto widgetMesh = GetRenderableSubMesh(entity);
     if (HasComponent(widgetMesh, ComponentOf_SubMesh())) {
-        widgetMesh = GetOwner(widgetMesh);
+        widgetMesh = GetOwnership(widgetMesh).Owner;
     }
 
     auto widgetMeshData = GetWidgetMeshData(widgetMesh);

@@ -62,7 +62,7 @@ static void RebuildTextWidget(Entity entity) {
         auto currentPath = GetStreamPath(vertexBuffer);
         if(!currentPath || !strlen(currentPath)) {
             char path[1024];
-            snprintf(path, sizeof(path), "memory://%s.vtb", GetUuid(vertexBuffer));
+            snprintf(path, sizeof(path), "memory://%s.vtb", GetIdentification(vertexBuffer).Uuid);
             SetStreamPath(vertexBuffer, path);
         }
 

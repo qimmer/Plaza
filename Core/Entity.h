@@ -25,6 +25,4 @@ Unit(Entity)
         return entity;
     }
 
-    Event(EntityDestroyed)
-
 #endif

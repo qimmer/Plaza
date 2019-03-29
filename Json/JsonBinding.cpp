@@ -98,7 +98,7 @@ API_EXPORT StringRef GetBindingString(const Binding& binding) {
     auto numIndirections = binding.BindingIndirections.size();
     for(auto i = 0; i < numIndirections; ++i) {
         auto property = binding.BindingIndirections[numIndirections - i - 1].IndirectionProperty;
-        ss << (strrchr(GetUuid(property), '.') + 1);
+        ss << (strrchr(GetIdentification(property).Uuid, '.') + 1);
 
         if(i != (numIndirections - 1)) {
             ss << '.';

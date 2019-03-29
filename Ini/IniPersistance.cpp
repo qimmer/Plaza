@@ -27,7 +27,7 @@ API_EXPORT bool SerializeIni(Entity stream) {
             auto property = GetIniSettingProperty(setting);
 
             auto value = GetPropertyValue(setting, data->IniSettingGroupEntity);
-            ss << GetUuid(property) << "=" << Cast(value, TypeOf_StringRef).as_StringRef << std::endl;
+            ss << GetIdentification(property).Uuid << "=" << Cast(value, TypeOf_StringRef).as_StringRef << std::endl;
         }
 
         ss << std::endl;
@@ -105,7 +105,7 @@ API_EXPORT bool DeserializeIni(Entity stream) {
 
                 auto enu = GetPropertyEnum(property);
                 if(IsEntityValid(enu)) {
-                    valueVar.as_u64 = GetEnumValue(enu, StringFormatV("%s.%s", GetUuid(enu), value));
+                    valueVar.as_u64 = GetEnumValue(enu, StringFormatV("%s.%s", GetIdentification(enu).Uuid, value));
                     valueVar.type = TypeOf_u64;
                 }
 

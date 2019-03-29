@@ -15,19 +15,18 @@ struct FunctionArgument {
 
 struct Function {
 	NativePtr FunctionCaller, FunctionPtr;
-	u32 NumFunctionArguments;
     Type FunctionReturnType;
-	Type FunctionArgumentTypes[11];
+	ChildArray FunctionArguments;
 };
 
 Unit(Function)
     Component(FunctionArgument)
-		__PropertyCore(Function, Type, FunctionArgumentType)
+		Property(Type, FunctionArgumentType)
 
     Component(Function)
-        __PropertyCore(Function, NativePtr, FunctionCaller)
-		__PropertyCore(Function, NativePtr, FunctionPtr)
-		__PropertyCore(Function, Type, FunctionReturnType)
+        Property(NativePtr, FunctionCaller)
+		Property(NativePtr, FunctionPtr)
+		Property(Type, FunctionReturnType)
         ArrayProperty(FunctionArgument, FunctionArguments)
 
 void SetFunctionArgsByDecl(Entity f, StringRef argsDecl);

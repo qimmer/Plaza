@@ -6,18 +6,25 @@
 #define PLAZA_SYSTEM_H
 
 #include <Core/NativeUtils.h>
+#include <EASTL/map.h>
+#include <EASTL/unordered_map.h>
 
 struct System {
-    Entity SystemUpdateFunction;
+    Entity SystemComponent;
+    NativePtr SystemFunction;
     float SystemOrder;
+    bool SystemDeferred;
 };
 
 Unit(System)
     Component(System)
-        ReferenceProperty(Component, SystemComponent)
-        ReferenceProperty(Function, SystemUpdateFunction)
+        Property(Entity, SystemComponent)
+        Property(NativePtr, SystemFunction)
+        Property(float, SystemOrder)
+        Property(bool, SystemDeferred)
 
-void UpdateSystems();
-void UpdateSystem(Entity system);
+void NotifyChange(Entity entity, Entity component, const void *oldData, const void *newData);
+void NotifyArray(Entity entity, Entity property, Entity oldValue, Entity newValue);
+void ProcessSystems();
 
 #endif //PLAZA_SYSTEM_H

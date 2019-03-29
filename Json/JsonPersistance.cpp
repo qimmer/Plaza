@@ -56,7 +56,7 @@ const StringRef jsonTypeNames[] = {
         if(READER.Is ## JSONREADFUNC ()) {\
             *(TYPE*)&value.data = READER.Get ## JSONREADFUNC ();\
         } else {\
-            Log(0, LogSeverity_Error, "Property '%s %s' could not be deserialized: Type is %s but %s was expected.", GetTypeName(GetPropertyType(property)), GetUuid(property), jsonTypeNames[READER.GetType()], #JSONREADFUNC);\
+            Log(0, LogSeverity_Error, "Property '%s %s' could not be deserialized: Type is %s but %s was expected.", GetTypeName(GetPropertyType(property)), GetIdentification(property).Uuid, jsonTypeNames[READER.GetType()], #JSONREADFUNC);\
         }\
         break;
 
@@ -260,7 +260,7 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
         {
             auto entity = value.as_Entity;
             if(IsEntityValid(entity)) {
-                auto uuid = GetUuid(entity);
+                auto uuid = GetIdentification(entity).Uuid;
                 writer.String(uuid ? uuid : "");
             } else {
                 writer.Null();
@@ -269,7 +269,7 @@ static bool SerializeValue(JsonSettings *settings, Entity entity, Entity propert
 
             break;
         default:
-            Log(entity, LogSeverity_Warning, "Unsupported type when serializing property '%s': %s", GetUuid(property), GetTypeName(value.type));
+            Log(entity, LogSeverity_Warning, "Unsupported type when serializing property '%s': %s", GetIdentification(property).Uuid, GetTypeName(value.type));
             writer.Null();
     }
 
@@ -295,10 +295,10 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
             writer.String("$components");
             writer.StartArray();
 
-			for_entity(component, data, Component) {
+			for_entity(component, ComponentOf_Component()) {
 				if (!HasComponent(parent, component)) continue;
 
-				auto uuid = GetUuid(component);
+				auto uuid = GetIdentification(component).Uuid;
 				writer.String(uuid ? uuid : "");
 			}
             
@@ -380,14 +380,14 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
             writer.EndArray();
         }*/
 
-		for_entity(component, data, Component) {
+		for_entity(component, ComponentOf_Component()) {
 			if (!HasComponent(parent, component)) continue;
 
             auto properties = GetProperties(component);
             for(auto pi = 0; pi < properties.size(); ++pi) {
                 auto property = properties[pi];
 
-                StringRef uuid = GetUuid(property);
+                StringRef uuid = GetIdentification(property).Uuid;
                 StringRef name = strrchr(uuid, '.');
                 name = name ? (name + 1) : uuid;
 
@@ -455,7 +455,7 @@ static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, St
 
         writer.EndObject();
     } else {
-        writer.String(GetUuid(parent));
+        writer.String(GetIdentification(parent).Uuid);
     }
 
     return result;
@@ -543,7 +543,7 @@ static bool DeserializeEntity(Entity stream, Entity entity, rapidjson::Value& va
 
         if (property == PropertyOf_Owner() || GetPropertyReadOnly(property)) continue;
 
-        auto component = GetOwner(property);
+        auto component = GetOwnership(property).Owner;
         AddComponent(entity, component);
     }
 
@@ -572,7 +572,7 @@ static bool DeserializeEntity(Entity stream, Entity entity, rapidjson::Value& va
 
         if(property == PropertyOf_Owner() || GetPropertyReadOnly(property)) continue;
 
-        auto component = GetOwner(property);
+        auto component = GetOwnership(property).Owner;
         auto propertyKind = GetPropertyKind(property);
 
         auto& reader = propertyIterator->value;
@@ -584,14 +584,14 @@ static bool DeserializeEntity(Entity stream, Entity entity, rapidjson::Value& va
                 break;
             case PropertyKind_Child:
                 if(!reader.IsObject()) {
-                    Log(0, LogSeverity_Error, "Json value for child property %s is not an object, but a %s. Skipping this node.", GetUuid(property), GetJsonTypeName(reader));
+                    Log(0, LogSeverity_Error, "Json value for child property %s is not an object, but a %s. Skipping this node.", GetIdentification(property).Uuid, GetJsonTypeName(reader));
                     break;
                 }
                 DeserializeEntity(stream, GetPropertyValue(property, entity).as_Entity, reader, document);
                 break;
             case PropertyKind_Array:
                 if(!reader.IsArray()) {
-                    Log(entity, LogSeverity_Error, "Property %s is an array property, but JSON value is %s. Skipping this property", GetUuid(property), GetJsonTypeName(reader));
+                    Log(entity, LogSeverity_Error, "Property %s is an array property, but JSON value is %s. Skipping this property", GetIdentification(property).Uuid, GetJsonTypeName(reader));
                     continue;
                 }
 
@@ -710,12 +710,12 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
             isVariant = true;
 
             if(!reader.GetObject().HasMember("type")) {
-                Error(parent, "Error parsing variant %s for %s. Variant object is missing 'type' field.", GetUuid(property), GetUuid(parent));
+                Error(parent, "Error parsing variant %s for %s. Variant object is missing 'type' field.", GetIdentification(property).Uuid, GetIdentification(parent).Uuid);
                 return false;
             }
 
             if(!reader.GetObject().HasMember("value")) {
-                Error(parent, "Error parsing variant %s for %s. Variant object is missing 'value' field.", GetUuid(property), GetUuid(parent));
+                Error(parent, "Error parsing variant %s for %s. Variant object is missing 'value' field.", GetIdentification(property).Uuid, GetIdentification(parent).Uuid);
                 return false;
             }
 
@@ -754,7 +754,7 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
         ReadVec4If(rgba8, Int, jsonValue)
         case TypeOf_Type:
             if(!jsonValue.IsString()) {
-                Log(parent, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's type name.", GetUuid(property));
+                Log(parent, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's type name.", GetIdentification(property).Uuid);
                 break;
             }
             value.as_Type = FindType(jsonValue.GetString());
@@ -765,7 +765,7 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
                 value.as_Entity = 0;
                 break;
             } else if(!jsonValue.IsString()) {
-                Log(parent, LogSeverity_Error, "Error parsing property '%s': Entity references should be noted by Uuid.", GetUuid(property));
+                Log(parent, LogSeverity_Error, "Error parsing property '%s': Entity references should be noted by Uuid.", GetIdentification(property).Uuid);
                 break;
             }
 
@@ -785,7 +785,7 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
         }
             break;
         default:
-            Log(parent, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetUuid(property), typeName);
+            Log(parent, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetIdentification(property).Uuid, typeName);
             return false;
             break;
     }

@@ -13,7 +13,7 @@
 
 static void RepositionMenu(Entity menu, bool vertical) {
     if(HasComponent(menu, ComponentOf_Menu()) && !HasComponent(menu, ComponentOf_MainMenu())) {
-        auto itemSize = GetSize2D(GetOwner(menu));
+        auto itemSize = GetSize2D(GetOwnership(menu).Owner);
         if(vertical) {
             SetPosition3D(menu, {0.0f, (float)itemSize.y, -GetTransformHierarchyLevel(menu) - GetWidgetDepthOrder(menu)});
         }
@@ -39,12 +39,12 @@ LocalFunction(OnSize2DChanged, void, Entity entity) {
 }
 
 LocalFunction(OnMenuChanged, void, Entity entity) {
-    RepositionMenu(entity, HasComponent(GetOwner(entity), ComponentOf_MainMenuItem()));
+    RepositionMenu(entity, HasComponent(GetOwnership(entity).Owner, ComponentOf_MainMenuItem()));
 }
 
 LocalFunction(OnClickedChanged, void, Entity entity, bool oldClicked, bool newClicked) {
     if(newClicked && HasComponent(entity, ComponentOf_MainMenuItem())) {
-        auto menu = GetOwner(entity);
+        auto menu = GetOwnership(entity).Owner;
 
         auto& menuItems = GetChildren(menu);
         auto alreadySelected = GetWidgetSelected(entity);
@@ -59,7 +59,7 @@ LocalFunction(OnClickedChanged, void, Entity entity, bool oldClicked, bool newCl
 
 LocalFunction(OnHoveredChanged, void, Entity entity, bool oldHovered, bool newHovered) {
     if(newHovered && HasComponent(entity, ComponentOf_MenuItem())) {
-        auto menu = GetOwner(entity);
+        auto menu = GetOwnership(entity).Owner;
         auto& menuItems = GetChildren(menu);
 
         bool anyMenuOpen = false;

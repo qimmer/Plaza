@@ -9,17 +9,15 @@
 
 struct AppLoop {
     u64 AppLoopFrame;
-    float AppLoopOrder;
+    bool AppLoopQuit;
 };
 
 Unit(AppLoop)
     Component(AppLoop)
+        Property(bool, AppLoopQuit)
         Property(u64, AppLoopFrame)
-        Property(float, AppLoopOrder)
 
-    Function(RunAppLoops, void)
-    Function(Quit, void)
-    Function(UpdateAppLoops, bool)
+    Function(RunAppLoop, void)
 
 #define AppLoopOrder_Rendering 10.0f
 #define AppLoopOrder_Update 1.0f

@@ -219,7 +219,7 @@ static void UpdatePickRay(Entity ray, PickRay *data) {
 }
 
 LocalFunction(OnAppUpdate, void, Entity appLoop) {
-    for_entity(ray, data, PickRay) {
+    for_entity(ray, ComponentOf_PickRay()) {
         UpdatePickRay(ray, data);
     }
 

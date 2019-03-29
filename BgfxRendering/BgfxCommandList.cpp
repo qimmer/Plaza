@@ -109,7 +109,7 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
         if(HasComponent(texture, ComponentOf_SubTexture2D())) {
             auto offset = GetSubTexture2DOffset(texture);
             auto size = GetSubTexture2DSize(texture);
-            texture = GetOwner(texture); // Get actual texture (atlas)
+            texture = GetOwnership(texture).Owner; // Get actual texture (atlas)
             auto textureSize = GetTextureSize2D(texture);
 
             uvOffsetSizePerSampler[uniformData->UniformSamplerIndex] = {(float)offset.x / textureSize.x, (float)offset.y / textureSize.y, (float)size.x / textureSize.x, (float)size.y / textureSize.y};
@@ -118,7 +118,7 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
         }
 
         if(!HasComponent(texture, ComponentOf_Texture())) {
-            Warning(entity, "%s is missing texture value for uniform %s.", GetUuid(entity), GetUuid(uniform));
+            Warning(entity, "%s is missing texture value for uniform %s.", GetIdentification(entity).Uuid, GetIdentification(uniform).Uuid);
             texture = whiteTexture;
         }
 
@@ -158,7 +158,7 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     auto material = GetRenderableMaterial(renderable);
     auto scissor = GetRenderableScissor(renderable);
 
-    auto mesh = GetOwner(subMesh);
+    auto mesh = GetOwnership(subMesh).Owner;
     auto meshData = GetMeshData(mesh);
 
     auto vertexBuffer = meshData->MeshVertexBuffer; auto vertexBufferData = GetVertexBufferData(vertexBuffer);
@@ -170,17 +170,17 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     auto indexBufferHandle = GetBgfxResourceHandle(indexBuffer);
 
     if(vertexBufferHandle == bgfx::kInvalidHandle) {
-        //Error(batch, "Invalid Vertex Buffer for renderable %s", GetUuid(renderable));
+        //Error(batch, "Invalid Vertex Buffer for renderable %s", GetIdentification(renderable).Uuid);
         return;
     }
 
     if(subMeshData->SubMeshNumIndices && indexBufferHandle == bgfx::kInvalidHandle) {
-        //Error(batch, "Invalid Index Buffer for renderable %s", GetUuid(renderable));
+        //Error(batch, "Invalid Index Buffer for renderable %s", GetIdentification(renderable).Uuid);
         return;
     }
 
     if(programHandle == bgfx::kInvalidHandle) {
-        Error(batch, "Invalid Program for renderable %s", GetUuid(renderable));
+        Error(batch, "Invalid Program for renderable %s", GetIdentification(renderable).Uuid);
         return;
     }
 
@@ -231,7 +231,7 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
 }
 
 void RenderCommandList(Entity commandList, unsigned char viewId) {
-    auto sceneRenderer = GetOwner(commandList);
+    auto sceneRenderer = GetOwnership(commandList).Owner;
 
     auto camera = GetSceneRendererCamera(sceneRenderer);
     auto scene = GetSceneRendererScene(sceneRenderer);
@@ -360,7 +360,7 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
 
 LocalFunction(OnSubmitCommandLists, void, Entity appLoop) {
     auto i = 0;
-    for_entity(commandList, data, CommandList) {
+    for_entity(commandList, ComponentOf_CommandList()) {
         RenderCommandList(commandList, i);
         ++i;
     }

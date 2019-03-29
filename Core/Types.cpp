@@ -6,44 +6,45 @@
 #include "Debug.h"
 
 static StringRef typeNames[] = {
-        "Unknown",
+    Intern("Unknown"),
 
-        "void",
-        "u8",
-        "u16",
-        "u32",
-        "u64",
-        "s8",
-        "s16",
-        "s32",
-        "s64",
-        "float",
-        "double",
-        "bool",
-        "StringRef",
+    Intern("void"),
+    Intern("u8"),
+    Intern("u16"),
+    Intern("u32"),
+    Intern("u64"),
+    Intern("s8"),
+    Intern("s16"),
+    Intern("s32"),
+    Intern("s64"),
+    Intern("float"),
+    Intern("double"),
+    Intern("bool"),
+    Intern("StringRef"),
 
-        "v2i",
-        "v3i",
-        "v4i",
+    Intern("v2i"),
+    Intern("v3i"),
+    Intern("v4i"),
 
-        "v2f",
-        "v3f",
-        "v4f",
-		
-        "Entity",
-        "Type",
+    Intern("v2f"),
+    Intern("v3f"),
+    Intern("v4f"),
 
-        "rgba8",
-        "rgb8",
+    Intern("Entity"),
+    Intern("Type"),
 
-        "rgba32",
-        "rgb32",
+    Intern("rgba8"),
+    Intern("rgb8"),
 
-        "Date",
+    Intern("rgba32"),
+    Intern("rgb32"),
 
-        "Variant",
+    Intern("Date"),
 
-        "NativePtr"
+    Intern("Variant"),
+
+    Intern("NativePtr"),
+    Intern("ChildArray")
 };
 
 API_EXPORT u32 GetTypeSize(Type type) {
@@ -84,7 +85,8 @@ API_EXPORT u32 GetTypeSize(Type type) {
         sizeof(Date),
 
         sizeof(Variant),
-        sizeof(NativePtr)
+        sizeof(NativePtr),
+        sizeof(ChildArray)
     };
 
     Assert(0, type < TypeOf_MAX);
@@ -130,7 +132,8 @@ API_EXPORT u32 GetTypeAlignment(Type type) {
             alignof(Date),
 
             alignof(Variant),
-            alignof(NativePtr)
+            alignof(NativePtr),
+            alignof(ChildArray)
     };
 
     Assert(0, type < TypeOf_MAX);
@@ -141,12 +144,14 @@ API_EXPORT u32 GetTypeAlignment(Type type) {
 API_EXPORT StringRef GetTypeName(Type type) {
     Assert(0, type < TypeOf_MAX);
 
+
     return typeNames[type];
 }
 
 API_EXPORT Type FindType(StringRef typeName) {
+    typeName = Intern(typeName);
     for(auto i = 0; i < TypeOf_MAX; ++i) {
-        if(strcmp(typeName, typeNames[i]) == 0) {
+        if(typeName == typeNames[i]) {
             return i;
         }
     }

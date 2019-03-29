@@ -50,14 +50,18 @@ int main(int argc, char** argv) {
             char vpath[512];
             snprintf(vpath, sizeof(vpath), "file://%s", path);
 
-            auto module = AddModules(GetModuleRoot());
+            auto module = CreateEntity();
             SetStreamPath(module, vpath);
             SetPersistancePointLoading(module, true);
+
+            AddModules(GetRoot(), module);
         }
 
     }
 
     RunAppLoops();
+
+    DestroyEntity(GetRoot());
 
     //DumpTree(GetModuleRoot());
 

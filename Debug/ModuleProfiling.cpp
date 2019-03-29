@@ -21,7 +21,7 @@ LocalFunction(StopMeasuringModuleLoadDuration, void, Entity module) {
     if(IsEntityValid(stopWatch)) {
         SetStopWatchRunning(stopWatch, false);
 
-        Info(module, "Loaded Module (%.2f\t ms): %s", GetStopWatchElapsedSeconds(stopWatch) * 1000.0, GetUuid(module));
+        Info(module, "Loaded Module (%.2f\t ms): %s", GetStopWatchElapsedSeconds(stopWatch) * 1000.0, GetIdentification(module).Uuid);
     }
 }
 

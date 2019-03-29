@@ -25,9 +25,9 @@ LocalFunction(OnWidgetClickedChanged, void, Entity widget, bool oldValue, bool n
 }
 
 LocalFunction(OnSelectionEntityChanged, void, Entity selection, Entity oldValue, Entity newValue) {
-    auto context = GetOwner(selection);
+    auto context = GetOwnership(selection).Owner;
 
-    for_entity(selectable, data, SelectableWidget) {
+    for_entity(selectable, ComponentOf_SelectableWidget()) {
         if(data->WidgetSelectionContext != data->WidgetSelectionContext) continue;
 
         if(data->WidgetSelectionEntity == oldValue) {

@@ -17,14 +17,14 @@
 #include <Foundation/AppLoop.h>
 
 static void SyncBatches(Entity commandList) {
-    auto sceneRenderer = GetOwner(commandList);
+    auto sceneRenderer = GetOwnership(commandList).Owner;
     auto scene = GetSceneRendererScene(sceneRenderer);
 
     u32 numExisting = GetCommandListBatches(commandList).size();
     
     u32 numBatches = 0;
     {
-        for_entity(renderable, data, Renderable) {
+        for_entity(renderable, ComponentOf_Renderable()) {
             if(GetSceneNodeScene(renderable) != scene) continue;
 
             numBatches++;
@@ -36,7 +36,7 @@ static void SyncBatches(Entity commandList) {
     auto& batches = GetCommandListBatches(commandList);
     {
         auto i = 0;
-        for_entity(renderable, data, Renderable) {
+        for_entity(renderable, ComponentOf_Renderable()) {
             if(GetSceneNodeScene(renderable) != scene) continue;
 
             SetBatchRenderable(batches[i], renderable);
@@ -65,7 +65,7 @@ static void SyncCommandLists(Entity sceneRenderer) {
 }
 
 LocalFunction(OnBatchRenderableChanged, void, Entity batch, Entity oldRenderable, Entity newRenderable) {
-    auto commandList = GetOwner(batch);
+    auto commandList = GetOwnership(batch).Owner;
     auto pass = GetCommandListPass(commandList);
     auto shaderCache = GetRenderPassShaderCache(pass);
     auto material = GetRenderableMaterial(newRenderable);
@@ -76,7 +76,7 @@ LocalFunction(OnBatchRenderableChanged, void, Entity batch, Entity oldRenderable
 }
 
 LocalFunction(OnRenderableMaterialChanged, void, Entity renderable, Entity oldMaterial, Entity newMaterial) {
-    for_entity(batch, data, Batch) {
+    for_entity(batch, ComponentOf_Batch()) {
         if(data->BatchRenderable == renderable) {
             OnBatchRenderableChanged(batch, renderable, renderable);
         }
@@ -84,7 +84,7 @@ LocalFunction(OnRenderableMaterialChanged, void, Entity renderable, Entity oldMa
 }
 
 LocalFunction(OnMaterialProgramChanged, void, Entity material, Entity oldProgram, Entity newProgram) {
-    for_entity(renderable, data, Renderable) {
+    for_entity(renderable, ComponentOf_Renderable()) {
         if(GetRenderableMaterial(renderable) == material) {
             OnRenderableMaterialChanged(renderable, material, material);
         }
@@ -101,7 +101,7 @@ LocalFunction(OnSceneRendererSceneChanged, void, Entity sceneRenderer, Entity ol
 }
 
 LocalFunction(OnRenderPathPassesChanged, void, Entity renderPath, Entity oldPass, Entity newPass) {
-    for_entity(sceneRenderer, data, SceneRenderer) {
+    for_entity(sceneRenderer, ComponentOf_SceneRenderer()) {
         if(data->SceneRendererPath == renderPath) {
             SyncCommandLists(sceneRenderer);
         }
@@ -109,7 +109,7 @@ LocalFunction(OnRenderPathPassesChanged, void, Entity renderPath, Entity oldPass
 }
 
 LocalFunction(OnSyncCommandLists, void) {
-	for_entity(sceneRenderer, data, SceneRenderer) {
+	for_entity(sceneRenderer, ComponentOf_SceneRenderer()) {
 		for_children(commandList, SceneRendererCommandLists, sceneRenderer) {
 			SyncBatches(commandList);
 		}

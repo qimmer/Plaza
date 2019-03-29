@@ -8,22 +8,14 @@
 #include "Identification.h"
 
 
-struct Enum {
-    bool EnumCombinable;
-};
-
-struct EnumFlag {
-    u64 EnumFlagValue;
-};
-
 API_EXPORT StringRef GetEnumName(Entity e, u64 value) {
-    for_children(flag, EnumFlags, e) {
-        if(GetEnumFlagValue(flag) == value) {
-            return GetUuid(flag);
+    for_children(flag, PropertyOf_EnumFlags(), e) {
+        if(GetEnumFlag(flag).EnumFlagValue == value) {
+            return GetArrayChild(flag).Name;
         }
     }
 
-    return "";
+    return 0;
 }
 
 API_EXPORT u64 GetEnumValue(Entity e, StringRef name) {
@@ -31,15 +23,15 @@ API_EXPORT u64 GetEnumValue(Entity e, StringRef name) {
 
     name = Intern(name);
 
-    auto uuid = StringFormatV("%s.%s", GetUuid(e), name);
+    auto uuid = StringFormatV("%s.%s", GetIdentification(e).Uuid, name);
 
-    for_children(flag, EnumFlags, e) {
-        if(GetUuid(flag) == name || GetUuid(flag) == uuid) {
-            return GetEnumFlagValue(flag);
+    for_children(flag, PropertyOf_EnumFlags(), e) {
+        if(GetIdentification(flag).Uuid == name || GetIdentification(flag).Uuid == uuid) {
+            return GetEnumFlag(flag).EnumFlagValue;
         }
     }
 
-    return 0;
+    return -1;
 }
 
 BeginUnit(Enum)

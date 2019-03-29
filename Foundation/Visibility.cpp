@@ -10,12 +10,12 @@ struct Visibility {
 };
 
 static bool IsHidden(Entity entity) {
-    auto owner = GetOwner(entity);
+    auto owner = GetOwnership(entity).Owner;
     return GetHidden(entity) || (IsEntityValid(owner) && IsHidden(owner));
 }
 
 LocalFunction(OnHiddenChanged, void, Entity changedEntity) {
-    for_entity(visibility, data, Visibility) {
+    for_entity(visibility, ComponentOf_Visibility()) {
         SetHierarchiallyHidden(visibility, IsHidden(visibility));
     }
 }

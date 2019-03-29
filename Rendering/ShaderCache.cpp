@@ -51,7 +51,7 @@ static void InvalidateBinaryProgram(Entity binaryProgram) {
     char binaryPath[1024];
 
     auto program = GetBinaryProgramProgram(binaryProgram);
-    auto shaderCache = GetOwner(binaryProgram);
+    auto shaderCache = GetOwnership(binaryProgram).Owner;
 
     auto cachePath = GetShaderCacheDirectoryPath(shaderCache);
     if(!cachePath || cachePath[0] == '\0') {
@@ -77,7 +77,7 @@ static void InvalidateBinaryProgram(Entity binaryProgram) {
 
 LocalFunction(OnStreamChanged, void,
         Entity stream) {
-    auto owner = GetOwner(stream);
+    auto owner = GetOwnership(stream).Owner;
     if(HasComponent(owner, ComponentOf_Program())) {
         auto program = owner;
 

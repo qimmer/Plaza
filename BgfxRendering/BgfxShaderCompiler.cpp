@@ -201,7 +201,7 @@ LocalFunction(OnShaderCompile, void, Entity binaryProgram) {
     //ErrorRedirector errors(std::cerr);
     //ErrorRedirector output(std::cout);
 
-    auto shaderCache = GetOwner(binaryProgram);
+    auto shaderCache = GetOwnership(binaryProgram).Owner;
     auto shaderDefines = GetShaderCacheDefines(shaderCache);
     auto profile = GetShaderCacheProfile(shaderCache);
 

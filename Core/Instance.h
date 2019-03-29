@@ -13,6 +13,7 @@ struct UnresolvedReference {
 };
 
 struct UnresolvedEntity {
+    ChildArray UnresolvedReferences;
 };
 
 struct Instance {
