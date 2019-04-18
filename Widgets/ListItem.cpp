@@ -9,27 +9,35 @@
 #include <Gui/Font.h>
 #include <Widgets/Style.h>
 
-LocalFunction(OnWidgetClickedChanged, void, Entity listItemContainer, bool oldValue, bool newValue) {
+static void OnInteractableWidgetChanged(Entity listItemContainer, const InteractableWidget& oldValue, const InteractableWidget& newValue) {
     auto listItem = GetOwnership(listItemContainer).Owner;
-    if(newValue && HasComponent(listItem, ComponentOf_ListItem())) {
-        SetListItemExpanded(listItem, !GetListItemExpanded(listItem));
+    if(!oldValue.WidgetClicked && newValue.WidgetClicked && HasComponent(listItem, ComponentOf_ListItem())) {
+        auto listItemData = GetListItem(listItem);
+        listItemData.ListItemExpanded = !listItemData.ListItemExpanded;
+        SetListItem(listItem, listItemData);
     }
 }
 
 BeginUnit(ListItem)
     BeginComponent(ListItemStyle)
         RegisterBase(Style)
-        RegisterChildProperty(WidgetMesh, ListItemStyleMesh)
+        BeginChildProperty(ListItemStyleMesh)
+        EndChildProperty()
         RegisterProperty(v4i, ListItemStylePadding)
     EndComponent()
 
     BeginComponent(ListItem)
         RegisterBase(Widget)
-        RegisterChildProperty(Layout, ListItemContainer)
+        BeginChildProperty(ListItemContainer)
+        EndChildProperty()
         RegisterProperty(StringRef, ListItemTitle)
         RegisterProperty(StringRef, ListItemIcon)
         RegisterProperty(bool, ListItemExpanded)
-        ComponentTemplate({
+
+    EndComponent()
+
+    BeginPrefab(ListItem)
+        PrefabJson({
             "LayoutMode": "LayoutMode_Vertical",
             "LayoutPadding": [10, 0, 0, 0],
             "LayoutChildWeight": [1, 0],
@@ -71,7 +79,7 @@ BeginUnit(ListItem)
                 "RenderableSubMesh": "{SceneNodeScene.SceneStyle.ListItemStyleMesh}"
             }
         })
-    EndComponent()
+    EndPrefab()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClicked()), OnWidgetClickedChanged, 0)
+    RegisterSystem(OnInteractableWidgetChanged, ComponentOf_InteractableWidget())
 EndUnit()

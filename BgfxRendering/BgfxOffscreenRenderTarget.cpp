@@ -8,6 +8,8 @@
 #include <Rendering/Texture2D.h>
 #include <Rendering/RenderContext.h>
 #include <Foundation/AppLoop.h>
+#include <Rendering/RenderTarget.h>
+#include <Rendering/RenderingModule.h>
 
 #include "BgfxOffscreenRenderTarget.h"
 #include "BgfxTexture2D.h"
@@ -18,44 +20,56 @@ static eastl::set<Entity> invalidatedTargets;
 struct BgfxOffscreenRenderTarget {
 };
 
-LocalFunction(OnBgfxOffscreenRenderTargetRemoved, void, Entity component, Entity entity) {
-	auto resourceData = GetBgfxResourceData(entity);
-    bgfx::FrameBufferHandle handle = { resourceData->BgfxResourceHandle };
-	
-    if(bgfx::isValid(handle)) {
-        bgfx::destroy(handle);
-    }
+static void OnBgfxResourceChanged(Entity entity, const BgfxResource& oldData, const BgfxResource& newData) {
+    if(oldData.BgfxResourceHandle != bgfx::kInvalidHandle && newData.BgfxResourceHandle != oldData.BgfxResourceHandle) {
+        if(HasComponent(entity, ComponentOf_BgfxOffscreenRenderTarget())) {
+            bgfx::FrameBufferHandle handle = { oldData.BgfxResourceHandle };
 
-	resourceData->BgfxResourceHandle = bgfx::kInvalidHandle;
+            if(bgfx::isValid(handle)) {
+                bgfx::destroy(handle);
+            }
+        }
+    }
 }
 
-LocalFunction(OnValidation, void, Entity component) {
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
     for(auto& entity : invalidatedTargets) {
-        OnBgfxOffscreenRenderTargetRemoved(0, entity);
+        auto stages = GetOffscreenRenderTarget(entity).OffscreenRenderTargetTextures;
+        auto targets = (bgfx::TextureHandle*)alloca(stages.GetSize() * sizeof(bgfx::TextureHandle));
 
-        auto stages = GetOffscreenRenderTargetTextures(entity);
-        auto targets = (bgfx::TextureHandle*)alloca(stages.size() * sizeof(bgfx::TextureHandle));
-
-        for(auto i = 0; i < stages.size(); ++i) {
+        for(auto i = 0; i < stages.GetSize(); ++i) {
             targets[i] = {
-                GetBgfxResourceHandle(stages[i])
+                GetBgfxResource(stages[i]).BgfxResourceHandle
             };
         }
 
-        SetBgfxResourceHandle(entity, bgfx::createFrameBuffer(stages.size(), targets).idx);
+        SetBgfxResource(entity, {bgfx::createFrameBuffer(stages.GetSize(), targets).idx});
     }
 
     invalidatedTargets.clear();
 }
 
-LocalFunction(InvalidateTarget, void, Entity entity) {
+static void OnOffscreenRenderTargetChanged(Entity entity, const OffscreenRenderTarget& oldData, const OffscreenRenderTarget& newData) {
     invalidatedTargets.insert(entity);
 }
 
-LocalFunction(InvalidateTexture, void, Entity entity) {
+static void OnRenderTargetChanged(Entity entity, const RenderTarget& oldData, const RenderTarget& newData) {
+    if(HasComponent(entity, ComponentOf_BgfxOffscreenRenderTarget())) {
+        invalidatedTargets.insert(entity);
+    }
+}
+
+static void OnTextureChanged(Entity entity, const Texture& oldData, const Texture& newData) {
     auto owner = GetOwnership(entity).Owner;
     if(HasComponent(owner, ComponentOf_BgfxOffscreenRenderTarget())) {
-        InvalidateTarget(owner);
+        invalidatedTargets.insert(owner);
+    }
+}
+
+static void OnTexture2DChanged(Entity entity, const Texture2D& oldData, const Texture2D& newData) {
+    auto owner = GetOwnership(entity).Owner;
+    if(HasComponent(owner, ComponentOf_BgfxOffscreenRenderTarget())) {
+        invalidatedTargets.insert(owner);
     }
 }
 
@@ -64,13 +78,10 @@ BeginUnit(BgfxOffscreenRenderTarget)
         RegisterBase(BgfxResource)
     EndComponent()
 
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxOffscreenRenderTargetRemoved, ComponentOf_BgfxOffscreenRenderTarget())
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnValidation, AppLoopOf_ResourceSubmission())
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_OffscreenRenderTargetTextures()), InvalidateTarget, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureSize2D()), InvalidateTexture, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureFormat()), InvalidateTexture, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureFlag()), InvalidateTexture, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextureDynamic()), InvalidateTexture, 0)
+    RegisterSystem(OnTextureChanged, ComponentOf_Texture())
+    RegisterSystem(OnTexture2DChanged, ComponentOf_Texture2D())
+    RegisterSystem(OnRenderTargetChanged, ComponentOf_RenderTarget())
+    RegisterSystem(OnOffscreenRenderTargetChanged, ComponentOf_OffscreenRenderTarget())
+    RegisterSystem(OnBgfxResourceChanged, ComponentOf_BgfxResource())
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_ResourceSubmission)
 EndUnit()

@@ -7,38 +7,35 @@
 #include <Foundation/AppLoop.h>
 #include <Foundation/StopWatch.h>
 
-LocalFunction(OnUpdateMovement, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    auto deltaTime = GetStopWatchElapsedSeconds(StopWatchOf_Velocity());
-    SetStopWatchElapsedSeconds(StopWatchOf_Velocity(), 0.0);
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
+    Accelerator acceleratorData;
+    Movement movementData;
 
-    for_entity(accelerator, ComponentOf_Accelerator()) {
-        auto movement = data->AcceleratorTarget;
+    for_entity_data(accelerator, ComponentOf_Accelerator(), &acceleratorData) {
+        auto movement = acceleratorData.AcceleratorTarget;
+        movementData = GetMovement(movement);
 
-        if(HasComponent(movement, ComponentOf_Movement())) {
-            auto velocity = GetMovementVelocity(movement);
-            velocity.x += data->AcceleratorAcceleration.x * deltaTime;
-            velocity.y += data->AcceleratorAcceleration.y * deltaTime;
-            velocity.z += data->AcceleratorAcceleration.z * deltaTime;
-            SetMovementVelocity(movement, velocity);
-        }
+        movementData.MovementVelocity.x += acceleratorData.AcceleratorAcceleration.x * newData.AppLoopDeltaTime;
+        movementData.MovementVelocity.y += acceleratorData.AcceleratorAcceleration.y * newData.AppLoopDeltaTime;
+        movementData.MovementVelocity.z += acceleratorData.AcceleratorAcceleration.z * newData.AppLoopDeltaTime;
+
+        SetMovement(movement, movementData);
     }
 
-    for_entity(movement, data2, Movement) {
-        auto transform = data2->MovementTransform;
 
-        if(HasComponent(transform, ComponentOf_Transform())) {
-            auto position = GetPosition3D(transform);
-            position.x += data2->MovementVelocity.x * deltaTime;
-            position.y += data2->MovementVelocity.y * deltaTime;
-            position.z += data2->MovementVelocity.z * deltaTime;
-            SetPosition3D(transform, position);
+    for_entity_data(movement, ComponentOf_Movement(), &movementData) {
+        auto transform = movementData.MovementTransform;
+        auto transformData = GetTransform(transform);
 
-            auto euler = GetRotationEuler3D(transform);
-            euler.x += data2->MovementTorque.x * deltaTime;
-            euler.y += data2->MovementTorque.y * deltaTime;
-            euler.z += data2->MovementTorque.z * deltaTime;
-            SetRotationEuler3D(transform, euler);
-        }
+        transformData.Position3D.x += movementData.MovementVelocity.x * newData.AppLoopDeltaTime;
+        transformData.Position3D.y += movementData.MovementVelocity.y * newData.AppLoopDeltaTime;
+        transformData.Position3D.z += movementData.MovementVelocity.z * newData.AppLoopDeltaTime;
+
+        transformData.RotationEuler3D.x += movementData.MovementTorque.x * newData.AppLoopDeltaTime;
+        transformData.RotationEuler3D.y += movementData.MovementTorque.y * newData.AppLoopDeltaTime;
+        transformData.RotationEuler3D.z += movementData.MovementTorque.z * newData.AppLoopDeltaTime;
+
+        SetTransform(transform, transformData);
     }
 }
 
@@ -54,8 +51,5 @@ BeginUnit(Velocity)
         RegisterProperty(v3f, AcceleratorAcceleration)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnUpdateMovement, AppLoopOf_Velocity())
-
-    SetAppLoopOrder(AppLoopOf_Velocity(), AppLoopOrder_Update * 1.25f);
-    SetStopWatchRunning(StopWatchOf_Velocity(), true);
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_Update * 1.25f)
 EndUnit()

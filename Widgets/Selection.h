@@ -12,6 +12,7 @@ struct Selection {
 };
 
 struct SelectionContext {
+    ChildArray SelectionContextSelections;
     bool SelectionContextMulti;
 };
 

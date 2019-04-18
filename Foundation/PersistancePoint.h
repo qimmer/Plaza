@@ -4,13 +4,15 @@
 
 #include <Core/NativeUtils.h>
 
+struct PersistancePoint {
+    bool PersistancePointLoading, PersistancePointSaving, PersistancePointAsync, PersistancePointLoaded;
+};
+
 Unit(PersistancePoint)
     Component(PersistancePoint)
         Property(bool, PersistancePointAsync)
         Property(bool, PersistancePointLoading)
         Property(bool, PersistancePointLoaded)
         Property(bool, PersistancePointSaving)
-
-    Function(LoadEntityPath, bool, StringRef pathToEnsureLoaded)
 
 #endif //PersistancePoint_H

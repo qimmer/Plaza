@@ -4,9 +4,10 @@
 #include <Core/NativeUtils.h>
 #include <Core/Debug.h>
 #include <Core/Types.h>
-#include <Core/Vector.h>
 #include <Core/Debug.h>
 #include <Core/Algorithms.h>
+
+#include <EASTL/fixed_vector.h>
 #include <memory>
 
 #define MaxPages 4096
@@ -26,17 +27,13 @@ class Pool
 {
 private:
     u32 elementSize, blockSize, endIndex;
-    Vector(entryPages, char*, 8);
-    Vector<u32, 64> freeIndices;
+    eastl::fixed_vector<char*, 8> entryPages;
+    eastl::fixed_vector<u32, 64> freeIndices;
 public:
     Pool() {
         blockSize = 0;
         elementSize = 0;
         endIndex = 0;
-
-		this->entryPages.Count = 0;
-		this->entryPages.DynCapacity = 0;
-		this->entryPages.DynBuf = NULL;
 
         SetElementSize(0);
     }
@@ -59,11 +56,11 @@ public:
 };
 
 inline u32 Pool::GetNumPages() {
-    return this->entryPages.Count;
+    return this->entryPages.size();
 }
 
 inline char *Pool::GetPage(u32 index) {
-    return GetVector(this->entryPages)[index];
+    return this->entryPages[index];
 }
 
 inline u32 Pool::GetBlockSize() {
@@ -73,7 +70,7 @@ inline char* Pool::operator[](u32 index)
 {
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
-    auto block = &GetVector(this->entryPages)[page][index * blockSize];
+    auto block = &this->entryPages[page][index * blockSize];
 
 #if MemoryGuard
     auto firstGuard = (u64*)block;
@@ -100,7 +97,7 @@ inline void Pool::SetElementSize(u32 size) {
     blockSize = UpperPowerOf2(Max(size + 1, 32));
 #endif
     // Make sure to expand every single existing element with the new size by allocating new pages
-    for(u32 i = 0; i < entryPages.Count; ++i) {
+    for(u32 i = 0; i < entryPages.size(); ++i) {
         auto newPage = (char*)_mm_malloc(PoolPageElements * blockSize, PoolAlignment);
         memset(newPage, 0, PoolPageElements * blockSize);
 
@@ -113,7 +110,7 @@ inline void Pool::SetElementSize(u32 size) {
         }
 #endif
 
-        auto oldPage = GetVector(entryPages)[i];
+        auto oldPage = entryPages[i];
 
         if(oldBlockSize > 0) {
             for (auto j = 0; j < PoolPageElements; ++j) {
@@ -130,7 +127,7 @@ inline void Pool::SetElementSize(u32 size) {
             _mm_free(oldPage);
         }
 
-        GetVector(entryPages)[i] = newPage;
+        entryPages[i] = newPage;
     }
 }
 
@@ -139,9 +136,9 @@ inline bool Pool::IsValid(u32 index) const
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
 
-    if(this->entryPages.Count <= page) return false;
+    if(this->entryPages.size() <= page) return false;
 
-    auto block = &GetVector(this->entryPages)[page][index * blockSize];
+    auto block = &this->entryPages[page][index * blockSize];
     auto blockState = block[blockSize - 1];
 
 #if MemoryGuard
@@ -169,12 +166,12 @@ inline bool Pool::Insert(u32 index)
     auto page = (index & 0xffffff00) >> 8;
     index &= 0xff;
 
-    if(page >= this->entryPages.Count)
+    if(page >= this->entryPages.size())
     {
-        for(auto i = this->entryPages.Count; i <= page; ++i) {
+        for(auto i = this->entryPages.size(); i <= page; ++i) {
             auto newPage = (char*)_mm_malloc(PoolPageElements * blockSize, PoolAlignment);
             memset(newPage, 0, PoolPageElements * blockSize);
-            VectorAdd(this->entryPages, newPage);
+            this->entryPages.push_back(newPage);
 
 #if MemoryGuard
             // Set magic numbers before and after element data
@@ -187,7 +184,7 @@ inline bool Pool::Insert(u32 index)
         }
     }
 
-    auto block = &GetVector(this->entryPages)[page][index * blockSize];
+    auto block = &this->entryPages[page][index * blockSize];
 
     // Assert that this block is at least 16 byte aligned
     //Assert(0, ((unsigned long)(u64)block & 15) == 0);
@@ -229,9 +226,9 @@ inline bool Pool::Remove(u32 index)
     auto page = (index & 0xffffff00) >> 8;
     index = index & 0xff;
 
-    if(this->entryPages.Count <= page) return false;
+    if(this->entryPages.size() <= page) return false;
 
-    auto block = &GetVector(this->entryPages)[page][index * blockSize];
+    auto block = &this->entryPages[page][index * blockSize];
 
     if(block[blockSize - 1] == AvailableBlock) return false;
 

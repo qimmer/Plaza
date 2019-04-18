@@ -18,6 +18,19 @@
 #define ShaderProfile_Metal_OSX 8
 #define ShaderProfile_Metal_iOS 9
 
+struct BinaryProgram {
+    Entity BinaryProgramProgram;
+    Entity BinaryProgramVertexShader;
+    Entity BinaryProgramPixelShader;
+};
+
+struct ShaderCache {
+    ChildArray ShaderCachePrograms;
+    StringRef ShaderCacheDirectoryPath;
+    StringRef ShaderCacheDefines;
+    u8 ShaderCacheProfile;
+};
+
 Unit(ShaderCache)
     Enum(ShaderProfile)
 
@@ -31,8 +44,6 @@ Unit(ShaderCache)
         Property(u8, ShaderCacheProfile)
         Property(StringRef, ShaderCacheDirectoryPath)
         ArrayProperty(BinaryProgram, ShaderCachePrograms)
-
-    Event(ShaderCompile, Entity binaryProgram)
 
     Function(GetShaderCacheBinaryProgram, Entity, Entity shaderCache, Entity program)
 

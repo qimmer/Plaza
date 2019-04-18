@@ -7,6 +7,10 @@
 
 #include <Core/NativeUtils.h>
 
+struct RenderTarget {
+    v2i RenderTargetSize;
+};
+
 Unit(RenderTarget)
     Component(RenderTarget)
         Property(v2i, RenderTargetSize)

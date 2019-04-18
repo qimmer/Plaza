@@ -21,6 +21,8 @@ Entity FindEntityByUuid(StringRef uuid);
 bool GetParentPath(StringRef childPath, u32 bufLen, char *parentPath);
 StringRef CreateGuidFromPath(StringRef path);
 
+StringRef CreateGuid();
+
 #define PathMax 512
 
 #endif //PLAZA_IDENTIFICATION_H

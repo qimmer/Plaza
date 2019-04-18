@@ -8,6 +8,7 @@
 #include <Core/NativeUtils.h>
 
 struct TransitioningEntity {
+    ChildArray ActiveTransitions;
 };
 
 struct ActiveTransition {
@@ -27,9 +28,6 @@ Unit(Transition)
         Property(Variant, ActiveTransitionSourceValue)
         Property(Variant, ActiveTransitionDestinationValue)
         ReferenceProperty(Property, ActiveTransitionProperty)
-
-    Declare(AppLoop, Transition)
-    Declare(StopWatch, Transition)
 
     Function(Transition, void, Entity entity, Entity property, Variant destinationValue, float time)
 

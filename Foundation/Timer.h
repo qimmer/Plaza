@@ -7,10 +7,17 @@
 
 #include <Core/Component.h>
 
+struct Timer {
+    u64 TimerTicks;
+    double TimerInterval;
+    double LastStopWatchTime;
+    bool TimerRepeat;
+};
+
 Unit(Timer)
     Component(Timer)
         Property(double, TimerInterval)
         Property(bool, TimerRepeat)
-    Event(TimerTick)
+        Property(u64, TimerTicks)
 
 #endif //PLAZA_TIMER_H

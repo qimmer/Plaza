@@ -7,6 +7,7 @@
 
 #include <Core/NativeUtils.h>
 #include <Foundation/PersistancePoint.h>
+#include <Foundation/NativeUtils.h>
 
 struct IniSetting {
     Entity IniSettingProperty;
@@ -14,9 +15,12 @@ struct IniSetting {
 
 struct IniSettingGroup {
     Entity IniSettingGroupEntity;
+    ChildArray IniSettingGroupSettings;
 };
 
-struct IniFile {};
+struct IniFile {
+    ChildArray IniFileSettingGroups;
+};
 
 Unit(IniPersistance)
     Component(IniSetting)
@@ -28,6 +32,8 @@ Unit(IniPersistance)
 
     Component(IniFile)
         ArrayProperty(IniSettingGroup, IniFileSettingGroups)
+
+    Serializer(Ini)
 
 bool SerializeIni(Entity stream, Entity entity);
 bool DeserializeIni(Entity stream, Entity entity);

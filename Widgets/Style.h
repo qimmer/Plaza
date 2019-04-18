@@ -8,6 +8,7 @@
 #include <Core/NativeUtils.h>
 
 struct Style {
+    ChildArray StyleFonts;
     Entity StyleSheet;
     Entity StyleIconFont;
 };

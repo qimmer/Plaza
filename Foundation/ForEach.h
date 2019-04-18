@@ -13,7 +13,7 @@ struct ForEach {
 };
 
 struct ForEachInstance {
-    Entity ForEachSource, ForEach;
+    Entity ForEachInstanceSource, ForEachInstanceForEach;
 };
 
 Unit(ForEach)
@@ -26,7 +26,7 @@ Unit(ForEach)
         Property(Entity, ForEachTemplate)
 
     Component(ForEachInstance)
-        Property(Entity, ForEach)
-        Property(Entity, ForEachSource)
+        Property(Entity, ForEachInstanceForEach)
+        Property(Entity, ForEachInstanceSource)
 
 #endif //PLAZA_FOREACH_H

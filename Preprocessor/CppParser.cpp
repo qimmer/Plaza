@@ -29,12 +29,12 @@ static const u8 terminatingTokens[] = {
 };
 
 static bool IsTokenOpen(Entity token) {
-    auto type = GetLexerTokenType(token);
+    auto type = GetLexerToken(token).LexerTokenType;
     return type == LexerTokenType_OpenBrace || type == LexerTokenType_OpenBracket || type == LexerTokenType_OpenParan;
 }
 
 static bool IsTokenClose(Entity token) {
-    auto type = GetLexerTokenType(token);
+    auto type = GetLexerToken(token).LexerTokenType;
     return type == LexerTokenType_CloseBrace || type == LexerTokenType_CloseBracket || type == LexerTokenType_CloseParan;
 }
 
@@ -46,8 +46,9 @@ static u32 ParseScope(Entity scope, const Entity *tokens, u32 numTokens, u32 sco
         if(IsTokenClose(token)) {
             return index;
         } else if(IsTokenOpen(token)) {
-            auto subScope = AddCppScopeSubScopes(scope);
+            auto subScope = CreateEntity();
             index += ParseScope(subScope, tokens, numTokens, index + 1);
+            //AddCppScopeSubScopes(scope, subScope);
         } else {
 
         }

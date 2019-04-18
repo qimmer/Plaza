@@ -135,22 +135,21 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
                             v2f *size,
                             FontVertex *vertices,
                             u32 maxVertices) {
-    auto data = GetFontData(font);
-    auto textureSize = GetTextureSize2D(font);
+    auto data = GetFont(font);
+    auto textureSize = GetTexture2D(font).TextureSize2D;
 
     auto end = text + (text ? strlen(text) : 0);
     u32 numVertices = 0;
 
     *size = {0.0f, 0.0f};
 
-    origin.y += data->FontAscent;
+    origin.y += data.FontAscent;
 
     auto i = 0;
 
-	auto& fontGlyphs = GetFontGlyphs(font);
-	auto glyphsData = (Glyph*)alloca(sizeof(Glyph) * fontGlyphs.size());
-	for (auto j = 0; j < fontGlyphs.size(); ++j) {
-		glyphsData[j] = *GetGlyphData(fontGlyphs[j]);
+	auto glyphsData = (Glyph*)alloca(sizeof(Glyph) * data.FontGlyphs.GetSize());
+	for (auto j = 0; j < data.FontGlyphs.GetSize(); ++j) {
+		glyphsData[j] = GetGlyph(data.FontGlyphs[j]);
 	}
 
     while (text < end) {
@@ -160,12 +159,12 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
 
         if(ch == '\n') {
             origin.x = 0;
-            origin.y += -data->FontDescent + data->FontLineGap + data->FontAscent;
+            origin.y += -data.FontDescent + data.FontLineGap + data.FontAscent;
             continue;
         }
 
 		Glyph *glyphData = NULL;
-		for (auto j = 0; j < fontGlyphs.size(); ++j) {
+		for (auto j = 0; j < data.FontGlyphs.GetSize(); ++j) {
 			if (glyphsData[j].GlyphCode == ch) {
 				glyphData = &glyphsData[j];
 				break;
@@ -185,7 +184,7 @@ API_EXPORT u32 GetFontGlyphData(Entity font,
     }
 
     if(size) {
-        size->y = origin.y - data->FontDescent;
+        size->y = origin.y - data.FontDescent;
     }
 
     return numVertices;

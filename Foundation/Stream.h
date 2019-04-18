@@ -6,63 +6,7 @@
 #define PLAZA_STREAM_H
 
 #include <Core/NativeUtils.h>
-
-struct Serializer {
-    StringRef SerializerMimeType;
-    bool(*SerializeHandler)(Entity entity);
-    bool(*DeserializeHandler)(Entity entity);
-};
-
-struct Stream {
-    StringRef StreamPath;
-    StringRef StreamResolvedPath;
-
-    Entity StreamProtocol, StreamCompressor, StreamFileType;
-
-    int StreamMode;
-
-    bool InvalidationPending;
-};
-
-struct FileType {
-    Entity FileTypeComponent;
-    StringRef FileTypeExtension;
-    StringRef FileTypeMimeType;
-};
-
-Unit(Stream)
-    Component(Stream)
-        Property(StringRef, StreamPath)
-        Property(StringRef, StreamResolvedPath)
-        ReferenceProperty(Entity, StreamProtocol)
-        ReferenceProperty(Entity, StreamCompressor)
-        ReferenceProperty(Entity, StreamFileType)
-
-    Component(StreamProtocol)
-        Property(StringRef, StreamProtocolIdentifier)
-        Property(Entity, StreamProtocolComponent)
-
-    Component(StreamCompressor)
-        Property(StringRef, StreamCompressorMimeType)
-
-    Component(FileType)
-        Property(StringRef, FileTypeExtension)
-        Property(StringRef, FileTypeMimeType)
-        Property(Entity, FileTypeComponent)
-
-    Component(Serializer)
-        Property(StringRef, SerializerMimeType)
-
-    Component(StreamExtensionModule)
-        ArrayProperty(StreamProtocol, ModuleStreamProtocols)
-        ArrayProperty(StreamCompressor, ModuleStreamCompressors)
-        ArrayProperty(FileType, ModuleFileTypes)
-        ArrayProperty(Serializer, ModuleSerializers)
-
-    Declare(FileType, Bin)
-
-
-Event(StreamContentChanged)
+#include <Foundation/NativeUtils.h>
 
 typedef bool(*StreamSeekHandlerType)(Entity entity, s32 offset);
 typedef s32(*StreamTellHandlerType)(Entity entity);
@@ -77,9 +21,35 @@ typedef bool(*StreamBoolHandlerType)(Entity entity);
 typedef bool(*CompressHandlerType)(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, const void *uncompressedData);
 typedef bool(*DecompressHandlerType)(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, void *uncompressedData);
 
+struct Serializer {
+    StringRef SerializerMimeType;
+    bool(*SerializeHandler)(Entity entity);
+    bool(*DeserializeHandler)(Entity entity);
+};
+
+struct Stream {
+    StringRef StreamPath;
+    StringRef StreamResolvedPath;
+    Date StreamLastWrite;
+
+    Entity StreamProtocol, StreamCompressor, StreamFileType;
+
+    int StreamMode;
+
+    bool InvalidationPending;
+};
+
+struct FileType {
+    StringRef FileTypeExtension;
+    StringRef FileTypeMimeType;
+};
+
+struct StreamExtensionModule {
+    ChildArray ModuleStreamProtocols, ModuleStreamCompressors, ModuleFileTypes, ModuleSerializers;
+};
+
 struct StreamProtocol {
     StringRef StreamProtocolIdentifier;
-    Entity StreamProtocolComponent;
     StreamSeekHandlerType StreamSeekHandler;
     StreamTellHandlerType StreamTellHandler;
     StreamReadHandlerType StreamReadHandler;
@@ -96,6 +66,37 @@ struct StreamCompressor {
     CompressHandlerType CompressHandler;
     DecompressHandlerType DecompressHandler;
 };
+
+Unit(Stream)
+    Component(Stream)
+        Property(StringRef, StreamPath)
+        Property(StringRef, StreamResolvedPath)
+        Property(Date, StreamLastWrite)
+        ReferenceProperty(Entity, StreamProtocol)
+        ReferenceProperty(Entity, StreamCompressor)
+        ReferenceProperty(Entity, StreamFileType)
+
+    Component(StreamProtocol)
+        Property(StringRef, StreamProtocolIdentifier)
+
+    Component(StreamCompressor)
+        Property(StringRef, StreamCompressorMimeType)
+
+    Component(FileType)
+        Property(StringRef, FileTypeExtension)
+        Property(StringRef, FileTypeMimeType)
+
+    Component(Serializer)
+        Property(StringRef, SerializerMimeType)
+
+    Component(StreamExtensionModule)
+        ArrayProperty(StreamProtocol, ModuleStreamProtocols)
+        ArrayProperty(StreamCompressor, ModuleStreamCompressors)
+        ArrayProperty(FileType, ModuleFileTypes)
+        ArrayProperty(Serializer, ModuleSerializers)
+
+    FileType(Bin)
+    StreamCompressor(Binary)
 
 #define StreamMode_Closed 0
 #define StreamMode_Read 1

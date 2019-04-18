@@ -10,8 +10,8 @@ BeginUnit(Entity)
     RegisterFunction(DestroyEntity)
 EndUnit()
 
-Vector<u32> Generations;
-Vector<u32> FreeSlots;
+eastl::vector<u32> Generations;
+eastl::vector<u32> FreeSlots;
 
 extern bool __IsCoreInitialized;
 

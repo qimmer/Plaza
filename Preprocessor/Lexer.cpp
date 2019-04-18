@@ -12,30 +12,27 @@ static bool Lex(Entity lexer, StringRef cppCode) {
 
     if (!generator.process(cppCode))
     {
-        SetNumLexerTokens(lexer, 0);
+        //SetNumLexerTokens(lexer, 0);
         return false;
     }
 
     if (!bc.process(generator))
     {
-        SetNumLexerTokens(lexer, 0);
+        //SetNumLexerTokens(lexer, 0);
         return false;
     }
 
-    SetNumLexerTokens(lexer, generator.size());
+    //SetNumLexerTokens(lexer, generator.size());
 
-    auto tokens = GetLexerTokens(lexer);
+    /*auto tokens = GetLexerTokens(lexer);
     for(auto i = 0; i < generator.size(); ++i) {
         auto& entry = generator[i];
 
         auto token = tokens[i];
-        SetLexerTokenStart(token, (u32)entry.position);
-        SetLexerTokenEnd(token, (u32)entry.position + (u32)entry.value.length());
-        SetLexerTokenType(token, entry.type);
-        SetLexerTokenValue(token, entry.value.c_str());
+        SetLexerToken(token, {(u32)entry.position, (u32)entry.position + (u32)entry.value.length(), (u8)entry.type, entry.value.c_str()});
     }
 
-    return true;
+    return true;*/
 }
 
 BeginUnit(Lexer)

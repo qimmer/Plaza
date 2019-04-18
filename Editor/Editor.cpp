@@ -10,7 +10,8 @@
 
 BeginUnit(Editor)
     BeginComponent(Editor)
-        RegisterChildProperty(MainFrame, EditorMainFrame)
+        BeginChildProperty(EditorMainFrame)
+    EndChildProperty()
     EndComponent()
 EndUnit()
 

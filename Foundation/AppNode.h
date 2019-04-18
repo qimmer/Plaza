@@ -7,6 +7,15 @@
 
 #include <Core/NativeUtils.h>
 
+struct AppRoot {
+    bool AppRootActive;
+};
+
+struct AppNode {
+    Entity AppNodeRoot;
+    ChildArray Children;
+};
+
 Unit(AppNode)
     Component(AppRoot)
         Property(bool, AppRootActive)

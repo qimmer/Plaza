@@ -3,7 +3,7 @@ project(Rest)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Rest RestModule.cpp RestModule.h RestEntityRouting.cpp RestEntityRouting.h RestResourceRouting.cpp RestResourceRouting.h RestRouting.cpp RestRouting.h RestServer.cpp RestServer.h RestFunctionRouting.cpp RestFunctionRouting.h)
+add_library(Rest RestModule.cpp RestModule.h RestEntityRouting.cpp RestEntityRouting.h RestResourceRouting.cpp RestResourceRouting.h)
 
 if(MSVC)
     target_sources(Rest PRIVATE Rest.def)

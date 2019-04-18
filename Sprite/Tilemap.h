@@ -12,9 +12,12 @@ struct Tile {
     Entity TileTemplate;
 };
 
-struct TileSet {};
+struct TileSet {
+    ChildArray TileSetTiles;
+};
 
 struct TileGrid {
+    ChildArray TileGridInstances;
     v2f TileGridSpacing;
     Entity TileGridSet, TileGridMap;
     float TileGridDepth;

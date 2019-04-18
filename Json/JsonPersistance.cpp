@@ -56,7 +56,7 @@ const StringRef jsonTypeNames[] = {
         if(READER.Is ## JSONREADFUNC ()) {\
             *(TYPE*)&value.data = READER.Get ## JSONREADFUNC ();\
         } else {\
-            Log(0, LogSeverity_Error, "Property '%s %s' could not be deserialized: Type is %s but %s was expected.", GetTypeName(GetPropertyType(property)), GetIdentification(property).Uuid, jsonTypeNames[READER.GetType()], #JSONREADFUNC);\
+            Log(0, LogSeverity_Error, "Property '%s %s' could not be deserialized: Type is %s but %s was expected.", GetTypeName(GetProperty(property).PropertyType), GetIdentification(property).Uuid, jsonTypeNames[READER.GetType()], #JSONREADFUNC);\
         }\
         break;
 
@@ -157,468 +157,7 @@ const StringRef jsonTypeNames[] = {
 
 
 static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, WriterType& writer, s16 includeChildLevels, s16 includeReferenceLevels, bool includePersistedChildren, bool includeNativeEntities);
-static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapidjson::Document& document, rapidjson::Value& reader);
 static Entity ResolveEntity(Entity stream, StringRef uuid, rapidjson::Document& document);
-
-static bool SerializeValue(JsonSettings *settings, Entity entity, Entity property, Entity root, WriterType& writer) {
-    Variant value = GetPropertyValue(property, entity);
-    auto type = GetPropertyType(property);
-
-	bool hasBindingData = false;
-	if (settings->JsonSettingsExplicitBindings) {
-		static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
-		auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
-
-		auto& bindings = GetBindingData(entity).Bindings;
-		auto& listeners = GetBindingData(entity).Listeners;
-		auto bindingIt = bindings.find(propertyIndex);
-		auto listenerIt = listeners.find(propertyIndex);
-
-		if (bindingIt != bindings.end()) {
-			hasBindingData = true;
-
-			writer.StartObject();
-			writer.String("Binding");
-			writer.String(GetBindingString(bindingIt->second));
-		}
-
-		if (listenerIt != listeners.end()) {
-			if (!hasBindingData) {
-				writer.StartObject();
-			}
-
-            hasBindingData = true;
-
-			writer.String("Listeners");
-			writer.StartArray();
-			for (auto& listener : listenerIt->second) {
-				writer.StartObject();
-				writer.String("BindingEntity");
-				writer.Uint64(listener.BindingEntity);
-				writer.String("IndirectionIndex");
-				writer.Uint64(listener.BindingIndirectionIndex);
-				writer.String("BindingTargetProperty");
-				writer.Uint64(listener.BindingTargetProperty);
-				writer.String("ListenerProperty");
-				writer.Uint64(listener.ListenerProperty);
-				writer.EndObject();
-			}
-			writer.EndArray();
-		}
-
-		if(hasBindingData) {
-            writer.String("Value");
-		}
-	}
-
-    if(type == TypeOf_Variant) {
-        writer.StartObject();
-        writer.String("type");
-        writer.String(GetTypeName(value.type));
-        writer.String("value");
-    }
-
-    if(type == TypeOf_double && !isfinite((double)value.as_double)) {
-        value.as_double = 0.0;
-    }
-
-    if(type == TypeOf_float && !isfinite((double)value.as_float)) {
-        value.as_float = 0.0f;
-    }
-
-    switch(value.type) {
-        WriteIf(u8, Uint)
-        WriteIf(u16, Uint)
-        WriteIf(u32, Uint)
-        WriteIf(u64, Uint64)
-        WriteIf(Date, Uint64)
-        WriteIf(s8, Int)
-        WriteIf(s16, Int)
-        WriteIf(s32, Int)
-        WriteIf(s64, Int64)
-        WriteIf(float, Double)
-        WriteIf(double, Double)
-        WriteIf(bool, Bool)
-        WriteVec2If(v2f, Double)
-        WriteVec3If(v3f, Double)
-        WriteVec4If(v4f, Double)
-        WriteVec2If(v2i, Int)
-        WriteVec3If(v3i, Int)
-        WriteVec4If(v4i, Int)
-        WriteVec4If(rgba32, Double)
-        WriteVec4If(rgba8, Int)
-        case TypeOf_StringRef:\
-            writer.String(value.as_StringRef ? value.as_StringRef : "");\
-            break;
-        case TypeOf_NativePtr:
-            writer.Uint64((u64)value.as_NativePtr);
-            break;
-        case TypeOf_Type:
-            writer.String(GetTypeName(value.as_Type));
-            break;
-        case TypeOf_Entity:
-        {
-            auto entity = value.as_Entity;
-            if(IsEntityValid(entity)) {
-                auto uuid = GetIdentification(entity).Uuid;
-                writer.String(uuid ? uuid : "");
-            } else {
-                writer.Null();
-            }
-        }
-
-            break;
-        default:
-            Log(entity, LogSeverity_Warning, "Unsupported type when serializing property '%s': %s", GetIdentification(property).Uuid, GetTypeName(value.type));
-            writer.Null();
-    }
-
-    if(type == TypeOf_Variant) {
-        writer.EndObject();
-    }
-
-	if (hasBindingData) {
-		writer.EndObject();
-	}
-
-    return true;
-}
-
-static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, StringRef parentProperty, WriterType& writer, u32 level) {
-    bool result = true;
-
-    // Only serialize if max child level has not been reached
-    if(!settings || level <= settings->JsonSettingsMaxRecursiveLevels) {
-		writer.StartObject();
-
-        if(!settings || settings->JsonSettingsExplicitComponents) {
-            writer.String("$components");
-            writer.StartArray();
-
-			for_entity(component, ComponentOf_Component()) {
-				if (!HasComponent(parent, component)) continue;
-
-				auto uuid = GetIdentification(component).Uuid;
-				writer.String(uuid ? uuid : "");
-			}
-            
-            writer.EndArray();
-        }
-
-        if(settings->JsonSettingsExplicitHandle) {
-            writer.String("$handle");
-			writer.StartObject();
-			writer.String("Handle");
-			writer.Uint64(parent);
-			writer.String("Index");
-			writer.Uint(GetEntityIndex(parent));
-			writer.String("Generation");
-			writer.Uint(GetEntityGeneration(parent));
-			writer.EndObject();
-        }
-
-        /*auto& bindingData = GetBindingData(parent);
-        if(bindingData.Bindings.size() && settings->JsonSettingsExplicitBindings) {
-            writer.String("$bindings");
-            writer.StartArray();
-            for(auto& binding : bindingData.Bindings) {
-                writer.StartObject();
-
-                writer.String("BindingTargetProperty");
-                auto uuid = GetUuid(binding.BindingTargetProperty);
-                writer.String(uuid ? uuid : "<None>");
-
-                writer.String("BindingSourceEntity");
-                uuid = GetUuid(binding.BindingSourceEntity);
-                writer.String(uuid ? uuid : "<None>");
-
-                writer.String("BindingIndirections");
-                writer.StartArray();
-                for(auto& indirection : binding.BindingIndirections) {
-                    writer.StartObject();
-
-                    writer.String("IndirectionProperty");
-                    uuid = GetUuid(indirection.IndirectionProperty);
-                    writer.String(uuid ? uuid : "<None>");
-
-                    writer.String("ListenerEntity");
-                    uuid = GetUuid(indirection.ListenerEntity);
-                    writer.String(uuid ? uuid : "<None>");
-
-                    writer.EndObject();
-                }
-                writer.EndArray();
-
-                writer.EndObject();
-            }
-            writer.EndArray();
-        }
-
-        if(bindingData.Listeners.size() && settings->JsonSettingsExplicitBindings) {
-            writer.String("$bindingListeners");
-            writer.StartArray();
-            for(auto& listener : bindingData.Listeners) {
-                writer.StartObject();
-
-                writer.String("BindingTargetProperty");
-                auto uuid = GetUuid(listener.BindingTargetProperty);
-                writer.String(uuid ? uuid : "<None>");
-
-                writer.String("ListenerProperty");
-                uuid = GetUuid(listener.ListenerProperty);
-                writer.String(uuid ? uuid : "<None>");
-
-                writer.String("BindingEntity");
-                uuid = GetUuid(listener.BindingEntity);
-                writer.String(uuid ? uuid : "<None>");
-
-                writer.String("BindingIndirectionIndex");
-                writer.Uint(listener.BindingIndirectionIndex);
-
-                writer.EndObject();
-            }
-            writer.EndArray();
-        }*/
-
-		for_entity(component, ComponentOf_Component()) {
-			if (!HasComponent(parent, component)) continue;
-
-            auto properties = GetProperties(component);
-            for(auto pi = 0; pi < properties.size(); ++pi) {
-                auto property = properties[pi];
-
-                StringRef uuid = GetIdentification(property).Uuid;
-                StringRef name = strrchr(uuid, '.');
-                name = name ? (name + 1) : uuid;
-
-                auto kind = GetPropertyKind(property);
-
-                auto binding = GetBinding(parent, property);
-                if(binding && kind == PropertyKind_Value && (!settings || !settings->JsonSettingsResolveBindings)) {
-                    auto bindingString = GetBindingString(*binding);
-                    writer.String(name);
-                    writer.String(bindingString);
-                    continue;
-                }
-
-                if(GetPropertyReadOnly(property) && settings && settings->JsonSettingsIgnoreReadOnly) {
-                    continue;
-                }
-
-                switch(kind) {
-                    case PropertyKind_Value:
-                        writer.String(name);
-
-                        result &= SerializeValue(settings, parent, property, root, writer);
-
-                        break;
-                    case PropertyKind_Child:
-                    {
-                        Entity child = GetPropertyValue(property, parent).as_Entity;
-                        if(IsEntityValid(child)) {
-                            writer.String(name);
-                            result &= SerializeNode(settings, child, root, name, writer, level + 1);
-                        }
-                    }
-                        break;
-                    case PropertyKind_Array:
-                    {
-                        writer.String(name);
-
-                        if(binding && (!settings || !settings->JsonSettingsResolveBindings)) {
-                            auto bindingString = GetBindingString(*binding);
-                            writer.String(bindingString);
-                            break;
-                        }
-
-                        auto count = GetArrayPropertyCount(property, parent);
-                        writer.StartArray();
-
-                        for(auto i = 0; i < count; ++i) {
-                            auto child = GetArrayPropertyElement(property, parent, i);
-                            if(IsEntityValid(child)) {
-                                result &= SerializeNode(settings, child, root, name, writer, level + 1);
-                            } else {
-                                writer.Null();
-                            }
-
-                        }
-                        writer.EndArray();
-                    }
-                        break;
-                    default:
-                        Log(property, LogSeverity_Error, "Unknown property kind: %d", GetPropertyKind(property));
-                        break;
-                }
-            }
-        }
-
-        writer.EndObject();
-    } else {
-        writer.String(GetIdentification(parent).Uuid);
-    }
-
-    return result;
-}
-
-static StringRef GetJsonTypeName(const rapidjson::Value& value) {
-    StringRef jsonType = NULL;
-    switch(value.GetType()) {
-        case rapidjson::kNullType:      //!< null
-            jsonType = "Null";
-            break;
-        case rapidjson::kFalseType:     //!< false
-            jsonType = "False";
-            break;
-        case rapidjson::kTrueType:      //!< true
-            jsonType = "True";
-            break;
-        case rapidjson::kObjectType:    //!< object
-            jsonType = "Object";
-            break;
-        case rapidjson::kArrayType:     //!< array
-            jsonType = "Array";
-            break;
-        case rapidjson::kStringType:    //!< string
-            jsonType = "String";
-            break;
-        case rapidjson::kNumberType:     //!< number
-            jsonType = "Number";
-            break;
-        default:
-            jsonType = "Unknown";
-            break;
-    }
-    return jsonType;
-}
-
-static bool DeserializeEntity(Entity stream, Entity entity, rapidjson::Value& value, rapidjson::Document& document) {
-    auto components = value.FindMember("$components");
-    if(components != value.MemberEnd() && components->value.IsArray()) {
-        for(auto arrayIt = components->value.Begin(); arrayIt != components->value.End(); ++arrayIt) {
-            if(arrayIt->IsString()) {
-                auto componentUuid = arrayIt->GetString();
-
-                auto component = FindEntityByUuid(componentUuid);
-
-                if(!IsEntityValid(component)) {
-                    Log(0, LogSeverity_Warning, "Unknown component in JSON: %s", componentUuid);
-                } else {
-                    AddComponent(entity, component);
-                }
-            }
-        }
-    }
-
-    auto include = value.FindMember("$include");
-    if(include != value.MemberEnd() && include->value.IsString()) {
-        auto filePath = include->value.GetString();
-
-        SetStreamPath(entity, filePath);
-        SetPersistancePointLoaded(entity, true);
-    }
-
-    // Add all required components
-    for (auto propertyIterator = value.MemberBegin();
-         propertyIterator != value.MemberEnd(); ++propertyIterator) {
-        auto propertyUuid = Intern(propertyIterator->name.GetString());
-
-        if (propertyUuid[0] == '$') {
-            continue;
-        }
-
-        if (!strchr(propertyUuid, '.')) {
-            auto newUuid = (char *) alloca(strlen("Property.") + propertyIterator->name.GetStringLength() + 1);
-            sprintf(newUuid, "Property.%s", propertyIterator->name.GetString());
-            propertyUuid = newUuid;
-        }
-
-        auto property = FindEntityByUuid(propertyUuid);
-
-        if (!HasComponent(property, ComponentOf_Property())) {
-            Log(0, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetDebugName(entity),
-                propertyUuid);
-            continue;
-        }
-
-        if (property == PropertyOf_Owner() || GetPropertyReadOnly(property)) continue;
-
-        auto component = GetOwnership(property).Owner;
-        AddComponent(entity, component);
-    }
-
-    // Deserialize property values
-    for (auto propertyIterator = value.MemberBegin();
-         propertyIterator != value.MemberEnd(); ++propertyIterator)
-    {
-        auto propertyUuid = Intern(propertyIterator->name.GetString());
-
-        if (propertyUuid[0] == '$') {
-            continue;
-        }
-
-        if(!strchr(propertyUuid, '.')) {
-            auto newUuid = (char*)alloca(strlen("Property.") + propertyIterator->name.GetStringLength() + 1);
-            sprintf(newUuid, "Property.%s", propertyIterator->name.GetString());
-            propertyUuid = newUuid;
-        }
-
-        auto property = FindEntityByUuid(propertyUuid);
-
-        if(!HasComponent(property, ComponentOf_Property())) {
-            Log(0, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetDebugName(entity), propertyUuid);
-            continue;
-        }
-
-        if(property == PropertyOf_Owner() || GetPropertyReadOnly(property)) continue;
-
-        auto component = GetOwnership(property).Owner;
-        auto propertyKind = GetPropertyKind(property);
-
-        auto& reader = propertyIterator->value;
-
-        AddComponent(entity, component);
-        switch(propertyKind) {
-            case PropertyKind_Value:
-                DeserializeValue(stream, entity, property, document, reader);
-                break;
-            case PropertyKind_Child:
-                if(!reader.IsObject()) {
-                    Log(0, LogSeverity_Error, "Json value for child property %s is not an object, but a %s. Skipping this node.", GetIdentification(property).Uuid, GetJsonTypeName(reader));
-                    break;
-                }
-                DeserializeEntity(stream, GetPropertyValue(property, entity).as_Entity, reader, document);
-                break;
-            case PropertyKind_Array:
-                if(!reader.IsArray()) {
-                    Log(entity, LogSeverity_Error, "Property %s is an array property, but JSON value is %s. Skipping this property", GetIdentification(property).Uuid, GetJsonTypeName(reader));
-                    continue;
-                }
-
-                auto count = reader.Size();
-
-                for(auto i = 0; i < count; ++i) {
-                    auto index = AddArrayPropertyElement(property, entity);
-                    Entity child = GetArrayPropertyElement(property, entity, index);
-                    DeserializeEntity(stream, child, reader[i], document);
-                }
-                break;
-        }
-    }
-
-    return true;
-}
-
-static bool ParseBinding(Entity stream, StringRef bindingString, Entity parent, Entity parentProperty, rapidjson::Document& document) {
-    auto len = strlen(bindingString);
-    if(bindingString[0] != '{' || bindingString[len - 1] != '}') return false;
-
-    char *bindingWithoutCurlyBraces = (char*)alloca(len - 1);
-    memcpy(bindingWithoutCurlyBraces, bindingString + 1, len - 2);
-    bindingWithoutCurlyBraces[len - 2] = '\0';
-
-    return BindByString(parent, parentProperty, bindingWithoutCurlyBraces);
-}
 
 static Type GetVariantType(const rapidjson::Value& value) {
     switch(value.GetType()) {
@@ -673,49 +212,176 @@ static Type GetVariantType(const rapidjson::Value& value) {
     return TypeOf_unknown;
 }
 
-static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapidjson::Document& document, rapidjson::Value& reader) {
-    auto type = GetPropertyType(property);
+static bool SerializeValue(JsonSettings *settings, Entity entity, Entity property, WriterType& writer) {
+    Variant value = GetPropertyValue(property, entity);
+    auto propertyData = GetProperty(property);
+
+	bool hasBindingData = false;
+	if (settings->JsonSettingsExplicitBindings) {
+		static auto propertyInfoIndex = GetComponentIndex(ComponentOf_Component(), ComponentOf_Property());
+		auto propertyIndex = GetComponentIndexByIndex(propertyInfoIndex, property);
+
+		auto& bindings = GetBindingData(entity).Bindings;
+		auto& listeners = GetBindingData(entity).Listeners;
+		auto bindingIt = bindings.find(propertyIndex);
+		auto listenerIt = listeners.find(propertyIndex);
+
+		if (bindingIt != bindings.end()) {
+			hasBindingData = true;
+
+			writer.StartObject();
+			writer.String("Binding");
+			writer.String(GetBindingString(bindingIt->second));
+		}
+
+		if (listenerIt != listeners.end()) {
+			if (!hasBindingData) {
+				writer.StartObject();
+			}
+
+            hasBindingData = true;
+
+			writer.String("Listeners");
+			writer.StartArray();
+			for (auto& listener : listenerIt->second) {
+				writer.StartObject();
+				writer.String("BindingEntity");
+				writer.Uint64(listener.BindingEntity);
+				writer.String("IndirectionIndex");
+				writer.Uint64(listener.BindingIndirectionIndex);
+				writer.String("BindingTargetProperty");
+				writer.Uint64(listener.BindingTargetProperty);
+				writer.String("ListenerProperty");
+				writer.Uint64(listener.ListenerProperty);
+				writer.EndObject();
+			}
+			writer.EndArray();
+		}
+
+		if(hasBindingData) {
+            writer.String("Value");
+		}
+	}
+
+    if(propertyData.PropertyType == TypeOf_Variant) {
+        writer.StartObject();
+        writer.String("type");
+        writer.String(GetTypeName(value.type));
+        writer.String("value");
+    }
+
+    if(propertyData.PropertyType == TypeOf_double && !isfinite((double)value.as_double)) {
+        value.as_double = 0.0;
+    }
+
+    if(propertyData.PropertyType == TypeOf_float && !isfinite((double)value.as_float)) {
+        value.as_float = 0.0f;
+    }
+
+    switch(value.type) {
+        WriteIf(u8, Uint)
+        WriteIf(u16, Uint)
+        WriteIf(u32, Uint)
+        WriteIf(u64, Uint64)
+        WriteIf(Date, Uint64)
+        WriteIf(s8, Int)
+        WriteIf(s16, Int)
+        WriteIf(s32, Int)
+        WriteIf(s64, Int64)
+        WriteIf(float, Double)
+        WriteIf(double, Double)
+        WriteIf(bool, Bool)
+        WriteVec2If(v2f, Double)
+        WriteVec3If(v3f, Double)
+        WriteVec4If(v4f, Double)
+        WriteVec2If(v2i, Int)
+        WriteVec3If(v3i, Int)
+        WriteVec4If(v4i, Int)
+        WriteVec4If(rgba32, Double)
+        WriteVec4If(rgba8, Int)
+        case TypeOf_StringRef:\
+            writer.String(value.as_StringRef ? value.as_StringRef : "");\
+            break;
+        case TypeOf_NativePtr:
+            writer.Uint64((u64)value.as_NativePtr);
+            break;
+        case TypeOf_Type:
+            writer.String(GetTypeName(value.as_Type));
+            break;
+        case TypeOf_Entity:
+        {
+            auto entity = value.as_Entity;
+            if(IsEntityValid(entity)) {
+                auto uuid = GetIdentification(entity).Uuid;
+                writer.String(uuid ? uuid : "");
+            } else {
+                writer.Null();
+            }
+        }
+
+            break;
+        default:
+            Log(entity, LogSeverity_Warning, "Unsupported type when serializing property '%s': %s", GetIdentification(property).Uuid, GetTypeName(value.type));
+            writer.Null();
+    }
+
+    if(propertyData.PropertyType == TypeOf_Variant) {
+        writer.EndObject();
+    }
+
+	if (hasBindingData) {
+		writer.EndObject();
+	}
+
+    return true;
+}
+
+static bool DeserializeValue(Entity entity, Entity property, rapidjson::Document& document, rapidjson::Value& reader) {
+    auto propertyData = GetProperty(property);
+    auto type = propertyData.PropertyType;
     auto jsonType = reader.GetType();
     auto typeName = GetTypeName(type);
 
-    auto enu = GetPropertyEnum(property);
+    auto enu = propertyData.PropertyEnum;
     if(enu && reader.GetType() == rapidjson::kStringType) {
         auto flagString = reader.GetString();
-        auto& flags = GetEnumFlags(enu);
+
+        auto enumData = GetEnum(enu);
+
         u64 value = 0;
-        for(auto i = 0; i < flags.size(); ++i) {
-            auto flagName = strrchr(GetUuid(flags[i]), '.') + 1;
+        for(auto flag : enumData.EnumFlags) {
+            auto flagName = strrchr(GetIdentification(flag).Uuid, '.') + 1;
             auto foundStr = strstr(flagString, flagName);
             if(foundStr) {
                 auto endChar = *(foundStr + strlen(flagName));
                 if(endChar == '\0' || endChar == '|') {
-                    value |= GetEnumFlagValue(flags[i]);
+                    value |= GetEnumFlag(flag).EnumFlagValue;
                 }
             }
         }
 
-        SetPropertyValue(property, parent, __MakeVariant(&value, type));
+        SetPropertyValue(property, entity, __MakeVariant(&value, type));
         return true;
     }
 
-    if(reader.IsString() && ParseBinding(stream, reader.GetString(), parent, property, document)) {
+    if(reader.IsString() && BindByString(entity, property, reader.GetString())) {
         return true;
     }
 
     Variant value;
     rapidjson::Value::MemberIterator variantValueIt;
     auto isVariant = false;
-    if(type == TypeOf_Variant) {
+    if(propertyData.PropertyType == TypeOf_Variant) {
         if(reader.IsObject()) {
             isVariant = true;
 
             if(!reader.GetObject().HasMember("type")) {
-                Error(parent, "Error parsing variant %s for %s. Variant object is missing 'type' field.", GetIdentification(property).Uuid, GetIdentification(parent).Uuid);
+                Error(entity, "Error parsing variant %s for %s. Variant object is missing 'type' field.", GetIdentification(property).Uuid, GetIdentification(entity).Uuid);
                 return false;
             }
 
             if(!reader.GetObject().HasMember("value")) {
-                Error(parent, "Error parsing variant %s for %s. Variant object is missing 'value' field.", GetIdentification(property).Uuid, GetIdentification(parent).Uuid);
+                Error(entity, "Error parsing variant %s for %s. Variant object is missing 'value' field.", GetIdentification(property).Uuid, GetIdentification(entity).Uuid);
                 return false;
             }
 
@@ -754,7 +420,7 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
         ReadVec4If(rgba8, Int, jsonValue)
         case TypeOf_Type:
             if(!jsonValue.IsString()) {
-                Log(parent, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's type name.", GetIdentification(property).Uuid);
+                Log(entity, LogSeverity_Error, "Error parsing property '%s': Types should be noted by it's type name.", GetIdentification(property).Uuid);
                 break;
             }
             value.as_Type = FindType(jsonValue.GetString());
@@ -765,7 +431,7 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
                 value.as_Entity = 0;
                 break;
             } else if(!jsonValue.IsString()) {
-                Log(parent, LogSeverity_Error, "Error parsing property '%s': Entity references should be noted by Uuid.", GetIdentification(property).Uuid);
+                Log(entity, LogSeverity_Error, "Error parsing property '%s': Entity references should be noted by Uuid.", GetIdentification(property).Uuid);
                 break;
             }
 
@@ -777,20 +443,299 @@ static bool DeserializeValue(Entity stream, Entity parent, Entity property, rapi
             value.as_Entity = entity;
             if(!IsEntityValid(entity)) {
                 // If not found, mark it as unresolved and set it when the referenced entity is loaded
-                auto unresolvedReference = AddUnresolvedReferences(parent);
-                Assert(parent, IsEntityValid(parent));
-                SetUnresolvedReferenceProperty(unresolvedReference, property);
-                SetUnresolvedReferenceUuid(unresolvedReference, id);
+                auto unresolvedReference = CreateEntity();
+                Assert(entity, IsEntityValid(entity));
+                auto unresolvedEntityData = GetUnresolvedEntity(entity);
+                unresolvedEntityData.UnresolvedReferences.Add(unresolvedReference);
+                SetUnresolvedEntity(entity, unresolvedEntityData);
+                SetUnresolvedReference(unresolvedReference, {property, id});
             }
         }
             break;
         default:
-            Log(parent, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetIdentification(property).Uuid, typeName);
+            Log(entity, LogSeverity_Error, "Unsupported type when deserializing property '%s': %s", GetIdentification(property).Uuid, typeName);
             return false;
             break;
     }
 
-    SetPropertyValue(property, parent, value);
+    SetPropertyValue(property, entity, value);
+
+    return true;
+}
+
+static bool SerializeNode(JsonSettings *settings, Entity parent, Entity root, StringRef parentProperty, WriterType& writer, u32 level) {
+    bool result = true;
+
+    // Only serialize if max child level has not been reached
+    if(!settings || level <= settings->JsonSettingsMaxRecursiveLevels) {
+		writer.StartObject();
+
+        if(!settings || settings->JsonSettingsExplicitComponents) {
+            writer.String("$components");
+            writer.StartArray();
+
+			for_entity(component, ComponentOf_Component()) {
+				if (!HasComponent(parent, component)) continue;
+
+				auto uuid = GetIdentification(component).Uuid;
+				writer.String(uuid ? uuid : "");
+			}
+            
+            writer.EndArray();
+        }
+
+        if(settings->JsonSettingsExplicitHandle) {
+            writer.String("$handle");
+			writer.StartObject();
+			writer.String("Handle");
+			writer.Uint64(parent);
+			writer.String("Index");
+			writer.Uint(GetEntityIndex(parent));
+			writer.String("Generation");
+			writer.Uint(GetEntityGeneration(parent));
+			writer.EndObject();
+        }
+
+        Component componentData;
+		for_entity_data(component, ComponentOf_Component(), &componentData) {
+			if (!HasComponent(parent, component)) continue;
+
+            for(auto property : componentData.Properties) {
+                auto propertyData = GetProperty(property);
+
+                StringRef uuid = GetIdentification(property).Uuid;
+                StringRef name = strrchr(uuid, '.');
+                name = name ? (name + 1) : uuid;
+
+                auto binding = GetBinding(parent, property);
+                if(binding && propertyData.PropertyType == TypeOf_ChildArray && (!settings || !settings->JsonSettingsResolveBindings)) {
+                    auto bindingString = GetBindingString(*binding);
+                    writer.String(name);
+                    writer.String(bindingString);
+                    continue;
+                }
+
+                if(propertyData.PropertyReadOnly && settings && settings->JsonSettingsIgnoreReadOnly) {
+                    continue;
+                }
+
+                writer.String(name);
+
+                switch(propertyData.PropertyType) {
+                    case TypeOf_ChildArray:
+                    {
+                        if(binding && (!settings || !settings->JsonSettingsResolveBindings)) {
+                            auto bindingString = GetBindingString(*binding);
+                            writer.String(bindingString);
+                            break;
+                        }
+
+                        auto array = GetPropertyValue(property, parent).as_ChildArray;
+
+                        writer.StartArray();
+
+                        for(auto child : array) {
+                            if(IsEntityValid(child)) {
+                                result &= SerializeNode(settings, child, root, name, writer, level + 1);
+                            } else {
+                                writer.Null();
+                            }
+
+                        }
+                        writer.EndArray();
+
+                        break;
+                    }
+                    case TypeOf_Entity:
+                    {
+                        auto child = GetPropertyValue(property, parent).as_Entity;
+                        auto ownershipData = GetOwnership(child);
+                        if(ownershipData.Owner == parent && ownershipData.OwnerProperty == property) {
+                            result &= SerializeNode(settings, child, root, name, writer, level + 1);
+                            break;
+                        }
+                    }
+                    default:
+                    {
+                        result &= SerializeValue(settings, parent, property, writer);
+                        break;
+                    }
+                }
+            }
+        }
+
+        writer.EndObject();
+    } else {
+        writer.String(GetIdentification(parent).Uuid);
+    }
+
+    return result;
+}
+
+static StringRef GetJsonTypeName(const rapidjson::Value& value) {
+    StringRef jsonType = NULL;
+    switch(value.GetType()) {
+        case rapidjson::kNullType:      //!< null
+            jsonType = "Null";
+            break;
+        case rapidjson::kFalseType:     //!< false
+            jsonType = "False";
+            break;
+        case rapidjson::kTrueType:      //!< true
+            jsonType = "True";
+            break;
+        case rapidjson::kObjectType:    //!< object
+            jsonType = "Object";
+            break;
+        case rapidjson::kArrayType:     //!< array
+            jsonType = "Array";
+            break;
+        case rapidjson::kStringType:    //!< string
+            jsonType = "String";
+            break;
+        case rapidjson::kNumberType:     //!< number
+            jsonType = "Number";
+            break;
+        default:
+            jsonType = "Unknown";
+            break;
+    }
+    return jsonType;
+}
+
+static bool DeserializeEntity(Entity entity, rapidjson::Value& value, rapidjson::Document& document) {
+    auto components = value.FindMember("$components");
+    if(components != value.MemberEnd() && components->value.IsArray()) {
+        for(auto arrayIt = components->value.Begin(); arrayIt != components->value.End(); ++arrayIt) {
+            if(arrayIt->IsString()) {
+                auto componentUuid = arrayIt->GetString();
+
+                auto component = FindEntityByUuid(componentUuid);
+
+                if(!IsEntityValid(component)) {
+                    Log(0, LogSeverity_Warning, "Unknown component in JSON: %s", componentUuid);
+                } else {
+                    AddComponent(entity, component);
+                }
+            }
+        }
+    }
+
+    auto include = value.FindMember("$include");
+    if(include != value.MemberEnd() && include->value.IsString()) {
+        auto filePath = include->value.GetString();
+
+        auto streamData = GetStream(entity);
+        streamData.StreamPath = filePath;
+        SetStream(entity, streamData);
+
+        auto persistData = GetPersistancePoint(entity);
+        persistData.PersistancePointLoaded = true;
+        SetPersistancePoint(entity, persistData);
+    }
+
+    // Add all required components
+    for (auto propertyIterator = value.MemberBegin();
+         propertyIterator != value.MemberEnd(); ++propertyIterator) {
+        auto propertyUuid = Intern(propertyIterator->name.GetString());
+
+        if (propertyUuid[0] == '$') {
+            continue;
+        }
+
+        if (!strchr(propertyUuid, '.')) {
+            auto newUuid = (char *) alloca(strlen("Property.") + propertyIterator->name.GetStringLength() + 1);
+            sprintf(newUuid, "Property.%s", propertyIterator->name.GetString());
+            propertyUuid = newUuid;
+        }
+
+        auto property = FindEntityByUuid(propertyUuid);
+
+        if (!HasComponent(property, ComponentOf_Property())) {
+            Log(0, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetDebugName(entity),
+                propertyUuid);
+            continue;
+        }
+
+        if (property == PropertyOf_Owner() || GetProperty(property).PropertyReadOnly) continue;
+
+        auto component = GetOwnership(property).Owner;
+        AddComponent(entity, component);
+    }
+
+    // Deserialize property values
+    for (auto propertyIterator = value.MemberBegin();
+         propertyIterator != value.MemberEnd(); ++propertyIterator)
+    {
+        auto propertyUuid = Intern(propertyIterator->name.GetString());
+
+        if (propertyUuid[0] == '$') {
+            continue;
+        }
+
+        if(!strchr(propertyUuid, '.')) {
+            auto newUuid = (char*)alloca(strlen("Property.") + propertyIterator->name.GetStringLength() + 1);
+            sprintf(newUuid, "Property.%s", propertyIterator->name.GetString());
+            propertyUuid = newUuid;
+        }
+
+        auto property = FindEntityByUuid(propertyUuid);
+
+        if(!HasComponent(property, ComponentOf_Property())) {
+            Log(0, LogSeverity_Warning, "Unknown property when deserializing '%s': %s", GetDebugName(entity), propertyUuid);
+            continue;
+        }
+
+        auto propertyData = GetProperty(property);
+        if(property == PropertyOf_Owner() || propertyData.PropertyReadOnly) continue;
+
+        auto component = GetOwnership(property).Owner;
+
+        auto& reader = propertyIterator->value;
+
+        AddComponent(entity, component);
+
+        if(propertyData.PropertyType == TypeOf_ChildArray) {
+            if(!reader.IsArray()) {
+                Log(entity, LogSeverity_Error, "Property %s is an array property, but JSON value is %s. Skipping this property", GetIdentification(property).Uuid, GetJsonTypeName(reader));
+                continue;
+            }
+
+            auto count = reader.Size();
+            auto array = GetPropertyValue(property, entity);
+
+            for(u32 i = 0; i < count; ++i) {
+                Entity child = 0;
+                if(reader[i].IsObject()) {
+                    child = CreateEntity();
+                    SetOwnership(child, {entity, property});
+                    DeserializeEntity(child, reader[i], document);
+
+                    array.as_ChildArray.Add(child);
+                } else {
+                    auto uuid = reader[i].IsString() ? reader[i].GetString() : "";
+                    child = FindEntityByUuid(uuid);
+
+                    if(!IsEntityValid(child)) {
+                        // If not found, mark it as unresolved and set it when the referenced entity is loaded
+                        auto unresolvedReference = CreateEntity();
+                        auto addedIndex = array.as_ChildArray.Add(child);
+                        SetUnresolvedReference(unresolvedReference, {property, uuid, addedIndex});
+                        auto unresolvedEntityData = GetUnresolvedEntity(entity);
+                        unresolvedEntityData.UnresolvedReferences.Add(unresolvedReference);
+                        SetUnresolvedEntity(entity, unresolvedEntityData);
+                    } else {
+                        array.as_ChildArray.Add(child);
+                    }
+                }
+            }
+            break;
+        } else if(propertyData.PropertyType == TypeOf_Entity && reader.IsObject()) {
+            DeserializeEntity(GetPropertyValue(property, entity).as_Entity, reader, document);
+        } else {
+            DeserializeValue(entity, property, document, reader);
+        }
+    }
 
     return true;
 }
@@ -811,7 +756,7 @@ API_EXPORT bool DeserializeJsonFromString(Entity stream, Entity entity, StringRe
     }
 
     serializationLevel++;
-    DeserializeEntity(stream, entity, document, document);
+    DeserializeEntity(entity, document, document);
     serializationLevel--;
 
     ResolveReferences();
@@ -823,7 +768,8 @@ API_EXPORT bool SerializeJson(Entity stream, Entity entity, Entity jsonSettings)
     rapidjson::StringBuffer buffer;
     WriterType writer(buffer);
 
-    auto result = SerializeNode(GetJsonSettingsData(jsonSettings), entity, entity, "", writer, 0);
+    auto jsonSettingsData = GetJsonSettings(jsonSettings);
+    auto result = SerializeNode(&jsonSettingsData, entity, entity, "", writer, 0);
 
     writer.Flush();
 
@@ -851,7 +797,7 @@ API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
     auto startOffset = 0;
     if(!streamWasOpen) {
         if(!StreamOpen(stream, StreamMode_Read)) {
-            Log(stream, LogSeverity_Error, "Could not open stream '%s' for deserialization.", GetStreamPath(stream));
+            Log(stream, LogSeverity_Error, "Could not open stream '%s' for deserialization.", GetStream(stream).StreamPath);
             return false;
         }
     } else {
@@ -884,7 +830,7 @@ API_EXPORT bool DeserializeJson(Entity stream, Entity entity) {
     }
 
     serializationLevel++;
-    DeserializeEntity(stream, entity, document, document);
+    DeserializeEntity(entity, document, document);
     serializationLevel--;
 
     free(data);
@@ -912,7 +858,7 @@ BeginUnit(JsonPersistance)
         RegisterProperty(bool, JsonSettingsExplicitHandle)
     EndComponent()
 
-    RegisterSerializer(JsonSerializer, "application/json")
+    RegisterSerializer(Json, "application/json")
 
 	ModuleData(
 		{

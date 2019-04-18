@@ -5,14 +5,18 @@
 #ifndef PLAZA_VIRTUALPATH_H
 #define PLAZA_VIRTUALPATH_H
 
-
 #include <Core/Entity.h>
+
+struct VirtualPath {
+    StringRef VirtualPathTrigger;
+    StringRef VirtualPathDestination;
+};
 
 Unit(VirtualPath)
     Component(VirtualPath)
         Property(StringRef, VirtualPathTrigger)
         Property(StringRef, VirtualPathDestination)
 
-void ResolveVirtualPath(StringRef virtualPath, u32 bufferLength, char *resolvedPath);
+StringRef ResolveVirtualPath(StringRef virtualPath);
 
 #endif //PLAZA_VIRTUALPATH_H

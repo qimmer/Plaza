@@ -55,5 +55,5 @@ BeginUnit(StdStream)
         RegisterBase(Stream)
     EndComponent()
 
-    RegisterStreamProtocol(StdStream, "std")
+    RegisterStreamProtocol(Std, "std")
 EndComponent()

@@ -18,99 +18,99 @@
 
 static void SyncBatches(Entity commandList) {
     auto sceneRenderer = GetOwnership(commandList).Owner;
-    auto scene = GetSceneRendererScene(sceneRenderer);
+    auto scene = GetSceneRenderer(sceneRenderer).SceneRendererScene;
+    auto pass = GetCommandList(commandList).CommandListPass;
+    auto shaderCache = GetRenderPass(pass).RenderPassShaderCache;
+    auto commandListData = GetCommandList(commandList);
 
-    u32 numExisting = GetCommandListBatches(commandList).size();
-    
     u32 numBatches = 0;
-    {
-        for_entity(renderable, ComponentOf_Renderable()) {
-            if(GetSceneNodeScene(renderable) != scene) continue;
+    for_entity(renderable, ComponentOf_Renderable()) {
+        if(GetSceneNode(renderable).SceneNodeScene != scene) continue;
 
-            numBatches++;
-        }
+        numBatches++;
     }
 
-    SetArrayPropertyCount(PropertyOf_CommandListBatches(), commandList, numBatches);
+    commandListData.CommandListBatches.SetSize(numBatches);
 
-    auto& batches = GetCommandListBatches(commandList);
-    {
-        auto i = 0;
-        for_entity(renderable, ComponentOf_Renderable()) {
-            if(GetSceneNodeScene(renderable) != scene) continue;
+    auto i = 0;
+    Renderable renderableData;
+    for_entity_data(renderable, ComponentOf_Renderable(), &renderableData) {
+        if(GetSceneNode(renderable).SceneNodeScene != scene) continue;
 
-            SetBatchRenderable(batches[i], renderable);
-
-            i++;
+        if(!commandListData.CommandListBatches[i]) {
+            commandListData.CommandListBatches[i] = CreateEntity();
         }
-    }
 
+        auto batchData = GetBatch(commandListData.CommandListBatches[i]);
+        batchData.BatchRenderable = renderable;
+        batchData.BatchBinaryProgram = GetShaderCacheBinaryProgram(shaderCache, GetMaterial(renderableData.RenderableMaterial).MaterialProgram);
+        SetBatch(commandListData.CommandListBatches[i], batchData);
+
+        i++;
+    }
 }
 
 static void SyncCommandLists(Entity sceneRenderer) {
-    auto renderPath = GetSceneRendererPath(sceneRenderer);
-    auto renderPathData = GetRenderPathData(renderPath);
+    auto sceneRendererData = GetSceneRenderer(sceneRenderer);
+    auto pathData = GetRenderPath(sceneRendererData.SceneRendererPath);
 
-    if(!renderPathData) return;
+    sceneRendererData.SceneRendererCommandLists.SetSize(pathData.RenderPathPasses.GetSize());
 
-    auto& renderPasses = GetRenderPathPasses(renderPath);
+    for(auto i = 0; i < pathData.RenderPathPasses.GetSize(); ++i) {
+        if(!sceneRendererData.SceneRendererCommandLists[i]) {
+            sceneRendererData.SceneRendererCommandLists[i] = CreateEntity();
+        }
+        auto commandListData = GetCommandList(sceneRendererData.SceneRendererCommandLists[i]);
+        commandListData.CommandListPass = pathData.RenderPathPasses[i];
+        SetCommandList(sceneRendererData.SceneRendererCommandLists[i], commandListData);
 
-    SetArrayPropertyCount(PropertyOf_SceneRendererCommandLists(), sceneRenderer, renderPasses.size());
-    auto& commandLists = GetSceneRendererCommandLists(sceneRenderer);
-    for(auto i = 0; i < renderPasses.size(); ++i) {
-        SetCommandListPass(commandLists[i], renderPasses[i]);
-
-        SyncBatches(commandLists[i]);
+        SyncBatches(sceneRendererData.SceneRendererCommandLists[i]);
     }
+
+    SetSceneRenderer(sceneRenderer, sceneRendererData);
 }
 
-LocalFunction(OnBatchRenderableChanged, void, Entity batch, Entity oldRenderable, Entity newRenderable) {
-    auto commandList = GetOwnership(batch).Owner;
-    auto pass = GetCommandListPass(commandList);
-    auto shaderCache = GetRenderPassShaderCache(pass);
-    auto material = GetRenderableMaterial(newRenderable);
+static void OnRenderableChanged(Entity renderable, const Renderable& oldData, const Renderable& newData) {
+    if(oldData.RenderableMaterial != newData.RenderableMaterial) {
+        Batch batchData;
+        for_entity_data(batch, ComponentOf_Batch(), &batchData) {
+            if(batchData.BatchRenderable == renderable) {
+                auto commandList = GetOwnership(batch).Owner;
+                auto pass = GetCommandList(commandList).CommandListPass;
+                auto shaderCache = GetRenderPass(pass).RenderPassShaderCache;
 
-    if(!HasComponent(material, ComponentOf_Material())) return;
-
-    SetBatchBinaryProgram(batch, GetShaderCacheBinaryProgram(shaderCache, GetMaterialProgram(material)));
-}
-
-LocalFunction(OnRenderableMaterialChanged, void, Entity renderable, Entity oldMaterial, Entity newMaterial) {
-    for_entity(batch, ComponentOf_Batch()) {
-        if(data->BatchRenderable == renderable) {
-            OnBatchRenderableChanged(batch, renderable, renderable);
+                batchData.BatchBinaryProgram = GetShaderCacheBinaryProgram(shaderCache, GetMaterial(newData.RenderableMaterial).MaterialProgram);
+                SetBatch(batch, batchData);
+            }
         }
     }
 }
 
-LocalFunction(OnMaterialProgramChanged, void, Entity material, Entity oldProgram, Entity newProgram) {
-    for_entity(renderable, ComponentOf_Renderable()) {
-        if(GetRenderableMaterial(renderable) == material) {
-            OnRenderableMaterialChanged(renderable, material, material);
-        }
+static void OnMaterialChanged(Entity material, const Material& oldData, const Material& newData) {
+    if(oldData.MaterialProgram != newData.MaterialProgram) {
+        Batch batchData;
+        for_entity_data(batch, ComponentOf_Batch(), &batchData) {
+            auto renderableData = GetRenderable(batchData.BatchRenderable);
+            if(renderableData.RenderableMaterial == material) {
+                auto commandList = GetOwnership(batch).Owner;
+                auto pass = GetCommandList(commandList).CommandListPass;
+                auto shaderCache = GetRenderPass(pass).RenderPassShaderCache;
 
+                batchData.BatchBinaryProgram = GetShaderCacheBinaryProgram(shaderCache, newData.MaterialProgram);
+                SetBatch(batch, batchData);
+            }
+        }
     }
 }
 
-LocalFunction(OnSceneRendererPathChanged, void, Entity sceneRenderer, Entity oldPath, Entity newPath) {
+static void OnSceneRendererChanged(Entity sceneRenderer, Entity oldScene, Entity newScene) {
     SyncCommandLists(sceneRenderer);
 }
 
-LocalFunction(OnSceneRendererSceneChanged, void, Entity sceneRenderer, Entity oldScene, Entity newScene) {
-    SyncCommandLists(sceneRenderer);
-}
-
-LocalFunction(OnRenderPathPassesChanged, void, Entity renderPath, Entity oldPass, Entity newPass) {
-    for_entity(sceneRenderer, ComponentOf_SceneRenderer()) {
-        if(data->SceneRendererPath == renderPath) {
-            SyncCommandLists(sceneRenderer);
-        }
-    }
-}
-
-LocalFunction(OnSyncCommandLists, void) {
-	for_entity(sceneRenderer, ComponentOf_SceneRenderer()) {
-		for_children(commandList, SceneRendererCommandLists, sceneRenderer) {
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
+    SceneRenderer sceneRendererData;
+	for_entity_data(sceneRenderer, ComponentOf_SceneRenderer(), &sceneRendererData) {
+		for(auto commandList : sceneRendererData.SceneRendererCommandLists) {
 			SyncBatches(commandList);
 		}
 	}
@@ -132,8 +132,10 @@ BeginUnit(SceneRenderer)
     EndEnum()
 
     BeginComponent(RenderPass)
-        RegisterChildProperty(ShaderCache, RenderPassShaderCache)
-        RegisterChildProperty(RenderState, RenderPassRenderState)
+        BeginChildProperty(RenderPassShaderCache)
+        EndChildProperty()
+        BeginChildProperty(RenderPassRenderState)
+        EndChildProperty()
         RegisterArrayProperty(Uniform, RenderPassSceneUniforms)
         RegisterArrayProperty(Uniform, RenderPassCameraUniforms)
         RegisterArrayProperty(Uniform, RenderPassRenderableUniforms)
@@ -170,14 +172,8 @@ BeginUnit(SceneRenderer)
         RegisterArrayPropertyReadOnly(CommandList, SceneRendererCommandLists)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneRendererPath()), OnSceneRendererPathChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneRendererScene()), OnSceneRendererSceneChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderPathPasses()), OnRenderPathPassesChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_BatchRenderable()), OnBatchRenderableChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderableMaterial()), OnRenderableMaterialChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MaterialProgram()), OnMaterialProgramChanged, 0)
-
-    SetAppLoopOrder(AppLoopOf_BatchSubmission(), AppLoopOrder_BatchSubmission);
-
-	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnSyncCommandLists, AppLoopOf_BatchSubmission())
+    RegisterSystem(OnRenderableChanged, ComponentOf_Renderable())
+    RegisterSystem(OnMaterialChanged, ComponentOf_Material())
+    RegisterSystem(OnSceneRendererChanged, ComponentOf_SceneRenderer())
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_Rendering - 0.1f)
 EndUnit()

@@ -24,4 +24,6 @@ Unit(MainFrame)
     Component(MainFrameStyle)
         ChildProperty(WidgetMesh, MainFrameStyleMesh)
 
+    Prefab(MainFrame)
+
 #endif //PLAZA_MAINFRAME_H

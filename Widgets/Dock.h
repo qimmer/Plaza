@@ -27,6 +27,6 @@ Unit(Dock)
     Component(Dock)
         Property(StringRef, DockTitle)
 
-
+    Prefab(Dock)
 
 #endif //PLAZA_DOCK_H

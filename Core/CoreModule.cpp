@@ -40,7 +40,6 @@ API_EXPORT Entity ModuleOf_Core () {
 void __InitModule_Core (Entity module) {
     __PreInitialize();
     __InitializeBase();
-    AddComponent(module, ComponentOf_Module());
 	SetIdentification(module, {"Module.Core"});
 
 	RegisterUnit(Entity)
@@ -56,8 +55,9 @@ void __InitModule_Core (Entity module) {
     RegisterUnit(Binding)
     RegisterUnit(Instance)
 
-    AddComponent(GetRoot(), ComponentOf_ModuleRoot());
+    auto rootData = GetModuleRoot(GetRoot());
     SetIdentification(GetRoot(), {"ModuleRoot"});
 
-    AddModules(GetRoot(), module);
+    rootData.Modules.Add(module);
+    SetModuleRoot(GetRoot(), rootData);
 EndModule()

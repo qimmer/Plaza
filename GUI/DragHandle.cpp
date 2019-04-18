@@ -7,40 +7,55 @@
 #include <Input/InputContext.h>
 #include <Scene/Transform.h>
 
-LocalFunction(OnWidgetClickedChanged, void, Entity widget, bool oldClicked, bool newClicked) {
-    auto dragData = GetDragHandleData(widget);
-    if(dragData && IsEntityValid(dragData->DragHandleTarget)) {
-        auto interactionPoint = GetWidgetInteractionPoint(widget);
-        auto pos = GetPosition2D(dragData->DragHandleTarget);
-        SetDragHandleInteractionStart(widget, interactionPoint);
-        SetDragHandlePositionStart(widget, pos);
+static void OnInteractableWidgetChanged(Entity widget, const InteractableWidget& oldData, const InteractableWidget& newData) {
+    if (HasComponent(widget, ComponentOf_DragHandle())) {
+        auto dragData = GetDragHandle(widget);
 
-        SetDragHandleDragging(widget, newClicked);
+        if (IsEntityValid(dragData.DragHandleTarget)) {
+            if (oldData.WidgetClicked != newData.WidgetClicked) {
+                auto interactionPoint = GetInteractableWidget(widget).WidgetInteractionPoint;
+                auto pos = GetTransform(dragData.DragHandleTarget).Position2D;
+
+                dragData.DragHandleInteractionStart = interactionPoint;
+                dragData.DragHandlePositionStart = pos;
+                dragData.DragHandleDragging = newData.WidgetClicked;
+                SetDragHandle(widget, dragData);
+            }
+
+            if (dragData.DragHandleDragging &&
+                oldData.WidgetInteractionPoint.x != newData.WidgetInteractionPoint.x ||
+                oldData.WidgetInteractionPoint.y != newData.WidgetInteractionPoint.y) {
+
+                auto transformData = GetTransform(dragData.DragHandleTarget);
+                transformData.Position2D = {
+                        dragData.DragHandlePositionStart.x +
+                        (newData.WidgetInteractionPoint.x - dragData.DragHandleInteractionStart.x),
+                        dragData.DragHandlePositionStart.y +
+                        (newData.WidgetInteractionPoint.y - dragData.DragHandleInteractionStart.y)
+                };
+                SetTransform(dragData.DragHandleTarget, transformData);
+            }
+        }
     }
 
-    auto resizeData = GetResizeHandleData(widget);
-    if(resizeData) {
-        SetResizeHandleResizing(widget, newClicked);
-    }
-}
+    if (HasComponent(widget, ComponentOf_ResizeHandle())) {
+        auto resizeData = GetResizeHandle(widget);
 
-LocalFunction(OnWidgetInteractionPointChanged, void, Entity widget, v2i oldPoint, v2i newPoint) {
-    auto dragHandleData = GetDragHandleData(widget);
+        if (IsEntityValid(resizeData.ResizeHandleTarget)) {
+            if (oldData.WidgetClicked != newData.WidgetClicked) {
+                resizeData.ResizeHandleResizing = newData.WidgetClicked;
+                SetResizeHandle(widget, resizeData);
+            }
 
-    if(dragHandleData && dragHandleData->DragHandleDragging && IsEntityValid(dragHandleData->DragHandleTarget)) {
-        SetPosition2D(dragHandleData->DragHandleTarget, {
-            dragHandleData->DragHandlePositionStart.x + (newPoint.x - dragHandleData->DragHandleInteractionStart.x),
-            dragHandleData->DragHandlePositionStart.y + (newPoint.y - dragHandleData->DragHandleInteractionStart.y)
-        });
-    }
-
-    auto resizeHandleData = GetResizeHandleData(widget);
-
-    if(resizeHandleData && resizeHandleData->ResizeHandleResizing && IsEntityValid(resizeHandleData->ResizeHandleTarget)) {
-        auto size = GetSize2D(resizeHandleData->ResizeHandleTarget);
-        size.x += (newPoint.x - oldPoint.x);
-        size.y += (newPoint.y - oldPoint.y);
-        SetSize2D(resizeHandleData->ResizeHandleTarget, size);
+            if (resizeData.ResizeHandleResizing &&
+                oldData.WidgetInteractionPoint.x != newData.WidgetInteractionPoint.x ||
+                oldData.WidgetInteractionPoint.y != newData.WidgetInteractionPoint.y) {
+                auto size = GetRect2D(resizeData.ResizeHandleTarget).Size2D;
+                size.x += (newData.WidgetInteractionPoint.x - oldData.WidgetInteractionPoint.x);
+                size.y += (newData.WidgetInteractionPoint.y - oldData.WidgetInteractionPoint.y);
+                SetRect2D(resizeData.ResizeHandleTarget, {size});
+            }
+        }
     }
 }
 
@@ -60,7 +75,6 @@ BeginUnit(DragHandle)
         RegisterProperty(v2i, ResizeHandleInteractionStart)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClicked()), OnWidgetClickedChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetInteractionPoint()), OnWidgetInteractionPointChanged, 0)
+    RegisterSystem(OnInteractableWidgetChanged, ComponentOf_InteractableWidget())
 EndUnit()
 

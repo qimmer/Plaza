@@ -7,6 +7,10 @@
 
 #include <Core/NativeUtils.h>
 
+struct OffscreenRenderTarget {
+    ChildArray OffscreenRenderTargetTextures;
+};
+
 Unit(OffscreenRenderTarget)
     Component(OffscreenRenderTarget)
         ArrayProperty(Texture2D, OffscreenRenderTargetTextures)

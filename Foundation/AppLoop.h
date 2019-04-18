@@ -10,14 +10,17 @@
 struct AppLoop {
     u64 AppLoopFrame;
     bool AppLoopQuit;
+    double AppLoopDeltaTime;
 };
 
 Unit(AppLoop)
     Component(AppLoop)
         Property(bool, AppLoopQuit)
         Property(u64, AppLoopFrame)
+        Property(double, AppLoopDeltaTime)
 
     Function(RunAppLoop, void)
+    Declare(AppLoop, Main)
 
 #define AppLoopOrder_Rendering 10.0f
 #define AppLoopOrder_Update 1.0f

@@ -19,24 +19,22 @@
 #include "TextWidget.h"
 #include <Json/NativeUtils.h>
 
-static eastl::set<Entity> invalidatedTextWidgets;
-
 static void RebuildTextWidget(Entity entity) {
-    Vector<v4f, 512> colors;
+    eastl::fixed_vector<v4f, 512> colors;
 
     if (!HasComponent(entity, ComponentOf_TextWidget())) return;
 
 	static auto vertexDecl = FindEntityByUuid("Gui.Font.VertexDeclaration");
 
-    auto data = GetTextWidgetData(entity);
+    auto data = GetTextWidget(entity);
 
-	auto font = data->TextWidgetFont;
-    auto text = data->TextWidgetText;
+	auto font = data.TextWidgetFont;
+    auto text = data.TextWidgetText;
 
     if (IsEntityValid(font)) {
         auto length = text ? strlen(text) : 0;
 
-        colors.resize(length, *(v4f*)&data->TextWidgetColor);
+        colors.resize(length, *(v4f*)&data.TextWidgetColor);
         
         auto vertices = (FontVertex *) alloca(sizeof(FontVertex) * length * 6);
         v2f size;
@@ -53,17 +51,19 @@ static void RebuildTextWidget(Entity entity) {
         }
 
         // Set size to text extent
-        SetSize2D(entity, {Max(s32(size.x), 0), Max(s32(size.y), 0)});
+        SetRect2D(entity, {{Max(s32(size.x), 0), Max(s32(size.y), 0)}});
 
-        auto textWidgetMesh = data->TextWidgetMesh;
-        auto vertexBuffer = GetMeshVertexBuffer(textWidgetMesh);
-        SetVertexBufferDeclaration(vertexBuffer, vertexDecl);
+        auto textWidgetMesh = data.TextWidgetMesh;
+        auto meshData = GetMesh(textWidgetMesh);
+        auto vertexBuffer = meshData.MeshVertexBuffer;
+        auto vertexBufferData = GetVertexBuffer(vertexBuffer);
+        vertexBufferData.VertexBufferDeclaration = vertexDecl;
+        SetVertexBuffer(vertexBuffer, vertexBufferData);
 
-        auto currentPath = GetStreamPath(vertexBuffer);
-        if(!currentPath || !strlen(currentPath)) {
-            char path[1024];
-            snprintf(path, sizeof(path), "memory://%s.vtb", GetIdentification(vertexBuffer).Uuid);
-            SetStreamPath(vertexBuffer, path);
+        auto streamData = GetStream(vertexBuffer);
+        if(!streamData.StreamPath || !strlen(streamData.StreamPath)) {
+            streamData.StreamPath = StringFormatV("memory://%s.vtb", GetIdentification(vertexBuffer).Uuid);
+            SetStream(vertexBuffer, streamData);
         }
 
         if(!StreamOpen(vertexBuffer, StreamMode_Write)) {
@@ -73,25 +73,24 @@ static void RebuildTextWidget(Entity entity) {
         StreamWrite(vertexBuffer, numVertices * sizeof(FontVertex), vertices);
         StreamClose(vertexBuffer);
 
-        SetNumMeshSubMeshes(textWidgetMesh, 1);
-        auto subMesh = GetMeshSubMeshes(textWidgetMesh)[0];
+        meshData.MeshSubMeshes.SetSize(1);
+        if(!meshData.MeshSubMeshes[0]) {
+            meshData.MeshSubMeshes[0] = CreateEntity();
+        }
 
-        SetSubMeshNumVertices(subMesh, numVertices);
-        SetSubMeshPrimitiveType(subMesh, PrimitiveType_TRIANGLELIST);
-        SetRenderableSubMesh(entity, subMesh);
+        auto subMeshData = GetSubMesh(meshData.MeshSubMeshes[0]);
+        subMeshData.SubMeshNumVertices = numVertices;
+        subMeshData.SubMeshPrimitiveType = PrimitiveType_TRIANGLELIST;
+        SetSubMesh(meshData.MeshSubMeshes[0], subMeshData);
+
+        auto renderableData = GetRenderable(entity);
+        renderableData.RenderableSubMesh = meshData.MeshSubMeshes[0];
+        SetRenderable(entity, renderableData);
     }
 }
 
-LocalFunction(OnValidateMeshes, void) {
-    for(auto& textWidget : invalidatedTextWidgets) {
-        RebuildTextWidget(textWidget);
-    }
-
-    invalidatedTextWidgets.clear();
-}
-
-LocalFunction(OnTextWidgetChanged, void, Entity textWidget) {
-    invalidatedTextWidgets.insert(textWidget);
+static void OnTextWidgetChanged(Entity textWidget, const TextWidget& oldData, const TextWidget& newData) {
+    RebuildTextWidget(textWidget);
 }
 
 BeginUnit(TextWidget)
@@ -100,16 +99,16 @@ BeginUnit(TextWidget)
         RegisterProperty(StringRef, TextWidgetText)
         RegisterReferenceProperty(Font, TextWidgetFont)
         RegisterProperty(rgba32, TextWidgetColor)
-        RegisterChildProperty(Mesh, TextWidgetMesh)
+        BeginChildProperty(TextWidgetMesh)
 
-        ComponentTemplate({
-            "RenderableMaterial": "Gui.Font.Material"
-        })
+        EndChildProperty()
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextWidgetText()), OnTextWidgetChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextWidgetFont()), OnTextWidgetChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TextWidgetColor()), OnTextWidgetChanged, 0)
+    BeginPrefab(TextWidget)
+        Renderable renderableData;
+        renderableData.RenderableMaterial = FindEntityByUuid("Gui.Font.Material");
+        SetRenderable(prefab, renderableData);
+    EndPrefab()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnValidateMeshes, AppLoopOf_ResourcePreparation())
+    RegisterSystem(OnTextWidgetChanged, ComponentOf_TextWidget())
 EndUnit()

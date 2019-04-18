@@ -15,6 +15,7 @@ struct TextWidget {
 };
 
 Unit(TextWidget)
+    Prefab(TextWidget)
     Component(TextWidget)
         Property(StringRef, TextWidgetText)
         ChildProperty(Mesh, TextWidgetMesh)

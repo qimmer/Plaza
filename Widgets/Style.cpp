@@ -8,7 +8,8 @@
 
 BeginUnit(Style)
     BeginComponent(Style)
-        RegisterChildProperty(TextureAtlas, StyleSheet)
+        BeginChildProperty(StyleSheet)
+        EndChildProperty()
         RegisterArrayProperty(Font, StyleFonts)
         RegisterReferenceProperty(Font, StyleIconFont)
     EndComponent()

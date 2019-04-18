@@ -8,5 +8,7 @@
 #include <Core/NativeUtils.h>
 
 Unit(StbImagePersistance)
+    Serializer(Png)
+    StreamCompressor(Png)
 
 #endif //PLAZA_STBIMAGEDECODER_H

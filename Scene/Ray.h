@@ -40,6 +40,4 @@ Unit(Ray)
     Component(PickRay)
         ReferenceProperty(SceneRenderer, PickRaySceneRenderer)
 
-    Declare(AppLoop, RayPicking)
-
 #endif //PLAZA_RAY_H

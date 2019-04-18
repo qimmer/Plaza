@@ -44,10 +44,10 @@ struct BgfxCommandList {
 };
 
 static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encoder, v4f *uvOffsetSizePerSampler) {
-    auto uniformData = GetUniformData(uniform);
+    auto uniformData = GetUniform(uniform);
 
-    auto component = GetOwner(uniformData->UniformEntityProperty);
-    auto propertyType = GetPropertyType(uniformData->UniformEntityProperty);
+    auto component = GetOwnership(uniformData.UniformEntityProperty).Owner;
+    auto propertyType = GetProperty(uniformData.UniformEntityProperty).PropertyType;
 
     if(!propertyType) return;
 
@@ -64,7 +64,7 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
             value.as_Entity = whiteTexture;
         }
     } else {
-        value = GetPropertyValue(uniformData->UniformEntityProperty, entity);
+        value = GetPropertyValue(uniformData.UniformEntityProperty, entity);
     }
 
     switch (propertyType) {
@@ -96,7 +96,7 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
             break;
     }
 
-    auto uniformHandle = bgfx::UniformHandle{GetBgfxResourceHandle(uniform)};
+    auto uniformHandle = bgfx::UniformHandle{GetBgfxResource(uniform).BgfxResourceHandle};
 
     if(value.type != TypeOf_Entity) {
         encoder->setUniform(
@@ -107,14 +107,16 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
         auto texture = value.as_Entity;
 
         if(HasComponent(texture, ComponentOf_SubTexture2D())) {
-            auto offset = GetSubTexture2DOffset(texture);
-            auto size = GetSubTexture2DSize(texture);
-            texture = GetOwnership(texture).Owner; // Get actual texture (atlas)
-            auto textureSize = GetTextureSize2D(texture);
+            auto subTexture2D = GetSubTexture2D(texture);
+            auto offset = subTexture2D.SubTexture2DOffset;
+            auto size = subTexture2D.SubTexture2DSize;
 
-            uvOffsetSizePerSampler[uniformData->UniformSamplerIndex] = {(float)offset.x / textureSize.x, (float)offset.y / textureSize.y, (float)size.x / textureSize.x, (float)size.y / textureSize.y};
+            texture = GetOwnership(texture).Owner; // Get actual texture (atlas)
+            auto textureSize = GetTexture2D(texture).TextureSize2D;
+
+            uvOffsetSizePerSampler[uniformData.UniformSamplerIndex] = {(float)offset.x / textureSize.x, (float)offset.y / textureSize.y, (float)size.x / textureSize.x, (float)size.y / textureSize.y};
         } else {
-            uvOffsetSizePerSampler[uniformData->UniformSamplerIndex] = {0.0f, 0.0f, 1.0f, 1.0f};
+            uvOffsetSizePerSampler[uniformData.UniformSamplerIndex] = {0.0f, 0.0f, 1.0f, 1.0f};
         }
 
         if(!HasComponent(texture, ComponentOf_Texture())) {
@@ -122,59 +124,56 @@ static void SetUniformState(Entity uniform, Entity entity, bgfx::Encoder *encode
             texture = whiteTexture;
         }
 
-        auto textureHandle = bgfx::TextureHandle{GetBgfxResourceHandle(texture)};
-        encoder->setTexture(uniformData->UniformSamplerIndex, uniformHandle, textureHandle);
+        auto textureHandle = bgfx::TextureHandle{GetBgfxResource(texture).BgfxResourceHandle};
+        encoder->setTexture(uniformData.UniformSamplerIndex, uniformHandle, textureHandle);
     }
 }
 
-inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity renderState, Entity pass, v4f *uvOffsetSizePerSampler) {
-    auto batchData = GetBatchData(batch);
-    auto renderStateData = GetRenderStateData(renderState);
-    if(!batchData) return;
-    if(!renderStateData) return;
+inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity renderState, const RenderPass& passData, v4f *uvOffsetSizePerSampler) {
+    auto batchData = GetBatch(batch);
+    auto renderStateData = GetRenderState(renderState);
+    
+    auto renderable = batchData.BatchRenderable;
+    auto binaryProgram = batchData.BatchBinaryProgram;
 
-    auto renderable = batchData->BatchRenderable;
-    auto binaryProgram = batchData->BatchBinaryProgram;
+    auto transformData = GetWorldTransform(renderable);
 
-    auto transformData = GetTransformData(renderable);
-    if(!transformData) return;
+    if(GetVisibility(renderable).HierarchiallyHidden) return;
 
-    if(GetHierarchiallyHidden(renderable)) return;
-
-    auto subMesh = GetRenderableSubMesh(renderable);
+    auto renderableData = GetRenderable(renderable);
 
     // Support setting submesh to a mesh and then use first submesh, just for convenience
-    if(HasComponent(subMesh, ComponentOf_Mesh())) {
-        auto& subMeshes = GetMeshSubMeshes(subMesh);
-        if(subMeshes.size() < 1) return;
+    if(HasComponent(renderableData.RenderableSubMesh, ComponentOf_Mesh())) {
+        auto meshData = GetMesh(renderableData.RenderableSubMesh);
 
-        subMesh = subMeshes[0];
+        if(!meshData.MeshSubMeshes.GetSize()) return;
+
+        renderableData.RenderableSubMesh = meshData.MeshSubMeshes[0];
     }
 
-    auto subMeshData = GetSubMeshData(subMesh);
+    auto subMeshData = GetSubMesh(renderableData.RenderableSubMesh);
 
-    if(!subMeshData) return;
+    auto mesh = GetOwnership(renderableData.RenderableSubMesh).Owner;
+    auto meshData = GetMesh(mesh);
 
-    auto material = GetRenderableMaterial(renderable);
-    auto scissor = GetRenderableScissor(renderable);
+    auto vertexBuffer = meshData.MeshVertexBuffer;
+    auto vertexBufferData = GetVertexBuffer(vertexBuffer);
 
-    auto mesh = GetOwnership(subMesh).Owner;
-    auto meshData = GetMeshData(mesh);
+    auto indexBuffer = meshData.MeshIndexBuffer;
+    auto indexBufferData = GetIndexBuffer(indexBuffer);
 
-    auto vertexBuffer = meshData->MeshVertexBuffer; auto vertexBufferData = GetVertexBufferData(vertexBuffer);
-    auto indexBuffer = meshData->MeshIndexBuffer; auto indexBufferData = GetIndexBufferData(indexBuffer);
-    auto vertexDeclaration = vertexBufferData->VertexBufferDeclaration;
+    auto vertexDeclaration = vertexBufferData.VertexBufferDeclaration;
 
-    auto programHandle = GetBgfxResourceHandle(binaryProgram);
-    auto vertexBufferHandle = GetBgfxResourceHandle(vertexBuffer);
-    auto indexBufferHandle = GetBgfxResourceHandle(indexBuffer);
+    auto programHandle = GetBgfxResource(binaryProgram).BgfxResourceHandle;
+    auto vertexBufferHandle = GetBgfxResource(vertexBuffer).BgfxResourceHandle;
+    auto indexBufferHandle = GetBgfxResource(indexBuffer).BgfxResourceHandle;
 
     if(vertexBufferHandle == bgfx::kInvalidHandle) {
         //Error(batch, "Invalid Vertex Buffer for renderable %s", GetIdentification(renderable).Uuid);
         return;
     }
 
-    if(subMeshData->SubMeshNumIndices && indexBufferHandle == bgfx::kInvalidHandle) {
+    if(subMeshData.SubMeshNumIndices && indexBufferHandle == bgfx::kInvalidHandle) {
         //Error(batch, "Invalid Index Buffer for renderable %s", GetIdentification(renderable).Uuid);
         return;
     }
@@ -185,68 +184,72 @@ inline void RenderBatch(u32 viewId, bgfx::Encoder *encoder, Entity batch, Entity
     }
 
     encoder->setState(
-            renderStateData->RenderStateWriteMask |
-                    renderStateData->RenderStateBlendMode |
-                    renderStateData->RenderStateDepthTest |
-                    renderStateData->RenderStateMultisampleMode |
-       subMeshData->SubMeshCullMode |
-       subMeshData->SubMeshPrimitiveType
+        renderStateData.RenderStateWriteMask |
+        renderStateData.RenderStateBlendMode |
+        renderStateData.RenderStateDepthTest |
+        renderStateData.RenderStateMultisampleMode |
+        subMeshData.SubMeshCullMode |
+        subMeshData.SubMeshPrimitiveType
     );
 
-    if(scissor.z != 0 || scissor.w != 0) {
-        encoder->setScissor(scissor.x, scissor.y, scissor.z, scissor.w);
+    if(renderableData.RenderableScissor.z != 0 || renderableData.RenderableScissor.w != 0) {
+        encoder->setScissor(renderableData.RenderableScissor.x, renderableData.RenderableScissor.y, renderableData.RenderableScissor.z, renderableData.RenderableScissor.w);
     }
 
-    encoder->setTransform(&transformData->TransformGlobalMatrix[0].x);
+    encoder->setTransform(&transformData.WorldTransformMatrix[0].x);
 
-    if(vertexBufferData->VertexBufferDynamic) {
-        encoder->setVertexBuffer(0, bgfx::DynamicVertexBufferHandle {vertexBufferHandle}, subMeshData->SubMeshStartVertex, subMeshData->SubMeshNumVertices);
+    if(vertexBufferData.VertexBufferDynamic) {
+        encoder->setVertexBuffer(0, bgfx::DynamicVertexBufferHandle {vertexBufferHandle}, subMeshData.SubMeshStartVertex, subMeshData.SubMeshNumVertices);
     } else {
-        encoder->setVertexBuffer(0, bgfx::VertexBufferHandle {vertexBufferHandle}, subMeshData->SubMeshStartVertex, subMeshData->SubMeshNumVertices);
+        encoder->setVertexBuffer(0, bgfx::VertexBufferHandle {vertexBufferHandle}, subMeshData.SubMeshStartVertex, subMeshData.SubMeshNumVertices);
     }
 
     if(indexBufferHandle != bgfx::kInvalidHandle) {
-        if(indexBufferData->IndexBufferDynamic) {
-            encoder->setIndexBuffer(bgfx::DynamicIndexBufferHandle {indexBufferHandle}, subMeshData->SubMeshStartIndex, subMeshData->SubMeshNumIndices);
+        if(indexBufferData.IndexBufferDynamic) {
+            encoder->setIndexBuffer(bgfx::DynamicIndexBufferHandle {indexBufferHandle}, subMeshData.SubMeshStartIndex, subMeshData.SubMeshNumIndices);
         } else {
-            encoder->setIndexBuffer(bgfx::IndexBufferHandle {indexBufferHandle}, subMeshData->SubMeshStartIndex, subMeshData->SubMeshNumIndices);
+            encoder->setIndexBuffer(bgfx::IndexBufferHandle {indexBufferHandle}, subMeshData.SubMeshStartIndex, subMeshData.SubMeshNumIndices);
         }
     }
 
-    for_children(uniform1, RenderPassMaterialUniforms, pass) {
-        SetUniformState(uniform1, material, encoder, uvOffsetSizePerSampler);
+    for(auto uniform1 : passData.RenderPassMaterialUniforms) {
+        SetUniformState(uniform1, renderableData.RenderableMaterial, encoder, uvOffsetSizePerSampler);
     }
 
-    for_children(uniform2, RenderPassMeshUniforms, pass) {
+    for(auto uniform2 : passData.RenderPassMeshUniforms) {
         SetUniformState(uniform2, mesh, encoder, uvOffsetSizePerSampler);
     }
 
-    for_children(uniform3, RenderPassRenderableUniforms, pass) {
+    for(auto uniform3 : passData.RenderPassRenderableUniforms) {
         SetUniformState(uniform3, renderable, encoder, uvOffsetSizePerSampler);
     }
 
     encoder->setUniform(u_uvOffsetSizePerSampler, uvOffsetSizePerSampler, 8);
 
-    encoder->submit(viewId, bgfx::ProgramHandle {programHandle}, transformData->TransformHierarchyLevel);
+    encoder->submit(viewId, bgfx::ProgramHandle {programHandle}, transformData.WorldTransformMatrix->z);
 }
 
 void RenderCommandList(Entity commandList, unsigned char viewId) {
     auto sceneRenderer = GetOwnership(commandList).Owner;
+    auto sceneRendererData = GetSceneRenderer(sceneRenderer);
+    auto commandListData = GetCommandList(commandList);
 
-    auto camera = GetSceneRendererCamera(sceneRenderer);
-    auto scene = GetSceneRendererScene(sceneRenderer);
-    auto renderTarget = GetSceneRendererTarget(sceneRenderer);
+    auto camera = sceneRendererData.SceneRendererCamera;
+    auto scene = sceneRendererData.SceneRendererScene;
+    auto renderTarget = sceneRendererData.SceneRendererTarget;
 
     if(!IsEntityValid(camera) || !IsEntityValid(scene) || !IsEntityValid(renderTarget)) return;
 
-    if(GetHierarchiallyHidden(camera)) return;
+    if(GetVisibility(camera).HierarchiallyHidden) return;
 
-    auto viewport = GetSceneRendererViewport(sceneRenderer);
-    auto pass = GetCommandListPass(commandList);
-    auto renderState = GetRenderPassRenderState(pass);
-    auto shaderCache = GetRenderPassShaderCache(pass);
-    auto clearColor = GetRenderPassClearColor(pass);
-	auto frustumData = GetFrustumData(camera);
+    auto viewport = sceneRendererData.SceneRendererViewport;
+    auto pass = commandListData.CommandListPass;
+
+    auto passData = GetRenderPass(pass);
+    auto renderState = passData.RenderPassRenderState;
+    auto shaderCache = passData.RenderPassShaderCache;
+    auto clearColor = passData.RenderPassClearColor;
+	auto frustumData = GetFrustum(camera);
 
     u8 shaderProfile;
     auto rendererType = bgfx::getRendererType();
@@ -271,13 +274,17 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
             break;
     }
 
-    SetShaderCacheProfile(shaderCache, shaderProfile);
+    auto shaderCacheData = GetShaderCache(shaderCache);
+    if(shaderCacheData.ShaderCacheProfile != shaderProfile) {
+        shaderCacheData.ShaderCacheProfile = shaderProfile;
+        SetShaderCache(shaderCache, shaderCacheData);
+    }
 
     v2i renderTargetSize;
     if(IsEntityValid(renderTarget)) {
-        renderTargetSize = GetRenderTargetSize(renderTarget);
+        renderTargetSize = GetRenderTarget(renderTarget).RenderTargetSize;
         if(HasComponent(renderTarget, ComponentOf_BgfxRenderContext())) {
-            bgfx::FrameBufferHandle fb = {GetBgfxResourceHandle(renderTarget)};
+            bgfx::FrameBufferHandle fb = {GetBgfxResource(renderTarget).BgfxResourceHandle};
             if(fb.idx != bgfx::kInvalidHandle) {
                 bgfx::setViewFrameBuffer(viewId, fb);
             }
@@ -285,14 +292,14 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
         }
 
         if(HasComponent(renderTarget, ComponentOf_BgfxOffscreenRenderTarget())) {
-            bgfx::FrameBufferHandle fb = {GetBgfxResourceHandle(renderTarget)};
+            bgfx::FrameBufferHandle fb = {GetBgfxResource(renderTarget).BgfxResourceHandle};
             if(fb.idx != bgfx::kInvalidHandle) {
                 bgfx::setViewFrameBuffer(viewId, fb);
             }
         }
     }
 
-    auto clearFlags = GetRenderPassClearTargets(pass);
+    auto clearFlags = passData.RenderPassClearTargets;
     u16 bgfxClearFlags = 0;
     if(clearFlags & ClearTarget_Color) bgfxClearFlags |= BGFX_CLEAR_COLOR;
     if(clearFlags & ClearTarget_Depth) bgfxClearFlags |= BGFX_CLEAR_DEPTH;
@@ -302,8 +309,8 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
             viewId,
             bgfxClearFlags,
             RGBA2DWORD(clearColor.r, clearColor.g, clearColor.b, clearColor.a),
-            GetRenderPassClearDepth(pass),
-            GetRenderPassClearStencil(pass));
+            passData.RenderPassClearDepth,
+            passData.RenderPassClearStencil);
 
     bgfx::setViewRect(
             viewId,
@@ -313,8 +320,8 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
             viewport.w * renderTargetSize.y
     );
 
-    bgfx::setViewTransform(viewId, &frustumData->FrustumViewMatrix[0].x, &frustumData->FrustumProjectionMatrix[0].x);
-    bgfx::setViewMode(viewId, (bgfx::ViewMode::Enum)GetRenderPassSortMode(pass));
+    bgfx::setViewTransform(viewId, &frustumData.FrustumViewMatrix[0].x, &frustumData.FrustumProjectionMatrix[0].x);
+    bgfx::setViewMode(viewId, (bgfx::ViewMode::Enum)passData.RenderPassSortMode);
 
     bgfx::touch(viewId);
 
@@ -322,43 +329,41 @@ void RenderCommandList(Entity commandList, unsigned char viewId) {
 
     v4f uvOffsetSizePerSampler[8];
 
-    for_children(uniform1, RenderPassSceneUniforms, pass) {
+    for(auto uniform1 : passData.RenderPassSceneUniforms) {
         SetUniformState(uniform1, scene, primaryEncoder, uvOffsetSizePerSampler);
     }
 
-    for_children(uniform2, RenderPassCameraUniforms, pass) {
+    for(auto uniform2 : passData.RenderPassCameraUniforms) {
         SetUniformState(uniform2, camera, primaryEncoder, uvOffsetSizePerSampler);
     }
 
-    auto& batches = GetCommandListBatches(commandList);
+    if(false) {
+        #pragma omp parallel
+        {
+            auto threadnum = omp_get_thread_num();
+            auto numthreads = omp_get_num_threads();
+            auto low = commandListData.CommandListBatches.GetSize()*threadnum/numthreads;
+            auto high = commandListData.CommandListBatches.GetSize()*(threadnum+1)/numthreads;
 
-        if(false) {
-            #pragma omp parallel
-            {
-                auto threadnum = omp_get_thread_num();
-                auto numthreads = omp_get_num_threads();
-                auto low = batches.size()*threadnum/numthreads;
-                auto high = batches.size()*(threadnum+1)/numthreads;
+            auto encoder = bgfx::begin();
 
-                auto encoder = bgfx::begin();
-
-                for (auto i=low; i<high; i++) {
-                    RenderBatch(viewId, encoder, batches[i], renderState, pass, uvOffsetSizePerSampler);
-                }
-
-                bgfx::end(encoder);
+            for (auto i=low; i<high; i++) {
+                RenderBatch(viewId, encoder, commandListData.CommandListBatches[i], renderState, passData, uvOffsetSizePerSampler);
             }
-        } else {
-            for (auto i=0; i < batches.size(); i++) {
-                RenderBatch(viewId, primaryEncoder, batches[i], renderState, pass, uvOffsetSizePerSampler);
-            }
+
+            bgfx::end(encoder);
         }
+    } else {
+        for (auto batch : commandListData.CommandListBatches) {
+            RenderBatch(viewId, primaryEncoder, batch, renderState, passData, uvOffsetSizePerSampler);
+        }
+    }
     
 
     bgfx::end(primaryEncoder);
 }
 
-LocalFunction(OnSubmitCommandLists, void, Entity appLoop) {
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
     auto i = 0;
     for_entity(commandList, ComponentOf_CommandList()) {
         RenderCommandList(commandList, i);
@@ -370,5 +375,5 @@ BeginUnit(BgfxCommandList)
     BeginComponent(BgfxCommandList)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnSubmitCommandLists, AppLoopOf_BatchSubmission())
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_BatchSubmission)
 EndUnit()

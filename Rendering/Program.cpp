@@ -5,14 +5,17 @@
 #include <Foundation/Stream.h>
 #include "Program.h"
 
-struct Program {
-    Entity ProgramVertexShaderSource, ProgramPixelShaderSource, ProgramDeclShaderSource;
-};
+Prefab(ShaderSource)
 
 BeginUnit(Program)
+    BeginPrefab(ShaderSource)
+    EndPrefab()
     BeginComponent(Program)
-        RegisterChildProperty(Stream, ProgramVertexShaderSource)
-        RegisterChildProperty(Stream, ProgramPixelShaderSource)
-        RegisterChildProperty(Stream, ProgramDeclShaderSource)
+        BeginChildProperty(ProgramVertexShaderSource)
+        EndChildProperty()
+        BeginChildProperty(ProgramPixelShaderSource)
+        EndChildProperty()
+        BeginChildProperty(ProgramDeclShaderSource)
+        EndChildProperty()
     EndComponent()
 EndUnit()

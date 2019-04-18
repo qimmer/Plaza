@@ -11,26 +11,32 @@ struct OrthographicFrustum {
     v2f OrthographicFrustumTopLeft, OrthographicFrustumBottomRight;
 };
 
-LocalFunction(UpdateProjectionMatrix, void, Entity entity) {
+static void UpdateProjectionMatrix(Entity entity) {
     if(!HasComponent(entity, ComponentOf_OrthographicFrustum())) return;
 
-    auto data = GetOrthographicFrustumData(entity);
-	auto frustumData = GetFrustumData(entity);
+    auto data = GetOrthographicFrustum(entity);
+	auto frustumData = GetFrustum(entity);
 
     glm_ortho(
-        data->OrthographicFrustumTopLeft.x,
-        data->OrthographicFrustumBottomRight.x,
-        data->OrthographicFrustumBottomRight.y,
-        data->OrthographicFrustumTopLeft.y,
-        GetFrustumNearClip(entity),
-        GetFrustumFarClip(entity),
-        (vec4*)&frustumData->FrustumProjectionMatrix[0].x);
+        data.OrthographicFrustumTopLeft.x,
+        data.OrthographicFrustumBottomRight.x,
+        data.OrthographicFrustumBottomRight.y,
+        data.OrthographicFrustumTopLeft.y,
+        frustumData.FrustumNearClip,
+        frustumData.FrustumFarClip,
+        (vec4*)&frustumData.FrustumProjectionMatrix[0].x);
 
     vec3 scale = {1.0f, 1.0f, -1.0f};
-    glm_scale((vec4*)&frustumData->FrustumProjectionMatrix[0].x, scale);
+    glm_scale((vec4*)&frustumData.FrustumProjectionMatrix[0].x, scale);
 }
 
-LocalFunction(OnOrthographicFrustumAdded, void, Entity component, Entity entity) {
+static void OnFrustumChanged(Entity entity, const Frustum& oldData, const Frustum& newData) {
+    if(HasComponent(entity, ComponentOf_OrthographicFrustum()) && (oldData.FrustumNearClip != newData.FrustumNearClip || oldData.FrustumFarClip != newData.FrustumFarClip)) {
+        UpdateProjectionMatrix(entity);
+    }
+}
+
+static void OnOrthographicFrustumChanged(Entity entity, const OrthographicFrustum& oldData, const OrthographicFrustum& newData) {
     UpdateProjectionMatrix(entity);
 }
 
@@ -41,9 +47,6 @@ BeginUnit(OrthographicFrustum)
         RegisterProperty(v2f, OrthographicFrustumBottomRight)
     EndComponent()
 
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnOrthographicFrustumAdded, ComponentOf_OrthographicFrustum())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumNearClip()), UpdateProjectionMatrix, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumFarClip()), UpdateProjectionMatrix, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_OrthographicFrustumTopLeft()), UpdateProjectionMatrix, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_OrthographicFrustumBottomRight()), UpdateProjectionMatrix, 0)
+    RegisterSystem(OnFrustumChanged, ComponentOf_Frustum())
+    RegisterSystem(OnOrthographicFrustumChanged, ComponentOf_OrthographicFrustum())
 EndUnit()

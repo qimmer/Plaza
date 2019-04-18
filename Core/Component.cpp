@@ -5,6 +5,7 @@
 #include <Core/NativeUtils.h>
 #include "Identification.h"
 #include "Component.h"
+#include "Instance.h"
 
 #include <EASTL/map.h>
 #include <EASTL/fixed_map.h>
@@ -19,6 +20,8 @@ struct ComponentInfo {
 };
 
 static eastl::vector<ComponentInfo> componentData;
+
+static char nullData[SHRT_MAX];
 
 API_EXPORT u32 GetComponentInfoIndex(Entity component) {
 	auto componentEntityIndex = GetEntityIndex(component);
@@ -118,7 +121,11 @@ API_EXPORT bool AddComponent (Entity entity, Entity component) {
 		AddComponent(entity, GetBase(base).BaseComponent);
 	}
 
-    NotifyChange(entity, component, data, data);
+    if(componentComponentData.ComponentDefaultData) {
+        SetComponentInstanceData(componentInfoIndex, componentDataIndex, componentComponentData.ComponentDefaultData);
+    } else {
+        NotifyChange(entity, component, data, data);
+    }
 
 	Extension extensionData;
 	for_entity_data(extension, ComponentOf_Extension(), &extensionData) {
@@ -175,36 +182,10 @@ API_EXPORT bool RemoveComponent (Entity entity, Entity component) {
 	if (componentIndex != InvalidIndex) {
 	    auto data = componentInfo.DataPool[componentIndex];
 
-	    auto nullData = (char*)alloca(componentInfo.DataPool.GetElementSize());
-	    memset(nullData, 0, componentInfo.DataPool.GetElementSize());
-
-        NotifyChange(entity, component, data, nullData);
-
-        for_children(property, PropertyOf_Properties(), component) {
-            auto propertyData = GetProperty(property);
-            if(propertyData.PropertyType == TypeOf_ChildArray) {
-                SetArrayPropertyCount(property, entity, 0);
-            }
-
-            // Handle ref counting for strings
-            else if(propertyData.PropertyType == TypeOf_StringRef) {
-                auto& oldString = *(StringRef*)(data + propertyData.PropertyOffset);
-
-                if(oldString) {
-                    ReleaseStringRef(oldString);
-                }
-            }
-
-            else if(propertyData.PropertyType == TypeOf_Entity) {
-                // If a reference was changed and the referred entity is owned by us, destroy it to prevent dangling entity!
-                Entity& oldRef = *(Entity*)(data + propertyData.PropertyOffset);
-                if(IsEntityValid(oldRef)) {
-                    auto refOwnership = GetOwnership(oldRef);
-                    if(refOwnership.Owner == entity && refOwnership.OwnerProperty == property) {
-                        DestroyEntity(oldRef);
-                    }
-                }
-            }
+        if(componentComponentData.ComponentDefaultData) {
+            SetComponentInstanceData(componentInfoIndex, componentIndex, componentComponentData.ComponentDefaultData);
+        } else {
+            SetComponentInstanceData(componentInfoIndex, componentIndex, nullData);
         }
 
 		componentInfo.EntityIndexToComponentIndexTable[entityIndex] = InvalidIndex;
@@ -222,7 +203,9 @@ API_EXPORT Entity GetComponentEntity(u32 componentInfoIndex, u32 componentIndex)
 }
 
 API_EXPORT const void* GetComponentInstanceData(u32 componentInfoIndex, u32 componentIndex) {
-	if (componentIndex == InvalidIndex) return 0;
+    const Component& componentComponentData = *(const Component*)componentData[0].DataPool[componentInfoIndex];
+
+	if (componentIndex == InvalidIndex) return componentComponentData.ComponentDefaultData ? componentComponentData.ComponentDefaultData : nullData;
 
     return componentData[componentInfoIndex].DataPool[componentIndex];
 }
@@ -234,16 +217,47 @@ API_EXPORT void SetComponentInstanceData(u32 componentInfoIndex, u32 componentIn
 	auto entity = componentData[componentInfoIndex].ComponentIndexToEntityTable[componentIndex];
 	auto data = componentData[componentInfoIndex].DataPool[componentIndex];
 	auto size = componentData[componentInfoIndex].DataPool.GetElementSize();
+	const Component& componentComponentData = *(const Component*)componentData[0].DataPool[componentInfoIndex];
 
 	auto oldData = (char*)alloca(size);
 	memcpy(oldData, data, size);
 	memcpy(data, newData, size);
 
-	for_children(property, PropertyOf_Properties(), component) {
+	for(auto property : componentComponentData.Properties) {
 	    auto propertyData = GetProperty(property);
 	    if(propertyData.PropertyType == TypeOf_ChildArray) {
-	        memcpy(data + propertyData.PropertyOffset, oldData + propertyData.PropertyOffset, sizeof(ChildArray));
-	    }
+            auto& oldArray = *(ChildArray*)(oldData + propertyData.PropertyOffset);
+            auto& newArray = *(ChildArray*)(data + propertyData.PropertyOffset);
+
+            if(newArray.IsDetached()) {
+                newArray.Attach(); // Make sure we retain array memory between frames on new stored array
+                oldArray.Detach();
+            }
+
+            if(oldArray.GetSize() != newArray.GetSize() || memcmp(oldArray.begin(), newArray.begin(), sizeof(Entity) * oldArray.GetSize()) != 0) {
+                // Remove ownership from removed elements
+                for(auto child : oldArray) {
+                    auto ownershipData = GetOwnership(child);
+                    auto index = newArray.GetIndex(child);
+                    if(index == InvalidIndex && ownershipData.Owner == entity && ownershipData.OwnerProperty == property) {
+                        ownershipData.Owner = 0;
+                        ownershipData.OwnerProperty = 0;
+                        SetOwnership(child, ownershipData);
+                    }
+                }
+
+                // Add ownership to added orphans
+                for(auto child : newArray) {
+                    auto ownershipData = GetOwnership(child);
+                    auto index = oldArray.GetIndex(child);
+                    if(index == InvalidIndex && !ownershipData.Owner && !ownershipData.OwnerProperty) {
+                        ownershipData.Owner = entity;
+                        ownershipData.OwnerProperty = property;
+                        SetOwnership(child, ownershipData);
+                    }
+                }
+            }
+        }
 
         // Handle ref counting for strings
         else if(propertyData.PropertyType == TypeOf_StringRef) {
@@ -260,6 +274,20 @@ API_EXPORT void SetComponentInstanceData(u32 componentInfoIndex, u32 componentIn
         }
 
         else if(propertyData.PropertyType == TypeOf_Entity) {
+            if(propertyData.PropertyPrefab && !*(Entity*)(data + propertyData.PropertyOffset)) {
+                // Prevent changing child properties from outside
+                *(Entity*)(data + propertyData.PropertyOffset) = *(Entity*)(oldData + propertyData.PropertyOffset);
+
+                // If we are still null, component has just been added and we should initialize child!
+                if(!*(Entity*)(data + propertyData.PropertyOffset)) {
+                    auto child = CreateEntity();
+                    *(Entity*)(data + propertyData.PropertyOffset) = child;
+
+                    SetOwnership(child, {entity, property});
+                    SetInstance(child, {propertyData.PropertyPrefab});
+                }
+            }
+
             // If a reference was changed and the referred entity is owned by us, release ownership!
             Entity oldRef = *(Entity*)(oldData + propertyData.PropertyOffset);
             if(IsEntityValid(oldRef)) {
@@ -282,7 +310,7 @@ API_EXPORT void SetComponentInstanceData(u32 componentInfoIndex, u32 componentIn
         }
 	}
 
-	NotifyChange(entity, component, oldData, newData);
+	NotifyChange(entity, component, oldData, data);
 }
 
 
@@ -305,25 +333,25 @@ static void AddComponentExtensions(Entity component, Entity extensionComponent) 
     }
 }
 
-static void OnComponentChanged(Entity component, const Component& value, const Component& oldValue) {
-	if(oldValue.ComponentSize != value.ComponentSize && value.ComponentExplicitSize) {
+static void OnComponentChanged(Entity component, const Component& oldValue, const Component& newValue) {
+	if(oldValue.ComponentSize != newValue.ComponentSize && newValue.ComponentExplicitSize) {
 		auto componentTypeIndex = GetComponentIndexByIndex(0, component);
 		auto& pool = GetComponentPool(componentTypeIndex);
-		pool.SetElementSize(value.ComponentSize); // Entity, some padding, then new data and last, old data before system update
+		pool.SetElementSize(newValue.ComponentSize); // Entity, some padding, then new data and last, old data before system update
 	}
 }
 
-static void OnExtensionChanged(Entity extension, const Extension& value, const Extension& oldValue) {
+static void OnExtensionChanged(Entity extension, const Extension& oldValue, const Extension& newValue) {
 	if(!oldValue.ExtensionDisabled) {
 		RemoveComponentExtensions(oldValue.ExtensionComponent, oldValue.ExtensionExtenderComponent);
 	}
 
-	if(!value.ExtensionDisabled) {
-		AddComponentExtensions(value.ExtensionComponent, oldValue.ExtensionExtenderComponent);
+	if(!newValue.ExtensionDisabled) {
+		AddComponentExtensions(newValue.ExtensionComponent, oldValue.ExtensionExtenderComponent);
 	}
 }
 
-static void OnBaseChanged(Entity base, const Base& value, const Base& oldValue) {
+static void OnBaseChanged(Entity base, const Base& oldValue, const Base& newValue) {
 	if (oldValue.BaseComponent) {
 		auto componentDataIndex = GetComponentIndexByIndex(0, oldValue.BaseComponent);
         auto& componentInfo = componentData[componentDataIndex];
@@ -331,9 +359,9 @@ static void OnBaseChanged(Entity base, const Base& value, const Base& oldValue) 
 		eastl::remove(componentInfo.Dependees.begin(), componentInfo.Dependees.end(), GetOwnership(base).Owner);
 	}
 
-	if (value.BaseComponent) {
-		AddComponent(value.BaseComponent, ComponentOf_Component());
-		auto componentDataIndex = GetComponentIndexByIndex(0, value.BaseComponent);
+	if (newValue.BaseComponent) {
+		AddComponent(newValue.BaseComponent, ComponentOf_Component());
+		auto componentDataIndex = GetComponentIndexByIndex(0, newValue.BaseComponent);
 
 		if (componentDataIndex >= componentData.size() && componentDataIndex != InvalidIndex) {
 			componentData.resize(componentDataIndex + 1);
@@ -358,6 +386,7 @@ BeginUnit(Component)
         RegisterArrayProperty(Base, Bases)
         RegisterPropertyReadOnly(u16, ComponentSize)
         RegisterPropertyReadOnly(bool, ComponentExplicitSize)
+        RegisterProperty(NativePtr, ComponentDefaultData)
     EndComponent()
 
     BeginComponent(Extension)
@@ -389,6 +418,8 @@ EndUnit()
 	}
 
 void __InitializeComponent() {
+    memset(nullData, 0, sizeof(nullData));
+
 	auto component = ComponentOf_Component();
 	
 	BootstrapComponent(Component)

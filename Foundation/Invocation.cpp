@@ -12,47 +12,30 @@
 #define ARGUMENT_DATA_MAX 4096
 
 API_EXPORT bool Invoke(Entity invocationEntity) {
-    auto functionInvocation = GetFunctionInvocationData(invocationEntity);
-    auto propertyInvocation = GetPropertyInvocationData(invocationEntity);
+    auto functionInvocation = GetFunctionInvocation(invocationEntity);
+    auto propertyInvocation = GetPropertyInvocation(invocationEntity);
 
-    if(propertyInvocation) {
-        SetPropertyValue(propertyInvocation->InvocationProperty, propertyInvocation->InvocationTarget, propertyInvocation->InvocationValue);
+    if(propertyInvocation.InvocationProperty) {
+        SetPropertyValue(propertyInvocation.InvocationProperty, propertyInvocation.InvocationTarget, propertyInvocation.InvocationValue);
         return true;
     }
 
-    if(functionInvocation) {
-        Variant result;
-
-        auto& invocationArguments = GetInvocationArguments(invocationEntity);
-
-        auto arguments = (Variant*)alloca(sizeof(Variant) * invocationArguments.size());
-        for(int i = 0; i < invocationArguments.size(); ++i) {
-            auto argument = GetInvocationArgumentData(invocationArguments[i]);
-
-            arguments[i] = argument->InvocationArgumentValue;
+    if(functionInvocation.InvocationFunction) {
+        auto arguments = (Variant*)alloca(sizeof(Variant) * functionInvocation.InvocationArguments.GetSize());
+        for(int i = 0; i < functionInvocation.InvocationArguments.GetSize(); ++i) {
+            arguments[i] = GetInvocationArgument(functionInvocation.InvocationArguments[i]).InvocationArgumentValue;
         }
 
-        if(HasComponent(functionInvocation->InvocationFunction, ComponentOf_Function())) {
-            result = CallFunction(
-                    functionInvocation->InvocationFunction,
-					invocationArguments.size(),
+        if(HasComponent(functionInvocation.InvocationFunction, ComponentOf_Function())) {
+            functionInvocation.InvocationResult = CallFunction(
+                    functionInvocation.InvocationFunction,
+                    functionInvocation.InvocationArguments.GetSize(),
                     arguments
             );
 
             if(IsEntityValid(invocationEntity)) {
-                SetInvocationResult(invocationEntity, result);
+                SetFunctionInvocation(invocationEntity, functionInvocation);
             }
-
-            return true;
-        } else if (HasComponent(functionInvocation->InvocationFunction, ComponentOf_Event())) {
-            FireEventFast(
-                    functionInvocation->InvocationFunction,
-					invocationArguments.size(),
-                    arguments
-            );
-
-            result.type = TypeOf_unknown;
-            SetInvocationResult(invocationEntity, result);
 
             return true;
         }
@@ -64,8 +47,8 @@ API_EXPORT bool Invoke(Entity invocationEntity) {
     return false;
 }
 
-LocalFunction(OnInvocationToggled, void, Entity invocation, bool oldState, bool newState) {
-    if(newState) {
+static void OnInvocationToggleChanged(Entity invocation, const InvocationToggle& oldData, const InvocationToggle& newData) {
+    if(newData.InvocationToggleState) {
         Invoke(invocation);
     }
 }
@@ -90,5 +73,5 @@ BeginUnit(Invocation)
         RegisterProperty(bool, InvocationToggleState)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_InvocationToggleState()), OnInvocationToggled, 0)
+    RegisterSystem(OnInvocationToggleChanged, ComponentOf_InvocationToggle())
 EndUnit()

@@ -12,7 +12,6 @@
 #include "BgfxUniform.h"
 #include "BgfxTexture2D.h"
 #include "BgfxMesh.h"
-#include "BgfxShaderCompiler.h"
 #include "BgfxShaderCache.h"
 #include "BgfxOffscreenRenderTarget.h"
 
@@ -28,7 +27,6 @@ BeginModule(BgfxRendering)
     RegisterDependency(Core)
 
 	RegisterUnit(BgfxResource)
-    RegisterUnit(BgfxShaderCompiler)
     RegisterUnit(BgfxRenderContext)
     RegisterUnit(BgfxCommandList)
     RegisterUnit(BgfxUniform)
@@ -37,10 +35,6 @@ BeginModule(BgfxRendering)
     RegisterUnit(BgfxShaderCache)
     RegisterUnit(BgfxOffscreenRenderTarget)
     RegisterUnit(BgfxRendering)
-
-#ifdef BGFXRENDERING_WITH_SHADER_COMPILER
-    RegisterUnit(BgfxShaderCompiler)
-#endif
 
     ModuleData({
         "Extensions": [
@@ -99,6 +93,7 @@ struct BgfxRendering {
 
 BeginUnit(BgfxRendering)
     BeginComponent(BgfxRendering)
-        RegisterChildProperty(AppLoop, BgfxRenderingLoop)
+        BeginChildProperty(BgfxRenderingLoop)
+    EndChildProperty()
     EndComponent()
 EndUnit()

@@ -143,7 +143,7 @@ static bool DeserializeImage(Entity entity) {
     return result;
 }
 
-LocalFunction(OnServiceStart, void, Service service) {
+static void OnServiceStart(Service service) {
     Serializer s {
             SerializeImage,
             DeserializeImage
@@ -152,7 +152,7 @@ LocalFunction(OnServiceStart, void, Service service) {
     AddSerializer("voxel/vox", &s);
 }
 
-LocalFunction(OnServiceStop, void, Service service){
+static void OnServiceStop(Service service){
     RemoveFileType(".vox");
     RemoveSerializer("voxel/vox");
 }

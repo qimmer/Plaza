@@ -9,41 +9,35 @@
 #include <Foundation/AppNode.h>
 #include <Core/Instance.h>
 
-struct AnimationPlayerLayer {
-    Entity AnimationPlayerLayerAnimation;
-    float AnimationPlayerLayerWeight, AnimationPlayerLayerSpeed, AnimationPlayerLayerTime;
-    bool AnimationPlayerLayerLooping;
-};
+static inline void EvaluateLayer(Entity animationPlayer, Entity layer, const AnimationPlayerLayer& layerData, double deltaTime) {
+    auto newTime = layerData.AnimationPlayerLayerTime;
+    newTime += deltaTime * layerData.AnimationPlayerLayerSpeed;
 
-struct AnimationPlayer {
-};
+    auto newLayerData = layerData;
+    newLayerData.AnimationPlayerLayerTime = newTime;
+    SetAnimationPlayerLayer(layer, newLayerData);
 
-static inline void EvaluateLayer(Entity animationPlayer, Entity layer, AnimationPlayerLayer *layerData, double deltaTime) {
-    auto newTime = layerData->AnimationPlayerLayerTime;
-    newTime += deltaTime * layerData->AnimationPlayerLayerSpeed;
-    SetAnimationPlayerLayerTime(layer, newTime);
-
-    for_children(track, AnimationTracks, GetAnimationPlayerLayerAnimation(layer)) {
-        auto value = EvaluateAnimationFrame(track, newTime, layerData->AnimationPlayerLayerLooping);
+    auto animationData = GetAnimation(layerData.AnimationPlayerLayerAnimation);
+    for(auto track : animationData.AnimationTracks) {
+        auto value = EvaluateAnimationFrame(track, newTime, layerData.AnimationPlayerLayerLooping);
         if(!value.type) continue;
 
-        auto property = GetAnimationTrackProperty(track);
-        value = Cast(value, GetPropertyType(property));
+        auto property = GetAnimationTrack(track).AnimationTrackProperty;
+        value = Cast(value, GetProperty(property).PropertyType);
         SetPropertyValue(property, animationPlayer, value);
     }
 }
 
-LocalFunction(OnUpdateAnimation, void) {
-    auto deltaTime = GetStopWatchElapsedSeconds(StopWatchOf_Animation());
-    SetStopWatchElapsedSeconds(StopWatchOf_Animation(), 0.0);
+static void OnUpdateAnimation(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
+    AnimationPlayer playerData;
 
-    for_entity(animationPlayer, playerData, AnimationPlayer) {
-        if(!IsEntityValid(GetAppNodeRoot(animationPlayer))) continue;
+    for_entity_data(animationPlayer, ComponentOf_AnimationPlayer(), &playerData) {
+        if(!IsEntityValid(GetAppNode(animationPlayer).AppNodeRoot)) continue;
 
-        for_children(layer, AnimationPlayerLayers, animationPlayer) {
-            auto layerData = GetAnimationPlayerLayerData(layer);
-            if(layerData->AnimationPlayerLayerSpeed != 0.0f) {
-                EvaluateLayer(animationPlayer, layer, layerData, deltaTime);
+        for(auto layer : playerData.AnimationPlayerLayers) {
+            auto layerData = GetAnimationPlayerLayer(layer);
+            if(layerData.AnimationPlayerLayerSpeed != 0.0f) {
+                EvaluateLayer(animationPlayer, layer, layerData, newData.AppLoopDeltaTime);
             }
         }
     }
@@ -63,8 +57,5 @@ BeginUnit(AnimationPlayer)
         RegisterArrayProperty(AnimationPlayerLayer, AnimationPlayerLayers)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnUpdateAnimation, AppLoopOf_Animation())
-
-    SetAppLoopOrder(AppLoopOf_Animation(), AppLoopOrder_Update);
-    SetStopWatchRunning(StopWatchOf_Animation(), true);
+    RegisterDeferredSystem(OnUpdateAnimation, ComponentOf_AppLoop(), AppLoopOrder_Update)
 EndUnit()

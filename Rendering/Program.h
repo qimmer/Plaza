@@ -7,6 +7,10 @@
 
 #include <Core/NativeUtils.h>
 
+struct Program {
+    Entity ProgramVertexShaderSource, ProgramPixelShaderSource, ProgramDeclShaderSource;
+};
+
 Unit(Program)
     Component(Program)
         ChildProperty(Stream, ProgramVertexShaderSource)

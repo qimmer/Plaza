@@ -42,14 +42,14 @@ static void UpdatePalette(Entity palette) {
     StreamClose(data->VoxelPaletteTexture);
 }
 
-LocalFunction(OnVoxelColorChanged, void, Entity voxelColor) {
+static void OnVoxelColorChanged(Entity voxelColor) {
     auto parent = GetParent(voxelColor);
     if(IsEntityValid(parent) && HasComponent(parent, ComponentOf_VoxelPalette())) {
         invalidatedPalettes.insert(parent);
     }
 }
 
-LocalFunction(OnParentChanged, void, Entity voxelColor, Entity oldPalette, Entity newPalette) {
+static void OnParentChanged(Entity voxelColor, Entity oldPalette, Entity newPalette) {
     if(HasComponent(voxelColor, ComponentOf_VoxelColor())) {
         if(IsEntityValid(oldPalette) && HasComponent(oldPalette, ComponentOf_VoxelPalette())) {
             invalidatedPalettes.insert(oldPalette);
@@ -60,7 +60,7 @@ LocalFunction(OnParentChanged, void, Entity voxelColor, Entity oldPalette, Entit
     }
 }
 
-LocalFunction(OnAdded, void, Entity voxelPalette) {
+static void OnAdded(Entity voxelPalette) {
     auto data = GetVoxelPalette(voxelPalette);
 
     auto us = CreateUniformState(voxelPalette, "TextureUniformState");
@@ -79,7 +79,7 @@ LocalFunction(OnAdded, void, Entity voxelPalette) {
     SetMaterialPixelShader(voxelPalette, GetVoxelPixelShader());
 }
 
-LocalFunction(OnAppUpdate, void, double deltaTime) {
+static void OnAppUpdate(double deltaTime) {
     for(auto palette : invalidatedPalettes) {
         UpdatePalette(palette);
     }

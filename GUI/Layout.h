@@ -18,6 +18,7 @@ struct LayoutChildOrdering {
 };
 
 struct Layout {
+    ChildArray LayoutChildOrder;
     v4i LayoutPadding;
     v2i LayoutSpacing;
     u8 LayoutMode;

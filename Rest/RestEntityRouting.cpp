@@ -8,8 +8,6 @@
 #include <Core/Identification.h>
 #include <Core/Debug.h>
 #include "RestEntityRouting.h"
-#include "RestRouting.h"
-#include "RestServer.h"
 
 #define Verbose_Rest "rest"
 
@@ -17,8 +15,27 @@ struct RestEntityRouting {
     Entity RestEntityRoutingJsonSettings;
 };
 
-static Entity handleGet(StringRef uuid, Entity request, Entity response, Entity jsonSettings) {
-    auto responseStream = GetHttpResponseContentStream(response);
+static void ParseQuery(Entity jsonSettings, Entity request) {
+    auto requestData = GetHttpRequest(request);
+    for(auto queryParam : requestData.HttpRequestParameters) {
+        auto propertyUuid = StringFormatV("Property.%s", GetHttpParameter(queryParam).HttpParameterName);
+        auto property = FindEntityByUuid(propertyUuid);
+
+        if(!property) {
+            Log(request, LogSeverity_Warning, "Unknown JSON settings property when trying to parse query parameter: %s", propertyUuid);
+        }
+
+        auto value = GetHttpParameter(queryParam).HttpParameterValue;
+
+        SetPropertyValue(property, jsonSettings, MakeVariant(StringRef, value));
+    }
+}
+
+API_EXPORT Entity EntityRouteGet(Entity route, Entity request, Entity response, StringRef uuid) {
+    auto responseStream = GetHttpResponse(response).HttpResponseContentStream;
+    auto entityRoutingData = GetRestEntityRouting(route);
+
+    ParseQuery(entityRoutingData.RestEntityRoutingJsonSettings, request);
 
     auto requestedEntity = FindEntityByUuid(uuid);
 
@@ -30,9 +47,11 @@ static Entity handleGet(StringRef uuid, Entity request, Entity response, Entity 
 	    }
 	}
 
-    SetStreamPath(responseStream, "memory://response.json");
+	auto streamData = GetStream(responseStream);
+    streamData.StreamPath = "memory://response.json";
+    SetStream(responseStream, streamData);
 
-    if(!SerializeJson(responseStream, requestedEntity, jsonSettings)) {
+    if(!SerializeJson(responseStream, requestedEntity, entityRoutingData.RestEntityRoutingJsonSettings)) {
 		Log(request, LogSeverity_Error, "GET: Error serializing %s", uuid);
 
         return FindResponseCode(500);
@@ -40,9 +59,8 @@ static Entity handleGet(StringRef uuid, Entity request, Entity response, Entity 
 
     return FindResponseCode(200);
 }
-
-static Entity handlePut(StringRef uuid, Entity request, Entity response) {
-    auto requestStream = GetHttpRequestContentStream(request);
+API_EXPORT Entity EntityRoutePut(Entity route, Entity request, Entity response, StringRef uuid) {
+    auto requestStream = GetHttpRequest(request).HttpRequestContentStream;
 
     auto requestedEntity = FindEntityByUuid(uuid);
 
@@ -61,9 +79,9 @@ static Entity handlePut(StringRef uuid, Entity request, Entity response) {
 
     return FindResponseCode(200);
 }
-
-static Entity handlePost(StringRef uuid, StringRef propertyName, Entity request, Entity response, Entity jsonSettings) {
+API_EXPORT Entity EntityRoutePost(Entity route, Entity request, Entity response, StringRef uuid, StringRef propertyName) {
     auto parent = FindEntityByUuid(uuid);
+    auto entityRoutingData = GetRestEntityRouting(route);
 
     if(!IsEntityValid(parent)) {
         parent = strtoull(uuid, NULL, 10);
@@ -76,33 +94,36 @@ static Entity handlePost(StringRef uuid, StringRef propertyName, Entity request,
     auto property = FindEntityByUuid(StringFormatV("Property.%s", propertyName));
     if(!IsEntityValid(property)) return FindResponseCode(404);
 
-    if(GetPropertyKind(property) != PropertyKind_Array) {
+    if(GetProperty(property).PropertyType != TypeOf_ChildArray) {
         return FindResponseCode(404);
     }
 
-    u32 newIndex = AddArrayPropertyElement(property, parent);
-    auto newEntity = GetArrayPropertyElement(property, parent, newIndex);
+    auto newEntity = CreateEntity();
+    auto arr = GetPropertyValue(property, parent);
+    arr.as_ChildArray.Add(newEntity);
+    SetPropertyValue(property, parent, arr);
 
-    auto requestStream = GetHttpRequestContentStream(request);
-    auto responseStream = GetHttpResponseContentStream(response);
+    auto requestStream = GetHttpRequest(request).HttpRequestContentStream;
+    auto responseStream = GetHttpResponse(response).HttpResponseContentStream;
 
     if(HasComponent(requestStream, ComponentOf_Stream())) {
-        auto fileType = GetStreamFileType(requestStream);
-        if(IsEntityValid(fileType) && strcmp(GetFileTypeMimeType(fileType), "application/json") == 0) {
+        auto fileType = GetStream(requestStream).StreamFileType;
+        if(IsEntityValid(fileType) && strcmp(GetFileType(fileType).FileTypeMimeType, "application/json") == 0) {
             DeserializeJson(requestStream, newEntity);
         }
     }
 
-    SetStreamPath(responseStream, "memory://response.json");
+    auto streamData = GetStream(responseStream);
+    streamData.StreamPath = "memory://response.json";
+    SetStream(responseStream, streamData);
 
-    if(!SerializeJson(responseStream, newEntity, jsonSettings)) {
+    if(!SerializeJson(responseStream, newEntity, entityRoutingData.RestEntityRoutingJsonSettings)) {
         return FindResponseCode(500);
     }
 
     return FindResponseCode(201);
 }
-
-static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
+API_EXPORT Entity EntityRouteDelete(Entity route, Entity request, Entity response, StringRef uuid) {
     auto existing = FindEntityByUuid(uuid);
 
 	if (!IsEntityValid(existing)) {
@@ -114,19 +135,18 @@ static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
 	}
 
 	auto parent = GetOwnership(existing).Owner;
-	auto property = GetOwnerProperty(existing);
+	auto property = GetOwnership(existing).OwnerProperty;
 
-    if(!IsEntityValid(parent) || !IsEntityValid(property) || GetPropertyKind(property) != PropertyKind_Array) {
+    if(!IsEntityValid(parent) || !IsEntityValid(property) || GetProperty(property).PropertyType != TypeOf_ChildArray) {
 		Log(request, LogSeverity_Error, "DELETE: Entity is not a removable array element: %s", uuid);
         return FindResponseCode(403);
     }
 
-    auto& children = GetArrayPropertyElements(property, parent);
-    for(auto i = 0; i < children.size(); ++i) {
-        if(children[i] == existing) {
-			if (!RemoveArrayPropertyElement(property, parent, i)) {
-				return FindResponseCode(500);
-			}
+    auto arr = GetPropertyValue(property, parent);
+    for(auto i = 0; i < arr.as_ChildArray.GetSize(); ++i) {
+        if(arr.as_ChildArray[i] == existing) {
+            arr.as_ChildArray.Remove(i);
+            SetPropertyValue(property, parent, arr);
 
             return FindResponseCode(200);
         }
@@ -135,62 +155,25 @@ static Entity handleDelete(StringRef uuid, Entity request, Entity response) {
     return FindResponseCode(500);
 }
 
-LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity response) {
-    auto data = GetRestEntityRoutingData(routing);
-
-    if(data) {
-        auto settings = GetRestEntityRoutingJsonSettings(routing);
-
-        for_children(queryParam, HttpRequestParameters, request) {
-            auto propertyUuid = StringFormatV("Property.%s", GetHttpParameterName(queryParam));
-            auto property = FindEntityByUuid(propertyUuid);
-
-            if(!property) {
-                Log(request, LogSeverity_Warning, "Unknown JSON settings property when trying to parse query parameter: %s", propertyUuid);
-            }
-
-            auto value = GetHttpParameterValue(queryParam);
-
-            SetPropertyValue(property, settings, MakeVariant(StringRef, value));
-        }
-
-        char completeRoute[1024];
-        auto requestUrl = GetHttpRequestUrl(request);
-        char relativeUrl[1024];
-        strcpy(relativeUrl, requestUrl + strlen(GetRestRoutingRoute(routing)) + 1);
-
-        auto uuid = relativeUrl;
-        auto propertyName = "";
-
-        auto slashLoc = strchr(relativeUrl, '/');
-        if(slashLoc) {
-            *slashLoc = '\0';
-            propertyName = slashLoc + 1;
-        }
-
-        auto method = GetHttpRequestMethod(request);
-        auto responseCode = FindResponseCode(500);
-		if (strcmp(method, "GET") == 0) {
-			responseCode = handleGet(uuid, request, response, settings);
-		} else if (strcmp(method, "PUT") == 0) {
-			responseCode = handlePut(uuid, request, response);
-		} else if (strcmp(method, "POST") == 0) {
-			responseCode = handlePost(uuid, propertyName, request, response, settings);
-		} else if (strcmp(method, "DELETE") == 0) {
-			responseCode = handleDelete(uuid, request, response);
-		} else {
-			responseCode = FindResponseCode(405);
-		}
-
-        SetHttpResponseCode(response, responseCode);
-    }
-}
+Prefab(RestEntityRoutingJsonSettings)
 
 BeginUnit(RestEntityRouting)
+    BeginPrefab(RestEntityRoutingJsonSettings)
+        SetJsonSettings(prefab, {
+
+        });
+    EndPrefab()
+
     BeginComponent(RestEntityRouting)
-        RegisterBase(RestRouting)
-        RegisterChildProperty(JsonSettings, RestEntityRoutingJsonSettings)
+        BeginChildProperty(RestEntityRoutingJsonSettings)
+            BeginChildComponent(JsonSettings)
+                data.JsonSettingsMaxRecursiveLevels = 3;
+            EndChildComponent()
+        EndChildProperty()
     EndComponent()
 
-    RegisterSubscription(EventOf_RestRoutingRequest(), OnRestRoutingRequest, 0)
+    RegisterFunction(EntityRouteGet)
+    RegisterFunction(EntityRoutePut)
+    RegisterFunction(EntityRoutePost)
+    RegisterFunction(EntityRouteDelete)
 EndUnit()

@@ -21,18 +21,6 @@ BeginModule(Collision)
     RegisterUnit(Collision)
 EndModule()
 
-LocalFunction(OnBodyAdded, void, Entity component, Entity entity) {
-    SetCollisionBodyGravityScale(entity, 1.0f);
-}
-
-LocalFunction(OnShapeAdded, void, Entity component, Entity entity) {
-    SetCollisionShapeDensity(entity, 1.0f);
-    SetCollisionShapeRestitution(entity, 0.1f);
-    SetCollisionShapeFriction(entity, 0.1f);
-    SetCollisionShapeMask(entity, 0xffff);
-    SetCollisionShapeGroup(entity, 0x0001);
-}
-
 BeginUnit(Collision)
     BeginEnum(CollisionBodyType, false)
         RegisterFlag(CollisionBodyType_None)
@@ -96,7 +84,4 @@ BeginUnit(Collision)
         RegisterReferencePropertyReadOnly(CollisionShape, CollisionContactShape)
         RegisterReferencePropertyReadOnly(CollisionShape, CollisionContactOtherShape)
     EndComponent()
-
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnBodyAdded, ComponentOf_CollisionBody())
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnShapeAdded, ComponentOf_CollisionShape())
 EndUnit()

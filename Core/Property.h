@@ -13,10 +13,11 @@ struct ArrayChild {
 
 struct Ownership {
     Entity Owner, OwnerProperty;
+    u16 OwnerLevel;
 };
 
 struct Property {
-    Entity PropertyEnum, PropertyChildComponent;
+    Entity PropertyEnum, PropertyPrefab;
     u32 PropertyOffset, PropertySize;
     Type PropertyType;
     bool PropertyReadOnly;
@@ -31,28 +32,21 @@ Component(Property)
     Property(u32, PropertySize)
     Property(Type, PropertyType)
     Property(bool, PropertyReadOnly)
-    Property(Entity, PropertyChildComponent)
+    Property(Entity, PropertyPrefab)
     Property(Entity, PropertyEnum)
 
 Component(Ownership)
     Property(Entity, Owner)
     Property(Entity, OwnerProperty)
+    Property(u16, OwnerLevel)
 
 Component(ArrayChild)
     Property(StringRef, Name)
 
 Function(IsOwnedBy, bool, Entity entity, Entity owner)
 
-Function(GetArrayPropertyCount, u32, Entity property, Entity entity);
-Function(AddArrayPropertyElement, u32, Entity property, Entity entity, Entity element);
-Function(RemoveArrayPropertyElement, void, Entity property, Entity entity, u32 index);
-Function(GetArrayPropertyIndex, u32, Entity property, Entity entity, Entity element);
-Function(SetArrayPropertyCount, void, Entity property, Entity entity, u32 count);
-
 Function(SetPropertyValue, void, Entity property, Entity entity, Variant value);
 Function(GetPropertyValue, Variant, Entity property, Entity entity);
-
-const Entity *GetArrayPropertyElements(Entity property, Entity entity);
 
 StringRef Intern(StringRef sourceString);
 

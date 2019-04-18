@@ -9,11 +9,6 @@
 #include <Foundation/AppLoop.h>
 
 struct Transform {
-	v4f TransformGlobalMatrix[4];
-	v4f TransformLocalMatrix[4];
-
-    s32 TransformHierarchyLevel;
-
     union {
         v3f Position3D;
         struct {
@@ -38,9 +33,12 @@ struct Transform {
     };
 };
 
+struct WorldTransform {
+    v4f WorldTransformMatrix[4];
+};
+
 Unit(Transform)
     Component(Transform)
-        Property(s32, TransformHierarchyLevel)
         Property(v3f, Position3D)
         Property(v3f, RotationEuler3D)
         Property(v4f, RotationQuat3D)
@@ -50,10 +48,11 @@ Unit(Transform)
         Property(v2f, Scale2D)
         Property(float, Distance2D)
 
+    Component(WorldTransform)
+
     Function(TransformPoint, v3f, Entity sourceSpace, Entity destinationSpace, v3f sourcePoint)
     Function(TransformNormal, v3f, Entity sourceSpace, Entity destinationSpace, v3f sourceNormal)
 
-	Declare(AppLoop, TransformUpdate)
 #define AppLoopOrder_TransformUpdate (AppLoopOrder_Update + 1.0f)
 
 void Move3D(Entity transform, v3f direction, bool relativeToRotation);

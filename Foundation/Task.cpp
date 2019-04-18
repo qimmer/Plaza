@@ -25,7 +25,7 @@ static struct scheduler Scheduler;
 
 #define MAX_THREADS 64
 
-static Vector<u64> threadIds;
+static eastl::vector<u64> threadIds;
 static int mainThread = 0;
 
 struct Task {
@@ -35,6 +35,7 @@ struct Task {
 };
 
 struct TaskQueue {
+    ChildArray QueuedTasks;
 };
 
 static void TaskFunc(void* taskIndexPtr, struct scheduler*, struct sched_task_partition, sched_uint thread_num) {
@@ -44,22 +45,20 @@ static void TaskFunc(void* taskIndexPtr, struct scheduler*, struct sched_task_pa
 }
 
 API_EXPORT void TaskWait(Entity task) {
-    auto data = GetTaskData(task);
-    scheduler_join(&Scheduler, &data->TaskData);
+    auto data = GetTask(task);
+    scheduler_join(&Scheduler, &data.TaskData);
 }
 
 API_EXPORT void TaskSchedule(Entity task) {
-    auto data = GetTaskData(task);
-    if(!data->TaskFinished) return;
+    auto data = GetTask(task);
+    if(!data.TaskFinished) return;
 
-    SetInvocationResult(task, Variant_Empty);
-
-    scheduler_add(&Scheduler, &data->TaskData, TaskFunc, (void*)GetComponentIndex(ComponentOf_Task(), task), 1, 1);
-    data->TaskFinished = false;
+    scheduler_add(&Scheduler, &data.TaskData, TaskFunc, (void*)GetComponentIndex(ComponentOf_Task(), task), 1, 1);
+    data.TaskFinished = false;
 }
 
 API_EXPORT bool GetTaskRunning(Entity task) {
-    return !sched_task_done(&GetTaskData(task)->TaskData);
+    return !sched_task_done(&GetTask(task).TaskData);
 }
 
 API_EXPORT int GetCurrentThreadIndex() {
@@ -89,28 +88,13 @@ API_EXPORT int GetNumThreads() {
     return MAX_THREADS;
 }
 
-LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    for_entity(task, ComponentOf_Task()) {
-        if(GetTaskRunning(task) || GetTaskFinished(task)) continue;
-
-        SetTaskFinished(task, true);
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
+    Task taskData;
+    for_entity_data(task, ComponentOf_Task(), &taskData) {
+        if(GetTaskRunning(task) || GetTask(task).TaskFinished) continue;
+        taskData.TaskFinished = true;
+        SetTask(task, taskData);
     }
-}
-
-LocalFunction(OnCoreModuleInitialized, void, Entity module) {
-    memset(threadIds.data(), 0, sizeof(u64) * MAX_THREADS);
-
-    mainThread = GetCurrentThreadIndex();
-
-    scheduler_init(&Scheduler, &NeededSchedulerMemory, SCHED_DEFAULT, 0);
-    SchedulerMemory = calloc(NeededSchedulerMemory, 1);
-    scheduler_start(&Scheduler, SchedulerMemory);
-
-}
-
-LocalFunction(OnCoreModuleDestroyed, void, Entity module){
-    scheduler_stop(&Scheduler, 0);
-    free(SchedulerMemory);
 }
 
 BeginUnit(Task)
@@ -122,7 +106,18 @@ BeginUnit(Task)
         RegisterArrayProperty(Task, QueuedTasks)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopFrameChanged, AppLoopOf_AsyncTasksUpdate())
+    memset(threadIds.data(), 0, sizeof(u64) * MAX_THREADS);
 
-    SetAppLoopOrder(AppLoopOf_AsyncTasksUpdate(), AppLoopOrder_Update * 0.5f);
+    mainThread = GetCurrentThreadIndex();
+
+    scheduler_init(&Scheduler, &NeededSchedulerMemory, SCHED_DEFAULT, 0);
+    SchedulerMemory = calloc(NeededSchedulerMemory, 1);
+    scheduler_start(&Scheduler, SchedulerMemory);
+
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_Update * 0.5f)
+
+    /*
+    scheduler_stop(&Scheduler, 0);
+    free(SchedulerMemory);
+     * */
 EndUnit()

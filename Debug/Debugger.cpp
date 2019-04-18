@@ -7,7 +7,6 @@
 #include <Foundation/AppLoop.h>
 #include <Foundation/FoundationModule.h>
 #include <Core/Identification.h>
-#include <Networking/Replication.h>
 #include <Foundation/Stream.h>
 #include <Foundation/PersistancePoint.h>
 #include <Json/JsonModule.h>
@@ -46,20 +45,10 @@ int main(int argc, char** argv) {
 
         if(strstr(path, ".dll") || strstr(path, ".so") || strstr(path, ".dylib")) {
             LoadPlazaModule(path);
-        } else if (strstr(path, ".json")){
-            char vpath[512];
-            snprintf(vpath, sizeof(vpath), "file://%s", path);
-
-            auto module = CreateEntity();
-            SetStreamPath(module, vpath);
-            SetPersistancePointLoading(module, true);
-
-            AddModules(GetRoot(), module);
         }
-
     }
 
-    RunAppLoops();
+    RunAppLoop();
 
     DestroyEntity(GetRoot());
 

@@ -23,32 +23,31 @@ using namespace asio::ip;
 
 static asio::io_service s_io_service;
 
+namespace asio {
+    namespace detail {
+        template <typename Exception>
+        void throw_exception(const Exception& e) {
+            //Log(0, LogSeverity_Error, "%s", e.what());
+        }
+    }
+}
 
 #define Verbose_TcpClient "tcpclient"
 
-struct TcpStream {
-    tcp::socket *socket;
-    u64 readOffset;
-};
-
-struct TcpServer {
-    tcp::acceptor *acceptor;
-};
-
 static u64 Read(Entity entity, u64 size, void *data) {
-    auto streamData = GetTcpStreamData(entity);
+    auto streamData = GetTcpStream(entity);
 
-    if(!streamData->socket->is_open()) {
+    if(!((tcp::socket*)streamData.TcpStreamSocket)->is_open()) {
         return 0;
     }
 
-    auto available = streamData->socket->available();
+    auto available = ((tcp::socket*)streamData.TcpStreamSocket)->available();
     if(available == 0) {
         return 0;
     }
 
     error_code ec;
-    size = asio::read(*streamData->socket, asio::buffer(data, size), transfer_at_least(available), ec);
+    size = asio::read(*((tcp::socket*)streamData.TcpStreamSocket), asio::buffer(data, size), transfer_at_least(available), ec);
 
     if(ec == asio::error::eof) {
         return 0;
@@ -58,14 +57,14 @@ static u64 Read(Entity entity, u64 size, void *data) {
 }
 
 static u64 Write(Entity entity, u64 size, const void *data) {
-    auto streamData = GetTcpStreamData(entity);
+    auto streamData = GetTcpStream(entity);
 
-    if(!streamData->socket->is_open()) {
+    if(!((tcp::socket*)streamData.TcpStreamSocket)->is_open()) {
         return 0;
     }
 
 	error_code ec;
-    size = asio::write(*streamData->socket, asio::const_buffer(data, size), asio::transfer_at_least(1), ec);
+    size = asio::write(*((tcp::socket*)streamData.TcpStreamSocket), asio::const_buffer(data, size), asio::transfer_at_least(1), ec);
 
 	if (ec == asio::error::eof) {
 		return 0;
@@ -77,8 +76,8 @@ static u64 Write(Entity entity, u64 size, const void *data) {
 }
 
 static s32 Tell(Entity entity) {
-    auto streamData = GetTcpStreamData(entity);
-    return streamData->readOffset;
+    auto streamData = GetTcpStream(entity);
+    return streamData.readOffset;
 }
 
 static bool Seek(Entity entity, s32 offset) {
@@ -86,15 +85,15 @@ static bool Seek(Entity entity, s32 offset) {
 }
 
 static bool Open(Entity entity, int modeFlag) {
-    auto streamData = GetTcpStreamData(entity);
+    auto streamData = GetTcpStream(entity);
 
-    if(streamData->socket) return true;
+    if(((tcp::socket*)streamData.TcpStreamSocket)) return true;
 
     char protocol[128];
     char host[256];
     char port[128];
 
-    auto numParsed = sscanf(GetStreamPath(entity), "%s://%s:%s", protocol, host, port);
+    auto numParsed = sscanf(GetStream(entity).StreamPath, "%s://%s:%s", protocol, host, port);
     if(numParsed != 3) {
         Log(entity, LogSeverity_Error, "Incorrect TCP stream path format. Should be: tcp://address:port");
         return false;
@@ -104,30 +103,32 @@ static bool Open(Entity entity, int modeFlag) {
     tcp::resolver::query query(host, port);
     tcp::resolver::iterator iter = resolver.resolve(query), end;
 
-    streamData->socket = new tcp::socket(s_io_service);
+    auto socket = new tcp::socket(s_io_service);
     asio::error_code error = asio::error::host_not_found;
     while (error && iter != end)
     {
-        streamData->socket->close();
-        streamData->socket->connect(*iter++, error);
+       socket->close();
+       socket->connect(*iter++, error);
     }
 
     if (error) {
-        delete streamData->socket;
-        streamData->socket = NULL;
+        delete socket;
         return false;
     }
+
+    streamData.TcpStreamSocket = socket;
+    SetTcpStream(entity, streamData);
 
     return true;
 }
 
 static bool Close(Entity entity) {
-    auto data = GetTcpStreamData(entity);
+    auto data = GetTcpStream(entity);
 
-    if(data && data->socket) {
-        data->socket->close();
-        delete data->socket;
-        data->socket = NULL;
+    if(data.TcpStreamSocket) {
+        ((tcp::socket*)data.TcpStreamSocket)->close();
+        data.TcpStreamSocket = NULL;
+        SetTcpStream(entity, data);
         return true;
     }
 
@@ -135,77 +136,85 @@ static bool Close(Entity entity) {
 }
 
 static bool IsOpen(Entity entity) {
-    auto data = GetTcpStreamData(entity);
+    auto data = GetTcpStream(entity);
 
-    if(data->socket && !data->socket->is_open()) {
-        delete data->socket;
-        data->socket = NULL;
+    if(data.TcpStreamSocket && !((tcp::socket*)data.TcpStreamSocket)->is_open()) {
+        data.TcpStreamSocket = NULL;
+        SetTcpStream(entity, data);
     }
 
-    return data->socket != NULL;
+    return data.TcpStreamSocket != NULL;
 }
 
 static bool Delete(Entity entity) {
     return false;
 }
 
-LocalFunction(OnTcpStreamRemoved, void, Entity component, Entity entity) {
-    Close(entity);
-}
-
-LocalFunction(OnTcpServerRemoved, void, Entity component, Entity entity) {
-    SetServerPort(entity, 0); // Trigger disposal of server
-}
-
 static void StartAccept(Entity server) {
-    auto data = GetTcpServerData(server);
+    auto data = GetTcpServer(server);
 
     auto socket = new tcp::socket(s_io_service);
-    data->acceptor->async_accept(*socket, [server, socket](const asio::error_code& e) {
+    ((tcp::acceptor*)data.TcpServerAcceptor)->async_accept(*socket, [server, socket](const asio::error_code& e) {
+        auto tcpServerData = GetTcpServer(server);
         StartAccept(server);
 
-        auto stream = AddTcpServerClients(server);
-        AddComponent(stream, ComponentOf_TcpStream());
-        auto streamData = GetTcpStreamData(stream);
+        auto stream = CreateEntity();
+        tcpServerData.TcpServerClients.Add(stream);
 
-        streamData->socket = socket;
+        auto tcpStreamData = GetTcpStream(stream);
+        tcpStreamData.TcpStreamSocket = socket;
 
         auto remoteIp = "tcp://" + socket->remote_endpoint().address().to_string() + "/";
 
-        SetStreamPath(stream, remoteIp.c_str());
+        auto streamData = GetStream(stream);
+        streamData.StreamPath = remoteIp.c_str();
+        SetStream(stream, streamData);
+        SetTcpStream(stream, tcpStreamData);
 
         StreamOpen(stream, StreamMode_Read | StreamMode_Write);
 
         Verbose(Verbose_TcpClient, "Client %u connected: %s", GetComponentIndex(ComponentOf_TcpStream(), stream), GetStreamPath(stream));
 
-		Variant values[] = { MakeVariant(Entity, server), MakeVariant(Entity, stream) };
-		FireEventFast(EventOf_TcpClientConnected(), 2, values);
+        SetTcpServer(server, tcpServerData);
     });
 }
 
-LocalFunction(OnTcpServerPortChanged, void, Entity server, u16 oldPort, u16 newPort) {
-    auto data = GetTcpServerData(server);
-
-    if(data) {
-        if(oldPort && data->acceptor) {
-            data->acceptor->close();
-            delete data->acceptor;
-            data->acceptor = NULL;
-        }
-
-        if(newPort) {
-            data->acceptor = new tcp::acceptor(s_io_service, ip::tcp::endpoint{ip::tcp::v4(), newPort});
-            data->acceptor->set_option(asio::ip::tcp::acceptor::reuse_address(true));
-            data->acceptor->set_option(asio::ip::tcp::acceptor::keep_alive(true));
-            data->acceptor->listen();
-
-            StartAccept(server);
-        }
+static void OnTcpStreamChanged(Entity entity, const TcpStream& oldData, const TcpStream& newData) {
+    if(oldData.TcpStreamSocket && !newData.TcpStreamSocket) {
+        delete ((tcp::socket*)oldData.TcpStreamSocket);
     }
 }
 
-LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    if(s_io_service.poll() == 0 && GetTcpWaitOnNoWork(ModuleOf_Networking())) {
+static void OnServerChanged(Entity entity, const Server& oldData, const Server& newData) {
+    auto tcpServerData = GetTcpServer(entity);
+    if(!newData.ServerPort && tcpServerData.TcpServerAcceptor) {
+        tcpServerData.TcpServerAcceptor = NULL;
+        SetTcpServer(entity, tcpServerData);
+    }
+}
+
+static void OnTcpServerChanged(Entity server, const TcpServer& oldData, const TcpServer& newData) {
+    if(oldData.TcpServerAcceptor && !newData.TcpServerAcceptor) {
+        auto acceptor = ((tcp::acceptor*)oldData.TcpServerAcceptor);
+        acceptor->close();
+        delete acceptor;
+    }
+
+    if(!oldData.TcpServerAcceptor && !newData.TcpServerAcceptor) {
+        auto data = newData;
+        auto acceptor = new tcp::acceptor(s_io_service, ip::tcp::endpoint{ip::tcp::v4(), GetServer(server).ServerPort});
+        acceptor->set_option(asio::ip::tcp::acceptor::reuse_address(true));
+        acceptor->set_option(asio::ip::tcp::acceptor::keep_alive(true));
+        acceptor->listen();
+        data.TcpServerAcceptor = acceptor;
+        SetTcpServer(server, data);
+
+        StartAccept(server);
+    }
+}
+
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
+    if(s_io_service.poll() == 0 && GetNetworking(ModuleOf_Networking()).TcpWaitOnNoWork) {
 #ifdef LINUX
         usleep(1);
 #endif
@@ -215,13 +224,13 @@ LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 new
     }
 
     // Remove closed clients from server
-    for_entity(server, serverData, TcpServer) {
-        auto& clients = GetTcpServerClients(server);
-        for(auto i = 0; i < clients.size(); ++i) {
-            auto client = clients[i];
+    TcpServer serverData;
+    for_entity_data(server, ComponentOf_TcpServer(), &serverData) {
+        for(auto i = 0; i < serverData.TcpServerClients.GetSize(); ++i) {
+            auto client = serverData.TcpServerClients[i];
             if(!IsOpen(client)) {
 				Verbose(Verbose_TcpClient, "Client %u disconnected: %s", GetComponentIndex(ComponentOf_TcpStream(), client), GetStreamPath(client));
-                RemoveTcpServerClients(server, i);
+                serverData.TcpServerClients.Remove(i);
                 i--;
             }
         }
@@ -238,11 +247,10 @@ BeginUnit(TcpStream)
         RegisterArrayProperty(TcpStream, TcpServerClients)
     EndComponent()
 
-    RegisterEvent(TcpClientConnected)
+    RegisterSystem(OnTcpStreamChanged, ComponentOf_TcpStream())
+    RegisterSystem(OnServerChanged, ComponentOf_Server())
+    RegisterSystem(OnTcpServerChanged, ComponentOf_TcpServer())
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_Input)
 
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnTcpStreamRemoved, ComponentOf_TcpStream())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_ServerPort()), OnTcpServerPortChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopFrameChanged, AppLoopOf_Networking())
-
-    RegisterStreamProtocol(TcpStream, "tcp")
+    RegisterStreamProtocol(Tcp, "tcp")
 EndComponent()

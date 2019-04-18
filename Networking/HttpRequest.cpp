@@ -9,41 +9,11 @@
 #define stricmp strcasecmp
 #endif
 
-struct HttpHeaderType {
-    StringRef HttpHeaderTypeIdentifier;
-};
-
-struct HttpResponseCode {
-    StringRef HttpResponseCodeMessage;
-    u16 HttpResponseCodeNumber;
-};
-
-struct HttpHeader {
-    Entity HttpHeaderType;
-    StringRef HttpHeaderValue;
-};
-
-struct HttpRequest {
-    StringRef HttpRequestMethod;
-    StringRef HttpRequestVersion;
-    StringRef HttpRequestUrl;
-    Entity HttpRequestContentStream;
-};
-
-struct HttpParameter {
-    StringRef HttpParameterName;
-    StringRef HttpParameterValue;
-};
-
-struct HttpResponse {
-    Entity HttpResponseCode;
-    Entity HttpResponseContentStream;
-};
-
-API_EXPORT Entity FindHeaderType(const char *identifier) {
+API_EXPORT Entity FindHeaderType(StringRef identifier) {
+    identifier = Intern(identifier);
     for_entity(headerType, ComponentOf_HttpHeaderType()) {
-        auto headerIdentifier = GetHttpHeaderTypeIdentifier(headerType);
-        if(stricmp(headerIdentifier, identifier) == 0) {
+        auto headerIdentifier = GetHttpHeaderType(headerType).HttpHeaderTypeIdentifier;
+        if(headerIdentifier == identifier) {
             return headerType;
         }
     }
@@ -53,7 +23,7 @@ API_EXPORT Entity FindHeaderType(const char *identifier) {
 
 API_EXPORT Entity FindResponseCode(u16 responseCodeNumber) {
     for_entity(responseCode, ComponentOf_HttpResponseCode()) {
-        if(GetHttpResponseCodeNumber(responseCode) == responseCodeNumber) {
+        if(GetHttpResponseCode(responseCode).HttpResponseCodeNumber == responseCodeNumber) {
             return responseCode;
         }
     }
@@ -82,13 +52,16 @@ BeginUnit(HttpRequest)
         RegisterProperty(StringRef, HttpRequestUrl)
         RegisterProperty(StringRef, HttpRequestVersion)
         RegisterArrayProperty(HttpHeader, HttpRequestHeaders)
-        RegisterChildProperty(Stream, HttpRequestContentStream)
+        BeginChildProperty(HttpRequestContentStream)
+        EndChildProperty()
     EndComponent()
 
     BeginComponent(HttpResponse)
+        RegisterReferenceProperty(HttpRequest, HttpResponseRequest)
         RegisterReferenceProperty(HttpResponseCode, HttpResponseCode)
         RegisterArrayProperty(HttpHeader, HttpResponseHeaders)
-        RegisterChildProperty(Stream, HttpResponseContentStream)
+        BeginChildProperty(HttpResponseContentStream)
+        EndChildProperty()
     EndComponent()
 
     BeginComponent(HttpParameter)

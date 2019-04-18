@@ -12,4 +12,9 @@ Unit(RestResourceRouting)
         Property(StringRef, RestResourceRoutingRoot)
         Property(StringRef, RestResourceRoutingDefaultFile)
 
+    Function(ResourceRouteGet, Entity, Entity route, Entity request, Entity response, StringRef path)
+    Function(ResourceRoutePut, Entity, Entity route, Entity request, Entity response, StringRef path)
+    Function(ResourceRoutePost, Entity, Entity route, Entity request, Entity response, StringRef path)
+    Function(ResourceRouteDelete, Entity, Entity route, Entity request, Entity response, StringRef path)
+
 #endif //PLAZA_RESTRESOURCEROUTING_H

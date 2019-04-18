@@ -29,18 +29,11 @@ Entity GetComponentEntity(u32 componentInfoIndex, u32 componentIndex);
 const void* GetComponentInstanceData(u32 componentInfoIndex, u32 componentDataIndex);
 void SetComponentInstanceData(u32 componentInfoIndex, u32 componentDataIndex, const void *data);
 
-u32 GetArrayPropertyCount(Entity property, Entity entity);
-void SetArrayPropertyCount(Entity property, Entity entity, u32 count);
-u32 AddArrayPropertyElement(Entity property, Entity entity, Entity element);
-u32 GetArrayPropertyIndex(Entity property, Entity entity, Entity element);
-void RemoveArrayPropertyElement(Entity property, Entity entity, u32 index);
-Entity GetArrayPropertyElement(Entity property, Entity entity, u32 index);
-const Entity* GetArrayPropertyElements(Entity property, Entity entity);
-
 void SetModule(Entity entity, const struct Module& data);
 void SetIdentification(Entity entity, const struct Identification& data);
 void SetOwnership(Entity entity, const struct Ownership& data);
 void SetFunction(Entity function, const struct Function& data);
+void SetInstance(Entity instance, const struct Instance& data);
 
 const struct Identification& GetIdentification(Entity entity);
 const struct Ownership& GetOwnership(Entity entity);
@@ -108,6 +101,13 @@ StringRef GetUniqueEntityName(Entity entity);
         SetComponentInstanceData(componentInfoIndex, componentIndex, (const char*)&data);\
     }
 
+#define Prefab(NAME)\
+    Declare(Prefab, NAME)\
+    inline Entity Create ## NAME () {\
+        auto entity = CreateEntity();\
+        SetInstance(entity, {PrefabOf_ ## NAME()});\
+        return entity;\
+    }
 
 #define Unit(NAME) \
     void __InitUnit_ ## NAME (Entity module);
@@ -128,36 +128,7 @@ StringRef GetUniqueEntityName(Entity entity);
     Declare(Property, PROPERTYNAME)
 
 #define ArrayProperty(ELEMENTCOMPONENT, PROPERTYNAME) \
-    Declare(Property, PROPERTYNAME)\
-    inline const Entity* Get ## PROPERTYNAME(Entity entity) {\
-        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        return GetArrayPropertyElements(prop, entity);\
-    }\
-    inline u32 Add ## PROPERTYNAME(Entity entity, Entity element) {\
-        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        return AddArrayPropertyElement(prop, entity, element);\
-    }\
-    inline void Remove ## PROPERTYNAME(Entity entity, u32 index) {\
-        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        RemoveArrayPropertyElement(prop, entity, index);\
-    }\
-    inline void Remove ## PROPERTYNAME ## ByValue(Entity entity, Entity value) {\
-        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        auto index = GetArrayPropertyIndex(prop, entity, value);\
-        RemoveArrayPropertyElement(prop, entity, index);\
-    }\
-    inline u32 Get ## PROPERTYNAME ## Index(Entity entity, Entity element) {\
-        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        return GetArrayPropertyIndex(prop, entity, element);\
-    }\
-    inline u32 GetNum ## PROPERTYNAME(Entity entity) {\
-        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        return GetArrayPropertyCount(prop, entity);\
-    }\
-    inline void SetNum ## PROPERTYNAME(Entity entity, u32 count) {\
-        static Entity prop = PropertyOf_ ## PROPERTYNAME();\
-        SetArrayPropertyCount(prop, entity, count);\
-    }
+    Declare(Property, PROPERTYNAME)
 
 #define RegisterFunctionSignature(Function, ...) \
     RegisterFunctionSignatureImpl((NativePtr)Function, #__VA_ARGS__);
@@ -294,9 +265,9 @@ StringRef GetUniqueEntityName(Entity entity);
                 SetModule(module, data);\
 				SetIdentification(module, {"Module." #NAME});\
 				SetOwnership(module, {GetRoot(), PropertyOf_Modules()});\
-				auto moduleRootData = GetModuleRoot(GetRoot());\
-				moduleRootData.Modules.push_back(module);\
-				SetModuleRoot(GetRoot(), moduleRootData);\
+				auto rootData = GetModuleRoot(GetRoot());\
+                rootData.Modules.Add(module);\
+                SetModuleRoot(GetRoot(), rootData);\
                 __InitModule_ ## NAME(module);\
             }\
         }\
@@ -322,29 +293,43 @@ StringRef GetUniqueEntityName(Entity entity);
         System systemData;\
         Property propertyData;\
         Enum enumData;\
+        Module moduleData = GetModule(module);\
         Entity node = 0, type = 0, component = 0, property = 0, event = 0, argument = 0, argumentParent = 0, base = 0, extension = 0, function = 0, subscription = 0, subscriptionFunction = 0, eenum = 0, flag = 0;\
         auto unitName = #NAME;
 
 #define BeginComponent(COMPONENT) \
-        component = ComponentOf_ ## COMPONENT ();\
-        SetArrayChild(component, {#COMPONENT});\
-        AddComponents(module, component);\
-		SetIdentification(component, {"Component." #COMPONENT});\
-		componentData = GetComponent(component);\
-		componentData.ComponentExplicitSize = true;\
-		componentData.ComponentSize = sizeof(COMPONENT);\
-		SetComponent(component, componentData);\
         {\
+            static COMPONENT defaultValue;\
+            memset(&defaultValue, 0, sizeof(COMPONENT));\
+            component = ComponentOf_ ## COMPONENT ();\
+            SetArrayChild(component, {#COMPONENT});\
+            moduleData.Components.Add(component);\
+            SetIdentification(component, {"Component." #COMPONENT});\
+            componentData = GetComponent(component);\
+            componentData.ComponentExplicitSize = true;\
+            componentData.ComponentSize = sizeof(COMPONENT);\
+            componentData.ComponentDefaultData = &defaultValue;\
             typedef COMPONENT ComponentType;
 
+
 #define EndComponent() \
+            SetComponent(component, componentData);\
+        }
+
+#define BeginPrefab(NAME)\
+        {\
+            auto prefab = PrefabOf_ ## NAME();\
+            SetArrayChild(prefab, {#NAME});\
+            moduleData.Prefabs.Add(prefab);\
+
+#define EndPrefab()\
         }
 
 #define RegisterSystem(NAME, COMPONENT) \
         {\
             auto system = CreateEntity();\
             SetArrayChild(system, {#NAME});\
-            AddSystems(module, system);\
+            moduleData.Systems.Add(system);\
             systemData = GetSystem(system);\
             systemData.SystemFunction = (NativePtr)&NAME;\
             systemData.SystemOrder = 0;\
@@ -357,7 +342,7 @@ StringRef GetUniqueEntityName(Entity entity);
         {\
             auto system = CreateEntity();\
             SetArrayChild(system, {#NAME});\
-            AddSystems(module, system);\
+            moduleData.Systems.Add(system);\
             systemData = GetSystem(system);\
             systemData.SystemFunction = (NativePtr)&NAME;\
             systemData.SystemOrder = ORDER;\
@@ -369,7 +354,7 @@ StringRef GetUniqueEntityName(Entity entity);
 #define RegisterProperty(PROPERTYTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
     SetArrayChild(property, {#PROPERTYNAME});\
-    AddProperties(component, property);\
+    componentData.Properties.Add(property);\
     propertyData = GetProperty(property);\
     propertyData.PropertyType = TypeOf_ ## PROPERTYTYPE;\
     propertyData.PropertyOffset = offsetof(ComponentType, PROPERTYNAME);\
@@ -390,28 +375,38 @@ StringRef GetUniqueEntityName(Entity entity);
 #define RegisterArrayProperty(COMPONENTTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
 	SetArrayChild(property, {#PROPERTYNAME});\
-	AddProperties(component, property);\
+	componentData.Properties.Add(property);\
     propertyData = GetProperty(property);\
     propertyData.PropertyType = TypeOf_ChildArray;\
     propertyData.PropertyOffset = offsetof(ComponentType, PROPERTYNAME);\
-    propertyData.PropertyChildComponent = ComponentOf_ ## COMPONENTTYPE();\
     SetProperty(property, propertyData);
 
-#define RegisterChildProperty(COMPONENTTYPE, PROPERTYNAME)\
+#define BeginChildProperty(PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
 	SetArrayChild(property, {#PROPERTYNAME});\
-	AddProperties(component, property);\
+	componentData.Properties.Add(property);\
     propertyData = GetProperty(property);\
     propertyData.PropertyType = TypeOf_Entity;\
     propertyData.PropertyOffset = offsetof(ComponentType, PROPERTYNAME);\
-    propertyData.PropertyChildComponent = ComponentOf_ ## COMPONENTTYPE();\
-    SetProperty(property, propertyData);
+    propertyData.PropertyPrefab = CreateEntity();\
+    SetOwnership(propertyData.PropertyPrefab, {property, PropertyOf_PropertyPrefab()});\
 
+#define BeginChildComponent(COMPONENTNAME)\
+    {\
+        auto data = Get ## COMPONENTNAME(propertyData.PropertyPrefab);\
+        auto setter = &Set ## COMPONENTNAME;
+
+#define EndChildComponent()\
+        setter(propertyData.PropertyPrefab, data);\
+    }
+
+#define EndChildProperty()\
+    SetProperty(property, propertyData);
 
 #define RegisterReferenceProperty(COMPONENTTYPE, PROPERTYNAME)\
     property = PropertyOf_ ## PROPERTYNAME ();\
 	SetArrayChild(property, {#PROPERTYNAME});\
-	AddProperties(component, property);\
+	componentData.Properties.Add(property);\
     propertyData = GetProperty(property);\
     propertyData.PropertyType = TypeOf_Entity;\
     propertyData.PropertyOffset = offsetof(ComponentType, PROPERTYNAME);\
@@ -432,42 +427,40 @@ StringRef GetUniqueEntityName(Entity entity);
     {\
         auto base = CreateEntity();\
         SetArrayChild(base, {#BASECOMPONENT});\
-        AddBases(component, base);\
+        componentData.Bases.Add(base);\
         SetBase(base, {ComponentOf_ ## BASECOMPONENT ()});\
     }
 
 #define RegisterExtension(BASECOMPONENT, EXTENSIONCOMPONENT) \
     extension = CreateEntity();\
     SetArrayChild(extension, #EXTENSIONCOMPONENT);\
-    AddExtensions(module, extension);\
+    moduleData.Extensions.Add(extension);\
     SetExtension(extension, {ComponentOf_ ## BASECOMPONENT (), ComponentOf_ ## EXTENSIONCOMPONENT ()});
 
 #define RegisterFunction(FUNCTION) \
     function = FunctionOf_ ## FUNCTION ();\
     SetArrayChild(function, {#FUNCTION});\
-    AddFunctions(module, function);
+    moduleData.Functions.Add(function);
 
 #define BeginEnum(ENUM, COMBINABLE) \
     eenum = EnumOf_ ## ENUM ();\
     SetArrayChild(eenum, {#ENUM});\
-    AddEnums(module, eenum);\
+    moduleData.Enums.Add(eenum);\
     enumData = GetEnum(eenum);\
 	enumData.EnumCombinable = COMBINABLE;
 
 #define RegisterFlag(FLAG) \
     flag = CreateEntity();\
     SetArrayChild(flag, {#FLAG});\
-    AddEnumFlags(eenum, flag);\
     SetEnumFlag(flag, {FLAG});\
-    enumData.EnumFlags.push_back(flag);
+    enumData.EnumFlags.Add(flag);
 
-#define EndEnum()
+#define EndEnum()\
+    SetEnum(eenum, enumData);
 
 #define EndUnit() \
+        SetModule(module, moduleData);\
     }
-
-#define for_children(CHILD, PROPERTY, PARENT) \
-    for(Entity CHILD ## _index = 0, CHILD = GetArrayPropertyElement(PROPERTY, PARENT, (u32)CHILD ## _index); CHILD ## _index < GetArrayPropertyCount(PROPERTY, PARENT); ++CHILD ## _index)
 
 #include <Core/Identification.h>
 #include <Core/Module.h>
@@ -477,5 +470,6 @@ StringRef GetUniqueEntityName(Entity entity);
 #include <Core/Entity.h>
 #include <Core/Enum.h>
 #include <Core/System.h>
+#include <Core/Instance.h>
 
 #endif //PLAZA_NATIVEUTILS_H

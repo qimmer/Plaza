@@ -7,6 +7,10 @@
 
 #include <Core/NativeUtils.h>
 
+struct Server {
+    u16 ServerPort;
+};
+
 Unit(Server)
     Component(Server)
         Property(u16, ServerPort)

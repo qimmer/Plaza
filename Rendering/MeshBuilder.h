@@ -18,6 +18,7 @@ struct MeshBuilderIndex {
 };
 
 struct MeshBuilder {
+    ChildArray MeshBuilderVertices, MeshBuilderIndices;
     bool MeshBuilderInvalidated;
 };
 

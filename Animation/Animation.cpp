@@ -8,18 +8,6 @@
 
 #include <cglm/cglm.h>
 
-struct AnimationFrame {
-    Variant AnimationFrameValue;
-    double AnimationFrameDuration;
-};
-
-struct AnimationTrack {
-    Entity AnimationTrackProperty;
-};
-
-struct Animation {
-};
-
 #define INTERP_NUM(TYPE) \
     case TypeOf_ ## TYPE :\
     {\
@@ -93,14 +81,9 @@ API_EXPORT Variant Interpolate(Variant left, Variant right, float t) {
 }
 
 API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bool loop) {
-    auto data = GetAnimationTrackData(animationTrack);
-    if(!data) {
-        return Variant_Empty;
-    }
+    auto data = GetAnimationTrack(animationTrack);
 
-	auto& frames = GetAnimationTrackFrames(animationTrack);
-    
-    if(!frames.size()) {
+    if(!data.AnimationTrackFrames.GetSize()) {
         return Variant_Empty;
     }
 
@@ -111,11 +94,10 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     double duration = 0.0, sum = 0.0;
 
     // Find accumulated duration
-    for(auto frame : frames) {
-        auto frameData = GetAnimationFrameData(frame);
-        if(!frameData) continue;
+    for(auto frame : data.AnimationTrackFrames) {
+        auto frameData = GetAnimationFrame(frame);
 
-        duration += frameData->AnimationFrameDuration;
+        duration += frameData.AnimationFrameDuration;
 
         lastFrame = frame;
     }
@@ -127,18 +109,17 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
     }
 
     // Find first frame
-	for(auto i = 0; i < frames.size(); ++i) {
-		auto frame2 = frames[i];
-        auto frameData = GetAnimationFrameData(frame2);
-        if(!frameData) continue;
+	for(auto i = 0; i < data.AnimationTrackFrames.GetSize(); ++i) {
+		auto frame2 = data.AnimationTrackFrames[i];
+        auto frameData = GetAnimationFrame(frame2);
 
         auto startTime = sum;
-        sum += frameData->AnimationFrameDuration;
+        sum += frameData.AnimationFrameDuration;
 
         if(!firstFrame && time >= startTime && time < sum) {
             firstFrame = frame2;
             firstTime = startTime;
-            lastFrame = frames[(i + 1) % frames.size()];
+            lastFrame = data.AnimationTrackFrames[(i + 1) % data.AnimationTrackFrames.GetSize()];
             lastTime = sum;
             break;
         }
@@ -148,11 +129,11 @@ API_EXPORT Variant EvaluateAnimationFrame(Entity animationTrack, double time, bo
 
     t = (time - firstTime) / (lastTime - firstTime);
 
-    auto firstValue = GetAnimationFrameValue(firstFrame);
-    auto lastValue = GetAnimationFrameValue(lastFrame);
+    auto firstValue = GetAnimationFrame(firstFrame).AnimationFrameValue;
+    auto lastValue = GetAnimationFrame(lastFrame).AnimationFrameValue;
 
-    auto property = data->AnimationTrackProperty;
-    auto propertyType = GetPropertyType(property);
+    auto property = data.AnimationTrackProperty;
+    auto propertyType = GetProperty(property).PropertyType;
     if(firstValue.type != propertyType) {
         Log(animationTrack, LogSeverity_Error, "Animation frame values are of type %s, but property is of type %s.", GetTypeName(firstValue.type), GetTypeName(propertyType));
         return Variant_Empty;

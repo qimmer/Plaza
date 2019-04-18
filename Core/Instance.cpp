@@ -22,21 +22,34 @@ static bool TryResolve(Entity unresolvedReference, UnresolvedReference *data) {
 
     auto value = MakeVariant(Entity, reference);
 
-    SetPropertyValue(data->UnresolvedReferenceProperty, entity, value);
-    data->UnresolvedReferenceUuid = NULL;
-
-    RemoveUnresolvedReferencesByValue(entity, unresolvedReference);
-
-    if(GetNumUnresolvedReferences(entity) == 0) {
-        RemoveComponent(entity, ComponentOf_UnresolvedEntity());
+    auto propertyData = GetProperty(data->UnresolvedReferenceProperty);
+    if(propertyData.PropertyType == TypeOf_ChildArray) {
+        auto arr = GetPropertyValue(data->UnresolvedReferenceProperty, entity);
+        arr.as_ChildArray[data->UnresolvedReferenceArrayIndex] = reference;
+        SetPropertyValue(data->UnresolvedReferenceProperty, entity, arr);
+    } else {
+        SetPropertyValue(data->UnresolvedReferenceProperty, entity, value);
     }
+
+    data->UnresolvedReferenceUuid = NULL;
 
     return true;
 }
 static bool ResolveOne() {
     UnresolvedReference data;
     for_entity_data(unresolvedReference, ComponentOf_UnresolvedReference(), &data) {
-        if(TryResolve(unresolvedReference, &data)) return true;
+        if(TryResolve(unresolvedReference, &data)) {
+            auto entity = GetOwnership(unresolvedReference).Owner;
+            auto entityData = GetUnresolvedEntity(entity);
+
+            entityData.UnresolvedReferences.Remove(__i);
+
+            if(!entityData.UnresolvedReferences.GetSize()) {
+                RemoveComponent(entity, ComponentOf_UnresolvedEntity());
+            }
+
+            return true;
+        }
     }
 
     return false;
@@ -47,8 +60,8 @@ API_EXPORT void ResolveReferences() {
 }
 
 static void OnInstanceChanged(Entity entity, const Instance& oldTemplate, const Instance& newTemplate) {
-    if(oldTemplate.InstanceTemplate) {
-        eastl::remove(templateInstances[oldTemplate.InstanceTemplate].begin(), templateInstances[oldTemplate.InstanceTemplate].end(), entity);
+    if(oldTemplate.Prefab) {
+        eastl::remove(templateInstances[oldTemplate.Prefab].begin(), templateInstances[oldTemplate.Prefab].end(), entity);
 
         for_entity (component, ComponentOf_Component()) {
 
@@ -59,14 +72,14 @@ static void OnInstanceChanged(Entity entity, const Instance& oldTemplate, const 
 				continue;
 			}
 
-			if (!HasComponent(oldTemplate.InstanceTemplate, component)) continue;
+			if (!HasComponent(oldTemplate.Prefab, component)) continue;
 
 			RemoveComponent(entity, component);
         }
     }
 
-    if(newTemplate.InstanceTemplate) {
-        templateInstances[newTemplate.InstanceTemplate].push_back(entity);
+    if(newTemplate.Prefab) {
+        templateInstances[newTemplate.Prefab].push_back(entity);
 
 		for_entity(component, ComponentOf_Component()) {
 			if (component == ComponentOf_Identification()
@@ -75,19 +88,19 @@ static void OnInstanceChanged(Entity entity, const Instance& oldTemplate, const 
 				continue;
 			}
 
-			if (!HasComponent(newTemplate.InstanceTemplate, component)) continue;
+			if (!HasComponent(newTemplate.Prefab, component)) continue;
 
 			AddComponent(entity, component);
 
             auto componentData = GetComponent(component);
             u32 componentInfoIndex = GetComponentIndexByIndex(0, component);
-            u32 newTemplateComponentIndex = GetComponentIndexByIndex(componentInfoIndex, newTemplate.InstanceTemplate);
+            u32 newTemplateComponentIndex = GetComponentIndexByIndex(componentInfoIndex, newTemplate.Prefab);
 
             auto newTemplateData = (const char*)GetComponentInstanceData(componentInfoIndex, newTemplateComponentIndex);
             auto instanceData = (char*)alloca(componentData.ComponentSize);
             memset(instanceData, 0, componentData.ComponentSize);
 
-            for_children(property, PropertyOf_Properties(), component) {
+            for(auto property : componentData.Properties) {
                 auto propertyData = GetProperty(property);
 
                 if(propertyData.PropertyReadOnly) continue;
@@ -95,7 +108,7 @@ static void OnInstanceChanged(Entity entity, const Instance& oldTemplate, const 
                 if(propertyData.PropertyType == TypeOf_Entity) {
                     auto newTemplateChild = *(Entity*)(newTemplateData + propertyData.PropertyOffset);
                     auto newTemplateOwnership = GetOwnership(newTemplateChild);
-                    if(newTemplateOwnership.Owner == newTemplate.InstanceTemplate && newTemplateOwnership.OwnerProperty == property) {
+                    if(newTemplateOwnership.Owner == newTemplate.Prefab && newTemplateOwnership.OwnerProperty == property) {
                         // Actual child
                         auto instanceChild = CreateEntity();
                         SetOwnership(instanceChild, {entity, property});
@@ -107,17 +120,18 @@ static void OnInstanceChanged(Entity entity, const Instance& oldTemplate, const 
                         *(Entity*)(instanceData + propertyData.PropertyOffset) = newTemplateChild;
                     }
                 } else if(propertyData.PropertyType == TypeOf_ChildArray) {
-                    for_children(templateChild, property, newTemplate.InstanceTemplate) {
-
+                    auto childArray = *(const ChildArray*)(newTemplateData + propertyData.PropertyOffset);
+                    for(auto templateChild : childArray) {
                         auto instanceChild = CreateEntity();
                         SetOwnership(instanceChild, {entity, property});
                         SetArrayChild(instanceChild, GetArrayChild(templateChild));
-                        AddArrayPropertyElement(property, entity, instanceChild);
+
+                        ((ChildArray*)(instanceData + propertyData.PropertyOffset))->Add(instanceChild);
 
                         SetInstance(instanceChild, {templateChild});
                     }
                 } else {
-                    auto templateBinding = GetBinding(newTemplate.InstanceTemplate, property);
+                    auto templateBinding = GetBinding(newTemplate.Prefab, property);
 
                     if(templateBinding) {
                         auto indirections = (Entity*)alloca(sizeof(Entity) * templateBinding->BindingIndirections.size());
@@ -134,24 +148,21 @@ static void OnInstanceChanged(Entity entity, const Instance& oldTemplate, const 
                 }
             }
 
-            u32 entityComponentIndex = GetComponentIndexByIndex(componentInfoIndex, newTemplate.InstanceTemplate);
+            u32 entityComponentIndex = GetComponentIndexByIndex(componentInfoIndex, newTemplate.Prefab);
             SetComponentInstanceData(componentInfoIndex, entityComponentIndex, instanceData);
         }
     }
 }
 
 BeginUnit(Instance)
-    BeginComponent(TemplatedComponent)
-        RegisterChildProperty(Identification, ComponentTemplate)
-    EndComponent()
-
     BeginComponent(Instance)
-        RegisterProperty(Entity, InstanceTemplate)
+        RegisterProperty(Entity, Prefab)
     EndComponent()
 
     BeginComponent(UnresolvedReference)
         RegisterReferenceProperty(Property, UnresolvedReferenceProperty)
         RegisterProperty(StringRef, UnresolvedReferenceUuid)
+        RegisterProperty(u32, UnresolvedReferenceArrayIndex)
     EndComponent()
 
     BeginComponent(UnresolvedEntity)

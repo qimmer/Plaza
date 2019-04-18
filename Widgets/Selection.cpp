@@ -5,37 +5,52 @@
 #include "Selection.h"
 #include <Gui/Widget.h>
 
-LocalFunction(OnWidgetClickedChanged, void, Entity widget, bool oldValue, bool newValue) {
-    auto selectableData = GetSelectableWidgetData(widget);
-    if(newValue && selectableData && selectableData->WidgetSelectionContext && selectableData->WidgetSelectionEntity) {
-        if(!GetSelectionContextMulti(selectableData->WidgetSelectionContext)) {
-            SetNumSelectionContextSelections(selectableData->WidgetSelectionContext, 0);
+static void OnInteractableWidgetChanged(Entity widget, const InteractableWidget& oldValue, const InteractableWidget& newValue) {
+    auto selectableData = GetSelectableWidget(widget);
+    if(newValue.WidgetClicked && selectableData.WidgetSelectionContext && selectableData.WidgetSelectionEntity) {
+        auto contextData = GetSelectionContext(selectableData.WidgetSelectionContext);
+
+        if(!contextData.SelectionContextMulti) {
+            contextData.SelectionContextSelections.SetSize(0);
         } else {
-            for_children(selection, SelectionContextSelections, selectableData->WidgetSelectionContext) {
-                if(GetSelectionEntity(selection) == selectableData->WidgetSelectionEntity) {
-                    RemoveSelectionContextSelectionsByValue(selectableData->WidgetSelectionContext, selection);
+            for(auto selection : contextData.SelectionContextSelections) {
+                auto selectionData = GetSelection(selection);
+                if(selectionData.SelectionEntity == selectableData.WidgetSelectionEntity) {
+                    contextData.SelectionContextSelections.Remove(contextData.SelectionContextSelections.GetIndex(selection));
+                    SetSelectionContext(selectableData.WidgetSelectionContext, contextData);
                     return;
                 }
             }
         }
 
-        auto selection = AddSelectionContextSelections(selectableData->WidgetSelectionContext);
-        SetSelectionEntity(selection, selectableData->WidgetSelectionEntity);
+        auto selection = CreateEntity();
+        auto selectionData = GetSelection(selection);
+        selectionData.SelectionEntity = selectableData.WidgetSelectionEntity;
+        SetSelection(selection, selectionData);
+
+        contextData.SelectionContextSelections.Add(selection);
+
+        SetSelectionContext(selectableData.WidgetSelectionContext, contextData);
     }
 }
 
-LocalFunction(OnSelectionEntityChanged, void, Entity selection, Entity oldValue, Entity newValue) {
+static void OnSelectionChanged(Entity selection, const Selection& oldValue, const Selection& newValue) {
     auto context = GetOwnership(selection).Owner;
 
-    for_entity(selectable, ComponentOf_SelectableWidget()) {
-        if(data->WidgetSelectionContext != data->WidgetSelectionContext) continue;
+    SelectableWidget data;
+    for_entity_data(selectable, ComponentOf_SelectableWidget(), &data) {
+        if(context != data.WidgetSelectionContext) continue;
 
-        if(data->WidgetSelectionEntity == oldValue) {
-            SetWidgetSelected(selectable, false);
+        if(data.WidgetSelectionEntity == oldValue.SelectionEntity) {
+            auto widgetData = GetWidget(selectable);
+            widgetData.WidgetSelected = false;
+            SetWidget(selectable, widgetData);
         }
 
-        if(data->WidgetSelectionEntity == newValue) {
-            SetWidgetSelected(selectable, true);
+        if(data.WidgetSelectionEntity == newValue.SelectionEntity) {
+            auto widgetData = GetWidget(selectable);
+            widgetData.WidgetSelected = true;
+            SetWidget(selectable, widgetData);
         }
     }
 }
@@ -53,5 +68,6 @@ BeginUnit(Selection)
         RegisterProperty(Entity, WidgetSelectionEntity)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClicked()), OnWidgetClickedChanged, 0)
+    RegisterSystem(OnInteractableWidgetChanged, ComponentOf_InteractableWidget())
+    RegisterSystem(OnSelectionChanged, ComponentOf_Selection())
 EndUnit()

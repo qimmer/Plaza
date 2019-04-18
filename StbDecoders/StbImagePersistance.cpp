@@ -35,22 +35,24 @@ static bool Deserialize(Entity texture) {
     free(buffer);
 
     if(result) {
-        SetTextureSize2D(texture, {width, height});
+        SetTexture2D(texture, {{width, height}});
 
+        auto textureData = GetTexture(texture);
         switch(channels) {
             case 1:
-                SetTextureFormat(texture, TextureFormat_R8);
+                textureData.TextureFormat = TextureFormat_R8;
                 break;
             case 2:
-                SetTextureFormat(texture, TextureFormat_RG8);
+                textureData.TextureFormat = TextureFormat_RG8;
                 break;
             case 3:
-                SetTextureFormat(texture, TextureFormat_RGB8);
+                textureData.TextureFormat = TextureFormat_RGB8;
                 break;
             case 4:
-                SetTextureFormat(texture, TextureFormat_RGBA8);
+                textureData.TextureFormat = TextureFormat_RGBA8;
                 break;
         }
+        SetTexture(texture, textureData);
     }
 
     return result;
@@ -86,5 +88,5 @@ static bool Decompress(Entity entity, u64 offset, u64 size, void *pixels) {
 
 BeginUnit(StbImagePersistance)
     RegisterSerializer(Png, "image/png")
-    RegisterStreamCompressor(Texture2D, "image/png")
+    RegisterStreamCompressor(Png, "image/png")
 EndUnit()

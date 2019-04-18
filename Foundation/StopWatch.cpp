@@ -16,18 +16,6 @@
 
 #undef CreateEvent
 
-struct StopWatch {
-    bool StopWatchRunning;
-    double StopWatchElapsedSeconds;
-    Entity StopWatchUpdateLoop;
-
-#ifdef WIN32
-    LARGE_INTEGER lastTime;
-#else
-    timespec lastTime;
-#endif
-};
-
 #ifdef WIN32
 static LARGE_INTEGER GetFrequency() {
     static LARGE_INTEGER PCFreq = {0, 0};
@@ -57,17 +45,17 @@ static timespec diff(timespec start, timespec end)
 
 #endif
 
-static void UpdateStopWatch(Entity stopWatch, StopWatch *data) {
-    if(!data->StopWatchRunning) return;
+static void UpdateStopWatch(Entity stopWatch, StopWatch& data) {
+    if(!data.StopWatchRunning) return;
 
 #ifdef WIN32
     LARGE_INTEGER currentTime;
     auto freq = GetFrequency();
     QueryPerformanceCounter(&currentTime);
 
-    double deltaTime = (double)(currentTime.QuadPart - data->lastTime.QuadPart) / freq.QuadPart;
+    double deltaTime = (double)(currentTime.QuadPart - data.lastTime) / freq.QuadPart;
 
-    data->lastTime = currentTime;
+    data.lastTime = (u64)currentTime.QuadPart;
 #else
     timespec now;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now);
@@ -76,46 +64,45 @@ static void UpdateStopWatch(Entity stopWatch, StopWatch *data) {
         double deltaTime = (double)delta.tv_sec + ((double)delta.tv_nsec / 1000000000.0);
 #endif
 
-    SetStopWatchElapsedSeconds(stopWatch, data->StopWatchElapsedSeconds + deltaTime);
+    data.StopWatchElapsedSeconds += deltaTime;
 }
 
-LocalFunction(OnAppLoopFrameChanged, void, Entity appLoop, u64 oldFrame, u64 newFrame) {
-    for_entity(stopWatch, ComponentOf_StopWatch()) {
-        if(data) {
-            UpdateStopWatch(stopWatch, data);
-        }
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
+    StopWatch data;
+    for_entity_data(stopWatch, ComponentOf_StopWatch(), &data) {
+        UpdateStopWatch(stopWatch, data);
+        SetStopWatch(stopWatch, data);
     }
 }
 
-LocalFunction(OnStopWatchRunningChanged, void, Entity stopWatch, bool oldValue, bool newValue) {
-    auto data = GetStopWatchData(stopWatch);
+static void OnStopWatchChanged(Entity stopWatch, const StopWatch& oldData, const StopWatch& newData) {
+    auto data = GetStopWatch(stopWatch);
 
-    if(newValue) {
+    if(!oldData.StopWatchRunning && newData.StopWatchRunning) {
 #ifdef WIN32
         LARGE_INTEGER currentTime;
         QueryPerformanceCounter(&currentTime);
-        data->lastTime = currentTime;
+        data.lastTime = currentTime.QuadPart;
 #else
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &data->lastTime);
 #endif
-    } else {
+    } else if(oldData.StopWatchRunning && !newData.StopWatchRunning) {
         // Make sure to include time from last update and until now when stopped!
-        data->StopWatchRunning = true;
+        data.StopWatchRunning = true;
         UpdateStopWatch(stopWatch, data);
-        data->StopWatchRunning = false;
+        data.StopWatchRunning = false;
+        SetStopWatch(stopWatch, data);
     }
-}
 
-LocalFunction(OnStopWatchElapsedSecondsChanged, void, Entity stopWatch, double oldValue, double newValue) {
-    auto data = GetStopWatchData(stopWatch);
-
+    if(newData.StopWatchElapsedSeconds != oldData.StopWatchElapsedSeconds) {
 #ifdef WIN32
-    LARGE_INTEGER currentTime;
-    QueryPerformanceCounter(&currentTime);
-    data->lastTime = currentTime;
+        LARGE_INTEGER currentTime;
+        QueryPerformanceCounter(&currentTime);
+        data.lastTime = currentTime.QuadPart;
 #else
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &data->lastTime);
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &data->lastTime);
 #endif
+    }
 }
 
 BeginUnit(StopWatch)
@@ -124,9 +111,6 @@ BeginUnit(StopWatch)
         RegisterProperty(double, StopWatchElapsedSeconds)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppLoopFrameChanged, AppLoopOf_StopWatchUpdate())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StopWatchRunning()), OnStopWatchRunningChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StopWatchElapsedSeconds()), OnStopWatchElapsedSecondsChanged, 0)
-
-    SetAppLoopOrder(AppLoopOf_StopWatchUpdate(), AppLoopOrder_Input);
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_Input)
+    RegisterSystem(OnStopWatchChanged, ComponentOf_StopWatch())
 EndUnit()

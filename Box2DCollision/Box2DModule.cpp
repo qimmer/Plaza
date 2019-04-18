@@ -27,11 +27,11 @@ static float timeStep = 1.0f / 60.0f;
 static bool isUpdatingTransforms = false;
 
 struct Box2DCollisionBody {
-    b2Body *Body;
+    struct b2Body *Body;
 };
 
 struct Box2DCollisionScene {
-    b2World *World;
+    struct b2World *World;
 };
 
 
@@ -46,14 +46,20 @@ public:
 
         auto body1 = GetOwnership(shape1).Owner;
         auto body2 = GetOwnership(shape2).Owner;
+        auto body1Data = GetCollisionBody(body1);
+        auto body2Data = GetCollisionBody(body2);
 
-        auto contactEntity1 = AddCollisionBodyContacts(body1);
-        SetCollisionContactShape(contactEntity1, shape1);
-        SetCollisionContactOtherShape(contactEntity1, shape2);
+        auto contactEntity1 = CreateEntity();
+        auto contactEntity2 = CreateEntity();
 
-        auto contactEntity2 = AddCollisionBodyContacts(body2);
-        SetCollisionContactShape(contactEntity2, shape2);
-        SetCollisionContactOtherShape(contactEntity2, shape1);
+        body1Data.CollisionBodyContacts.Add(contactEntity1);
+        body2Data.CollisionBodyContacts.Add(contactEntity2);
+
+        SetCollisionBody(body1, body1Data);
+        SetCollisionBody(body2, body2Data);
+
+        SetCollisionContact(contactEntity1, {shape1, shape2});
+        SetCollisionContact(contactEntity2, {shape2, shape1});
 
         contactEntityMapping[contact] = eastl::make_pair(contactEntity1, contactEntity2);
     }
@@ -62,65 +68,77 @@ public:
         b2ContactListener::EndContact(contact);
 
         auto& mapping = contactEntityMapping[contact];
-        RemoveCollisionBodyContactsByValue(GetOwner(mapping.first), mapping.first);
-        RemoveCollisionBodyContactsByValue(GetOwner(mapping.second), mapping.second);
+
+        auto body1 = GetOwnership(mapping.first).Owner;
+        auto body2 = GetOwnership(mapping.second).Owner;
+        auto body1Data = GetCollisionBody(body1);
+        auto body2Data = GetCollisionBody(body2);
+
+        body1Data.CollisionBodyContacts.Remove(body1Data.CollisionBodyContacts.GetIndex(mapping.first));
+        body2Data.CollisionBodyContacts.Remove(body2Data.CollisionBodyContacts.GetIndex(mapping.second));
+
+        SetCollisionBody(body1, body1Data);
+        SetCollisionBody(body2, body2Data);
+
         contactEntityMapping.erase(contact);
     }
 };
 
 static void UpdateBody(Entity body) {
-    auto data = GetBox2DCollisionBodyData(body);
-    auto bodyData = GetCollisionBodyData(body);
-    auto transformData = GetTransformData(body);
+    auto data = GetBox2DCollisionBody(body);
+    auto bodyData = GetCollisionBody(body);
+    auto transformData = GetTransform(body);
 
-    if(!data || !data->Body) return;
+    if(!data.Body) return;
 
-    switch(bodyData->CollisionBodyType) {
+    switch(bodyData.CollisionBodyType) {
         case CollisionBodyType_Kinematic:
-            data->Body->SetType(b2_kinematicBody);
+            data.Body->SetType(b2_kinematicBody);
             break;
         case CollisionBodyType_Dynamic:
-            data->Body->SetType(b2_dynamicBody);
+            data.Body->SetType(b2_dynamicBody);
             break;
         default:
-            data->Body->SetType(b2_staticBody);
+            data.Body->SetType(b2_staticBody);
             break;
     }
-    data->Body->SetAwake(!bodyData->CollisionBodySleeping);
-    data->Body->SetSleepingAllowed(!bodyData->CollisionBodyForbidSleep);
-    data->Body->SetTransform({transformData->Position2D.x, transformData->Position2D.y}, transformData->RotationEuler3D.z);
-    data->Body->SetBullet(bodyData->CollisionBodyCCD);
-    data->Body->SetFixedRotation(bodyData->CollisionBodyFixedRotation);
-    data->Body->SetGravityScale(bodyData->CollisionBodyGravityScale);
-    data->Body->SetAngularDamping(bodyData->CollisionBodyAngularDamping);
-    data->Body->SetLinearDamping(bodyData->CollisionBodyLinearDamping);
+    data.Body->SetAwake(!bodyData.CollisionBodySleeping);
+    data.Body->SetSleepingAllowed(!bodyData.CollisionBodyForbidSleep);
+    data.Body->SetTransform({transformData.Position2D.x, transformData.Position2D.y}, transformData.RotationEuler3D.z);
+    data.Body->SetBullet(bodyData.CollisionBodyCCD);
+    data.Body->SetFixedRotation(bodyData.CollisionBodyFixedRotation);
+    data.Body->SetGravityScale(bodyData.CollisionBodyGravityScale);
+    data.Body->SetAngularDamping(bodyData.CollisionBodyAngularDamping);
+    data.Body->SetLinearDamping(bodyData.CollisionBodyLinearDamping);
+    data.Body->SetAngularVelocity(bodyData.CollisionBodyAngularVelocity.z);
+    data.Body->SetLinearVelocity({bodyData.CollisionBodyLinearVelocity.x, bodyData.CollisionBodyLinearVelocity.y});
 }
 
 static void AddFixture(b2Body *body, Entity shape, bool isSensor) {
-    auto shapeData = GetCollisionShapeData(shape);
+    auto shapeData = GetCollisionShape(shape);
 
     b2FixtureDef fixtureDef;
-    fixtureDef.density = shapeData->CollisionShapeDensity;
-    fixtureDef.friction = shapeData->CollisionShapeFriction;
-    fixtureDef.restitution = shapeData->CollisionShapeRestitution;
-    fixtureDef.filter.categoryBits = shapeData->CollisionShapeGroup;
-    fixtureDef.filter.maskBits = shapeData->CollisionShapeMask;
+    fixtureDef.density = shapeData.CollisionShapeDensity;
+    fixtureDef.friction = shapeData.CollisionShapeFriction;
+    fixtureDef.restitution = shapeData.CollisionShapeRestitution;
+    fixtureDef.filter.categoryBits = shapeData.CollisionShapeGroup;
+    fixtureDef.filter.maskBits = shapeData.CollisionShapeMask;
     fixtureDef.isSensor = isSensor;
 
-    auto boxData = GetCollisionBoxShapeData(shape);
-    auto sphereData = GetCollisionSphereShapeData(shape);
+    auto boxData = GetCollisionBoxShape(shape);
+    auto sphereData = GetCollisionSphereShape(shape);
 
     b2Fixture *fixture = NULL;
-    if(boxData) {
+    if(HasComponent(shape, ComponentOf_CollisionBoxShape())) {
         b2PolygonShape shape;
-        shape.SetAsBox(boxData->CollisionShapeExtent.x, boxData->CollisionShapeExtent.y, {shapeData->CollisionShapePositionOffset.x, shapeData->CollisionShapePositionOffset.y}, shapeData->CollisionShapeRotationEulerOffset.z);
+        shape.SetAsBox(boxData.CollisionShapeExtent.x, boxData.CollisionShapeExtent.y, {shapeData.CollisionShapePositionOffset.x, shapeData.CollisionShapePositionOffset.y}, shapeData.CollisionShapeRotationEulerOffset.z);
         fixtureDef.shape = &shape;
         fixture = body->CreateFixture(&fixtureDef);
     }
-    else if(sphereData) {
+    else if(HasComponent(shape, ComponentOf_CollisionSphereShape())) {
         b2CircleShape shape;
-        shape.m_p = {shapeData->CollisionShapePositionOffset.x, shapeData->CollisionShapePositionOffset.y};
-        shape.m_radius = sphereData->CollisionShapeRadius;
+        shape.m_p = {shapeData.CollisionShapePositionOffset.x, shapeData.CollisionShapePositionOffset.y};
+        shape.m_radius = sphereData.CollisionShapeRadius;
 
         fixtureDef.shape = &shape;
         fixture = body->CreateFixture(&fixtureDef);
@@ -132,153 +150,126 @@ static void AddFixture(b2Body *body, Entity shape, bool isSensor) {
 }
 
 static void BuildBody(Entity body) {
-    auto scene = GetSceneNodeScene(body);
-    auto sceneData = GetBox2DCollisionSceneData(scene);
+    auto scene = GetSceneNode(body).SceneNodeScene;
+    auto sceneData = GetBox2DCollisionScene(scene);
+    auto data = GetBox2DCollisionBody(body);
 
-    if(!sceneData) return;
-
-    auto data = GetBox2DCollisionBodyData(body);
-
-    if(data->Body) {
-        sceneData->World->DestroyBody(data->Body);
-        data->Body = NULL;
+    if(data.Body) {
+        sceneData.World->DestroyBody(data.Body);
+        data.Body = NULL;
     }
 
     b2BodyDef bodyDef;
-    data->Body = sceneData->World->CreateBody(&bodyDef);
-    data->Body->SetUserData((void*)(size_t)GetEntityIndex(body));
+    data.Body = sceneData.World->CreateBody(&bodyDef);
+    data.Body->SetUserData((void*)(size_t)GetEntityIndex(body));
+    SetBox2DCollisionBody(body, data);
 
     UpdateBody(body);
 
-    auto isSensor = GetCollisionBodyType(body) == CollisionBodyType_Overlap;
+    auto isSensor = GetCollisionBody(body).CollisionBodyType == CollisionBodyType_Overlap;
 
-    for_children(shape, CollisionBodyShapes, body) {
-        AddFixture(data->Body, shape, isSensor);
+    auto bodyData = GetCollisionBody(body);
+    for(auto shape : bodyData.CollisionBodyShapes) {
+        AddFixture(data.Body, shape, isSensor);
     }
 }
 
-LocalFunction(OnSceneAdded, void, Entity component, Entity entity) {
-    auto data = GetBox2DCollisionSceneData(entity);
-    auto gravity = GetCollisionSceneGravity(entity);
-    data->World = new b2World({gravity.x, gravity.y});
-    data->World->SetContactListener(new ContactListener());
+static void OnBox2DCollisionSceneChanged(Entity entity, const Box2DCollisionScene& oldData, const Box2DCollisionScene& newData) {
+    if(oldData.World && !newData.World) {
+        delete oldData.World;
+    }
+
+    if(!oldData.World && !newData.World) {
+        auto data = newData;
+        auto gravity = GetCollisionScene(entity).CollisionSceneGravity;
+        data.World = new b2World({gravity.x, gravity.y});
+        data.World->SetContactListener(new ContactListener());
+        SetBox2DCollisionScene(entity, data);
+    }
 }
 
-LocalFunction(OnSceneChanged, void, Entity entity) {
-    auto data = GetBox2DCollisionSceneData(entity);
-
-    if(!data) return;
-
-    auto gravity = GetCollisionSceneGravity(entity);
-    data->World->SetGravity({gravity.x, gravity.y});
+static void OnCollisionSceneChanged(Entity entity, const CollisionScene& oldData, const CollisionScene& newData) {
+    if(HasComponent(entity, ComponentOf_Box2DCollisionScene())) {
+        auto data = GetBox2DCollisionScene(entity);
+        auto gravity = newData.CollisionSceneGravity;
+        data.World->SetGravity({gravity.x, gravity.y});
+        SetBox2DCollisionScene(entity, data);
+    }
 }
 
-LocalFunction(OnSceneRemoved, void, Entity component, Entity entity) {
-    auto data = GetBox2DCollisionSceneData(entity);
-    delete data->World;
+static void OnCollisionBodyChanged(Entity entity, const CollisionBody& oldData, const CollisionBody& newData) {
+    if(isUpdatingTransforms) return;
+
+    if(oldData.CollisionBodyType != newData.CollisionBodyType) {
+        BuildBody(entity);
+    } else {
+        UpdateBody(entity);
+    }
+
 }
 
-LocalFunction(OnBodyAdded, void, Entity component, Entity entity) {
-    BuildBody(entity);
+static void OnBox2DCollisionBodyChanged(Entity entity, const Box2DCollisionBody& oldData, const Box2DCollisionBody& newData) {
+    if(oldData.Body && !newData.Body) {
+        oldData.Body->GetWorld()->DestroyBody(oldData.Body);
+    }
 }
 
-LocalFunction(OnBodyRemoved, void, Entity component, Entity entity) {
-    auto data = GetBox2DCollisionBodyData(entity);
-
-    if(!data->Body) return;
-
-    data->Body->GetWorld()->DestroyBody(data->Body);
-}
-
-LocalFunction(OnGravityChanged, void, Entity entity, v3f oldValue, v3f newValue) {
-    auto data = GetBox2DCollisionSceneData(entity);
-    data->World->SetGravity({newValue.x, newValue.y});
-}
-
-LocalFunction(OnShapeChanged, void, Entity entity) {
+static void OnCollisionShapeChanged(Entity entity) {
     auto body = GetOwnership(entity).Owner;
     BuildBody(body);
 }
 
-LocalFunction(OnBodyChanged, void, Entity entity) {
-    UpdateBody(entity);
-}
-
-LocalFunction(OnAngularVelocityChanged, void, Entity entity) {
-    auto data = GetBox2DCollisionBodyData(entity);
-
-    if(!isUpdatingTransforms && data && data->Body) {
-        data->Body->SetAngularVelocity(GetCollisionBodyAngularVelocity(entity).z);
-    }
-}
-
-LocalFunction(OnLinearVelocityChanged, void, Entity entity) {
-    auto data = GetBox2DCollisionBodyData(entity);
-
-    if(!isUpdatingTransforms && data && data->Body) {
-        auto vel = GetCollisionBodyLinearVelocity(entity);
-        data->Body->SetLinearVelocity({vel.x, vel.y});
-    }
-}
-
-LocalFunction(OnSceneNodeSceneChanged, void, Entity entity) {
-    if(HasComponent(entity, ComponentOf_CollisionBody())) {
+static void OnSceneNodeChanged(Entity entity, const SceneNode& oldData, const SceneNode& newData) {
+    if(oldData.SceneNodeScene != newData.SceneNodeScene && HasComponent(entity, ComponentOf_CollisionBody())) {
         BuildBody(entity);
     }
 }
 
-LocalFunction(OnBodyInvalidated, void, Entity entity) {
-    BuildBody(entity);
+static void OnCollisionImpulseChanged(Entity entity, const CollisionImpulse& oldData, const CollisionImpulse& newData) {
+    if(!oldData.CollisionImpulseTrigger && newData.CollisionImpulseTrigger) {
+        auto bodyData = GetBox2DCollisionBody(newData.CollisionImpulseBody);
+        if(!bodyData.Body) return;
+
+        bodyData.Body->ApplyLinearImpulseToCenter({newData.CollisionImpulseDirection.x * newData.CollisionImpulseFactor, newData.CollisionImpulseDirection.y * newData.CollisionImpulseFactor}, true);
+    }
 }
 
-LocalFunction(OnImpulse, void, Entity entity, bool oldVal, bool newVal) {
-    if(!newVal) return;
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
+    CollisionForce forceData;
+    for_entity_data(force, ComponentOf_CollisionForce(), &forceData) {
+        auto bodyData = GetBox2DCollisionBody(forceData.CollisionForceBody);
+        if(!bodyData.Body) continue;
 
-    auto impulseData = GetCollisionImpulseData(entity);
-    if(!impulseData) return;
-
-    auto bodyData = GetBox2DCollisionBodyData(impulseData->CollisionImpulseBody);
-    if(!bodyData || !bodyData->Body) return;
-
-    bodyData->Body->ApplyLinearImpulseToCenter({impulseData->CollisionImpulseDirection.x * impulseData->CollisionImpulseFactor, impulseData->CollisionImpulseDirection.y * impulseData->CollisionImpulseFactor}, true);
-}
-
-static void UpdateBody(Entity body, Box2DCollisionBody *bodyData) {
-    auto updatedLinearVelocity = bodyData->Body->GetLinearVelocity();
-    auto updatedAngularVelocity = bodyData->Body->GetAngularVelocity();
-
-    SetCollisionBodyAngularVelocity(body, {0.0f, 0.0f, updatedAngularVelocity});
-    SetCollisionBodyLinearVelocity(body, {updatedLinearVelocity.x, updatedLinearVelocity.y, 0.0f});
-
-    auto transform = bodyData->Body->GetTransform();
-    SetPosition2D(body, {transform.p.x, transform.p.y});
-    SetRotation2D(body, transform.q.GetAngle());
-}
-
-LocalFunction(OnUpdate, void) {
-    auto deltaTime = GetStopWatchElapsedSeconds(StopWatchOf_Box2D());
-    SetStopWatchElapsedSeconds(StopWatchOf_Box2D(), 0.0);
-
-    for_entity(force, forceData, CollisionForce) {
-        auto bodyData = GetBox2DCollisionBodyData(forceData->CollisionForceBody);
-        if(!bodyData || !bodyData->Body) continue;
-
-        auto factor = forceData->CollisionForceFactor * (float)deltaTime;
-        bodyData->Body->ApplyLinearImpulseToCenter({forceData->CollisionForceDirection.x * factor, forceData->CollisionForceDirection.y * factor}, true);
+        auto factor = forceData.CollisionForceFactor * (float)newData.AppLoopDeltaTime;
+        bodyData.Body->ApplyLinearImpulseToCenter({forceData.CollisionForceDirection.x * factor, forceData.CollisionForceDirection.y * factor}, true);
     }
 
-    for_entity(scene, sceneData, Box2DCollisionScene) {
+    Box2DCollisionScene sceneData;
+    for_entity_data(scene, ComponentOf_Box2DCollisionScene(), &sceneData) {
         auto velocityIterations = 6;
         auto positionIterations = 2;
 
-        sceneData->World->Step(deltaTime, velocityIterations, positionIterations);
+        sceneData.World->Step(newData.AppLoopDeltaTime, velocityIterations, positionIterations);
     }
 
     isUpdatingTransforms = true;
-    for_entity(body, bodyData, Box2DCollisionBody) {
-        if(!bodyData->Body) continue;
+    Box2DCollisionBody bodyData;
+    for_entity_data(body, ComponentOf_Box2DCollisionBody(), &bodyData) {
+        if(!bodyData.Body) continue;
 
-        UpdateBody(body, bodyData);
+        auto updatedLinearVelocity = bodyData.Body->GetLinearVelocity();
+        auto updatedAngularVelocity = bodyData.Body->GetAngularVelocity();
+
+        auto collisionBodyData = GetCollisionBody(body);
+        collisionBodyData.CollisionBodyAngularVelocity = {0.0f, 0.0f, updatedAngularVelocity};
+        collisionBodyData.CollisionBodyLinearVelocity = {updatedLinearVelocity.x, updatedLinearVelocity.y, 0.0f};
+        SetCollisionBody(body, collisionBodyData);
+
+        auto transform = bodyData.Body->GetTransform();
+        auto transformData = GetTransform(body);
+        transformData.Position2D = {transform.p.x, transform.p.y};
+        transformData.Rotation2D = transform.q.GetAngle();
+        SetTransform(body, transformData);
     }
 
     isUpdatingTransforms = false;
@@ -302,54 +293,20 @@ BeginUnit(Box2DCollision)
         RegisterPropertyReadOnly(NativePtr, World)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyShapes()), OnBodyInvalidated, 0)
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_Update * 1.05f)
+    RegisterSystem(OnCollisionImpulseChanged, ComponentOf_CollisionImpulse())
+    RegisterSystem(OnSceneNodeChanged, ComponentOf_SceneNode())
+    RegisterSystem(OnCollisionShapeChanged, ComponentOf_CollisionShape())
+    RegisterSystem(OnBox2DCollisionBodyChanged, ComponentOf_Box2DCollisionBody())
+    RegisterSystem(OnCollisionBodyChanged, ComponentOf_CollisionBody())
+    RegisterSystem(OnCollisionSceneChanged, ComponentOf_CollisionScene())
+    RegisterSystem(OnBox2DCollisionSceneChanged, ComponentOf_Box2DCollisionScene())
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyForbidSleep()), OnBodyChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyAngularDamping()), OnBodyChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodySleeping()), OnBodyChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyCCD()), OnBodyChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyFixedRotation()), OnBodyChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyGravityScale()), OnBodyChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyLinearDamping()), OnBodyChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyType()), OnBodyChanged, 0)
-    //RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TransformLocalMatrix()), OnBodyChanged, 0)
+    auto ext = CreateEntity();
+    SetExtension(ext, {ComponentOf_CollisionScene(), ComponentOf_Box2DCollisionScene(), true});
+    moduleData.Extensions.Add(ext);
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyLinearVelocity()), OnLinearVelocityChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionBodyAngularVelocity()), OnAngularVelocityChanged, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionShapeDensity()), OnShapeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionShapeRestitution()), OnShapeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionShapeFriction()), OnShapeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionShapeGroup()), OnShapeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionShapeMask()), OnShapeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionShapePositionOffset()), OnShapeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionShapeRotationEulerOffset()), OnShapeChanged, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionShapeExtent()), OnShapeChanged, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionShapeRadius()), OnShapeChanged, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionSceneGravity()), OnSceneChanged, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_CollisionImpulseTrigger()), OnImpulse, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_SceneNodeScene()), OnSceneNodeSceneChanged, 0)
-
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnBodyAdded, ComponentOf_Box2DCollisionBody())
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBodyRemoved, ComponentOf_Box2DCollisionBody())
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnSceneAdded, ComponentOf_Box2DCollisionScene())
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnSceneRemoved, ComponentOf_Box2DCollisionScene())
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnUpdate, AppLoopOf_Box2D())
-
-    SetAppLoopOrder(AppLoopOf_Box2D(), AppLoopOrder_Update * 1.05f);
-    SetStopWatchRunning(StopWatchOf_Box2D(), true);
-
-    auto ext = AddExtensions(module);
-    SetExtensionComponent(ext, ComponentOf_CollisionScene());
-    SetExtensionExtenderComponent(ext, ComponentOf_Box2DCollisionScene());
-
-    ext = AddExtensions(module);
-    SetExtensionComponent(ext, ComponentOf_CollisionBody());
-    SetExtensionExtenderComponent(ext, ComponentOf_Box2DCollisionBody());
+    ext = CreateEntity();
+    SetExtension(ext, {ComponentOf_CollisionBody(), ComponentOf_Box2DCollisionBody(), true});
+    moduleData.Extensions.Add(ext);
 EndUnit()

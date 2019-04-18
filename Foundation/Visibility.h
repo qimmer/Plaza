@@ -7,6 +7,9 @@
 
 #include <Core/NativeUtils.h>
 
+struct Visibility {
+    bool Hidden, HierarchiallyHidden;
+};
 
 Unit(Visibility)
     Component(Visibility)

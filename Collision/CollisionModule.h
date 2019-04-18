@@ -8,6 +8,7 @@
 #include <Core/Module.h>
 
 struct CollisionBody {
+    ChildArray CollisionBodyShapes, CollisionBodyContacts;
     v3f CollisionBodyAngularVelocity, CollisionBodyLinearVelocity;
     float CollisionBodyLinearDamping, CollisionBodyAngularDamping, CollisionBodyGravityScale;
     u8 CollisionBodyType;

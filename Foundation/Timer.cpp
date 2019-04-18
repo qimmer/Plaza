@@ -6,37 +6,27 @@
 #include <Foundation/Timer.h>
 #include <Foundation/StopWatch.h>
 
-struct Timer {
-    double TimerInterval;
-    bool TimerRepeat;
-    double LastStopWatchTime;
-};
+static void OnStopWatchChanged(Entity stopWatch, const StopWatch& oldValue, const StopWatch& newValue) {
+    auto timerData = GetTimer(stopWatch);
 
-LocalFunction(OnStopWatchElapsedSecondsChanged, void, Entity stopWatch, double oldTime, double newTime) {
-    auto timer = GetTimerData(stopWatch);
+    if(timerData.TimerInterval != 0.0) {
+        if(newValue.StopWatchRunning != oldValue.StopWatchRunning) {
+            timerData.LastStopWatchTime = newValue.StopWatchElapsedSeconds;
+            SetTimer(stopWatch, timerData);
+        }
 
-    if(timer) {
-        if(newTime >= (timer->LastStopWatchTime + timer->TimerInterval)) {
-            timer->LastStopWatchTime = newTime;
+        if(newValue.StopWatchElapsedSeconds != oldValue.StopWatchElapsedSeconds && newValue.StopWatchElapsedSeconds >= (timerData.LastStopWatchTime + timerData.TimerInterval)) {
+            timerData.LastStopWatchTime = newValue.StopWatchElapsedSeconds;
+            timerData.TimerTicks++;
+            SetTimer(stopWatch, timerData);
 
-            Variant argument = MakeVariant(Entity, stopWatch);
-
-            FireEventFast(EventOf_TimerTick(), 1, &argument);
-
-            if(!timer->TimerRepeat) {
-                SetStopWatchRunning(stopWatch, false);
-                SetStopWatchElapsedSeconds(stopWatch, 0.0);
+            if(!timerData.TimerRepeat) {
+                auto stopWatchData = newValue;
+                stopWatchData.StopWatchRunning = false;
+                stopWatchData.StopWatchElapsedSeconds = 0.0;
+                SetStopWatch(stopWatch, stopWatchData);
             }
 
-        }
-    }
-}
-
-LocalFunction(OnStopWatchRunningChanged, void, Entity timer, bool oldValue, bool newValue) {
-    if(newValue) {
-        auto data = GetTimerData(timer);
-        if(data) {
-            data->LastStopWatchTime = GetStopWatchElapsedSeconds(timer);
         }
     }
 }
@@ -46,9 +36,9 @@ BeginUnit(Timer)
         RegisterBase(StopWatch)
         RegisterProperty(double, TimerInterval)
         RegisterProperty(bool, TimerRepeat)
+        RegisterProperty(u64, TimerTicks)
     EndComponent()
-    RegisterEvent(TimerTick)
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StopWatchElapsedSeconds()), OnStopWatchElapsedSecondsChanged, 0)
+    RegisterSystem(OnStopWatchChanged, ComponentOf_StopWatch())
 EndUnit()
 

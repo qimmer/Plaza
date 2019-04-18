@@ -5,13 +5,6 @@
 #include "Scene.h"
 #include <Foundation/AppNode.h>
 
-struct Scene {
-};
-
-struct SceneNode {
-    Entity SceneNodeScene;
-};
-
 static Entity FindScene(Entity entity) {
     if(!IsEntityValid(entity)) {
         return 0;
@@ -25,7 +18,7 @@ static Entity FindScene(Entity entity) {
 }
 
 static void SetSceneNodeSceneRecursive(Entity entity) {
-    SetSceneNodeScene(entity, FindScene(entity));
+    SetSceneNode(entity, {FindScene(entity)});
     for_entity(child, ComponentOf_SceneNode()) {
         if(GetOwnership(child).Owner == entity) {
             SetSceneNodeSceneRecursive(child);
@@ -33,18 +26,16 @@ static void SetSceneNodeSceneRecursive(Entity entity) {
     }
 }
 
-LocalFunction(OnOwnerChanged, void, Entity entity) {
+static void OnOwnershipChanged(Entity entity, const Ownership& oldData, const Ownership& newData) {
     if(HasComponent(entity, ComponentOf_SceneNode())) {
         SetSceneNodeSceneRecursive(entity);
     }
 }
 
-LocalFunction(OnSceneNodeAdded, void, Entity component, Entity entity) {
-    SetSceneNodeScene(entity, FindScene(entity));
-}
-
-LocalFunction(OnSceneAdded, void, Entity component, Entity entity) {
-    SetSceneNodeSceneRecursive(entity);
+static void OnSceneNodeChanged(Entity entity, const SceneNode& oldData, const SceneNode& newData) {
+    if(!oldData.SceneNodeScene && !newData.SceneNodeScene) {
+        SetSceneNode(entity, {FindScene(entity)});
+    }
 }
 
 BeginUnit(Scene)
@@ -56,7 +47,6 @@ BeginUnit(Scene)
         RegisterBase(SceneNode)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnSceneNodeAdded, ComponentOf_SceneNode())
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnSceneAdded, ComponentOf_Scene())
+    RegisterSystem(OnOwnershipChanged, ComponentOf_Ownership())
+    RegisterSystem(OnSceneNodeChanged, ComponentOf_SceneNode())
 EndUnit()

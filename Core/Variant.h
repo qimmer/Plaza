@@ -39,6 +39,7 @@ struct ALIGN(16) Variant {
         Date as_Date;
         NativePtr as_NativePtr;
         void* as_unknown;
+        ChildArray as_ChildArray;
     };
 
     Type type;

@@ -10,20 +10,20 @@
 #include <Core/Instance.h>
 
 #define ModuleDataFile(PATH) \
-    SetStreamPath(module, PATH);\
-    SetPersistancePointLoaded(module, true);
+    {\
+        auto streamData = GetStream(module);\
+        streamData.StreamPath = PATH;\
+        SetStream(module, streamData);\
+        auto ppData = GetPersistancePoint(module);\
+        ppData.PersistancePointLoaded = true;\
+        SetPersistancePoint(module, ppData);\
+    }
 
 #define ModuleData(...) \
     DeserializeJsonFromString(module, module, #__VA_ARGS__ );
 
-#define ComponentTemplate(...) \
-    AddComponent(component, ComponentOf_TemplatedComponent());\
-    auto templ = GetComponentTemplate(component);\
-    AddComponent(templ, component);\
-    for_children(base, Bases, component) {\
-        AddComponent(GetComponentTemplate(component), GetBaseComponent(base));\
-    }\
-    DeserializeJsonFromString(templ, templ, #__VA_ARGS__ );
+#define PrefabJson(...) \
+    DeserializeJsonFromString(prefab, prefab, #__VA_ARGS__ );
 
 #define Define(TYPE, NAME, ...) \
     DeserializeJsonFromString(TYPE ## Of_ ## NAME (), TYPE ## Of_ ## NAME (), #__VA_ARGS__ );

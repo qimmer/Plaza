@@ -10,6 +10,7 @@
 struct Switch {
     Variant SwitchInput;
     Variant SwitchResult;
+    ChildArray SwitchCases;
 };
 
 struct SwitchCase {

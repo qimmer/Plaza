@@ -31,7 +31,7 @@ Test(TestNetworking) {
     return Success;
 }
 
-LocalFunction(OnHttpServerRequest, void, Entity server, Entity request) {
+static void OnHttpServerRequest(Entity server, Entity request) {
     auto response = GetHttpRequestResponse(request);
     SetStreamPath(response, "memory://response.json");
     auto url = GetHttpRequestUrl(request);

@@ -6,6 +6,7 @@
 #define PLAZA_STBTRUETYPEPERSISTANCE_H
 
 #include <Core/NativeUtils.h>
+#include <Foundation/NativeUtils.h>
 
 struct UnicodeRange {
     u16 UnicodeRangeStart;
@@ -13,6 +14,7 @@ struct UnicodeRange {
 };
 
 struct TrueTypeFont {
+    ChildArray TrueTypeFontRanges;
     float TrueTypeFontSize;
 };
 
@@ -31,5 +33,8 @@ Unit(StbTrueTypePersistance)
     Component(TrueTypeFont)
         Property(float, TrueTypeFontSize)
         ArrayProperty(TrueTypeFontRange, TrueTypeFontRanges)
+
+    Serializer(TTF)
+    StreamCompressor(TTF)
 
 #endif //PLAZA_STBTRUETYPEPERSISTANCE_H

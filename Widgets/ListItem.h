@@ -29,4 +29,6 @@ Unit(ListItem)
         ChildProperty(WidgetMesh, ListItemStyleMesh)
         Property(v4i, ListItemStylePadding)
 
+    Prefab(ListItem)
+
 #endif //PLAZA_LISTITEM_H

@@ -11,13 +11,27 @@
 BeginUnit(Panel)
     BeginComponent(PanelStyle)
         RegisterBase(Style)
-        RegisterChildProperty(WidgetMesh, PanelStyleMesh)
+        BeginChildProperty(PanelStyleMesh)
+        EndChildProperty()
         RegisterProperty(v4i, PanelStylePadding)
     EndComponent()
 
-    BeginComponent(Panel)
-        RegisterBase(Widget)
-        ComponentTemplate({
+    BeginComponent(WellStyle)
+        RegisterBase(Style)
+        BeginChildProperty(WellStyleMesh)
+        EndChildProperty()
+        RegisterProperty(v4i, WellStylePadding)
+    EndComponent()
+
+    BeginComponent(ItemWellStyle)
+        RegisterBase(Style)
+        BeginChildProperty(ItemWellStyleMesh)
+        EndChildProperty()
+        RegisterProperty(v4i, ItemWellStylePadding)
+    EndComponent()
+
+    BeginPrefab(Panel)
+        PrefabJson({
             "$components": ["Component.Widget"],
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.PanelStyleMesh}",
             "LayoutPadding": "{SceneNodeScene.SceneStyle.PanelStylePadding}",
@@ -29,15 +43,8 @@ BeginUnit(Panel)
         })
     EndComponent()
 
-    BeginComponent(WellStyle)
-        RegisterBase(Style)
-        RegisterChildProperty(WidgetMesh, WellStyleMesh)
-        RegisterProperty(v4i, WellStylePadding)
-    EndComponent()
-
-    BeginComponent(Well)
-        RegisterBase(Widget)
-        ComponentTemplate({
+    BeginPrefab(Well)
+        PrefabJson({
             "$components": ["Component.Widget"],
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.WellStyleMesh}",
             "LayoutPadding": "{SceneNodeScene.SceneStyle.WellStylePadding}",
@@ -49,15 +56,8 @@ BeginUnit(Panel)
         })
     EndComponent()
 
-    BeginComponent(ItemWellStyle)
-        RegisterBase(Style)
-        RegisterChildProperty(WidgetMesh, ItemWellStyleMesh)
-        RegisterProperty(v4i, ItemWellStylePadding)
-    EndComponent()
-
-    BeginComponent(ItemWell)
-        RegisterBase(Widget)
-        ComponentTemplate({
+    BeginPrefab(ItemWell)
+        PrefabJson({
             "$components": ["Component.Widget", "Component.ScrollableLayout"],
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.ItemWellStyleMesh}",
             "LayoutPadding": "{SceneNodeScene.SceneStyle.ItemWellStylePadding}",

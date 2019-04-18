@@ -5,14 +5,6 @@
 #include <Foundation/Stream.h>
 #include "Texture.h"
 
-struct Texture {
-    u32 TextureFlag;
-    u16 TextureFormat;
-    bool TextureDynamic;
-    u8 TextureMipLevels;
-    Entity TextureReadbackTarget;
-};
-
 API_EXPORT Type GetTextureFormatChannelType(u16 format) {
     return 0;
 }

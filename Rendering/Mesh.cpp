@@ -8,8 +8,9 @@
 
 API_EXPORT u32 GetVertexStride(Entity vertexDeclaration) {
     u32 stride = 0;
-    for_children(attribute, VertexDeclarationAttributes, vertexDeclaration) {
-        stride += GetTypeSize(GetVertexAttributeType(attribute));
+    auto vertexDeclarationData = GetVertexDeclaration(vertexDeclaration);
+    for(auto attribute : vertexDeclarationData.VertexDeclarationAttributes) {
+        stride += GetTypeSize(GetVertexAttribute(attribute).VertexAttributeType);
     }
 
     return stride;
@@ -75,8 +76,10 @@ BeginUnit(Mesh)
     EndComponent()
 
     BeginComponent(Mesh)
-        RegisterChildProperty(VertexBuffer, MeshVertexBuffer)
-        RegisterChildProperty(IndexBuffer, MeshIndexBuffer)
+        BeginChildProperty(MeshVertexBuffer)
+        EndChildProperty()
+        BeginChildProperty(MeshIndexBuffer)
+        EndChildProperty()
         RegisterArrayProperty(SubMesh, MeshSubMeshes)
         RegisterProperty(v3f, MeshAABBMin)
         RegisterProperty(v3f, MeshAABBMax)

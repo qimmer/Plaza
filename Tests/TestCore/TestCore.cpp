@@ -74,7 +74,7 @@ Test(TestInstance) {
 
 static int ageDifference = 0;
 
-LocalFunction(OnAgeChanged, void, Entity person, u8 oldValue, u8 newValue) {
+static void OnAgeChanged(Entity person, u8 oldValue, u8 newValue) {
     ageDifference = Abs(newValue - oldValue);
 }
 
@@ -125,9 +125,12 @@ BeginUnit(TestCore)
         RegisterArrayProperty(Person, FamilyMembers)
     EndComponent()
     BeginComponent(TestCore)
-        RegisterChildProperty(Family, FamilyWithNoChildren)
-        RegisterChildProperty(Family, FamilyWithTwoChildren)
-        RegisterChildProperty(Family, FamilyInstance)
+        BeginChildProperty(FamilyWithNoChildren)
+        EndChildProperty()
+        BeginChildProperty(FamilyWithTwoChildren)
+        EndChildProperty()
+        BeginChildProperty(FamilyInstance)
+    EndChildProperty()
     EndComponent()
 
     AddComponent(module, ComponentOf_TestCore());

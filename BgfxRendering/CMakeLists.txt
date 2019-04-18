@@ -90,7 +90,6 @@ IF(WIN32 OR APPLE OR UNIX)
 ENDIF()
 
 IF(WITH_SHADER_COMPILER)
-    target_sources(BgfxRendering PRIVATE BgfxShaderCompiler.cpp BgfxShaderCompiler.h)
     target_compile_definitions(BgfxRendering PUBLIC "BGFXRENDERING_WITH_SHADER_COMPILER")
     target_link_libraries(BgfxRendering File)
 ENDIF(WITH_SHADER_COMPILER)

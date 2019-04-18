@@ -346,7 +346,7 @@ static void RegenerateVoxelMesh(Entity voxelMesh) {
     free(buffer);
 }
 
-LocalFunction(OnVoxelChunkChanged, void, Entity voxelChunk) {
+static void OnVoxelChunkChanged(Entity voxelChunk) {
     if(HasComponent(voxelChunk, ComponentOf_VoxelChunk())) {
         for_entity(voxelMesh, ComponentOf_VoxelMesh()) {
             if(GetVoxelMeshChunk(voxelMesh) == voxelChunk) RegenerateVoxelMesh(voxelMesh);
@@ -354,13 +354,13 @@ LocalFunction(OnVoxelChunkChanged, void, Entity voxelChunk) {
     }
 }
 
-LocalFunction(OnVoxelPaletteChanged, void, Entity voxelPalette) {
+static void OnVoxelPaletteChanged(Entity voxelPalette) {
     for_entity(voxelMesh, ComponentOf_VoxelMesh()) {
         if(GetVoxelMeshPalette(voxelMesh) == voxelPalette) RegenerateVoxelMesh(voxelMesh);
     }
 }
 
-LocalFunction(OnVoxelMeshAdded, void, Entity component, Entity voxelMesh) {
+static void OnVoxelMeshAdded(Entity component, Entity voxelMesh) {
     auto vb = CreateVertexBuffer(voxelMesh, "VertexBuffer");
     SetMeshVertexBuffer(voxelMesh, vb);
     SetVertexBufferDeclaration(vb, VoxelVertexDeclaration);

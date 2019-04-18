@@ -5,14 +5,20 @@
 #include "System.h"
 #include "Strings.h"
 
-struct CompareFunctionOrder {
+struct CompareSystemOrder {
+    bool operator()(const Entity& a, const Entity& b) const {
+        return GetSystem(a).SystemOrder < GetSystem(b).SystemOrder;
+    }
+};
+
+struct CompareOwnerLevel {
     bool operator()(const eastl::pair<Entity, Entity>& a, const eastl::pair<Entity, Entity>& b) const {
-        return GetSystem(a.first).SystemOrder < GetSystem(b.second).SystemOrder;
+        return GetOwnership(a.first).OwnerLevel < GetOwnership(b.first).OwnerLevel || a.second < b.second;
     }
 };
 
 eastl::map<Entity, eastl::set<Entity>> ComponentSystemsMap;
-eastl::fixed_map<Entity, eastl::map<eastl::pair<Entity, Entity>, u32>, 256, true, CompareFunctionOrder> SystemChanges;
+eastl::fixed_map<Entity, eastl::map<eastl::pair<Entity, Entity>, u32, CompareOwnerLevel>, 256, true, CompareSystemOrder> SystemChanges;
 
 // Use v4f as element type to 16-byte-align all oldValue component data
 eastl::vector<v4f> OldValueBuffer;
@@ -82,6 +88,9 @@ API_EXPORT void ProcessSystems() {
                 ((GenericSystemPtr)systemData.SystemFunction)(change.first.first, change.first.second, GetComponentInstanceData(componentInfoIndex, componentIndex), &oldValues[change.second]);
             }
         }
+
+        // Free up temporary memory buffer
+        TempFree();
     }
 
     CleanupStrings();
@@ -89,7 +98,7 @@ API_EXPORT void ProcessSystems() {
 
 BeginUnit(System)
     BeginComponent(System)
-        RegisterProperty(Entity, SystemComponent)
+        RegisterReferenceProperty(Component, SystemComponent)
         RegisterProperty(NativePtr, SystemFunction)
         RegisterProperty(float, SystemOrder)
         RegisterProperty(bool, SystemDeferred)

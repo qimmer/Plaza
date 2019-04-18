@@ -7,8 +7,21 @@
 
 #include <Core/NativeUtils.h>
 
+struct JavaScriptContext {
+    NativePtr JavaScriptContextHandle;
+};
+
+struct JavaScriptFunction {
+    NativePtr JavaScriptFunctionHandle, JavaScriptFunctionContext;
+};
+
+struct JavaScript {
+    ChildArray JavaScriptFunctions;
+};
+
 Unit(JavaScriptContext)
     Component(JavaScriptContext)
+        Property(NativePtr, JavaScriptContextHandle)
 
     Component(JavaScript)
         ArrayProperty(JavaScriptFunction, JavaScriptFunctions)

@@ -7,6 +7,11 @@
 
 #include <Core/NativeUtils.h>
 
+struct Networking {
+    ChildArray HttpHeaderTypes, HttpResponseCodes;
+    bool TcpWaitOnNoWork;
+};
+
 Module(Networking)
 
 Unit(Networking)
@@ -14,7 +19,5 @@ Unit(Networking)
         ArrayProperty(HttpHeaderType, HttpHeaderTypes)
         ArrayProperty(HttpResponseCode, HttpResponseCodes)
         Property(bool, TcpWaitOnNoWork)
-
-    Declare(AppLoop, Networking)
 
 #endif //PLAZA_NETWORKINGMODULE_H

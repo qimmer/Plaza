@@ -44,6 +44,7 @@ enum {
 };
 
 struct Lexer {
+    ChildArray LexerTokens;
 };
 
 struct LexerToken {

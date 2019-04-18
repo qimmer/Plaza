@@ -6,12 +6,12 @@
 #define PLAZA_FILESTREAM_H
 
 #include <Core/NativeUtils.h>
+#include <Foundation/NativeUtils.h>
 
 Unit(FileStream)
     Component(FileStream)
+    StreamProtocol(File)
 
 Function(GetNativePath, StringRef, StringRef resourcePath);
-
-Declare(AppLoop, FileChangesPoll)
 
 #endif //PLAZA_FILESTREAM_H

@@ -7,18 +7,9 @@
 
 #include <Core/NativeUtils.h>
 
-struct Panel {
-};
-
 struct PanelStyle {
     v4i PanelStylePadding;
     Entity PanelStyleMesh;
-};
-
-struct Well {
-};
-
-struct ItemWell {
 };
 
 struct WellStyle {
@@ -32,22 +23,20 @@ struct ItemWellStyle {
 };
 
 Unit(Panel)
-    Component(Panel)
-
     Component(PanelStyle)
         ChildProperty(WidgetMesh, PanelStyleMesh)
         Property(v4i, PanelStylePadding)
-
-    Component(Well)
 
     Component(WellStyle)
         ChildProperty(WidgetMesh, WellStyleMesh)
         Property(v4i, WellStylePadding)
 
-    Component(ItemWell)
-
     Component(ItemWellStyle)
         ChildProperty(WidgetMesh, ItemWellStyleMesh)
         Property(v4i, ItemWellStylePadding)
+
+    Prefab(Panel)
+    Prefab(Well)
+    Prefab(ItemWell)
 
 #endif //PLAZA_PANEL_H

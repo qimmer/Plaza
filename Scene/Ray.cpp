@@ -125,25 +125,24 @@ static inline bool RayAABBIntersect(EvaluatedRay *r, v3f *bounds) {
 }
 
 static inline bool TraceRenderable(Entity renderable, EvaluatedRay *ray, v3f *hitPoint) {
-    auto renderableData = GetRenderableData(renderable);
-    if(!renderableData) return false;
+    auto renderableData = GetRenderable(renderable);
 
     return HitBoundingBox(
-            &renderableData->RenderableAABBMin.x,
-            &renderableData->RenderableAABBMax.x,
+            &renderableData.RenderableAABBMin.x,
+            &renderableData.RenderableAABBMax.x,
             &ray->orig.x,
             &ray->dir.x,
             &hitPoint->x);
 }
 
-static inline Entity RayTrace(Entity ray, TraceRay *data) {
-	auto transformData = GetTransformData(ray);
+static inline void RayTrace(Entity ray, const TraceRay& data) {
+	auto transformData = GetWorldTransform(ray);
 
     float minDistance = FLT_MAX;
     Entity pickedRenderable = 0;
 
     int sign[3];
-    v3f invdir = {-transformData->TransformGlobalMatrix[2].x, -transformData->TransformGlobalMatrix[2].y, -transformData->TransformGlobalMatrix[2].z};
+    v3f invdir = {-transformData.WorldTransformMatrix[2].x, -transformData.WorldTransformMatrix[2].y, -transformData.WorldTransformMatrix[2].z};
     sign[0] = (invdir.x < 0);
     sign[1] = (invdir.y < 0);
     sign[2] = (invdir.z < 0);
@@ -151,20 +150,20 @@ static inline Entity RayTrace(Entity ray, TraceRay *data) {
     EvaluatedRay evaluatedRay = {
             {sign[0], sign[1], sign[2]},
             invdir,
-            {transformData->TransformGlobalMatrix[2].x, transformData->TransformGlobalMatrix[2].y, transformData->TransformGlobalMatrix[2].z},
-            {transformData->TransformGlobalMatrix[3].x, transformData->TransformGlobalMatrix[3].y, transformData->TransformGlobalMatrix[3].z}
+            {transformData.WorldTransformMatrix[2].x, transformData.WorldTransformMatrix[2].y, transformData.WorldTransformMatrix[2].z},
+            {transformData.WorldTransformMatrix[3].x, transformData.WorldTransformMatrix[3].y, transformData.WorldTransformMatrix[3].z}
     };
 
-    v3f finalHitPoint = {transformData->TransformGlobalMatrix[3].x, transformData->TransformGlobalMatrix[3].y, transformData->TransformGlobalMatrix[3].z};
-    finalHitPoint.x += transformData->TransformGlobalMatrix[2].x;
-    finalHitPoint.y += transformData->TransformGlobalMatrix[2].y;
-    finalHitPoint.z += transformData->TransformGlobalMatrix[2].z;
+    v3f finalHitPoint = {transformData.WorldTransformMatrix[3].x, transformData.WorldTransformMatrix[3].y, transformData.WorldTransformMatrix[3].z};
+    finalHitPoint.x += transformData.WorldTransformMatrix[2].x;
+    finalHitPoint.y += transformData.WorldTransformMatrix[2].y;
+    finalHitPoint.z += transformData.WorldTransformMatrix[2].z;
 
-    auto scene = GetAppNodeRoot(ray);
-    for_entity_abstract(candidate, data2, data->TraceRayComponent) {
+    auto scene = GetAppNode(ray).AppNodeRoot;
+    for_entity(candidate, data.TraceRayComponent) {
         v3f hitPoint;
 
-        if(GetAppNodeRoot(candidate) != scene || GetHierarchiallyHidden(candidate)) continue;
+        if(GetAppNode(candidate).AppNodeRoot != scene || GetVisibility(candidate).HierarchiallyHidden) continue;
 
         if (TraceRenderable(candidate, &evaluatedRay, &hitPoint)) {
             auto distance = glm_vec_distance(&hitPoint.x, &evaluatedRay.orig.x);
@@ -177,54 +176,54 @@ static inline Entity RayTrace(Entity ray, TraceRay *data) {
         }
     }
 
-    SetTraceRayPoint(ray, finalHitPoint);
-
-    return pickedRenderable;
+    auto traceRayData = data;
+    traceRayData.TraceRayPoint = finalHitPoint;
+    traceRayData.TraceRayRenderable = pickedRenderable;
+    SetTraceRay(ray, traceRayData);
 }
 
-static void UpdatePickRay(Entity ray, PickRay *data) {
-    auto sceneRendererData = GetSceneRendererData(data->PickRaySceneRenderer);
-    if(!sceneRendererData) return;
+static void UpdatePickRay(Entity ray, const PickRay& data) {
+    auto sceneRendererData = GetSceneRenderer(data.PickRaySceneRenderer);
+    auto frustumData = GetFrustum(sceneRendererData.SceneRendererCamera);
 
-    auto frustumData = GetFrustumData(sceneRendererData->SceneRendererCamera);
-    if(!frustumData) return;
-
-    auto mouseLocation = GetInputContextCursorPosition(sceneRendererData->SceneRendererTarget);
-    auto renderTargetSize = GetRenderTargetSize(sceneRendererData->SceneRendererTarget);
+    auto mouseLocation = GetInputContext(sceneRendererData.SceneRendererTarget).InputContextCursorPosition;
+    auto renderTargetSize = GetRenderTarget(sceneRendererData.SceneRendererTarget).RenderTargetSize;
 
     v3f location;
-    location.x = (float)mouseLocation.x / sceneRendererData->SceneRendererViewport.z;
-    location.y = (float)(renderTargetSize.y - mouseLocation.y) / sceneRendererData->SceneRendererViewport.w;
+    location.x = (float)mouseLocation.x / sceneRendererData.SceneRendererViewport.z;
+    location.y = (float)(renderTargetSize.y - mouseLocation.y) / sceneRendererData.SceneRendererViewport.w;
 
     v3f worldSpaceNear;
     v3f worldSpaceFar;
     v3f rayDirection;
 
     v4f viewport = {
-        sceneRendererData->SceneRendererViewport.x * renderTargetSize.x,
-        sceneRendererData->SceneRendererViewport.y * renderTargetSize.y,
-        sceneRendererData->SceneRendererViewport.z * renderTargetSize.x,
-        sceneRendererData->SceneRendererViewport.w * renderTargetSize.y,
+        sceneRendererData.SceneRendererViewport.x * renderTargetSize.x,
+        sceneRendererData.SceneRendererViewport.y * renderTargetSize.y,
+        sceneRendererData.SceneRendererViewport.z * renderTargetSize.x,
+        sceneRendererData.SceneRendererViewport.w * renderTargetSize.y,
     };
 
     location.z = 0.0f;
-    glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix[0].x, &viewport.x, &worldSpaceNear.x);
+    glm_unprojecti(&location.x, (vec4*)&frustumData.FrustumInvViewProjectionMatrix[0].x, &viewport.x, &worldSpaceNear.x);
 
     location.z = 1.0f;
-    glm_unprojecti(&location.x, (vec4*)&frustumData->FrustumInvViewProjectionMatrix[0].x, &viewport.x, &worldSpaceFar.x);
+    glm_unprojecti(&location.x, (vec4*)&frustumData.FrustumInvViewProjectionMatrix[0].x, &viewport.x, &worldSpaceFar.x);
 
     glm_vec_sub(&worldSpaceFar.x, &worldSpaceNear.x, &rayDirection.x);
 
     LookAt(ray, worldSpaceNear, rayDirection);
 }
 
-LocalFunction(OnAppUpdate, void, Entity appLoop) {
-    for_entity(ray, ComponentOf_PickRay()) {
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
+    PickRay data;
+    for_entity_data(ray, ComponentOf_PickRay(), &data) {
         UpdatePickRay(ray, data);
     }
 
-    for_entity(ray, data2, TraceRay) {
-        SetTraceRayRenderable(ray, RayTrace(ray, data2));
+    TraceRay traceRayData;
+    for_entity_data(ray, ComponentOf_TraceRay(), &traceRayData) {
+        RayTrace(ray, traceRayData);
     }
 }
 
@@ -252,7 +251,5 @@ BeginUnit(Ray)
         RegisterReferenceProperty(SceneRenderer, PickRaySceneRenderer)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnAppUpdate, AppLoopOf_RayPicking())
-
-    SetAppLoopOrder(AppLoopOf_RayPicking(), AppLoopOrder_BoundsUpdate + 1.0f);
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_BoundsUpdate + 1.0f)
 EndUnit()

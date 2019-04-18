@@ -21,6 +21,4 @@ BeginUnit(Renderable)
         RegisterProperty(v3f, RenderableAABBMax)
         RegisterProperty(v4i, RenderableScissor)
     EndComponent()
-
-	SetAppLoopOrder(AppLoopOf_BoundsUpdate(), AppLoopOrder_BoundsUpdate);
 EndUnit()

@@ -6,6 +6,7 @@
 #include "Test.h"
 
 struct Test {
+    ChildArray TestEntities;
 };
 
 BeginUnit(Test)

@@ -11,7 +11,9 @@ struct Constant {
     Variant ConstantValue;
 };
 
-struct ConstantDictionary {};
+struct ConstantDictionary {
+    ChildArray Constants;
+};
 
 Unit(Constant)
     Component(Constant)

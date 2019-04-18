@@ -22,37 +22,49 @@
 #include <Core/Debug.h>
 
 struct Folder {
-    char FolderPath[PathMax];
+    ChildArray FolderSubfolders, FolderFiles;
+    StringRef FolderPath;
 };
 
 API_EXPORT void ScanFolder(Entity entity) {
-    SetNumFolderFiles(entity, 0);
+    auto folderData = GetFolder(entity);
+    folderData.FolderFiles.SetSize(0);
 
     DIR *dir;
     struct dirent *ent;
-    if ((dir = opendir (GetFolderPath(entity))) != NULL) {
+    if ((dir = opendir (GetFolder(entity).FolderPath)) != NULL) {
         while ((ent = readdir (dir)) != NULL) {
             Entity entryEntity = 0;
 
             if(ent->d_name[0] == '.') continue;
 
             char entryPath[PathMax];
-            snprintf(entryPath, PathMax, "%s/%s", GetFolderPath(entity), ent->d_name);
+            snprintf(entryPath, PathMax, "%s/%s", GetFolder(entity).FolderPath, ent->d_name);
 
             struct stat ent_stat;
             stat(entryPath, &ent_stat);
 
             switch(ent_stat.st_mode & S_IFMT) {
                 case S_IFDIR:
-                    entryEntity = AddFolderSubfolders(entity);
+                {
+                    entryEntity = CreateEntity();
                     //SetName(entryEntity, ent->d_name);
-                    SetFolderPath(entryEntity, entryPath);
+                    auto subFolderData = GetFolder(entryEntity);
+                    subFolderData.FolderPath = entryPath;
+                    SetFolder(entryEntity, subFolderData);
+                    folderData.FolderSubfolders.Add(entryEntity);
                     break;
+                }
                 case S_IFREG:
-                    entryEntity = AddFolderFiles(entity);
+                {
+                    entryEntity = CreateEntity();
                     //SetName(entryEntity, ent->d_name);
-                    SetStreamPath(entryEntity, entryPath);
+                    auto streamData = GetStream(entity);
+                    streamData.StreamPath = entryPath;
+                    SetStream(entryEntity, streamData);
+                    folderData.FolderFiles.Add(entryEntity);
                     break;
+                }
             }
         }
         closedir (dir);
@@ -96,8 +108,7 @@ API_EXPORT bool CreateDirectories(StringRef fullPath) {
 }
 
 API_EXPORT bool IsFolder(StringRef absolutePath) {
-    char resolvedPath[PathMax];
-    ResolveVirtualPath(absolutePath, PathMax, resolvedPath);
+    auto resolvedPath = ResolveVirtualPath(absolutePath);
 
     auto isVirtualPath = strstr(resolvedPath, "://") != NULL;
 
@@ -106,35 +117,18 @@ API_EXPORT bool IsFolder(StringRef absolutePath) {
         return false;
     }
 
-    char *rawPath = resolvedPath;
-    rawPath += 7;
+    resolvedPath += 7;
 
     struct stat ent_stat;
-    stat(rawPath, &ent_stat);
+    stat(resolvedPath, &ent_stat);
 
     if(ent_stat.st_mode & S_IFMT) return true;
 
     return false;
 }
 
-LocalFunction(OnFolderPathChanged, void, Entity entity, StringRef before, StringRef after) {
-    //SetName(entity, GetFileName(after));
-}
-
-LocalFunction(OnFolderAdded, void, Entity component, Entity entity) {
-
-}
-
-LocalFunction(OnFolderRemoved, void, Entity component, Entity entity) {
-
-}
-
 BeginUnit(Folder)
     BeginComponent(Folder)
         RegisterProperty(StringRef, FolderPath)
     EndComponent()
-
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnFolderAdded, ComponentOf_Folder())
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnFolderRemoved, ComponentOf_Folder())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FolderPath()), OnFolderPathChanged, 0)
 EndComponent()

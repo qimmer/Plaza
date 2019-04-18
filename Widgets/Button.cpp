@@ -12,7 +12,8 @@
 BeginUnit(Button)
     BeginComponent(ButtonStyle)
         RegisterBase(Style)
-        RegisterChildProperty(WidgetMesh, ButtonStyleMesh)
+        BeginChildProperty(ButtonStyleMesh)
+        EndChildProperty()
         RegisterReferenceProperty(Font, ButtonStyleFont)
         RegisterProperty(v4f, ButtonStyleTextColor)
         RegisterProperty(v4i, ButtonStylePadding)
@@ -21,22 +22,25 @@ BeginUnit(Button)
     BeginComponent(Button)
         RegisterBase(InteractableWidget)
         RegisterProperty(StringRef, ButtonTitle)
-        RegisterChildProperty(TextWidget, ButtonLabel)
+        BeginChildProperty(ButtonLabel)
 
-        ComponentTemplate({
-            "RenderableSubMesh": "{SceneNodeScene.SceneStyle.ButtonStyleMesh}",
-            "LayoutMode": "LayoutMode_Horizontal",
-            "LayoutPadding": "{SceneNodeScene.SceneStyle.ButtonStylePadding}",
-            "LayoutChildOrder": [
-              {
-                  "LayoutChildOrderingProperty": "Property.ButtonLabel"
-              }
-            ],
-            "ButtonLabel": {
+        EndChildProperty()
+    EndComponent()
+    BeginPrefab(Button)
+        PrefabJson({
+               "RenderableSubMesh": "{SceneNodeScene.SceneStyle.ButtonStyleMesh}",
+               "LayoutMode": "LayoutMode_Horizontal",
+               "LayoutPadding": "{SceneNodeScene.SceneStyle.ButtonStylePadding}",
+               "LayoutChildOrder": [
+               {
+                   "LayoutChildOrderingProperty": "Property.ButtonLabel"
+               }
+               ],
+               "ButtonLabel": {
                 "TextWidgetFont": "{SceneNodeScene.SceneStyle.ButtonStyleFont}",
                 "TextWidgetText": "{Owner.ButtonTitle}",
                 "TextWidgetColor": "{Owner.WidgetStateColor}"
             }
         })
-    EndComponent()
+    EndPrefab()
 EndUnit()

@@ -28,13 +28,16 @@ static void Split(char* string, char delimeter, StringRef* left, StringRef* righ
     *right = delimeterLocation ? (delimeterLocation + 1) : "";
 }
 
-static bool ParseBinding(Entity entity, Entity targetProperty, StringRef sourceBindingString) {
-    Vector<Entity, 16> indirections;
-    Vector<StringRef, 16> indirectionArrayNames;
-
+API_EXPORT bool BindByString(Entity entity, Entity targetProperty, StringRef sourceBindingString) {
     auto len = strlen(sourceBindingString);
-    auto buffer = (char*)alloca(len + 1);
-    strcpy(buffer, sourceBindingString);
+    if(sourceBindingString[0] != '{' || sourceBindingString[len - 1] != '}') return false;
+
+    char *buffer = (char*)alloca(len - 1);
+    memcpy(buffer, sourceBindingString + 1, len - 2);
+    buffer[len - 2] = '\0';
+
+    eastl::fixed_vector<Entity, 16> indirections;
+    eastl::fixed_vector<StringRef, 16> indirectionArrayNames;
 
     StringRef sourceEntityUuid, propertiesString;
     Split(buffer, '@', &propertiesString, &sourceEntityUuid);
@@ -85,10 +88,6 @@ static bool ParseBinding(Entity entity, Entity targetProperty, StringRef sourceB
     return true;
 }
 
-API_EXPORT bool BindByString(Entity entity, Entity property, StringRef sourceBindingString) {
-    return ParseBinding(entity, property, sourceBindingString);
-}
-
 API_EXPORT StringRef GetBindingString(const Binding& binding) {
     static std::stringstream ss;
     ss.str(std::string());
@@ -106,7 +105,7 @@ API_EXPORT StringRef GetBindingString(const Binding& binding) {
     }
 
     if(IsEntityValid(binding.BindingSourceEntity)) {
-        ss << '@' << GetUuid(binding.BindingSourceEntity);
+        ss << '@' << GetIdentification(binding.BindingSourceEntity).Uuid;
     }
 
     ss << '}';

@@ -3,7 +3,7 @@ project(Networking)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(Networking NetworkingModule.h NetworkingModule.cpp Server.cpp Server.h HttpServer.cpp HttpServer.h HttpRequest.cpp HttpRequest.h TcpStream.cpp TcpStream.h Replication.cpp Replication.h)
+add_library(Networking NetworkingModule.h NetworkingModule.cpp Server.cpp Server.h HttpServer.cpp HttpServer.h HttpRequest.cpp HttpRequest.h TcpStream.cpp TcpStream.h)
 
 target_link_libraries(Networking Core Foundation Json)
 target_include_directories(Networking PUBLIC ".." "asio/include")

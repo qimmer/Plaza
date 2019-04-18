@@ -7,6 +7,7 @@
 #include <bgfx/bgfx.h>
 #include <Rendering/Uniform.h>
 #include <Rendering/RenderContext.h>
+#include <Rendering/RenderingModule.h>
 #include <Foundation/AppLoop.h>
 #include <Core/Debug.h>
 #include <Core/Identification.h>
@@ -15,30 +16,29 @@
 struct BgfxUniform {
 };
 
-LocalFunction(OnUniformRemoved, void, Entity component, Entity entity) {
-	auto resourceData = GetBgfxResourceData(entity);
-    bgfx::UniformHandle handle = { resourceData->BgfxResourceHandle };
+static void OnBgfxResourceChanged(Entity entity, const BgfxResource& oldData, const BgfxResource& newData) {
+    if(oldData.BgfxResourceHandle != bgfx::kInvalidHandle && newData.BgfxResourceHandle != oldData.BgfxResourceHandle) {
+        if(HasComponent(entity, ComponentOf_BgfxUniform())) {
+            bgfx::UniformHandle handle = { oldData.BgfxResourceHandle };
 
-    if(bgfx::isValid(handle)) {
-        bgfx::destroy(handle);
+            if(bgfx::isValid(handle)) {
+                bgfx::destroy(handle);
+            }
+        }
     }
-
-	resourceData->BgfxResourceHandle = bgfx::kInvalidHandle;
 }
 
 static eastl::set<Entity> invalidatedUniforms;
 
-LocalFunction(OnUniformValidation, void) {
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
     for(auto& entity : invalidatedUniforms) {
-        // Eventually free old buffers
-        OnUniformRemoved(0, entity);
-
         // Create or update unifom
         bgfx::UniformType::Enum type;
+        auto uniformData = GetUniform(entity);
 
-        auto property = GetUniformEntityProperty(entity);
+        auto property = uniformData.UniformEntityProperty;
 
-        auto propertyType = GetPropertyType(property);
+        auto propertyType = GetProperty(property).PropertyType;
 		
         switch (propertyType) {
             case TypeOf_s8:
@@ -69,19 +69,15 @@ LocalFunction(OnUniformValidation, void) {
                 break;
         }
 
-        auto name = GetUniformIdentifier(entity);
-        auto arrayCount = Max((u32)1, GetUniformArrayCount(entity));
-        SetBgfxResourceHandle(entity, bgfx::createUniform(name, type, arrayCount).idx);
+        auto name = uniformData.UniformIdentifier;
+        auto arrayCount = Max((u32)1, uniformData.UniformArrayCount);
+        SetBgfxResource(entity, {bgfx::createUniform(name, type, arrayCount).idx});
     }
 
     invalidatedUniforms.clear();
 }
 
-LocalFunction(Invalidate, void, Entity entity) {
-    invalidatedUniforms.insert(entity);
-}
-
-LocalFunction(OnUniformAdded, void, Entity component, Entity entity) {
+static void OnUniformChanged(Entity entity, const Uniform& oldData, const Uniform& newData) {
 	invalidatedUniforms.insert(entity);
 }
 
@@ -90,12 +86,6 @@ BeginUnit(BgfxUniform)
         RegisterBase(BgfxResource)
     EndComponent()
 
-	RegisterSubscription(EventOf_EntityComponentAdded(), OnUniformAdded, ComponentOf_BgfxUniform())
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnUniformRemoved, ComponentOf_BgfxUniform())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformEntityProperty()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformIdentifier()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformArrayCount()), Invalidate, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_UniformElementProperty()), Invalidate, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnUniformValidation, AppLoopOf_ResourceSubmission())
+    RegisterSystem(OnUniformChanged, ComponentOf_Uniform())
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_ResourceSubmission)
 EndUnit()

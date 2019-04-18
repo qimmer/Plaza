@@ -21,6 +21,7 @@
 #include <EASTL/algorithm.h>
 #include <Core/Identification.h>
 #include <Core/Algorithms.h>
+#include <Core/Date.h>
 
 #if defined(WIN32) && defined(EA_COMPILER_MSVC)
 #include <unistd.h>
@@ -28,79 +29,69 @@
 
 using namespace eastl;
 
-struct StreamExtensionModule {
-};
-
 API_EXPORT bool StreamSeek(Entity entity, s32 offset){
-    auto streamData = GetStreamData(entity);
-    if(!streamData) return false;
+    auto streamData = GetStream(entity);
+    
 
-    auto protocolData = GetStreamProtocolData(streamData->StreamProtocol);
-    if(!protocolData) return false;
+    auto protocolData = GetStreamProtocol(streamData.StreamProtocol);
+    
 
-    if(!protocolData->StreamSeekHandler) {
+    if(!protocolData.StreamSeekHandler) {
         return false;
     }
 
-    return protocolData->StreamSeekHandler(entity, offset);
+    return protocolData.StreamSeekHandler(entity, offset);
 }
 
 API_EXPORT s32 StreamTell(Entity entity){
-    auto streamData = GetStreamData(entity);
-    if(!streamData) return false;
+    auto streamData = GetStream(entity);
 
-    auto protocolData = GetStreamProtocolData(streamData->StreamProtocol);
-    if(!protocolData) return false;
+    auto protocolData = GetStreamProtocol(streamData.StreamProtocol);
+    
 
-    if(!protocolData->StreamTellHandler) {
+    if(!protocolData.StreamTellHandler) {
         return false;
     }
 
-    return protocolData->StreamTellHandler(entity);
+    return protocolData.StreamTellHandler(entity);
 }
 
 API_EXPORT u64 StreamRead(Entity entity, u64 size, void *data){
-    auto streamData = GetStreamData(entity);
-    if(!streamData) return false;
+    auto streamData = GetStream(entity);
+    auto protocolData = GetStreamProtocol(streamData.StreamProtocol);
 
-    auto protocolData = GetStreamProtocolData(streamData->StreamProtocol);
-    if(!protocolData) return false;
-
-    if(!protocolData->StreamReadHandler || !(streamData->StreamMode & StreamMode_Read)) {
+    if(!protocolData.StreamReadHandler || !(streamData.StreamMode & StreamMode_Read)) {
         return 0;
     }
 
-    return protocolData->StreamReadHandler(entity, size, data);
+    return protocolData.StreamReadHandler(entity, size, data);
 }
 
 API_EXPORT u64 StreamWrite(Entity entity, u64 size, const void *data){
-    auto streamData = GetStreamData(entity);
-    if(!streamData) return 0;
+    auto streamData = GetStream(entity);
 
-    auto protocolData = GetStreamProtocolData(streamData->StreamProtocol);
-    if(!protocolData) return 0;
+    auto protocolData = GetStreamProtocol(streamData.StreamProtocol);
 
-    if(!protocolData->StreamWriteHandler || !(streamData->StreamMode & StreamMode_Write)) {
+    if(!protocolData.StreamWriteHandler || !(streamData.StreamMode & StreamMode_Write)) {
         return 0;
     }
 
-    streamData->InvalidationPending = true;
+    streamData.InvalidationPending = true;
+    SetStream(entity, streamData);
 
-    return protocolData->StreamWriteHandler(entity, size, data);
+    return protocolData.StreamWriteHandler(entity, size, data);
 }
 
 API_EXPORT bool IsStreamOpen(Entity entity) {
-    auto streamData = GetStreamData(entity);
-    if(!streamData) return false;
+    auto streamData = GetStream(entity);
 
-    auto protocolData = GetStreamProtocolData(streamData->StreamProtocol);
-    if(!protocolData) return false;
+    auto protocolData = GetStreamProtocol(streamData.StreamProtocol);
 
-    if(!protocolData->StreamIsOpenHandler) {
+    if(!protocolData.StreamIsOpenHandler) {
         return false;
     }
 
-    return protocolData->StreamIsOpenHandler(entity);
+    return protocolData.StreamIsOpenHandler(entity);
 }
 
 API_EXPORT bool StreamOpen(Entity entity, int mode) {
@@ -108,59 +99,54 @@ API_EXPORT bool StreamOpen(Entity entity, int mode) {
         return false;
     }
 
-    auto data = GetStreamData(entity);
-    if(!data) return false;
+    auto data = GetStream(entity);
 
-    auto protocolData = GetStreamProtocolData(data->StreamProtocol);
-    if(!protocolData) return false;
-
-    if(!protocolData->StreamOpenHandler) {
+    auto protocolData = GetStreamProtocol(data.StreamProtocol);
+    
+    if(!protocolData.StreamOpenHandler) {
         return false;
     }
 
-    data->StreamMode = mode;
+    data.StreamMode = mode;
 
-    if(protocolData->StreamOpenHandler(entity, mode)) {
-        data->StreamMode = mode;
+    if(protocolData.StreamOpenHandler(entity, mode)) {
+        data.StreamMode = mode;
+        SetStream(entity, data);
         return true;
     } else {
-        data->StreamMode = 0;
-        //Log(entity, LogSeverity_Error, "Stream '%s' could not be opened.", data->StreamPath);
+        data.StreamMode = 0;
+        SetStream(entity, data);
+        //Log(entity, LogSeverity_Error, "Stream '%s' could not be opened.", data.StreamPath);
     }
 
     return false;
 }
 
 API_EXPORT bool StreamDelete(Entity entity) {
-    auto data = GetStreamData(entity);
-    if (!data) return false;
+    auto data = GetStream(entity);
 
-    auto protocolData = GetStreamProtocolData(data->StreamProtocol);
-    if (!protocolData) return false;
+    auto protocolData = GetStreamProtocol(data.StreamProtocol);
 
-    if (protocolData->StreamDeleteHandler) {
-        return protocolData->StreamDeleteHandler(entity);
+    if (protocolData.StreamDeleteHandler) {
+        return protocolData.StreamDeleteHandler(entity);
     }
 
     return false;
 }
 
 API_EXPORT bool StreamClose(Entity entity) {
-    auto data = GetStreamData(entity);
-    if(!data) return false;
+    auto data = GetStream(entity);
+    auto protocolData = GetStreamProtocol(data.StreamProtocol);
 
-    auto protocolData = GetStreamProtocolData(data->StreamProtocol);
-    if(!protocolData) return false;
+    if(protocolData.StreamCloseHandler) {
+        protocolData.StreamCloseHandler(entity);
 
-    if(protocolData->StreamCloseHandler) {
-        protocolData->StreamCloseHandler(entity);
+        if(data.InvalidationPending) {
+            data.InvalidationPending = false;
+            data.StreamMode = 0;
+            data.StreamLastWrite = GetDateNow();
 
-        if(data->InvalidationPending) {
-            data->InvalidationPending = false;
-            data->StreamMode = 0;
-
-			auto value = MakeVariant(Entity, entity);
-			FireEventFast(EventOf_StreamContentChanged(), 1, &value);
+            SetStream(entity, data);
         }
 
         return true;
@@ -187,20 +173,21 @@ API_EXPORT void StreamWriteAsync(Entity entity, u64 size, const void *data, Stre
 
 API_EXPORT int GetStreamMode(Entity entity) {
     if(!HasComponent(entity, ComponentOf_Stream())) return StreamMode_Closed;
-    return GetStreamData(entity)->StreamMode;
+    return GetStream(entity).StreamMode;
 }
 
 API_EXPORT u64 StreamDecompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, void *uncompressedData) {
-    auto data = GetStreamData(entity);
+    auto data = GetStream(entity);
 
-    auto compressorData = GetStreamCompressorData(data->StreamCompressor);
-    if(!compressorData) {
+    if(!data.StreamCompressor) {
         Error(entity, "Could not decompress data in stream. No compatible decompressor found for file type.");
         return false;
     }
 
-    if(compressorData->DecompressHandler) {
-        if(!compressorData->DecompressHandler(entity, uncompressedOffset, uncompressedSize, uncompressedData)) {
+    auto compressorData = GetStreamCompressor(data.StreamCompressor);
+
+    if(compressorData.DecompressHandler) {
+        if(!compressorData.DecompressHandler(entity, uncompressedOffset, uncompressedSize, uncompressedData)) {
             return 0;
         }
 
@@ -213,14 +200,15 @@ API_EXPORT u64 StreamDecompress(Entity entity, u64 uncompressedOffset, u64 uncom
 }
 
 API_EXPORT u64 StreamCompress(Entity entity, u64 uncompressedOffset, u64 uncompressedSize, const void *uncompressedData) {
-    auto data = GetStreamData(entity);
-    auto compressorData = GetStreamCompressorData(data->StreamCompressor);
-    if(!compressorData) {
+    auto data = GetStream(entity);
+
+    if(!data.StreamCompressor) {
         Error(entity, "Could not compress data in stream. No compatible compressor found for file type.");
     }
+    auto compressorData = GetStreamCompressor(data.StreamCompressor);
 
-    if(compressorData->CompressHandler) {
-        if(!compressorData->CompressHandler(entity, uncompressedOffset, uncompressedSize, uncompressedData)) {
+    if(compressorData.CompressHandler) {
+        if(!compressorData.CompressHandler(entity, uncompressedOffset, uncompressedSize, uncompressedData)) {
             return 0;
         }
 
@@ -374,159 +362,131 @@ API_EXPORT bool StreamCopy(Entity source, Entity destination) {
     return true;
 }
 
-LocalFunction(OnStreamFileTypeChanged, void, Entity stream, Entity oldFileType, Entity newFileType) {
-    if(IsEntityValid(oldFileType)) {
-        auto fileTypeComponent = GetFileTypeComponent(oldFileType);
-
-        if(IsEntityValid(fileTypeComponent)) {
-            RemoveComponent(stream, fileTypeComponent);
-        }
-    }
-
-    if(IsEntityValid(newFileType)) {
-        auto fileTypeComponent = GetFileTypeComponent(newFileType);
-
-        if(IsEntityValid(fileTypeComponent)) {
-            AddComponent(stream, fileTypeComponent);
-        }
-    }
-}
-
-LocalFunction(OnStreamPathChanged, void, Entity entity, StringRef oldValue, StringRef newValue) {
-    auto data = GetStreamData(entity);
-
-    if(IsStreamOpen(entity)) {
+static bool UpdateStream(Entity entity, Stream& data) {
+    if (IsStreamOpen(entity)) {
         StreamClose(entity);
     }
 
-    SetStreamFileType(entity, 0);
-    SetStreamCompressor(entity, 0);
-    SetStreamProtocol(entity, 0);
-
-    // Resolve protocol, compressor and filetype first
-    char resolvedPath[PathMax];
-    ResolveVirtualPath(newValue, PathMax, resolvedPath);
+    data.StreamResolvedPath = ResolveVirtualPath(data.StreamPath);
+    data.StreamProtocol = 0;
 
     char protocolIdentifier[32];
-    auto colonLocation = strstr(resolvedPath, "://");
+    auto colonLocation = strstr(data.StreamResolvedPath, "://");
 
     if(!colonLocation) {
-        //Log(entity, LogSeverity_Error, "Malformed URI: %s (resolved from %s)", resolvedPath, data->StreamPath);
-        return;
+        //Log(entity, LogSeverity_Error, "Malformed URI: %s (resolved from %s)", resolvedPath, data.StreamPath);
+        return false;
     }
 
-    u32 len = colonLocation - resolvedPath;
-    strncpy(protocolIdentifier, resolvedPath, len);
+    u32 len = colonLocation - data.StreamResolvedPath;
+    strncpy(protocolIdentifier, data.StreamResolvedPath, len);
     protocolIdentifier[len] = 0;
     auto protocolIdentifierInterned = Intern(protocolIdentifier);
 
-    auto extension = GetFileExtension(resolvedPath);
+    auto extension = GetFileExtension(data.StreamResolvedPath);
 
     StringRef mimeType = Intern("application/octet-stream");
-    auto oldProtocol = data->StreamProtocol;
+    auto oldProtocol = data.StreamProtocol;
 
     // Find protocol
-    for_entity(protocolEntity, protocolData, StreamProtocol) {
-        if(protocolIdentifierInterned == protocolData->StreamProtocolIdentifier) {
-            SetStreamProtocol(entity, protocolEntity);
+    StreamProtocol protocolData;
+    for_entity_data(protocolEntity, ComponentOf_StreamProtocol(), &protocolData) {
+        if(protocolIdentifierInterned == protocolData.StreamProtocolIdentifier) {
+            data.StreamProtocol = protocolEntity;
             break;
         }
     }
 
-    if(!IsEntityValid(data->StreamProtocol)) {
-        Log(entity, LogSeverity_Error, "Unknown stream protocol: %s (%s)", protocolIdentifier, resolvedPath);
-        return;
+    if(!IsEntityValid(data.StreamProtocol)) {
+        Log(entity, LogSeverity_Error, "Unknown stream protocol: %s (%s)", protocolIdentifier, data.StreamResolvedPath);
+        return false;
     }
 
     if(strlen(extension) > 0) {
+        FileType fileTypeData;
+
         // Find Filetype (optional)
-        for_entity(fileTypeEntity, fileTypeData, FileType) {
-            if(extension == fileTypeData->FileTypeExtension) {
-                SetStreamFileType(entity, fileTypeEntity);
-                if(fileTypeData->FileTypeMimeType) {
-                    mimeType = fileTypeData->FileTypeMimeType;
+        for_entity_data(fileTypeEntity, ComponentOf_FileType(), &fileTypeData) {
+            if(extension == fileTypeData.FileTypeExtension) {
+                data.StreamFileType = fileTypeEntity;
+                if(fileTypeData.FileTypeMimeType) {
+                    mimeType = fileTypeData.FileTypeMimeType;
                     break;
                 }
             }
         }
 
-        if(!IsEntityValid(GetStreamFileType(entity))) {
-            Log(entity, LogSeverity_Warning, "Unknown file type: %s", extension);
+        if(!IsEntityValid(data.StreamFileType)) {
+            Log(0, LogSeverity_Warning, "Unknown file type: %s", extension);
         }
     }
 
     // Find compressor (optional)
-    for_entity(compressorEntity, compressorData, StreamCompressor) {
-        if(mimeType == compressorData->StreamCompressorMimeType) {
-            SetStreamCompressor(entity, compressorEntity);
-        }
-    }
-
-    // Update stream with new protocol, compressor and filetype
-    if(IsEntityValid(oldProtocol)) {
-        auto protocolComponent = GetStreamProtocolData(oldProtocol)->StreamProtocolComponent;
-        if(IsEntityValid(protocolComponent)) {
-            RemoveComponent(entity, protocolComponent);
-        }
-    }
-
-    if(IsEntityValid(data->StreamProtocol)) {
-        auto protocolComponent = GetStreamProtocolData(data->StreamProtocol)->StreamProtocolComponent;
-        if(IsEntityValid(protocolComponent)) {
-            AddComponent(entity, protocolComponent);
+    StreamCompressor compressorData;
+    for_entity_data(compressorEntity, ComponentOf_StreamCompressor(), &compressorData) {
+        if(mimeType == compressorData.StreamCompressorMimeType) {
+            data.StreamCompressor = compressorEntity;
         }
     }
 
     // Find serializer (optional)
-    for_entity(serializerEntity, serializerData, Serializer) {
-        if(mimeType == serializerData->SerializerMimeType) {
+    Serializer serializerData;
+    for_entity_data(serializerEntity, ComponentOf_Serializer(), &serializerData) {
+        if(mimeType == serializerData.SerializerMimeType) {
             AddComponent(entity, ComponentOf_PersistancePoint());
             break;
         }
     }
 
-    SetStreamResolvedPath(entity, Intern(resolvedPath));
+    return true;
 }
 
-LocalFunction(OnProtocolChanged, void, Entity protocol) {
-    for_entity(stream, streamData, Stream) {
-        if(streamData->StreamProtocol == protocol) {
-            OnStreamPathChanged(stream, streamData->StreamPath, streamData->StreamPath);
+static void OnStreamChanged(Entity entity, const Stream& oldData, const Stream& newData) {
+    auto data = newData;
+
+    if(oldData.StreamPath != data.StreamPath) {
+        UpdateStream(entity, data);
+        SetStream(entity, data);
+    }
+}
+
+static void OnProtocolChanged(Entity protocol) {
+    Stream streamData;
+    for_entity_data(stream, ComponentOf_Stream(), &streamData) {
+        if(streamData.StreamProtocol == protocol) {
+            UpdateStream(stream, streamData);
+            SetStream(stream, streamData);
         }
     }
 }
 
-LocalFunction(OnFileTypeChanged, void, Entity fileType) {
-    for_entity(stream, streamData, Stream) {
-        if(streamData->StreamFileType == fileType) {
-            OnStreamPathChanged(stream, streamData->StreamPath, streamData->StreamPath);
+static void OnFileTypeChanged(Entity fileType) {
+    Stream streamData;
+    for_entity_data(stream, ComponentOf_Stream(), &streamData) {
+        if(streamData.StreamFileType == fileType) {
+            UpdateStream(stream, streamData);
+            SetStream(stream, streamData);
         }
     }
 }
 
-LocalFunction(OnCompressorChanged, void, Entity compressor) {
-    for_entity(stream, streamData, Stream) {
-        if(streamData->StreamCompressor == compressor) {
-            OnStreamPathChanged(stream, streamData->StreamPath, streamData->StreamPath);
+static void OnCompressorChanged(Entity compressor) {
+    Stream streamData;
+    for_entity_data(stream, ComponentOf_Stream(), &streamData) {
+        if(streamData.StreamCompressor == compressor) {
+            UpdateStream(stream, streamData);
+            SetStream(stream, streamData);
         }
     }
 }
 
-LocalFunction(OnReresolvePaths, void) {
-    for_entity(stream, ComponentOf_Stream()) {
-        char resolvedPath[PathMax];
-        auto streamData = GetStreamData(stream);
-        ResolveVirtualPath(GetStreamPath(stream), PathMax, resolvedPath);
-
-        SetStreamResolvedPath(stream, Intern(resolvedPath));
+static void OnVirtualPathChanged(Entity entity) {
+    Stream streamData;
+    for_entity_data(stream, ComponentOf_Stream(), &streamData) {
+        UpdateStream(stream, streamData);
+        SetStream(stream, streamData);
     }
 }
-
-LocalFunction(OnResolvedPathChanged, void, Entity stream) {
-    auto value = MakeVariant(Entity, stream);
-    FireEventFast(EventOf_StreamContentChanged(), 1, &value);
-}
-
 
 static bool Compress(Entity entity, u64 offset, u64 size, const void *pixels) {
     return StreamWrite(entity, size, (char*)pixels + offset);
@@ -549,11 +509,11 @@ BeginUnit(Stream)
         RegisterReferencePropertyReadOnly(StreamProtocol, StreamProtocol)
         RegisterReferencePropertyReadOnly(StreamCompressor, StreamCompressor)
         RegisterReferencePropertyReadOnly(FileType, StreamFileType)
+        RegisterProperty(Date, StreamLastWrite)
     EndComponent()
 
     BeginComponent(StreamProtocol)
         RegisterProperty(StringRef, StreamProtocolIdentifier)
-        RegisterProperty(Entity, StreamProtocolComponent)
     EndComponent()
 
     BeginComponent(StreamCompressor)
@@ -563,7 +523,6 @@ BeginUnit(Stream)
     BeginComponent(FileType)
         RegisterProperty(StringRef, FileTypeExtension)
         RegisterProperty(StringRef, FileTypeMimeType)
-        RegisterProperty(Entity, FileTypeComponent)
     EndComponent()
 
     BeginComponent(Serializer)
@@ -579,21 +538,13 @@ BeginUnit(Stream)
     EndComponent()
 
     RegisterStreamCompressor(Binary, "application/bin")
-    SetFileTypeMimeType(FileTypeOf_Bin(), "application/bin");
-    SetFileTypeExtension(FileTypeOf_Bin(), ".bin");
+    RegisterFileType(Bin, "application/bin", ".bin")
 
-    RegisterEvent(StreamContentChanged)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), OnStreamPathChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamProtocolIdentifier()), OnProtocolChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamProtocolComponent()), OnProtocolChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FileTypeExtension()), OnFileTypeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FileTypeMimeType()), OnFileTypeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamCompressorMimeType()), OnCompressorChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamFileType()), OnStreamFileTypeChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VirtualPathTrigger()), OnReresolvePaths, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VirtualPathDestination()), OnReresolvePaths, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamResolvedPath()), OnResolvedPathChanged, 0)
+    RegisterSystem(OnStreamChanged, ComponentOf_Stream())
+    RegisterSystem(OnProtocolChanged, ComponentOf_StreamProtocol())
+    RegisterSystem(OnFileTypeChanged, ComponentOf_FileType())
+    RegisterSystem(OnCompressorChanged, ComponentOf_StreamCompressor())
+    RegisterSystem(OnVirtualPathChanged, ComponentOf_VirtualPath())
 EndUnit()
 
 

@@ -10,61 +10,71 @@
 #include <Json/NativeUtils.h>
 #include <Foundation/Visibility.h>
 #include <Foundation/AppNode.h>
+#include <Scene/Scene.h>
 
 static void RepositionMenu(Entity menu, bool vertical) {
     if(HasComponent(menu, ComponentOf_Menu()) && !HasComponent(menu, ComponentOf_MainMenu())) {
-        auto itemSize = GetSize2D(GetOwnership(menu).Owner);
+        auto ownerLevel  = GetOwnership(menu).OwnerLevel;
+        auto depthLevel = GetWidget(menu).WidgetDepthOrder;
+        auto itemSize = GetRect2D(GetOwnership(menu).Owner).Size2D;
+
+        auto transformData = GetTransform(menu);
         if(vertical) {
-            SetPosition3D(menu, {0.0f, (float)itemSize.y, -GetTransformHierarchyLevel(menu) - GetWidgetDepthOrder(menu)});
+            transformData.Position3D = {0.0f, (float)itemSize.y, -ownerLevel - depthLevel};
         }
         else {
-            SetPosition3D(menu, {(float)itemSize.x, 0.0f, -GetTransformHierarchyLevel(menu) - GetWidgetDepthOrder(menu)});
+            transformData.Position3D = {(float)itemSize.x, 0.0f, -ownerLevel - depthLevel};
         }
+
+        SetTransform(menu, transformData);
     }
 }
 
 static void RepositionMenuItemMenu(Entity item) {
     if(HasComponent(item, ComponentOf_MainMenuItem())) {
-        auto menu = GetMenuItemSubMenu(item);
+        auto menu = GetMenuItem(item).MenuItemSubMenu;
         RepositionMenu(menu, true);
     }
     else if(HasComponent(item, ComponentOf_MenuItem())) {
-        auto menu = GetMenuItemSubMenu(item);
+        auto menu = GetMenuItem(item).MenuItemSubMenu;
         RepositionMenu(menu, false);
     }
 }
 
-LocalFunction(OnSize2DChanged, void, Entity entity) {
+static void OnRect2DChanged(Entity entity, const Rect2D& oldData, const Rect2D& newData) {
     RepositionMenuItemMenu(entity);
 }
 
-LocalFunction(OnMenuChanged, void, Entity entity) {
+static void OnWidgetChanged(Entity entity, const Menu& oldData, const Menu& newData) {
     RepositionMenu(entity, HasComponent(GetOwnership(entity).Owner, ComponentOf_MainMenuItem()));
 }
 
-LocalFunction(OnClickedChanged, void, Entity entity, bool oldClicked, bool newClicked) {
-    if(newClicked && HasComponent(entity, ComponentOf_MainMenuItem())) {
+static void OnInteractableWidgetChanged(Entity entity, const InteractableWidget& oldData, const InteractableWidget& newData) {
+    if(!oldData.WidgetClicked && newData.WidgetClicked && HasComponent(entity, ComponentOf_MainMenuItem())) {
         auto menu = GetOwnership(entity).Owner;
 
-        auto& menuItems = GetChildren(menu);
-        auto alreadySelected = GetWidgetSelected(entity);
-        for(auto i = 0; i < menuItems.size(); ++i) {
+        auto menuItems = GetAppNode(menu).Children;
+        auto alreadySelected = GetWidget(entity).WidgetSelected;
+        for(auto i = 0; i < menuItems.GetSize(); ++i) {
             auto selected = menuItems[i] == entity && !alreadySelected;
-            auto subMenu = GetMenuItemSubMenu(menuItems[i]);
-            SetHidden(subMenu, !selected);
-            SetWidgetSelected(menuItems[i], selected);
+            auto subMenu = GetMenuItem(menuItems[i]).MenuItemSubMenu;
+            SetVisibility(subMenu, {!selected});
+
+            auto widgetData = GetWidget(menuItems[i]);
+            if(selected != widgetData.WidgetSelected) {
+                widgetData.WidgetSelected = selected;
+                SetWidget(menuItems[i], widgetData);
+            }
         }
     }
-}
 
-LocalFunction(OnHoveredChanged, void, Entity entity, bool oldHovered, bool newHovered) {
-    if(newHovered && HasComponent(entity, ComponentOf_MenuItem())) {
+    if(!oldData.WidgetHovered && newData.WidgetHovered && HasComponent(entity, ComponentOf_MenuItem())) {
         auto menu = GetOwnership(entity).Owner;
-        auto& menuItems = GetChildren(menu);
+        auto menuItems = GetAppNode(menu).Children;
 
         bool anyMenuOpen = false;
-        for(auto i = 0; i < menuItems.size(); ++i) {
-            if(GetWidgetSelected(menuItems[i])) {
+        for(auto i = 0; i < menuItems.GetSize(); ++i) {
+            if(GetWidget(menuItems[i]).WidgetSelected) {
                 anyMenuOpen = true;
                 break;
             }
@@ -72,23 +82,30 @@ LocalFunction(OnHoveredChanged, void, Entity entity, bool oldHovered, bool newHo
 
         if(!anyMenuOpen) return;
 
-        for(auto i = 0; i < menuItems.size(); ++i) {
+        for(auto i = 0; i < menuItems.GetSize(); ++i) {
             auto selected = menuItems[i] == entity;
-            auto subMenu = GetMenuItemSubMenu(menuItems[i]);
-            SetHidden(subMenu, !selected);
-            SetWidgetSelected(menuItems[i], selected);
+            auto subMenu = GetMenuItem(menuItems[i]).MenuItemSubMenu;
+            SetVisibility(subMenu, {!selected});
+
+            auto widgetData = GetWidget(menuItems[i]);
+            if(selected != widgetData.WidgetSelected) {
+                widgetData.WidgetSelected = selected;
+                SetWidget(menuItems[i], widgetData);
+            }
         }
     }
 }
 
 BeginUnit(Menu)
     BeginComponent(MenuItemStyle)
-        RegisterChildProperty(WidgetMesh, MenuItemStyleMesh)
+        BeginChildProperty(MenuItemStyleMesh)
+        EndChildProperty()
         RegisterProperty(v4i, MenuItemStylePadding)
     EndComponent()
 
     BeginComponent(MainMenuItemStyle)
-        RegisterChildProperty(WidgetMesh, MainMenuItemStyleMesh)
+        BeginChildProperty(MainMenuItemStyleMesh)
+    EndChildProperty()
     EndComponent()
 
     BeginComponent(MainMenuStyle)
@@ -97,97 +114,111 @@ BeginUnit(Menu)
 
     BeginComponent(SeparatorStyle)
         RegisterProperty(v4i, SeparatorStylePadding)
-        RegisterChildProperty(WidgetMesh, SeparatorStyleVerticalMesh)
-        RegisterChildProperty(WidgetMesh, SeparatorStyleHorizontalMesh)
+        BeginChildProperty(SeparatorStyleVerticalMesh)
+        EndChildProperty()
+        BeginChildProperty(SeparatorStyleHorizontalMesh)
+    EndChildProperty()
     EndComponent()
 
     BeginComponent(Menu)
         RegisterBase(Widget)
-        ComponentTemplate({
+    EndComponent()
+
+    BeginComponent(MainMenu)
+        RegisterBase(Menu)
+    EndComponent()
+
+    BeginComponent(MenuItem)
+        RegisterBase(InteractableWidget)
+        RegisterProperty(StringRef, MenuItemTitle)
+        BeginChildProperty(MenuItemLabel)
+        EndChildProperty()
+        BeginChildProperty(MenuItemSubMenu)
+        EndChildProperty()
+    EndComponent()
+
+    BeginComponent(MainMenuItem)
+        RegisterBase(MenuItem)
+    EndComponent()
+
+    BeginPrefab(Menu)
+        PrefabJson({
             "WidgetDepthOrder": 10.0,
             "LayoutMode": "LayoutMode_Vertical",
             "RenderableSubMesh": "{SceneNodeScene.SceneStyle.PanelStyleMesh}",
             "LayoutPadding": "{SceneNodeScene.SceneStyle.PanelStylePadding}",
             "LayoutChildWeight": [0.0, 0.0],
             "LayoutChildOrder": [
-                {
-                    "LayoutChildOrderingProperty": "Property.Children"
-                }
+            {
+                "LayoutChildOrderingProperty": "Property.Children"
+            }
             ]
         })
-    EndComponent()
+    EndPrefab()
 
-    BeginComponent(MainMenu)
-        RegisterBase(Menu)
-        ComponentTemplate({
-              "WidgetDepthOrder": 0.0,
-              "RenderableSubMesh": "{SceneNodeScene.SceneStyle.PanelStyleMesh}",
-              "LayoutMode": "LayoutMode_Horizontal",
-              "LayoutChildWeight": [1.0, 0.0],
-              "LayoutPadding": "{SceneNodeScene.SceneStyle.MainMenuStylePadding}"
-          })
-    EndComponent()
+    BeginPrefab(MainMenu)
+        PrefabJson({
+           "WidgetDepthOrder": 0.0,
+           "RenderableSubMesh": "{SceneNodeScene.SceneStyle.PanelStyleMesh}",
+           "LayoutMode": "LayoutMode_Horizontal",
+           "LayoutChildWeight": [1.0, 0.0],
+           "LayoutPadding": "{SceneNodeScene.SceneStyle.MainMenuStylePadding}"
+        })
+    EndPrefab()
 
-    BeginComponent(MenuItem)
-        RegisterBase(InteractableWidget)
-        RegisterProperty(StringRef, MenuItemTitle)
-        RegisterChildProperty(TextWidget, MenuItemLabel)
-        RegisterChildProperty(Menu, MenuItemSubMenu)
-        ComponentTemplate({
-          "RenderableSubMesh": "{SceneNodeScene.SceneStyle.MenuItemStyleMesh}",
-          "LayoutMode": "LayoutMode_Horizontal",
-          "LayoutPadding": "{SceneNodeScene.SceneStyle.ButtonStylePadding}",
-          "LayoutChildWeight": [0.0, 0.0],
-          "MenuItemLabel": {
-            "TextWidgetFont": "{SceneNodeScene.SceneStyle.ButtonStyleFont}",
-            "TextWidgetText": "{Owner.MenuItemTitle}",
-            "TextWidgetColor": "{Owner.WidgetStateColor}"
-          },
-          "MenuItemSubMenu": {
-              "Hidden": true
-          },
-          "LayoutChildOrder": [
-              {
-                  "LayoutChildOrderingProperty": "Property.MenuItemLabel"
-              }
-          ]
-      })
-    EndComponent()
-
-    BeginComponent(MainMenuItem)
-        RegisterBase(MenuItem)
-        ComponentTemplate({
-          "RenderableSubMesh": "{SceneNodeScene.SceneStyle.MainMenuItemStyleMesh}",
-          "LayoutPadding": "{SceneNodeScene.SceneStyle.MenuItemStylePadding}",
-          "LayoutChildWeight": [0.0, 0.0],
-          "MenuItemLabel": {
+    BeginPrefab(MenuItem)
+        PrefabJson({
+           "RenderableSubMesh": "{SceneNodeScene.SceneStyle.MenuItemStyleMesh}",
+           "LayoutMode": "LayoutMode_Horizontal",
+           "LayoutPadding": "{SceneNodeScene.SceneStyle.ButtonStylePadding}",
+           "LayoutChildWeight": [0.0, 0.0],
+           "MenuItemLabel": {
                 "TextWidgetFont": "{SceneNodeScene.SceneStyle.ButtonStyleFont}",
-                "TextWidgetText": "{Owner.MenuItemTitle}"
+                "TextWidgetText": "{Owner.MenuItemTitle}",
+                "TextWidgetColor": "{Owner.WidgetStateColor}"
+            },
+            "MenuItemSubMenu": {
+                "Hidden": true
+            },
+           "LayoutChildOrder": [
+           {
+               "LayoutChildOrderingProperty": "Property.MenuItemLabel"
+           }
+           ]
+       })
+    EndPrefab()
+
+    BeginPrefab(MainMenuItem)
+        PrefabJson({
+            "RenderableSubMesh": "{SceneNodeScene.SceneStyle.MainMenuItemStyleMesh}",
+            "LayoutPadding": "{SceneNodeScene.SceneStyle.MenuItemStylePadding}",
+            "LayoutChildWeight": [0.0, 0.0],
+            "MenuItemLabel": {
+                 "TextWidgetFont": "{SceneNodeScene.SceneStyle.ButtonStyleFont}",
+                 "TextWidgetText": "{Owner.MenuItemTitle}"
             }
         })
-    EndComponent()
+    EndPrefab()
 
-    BeginComponent(VerticalSeparator)
-        RegisterBase(Widget)
-        ComponentTemplate({
+    BeginPrefab(VerticalSeparator)
+        PrefabJson({
+            "$components": ["Component.Widget"],
           "RenderableSubMesh": "{SceneNodeScene.SceneStyle.SeparatorStyleVerticalMesh}",
           "LayoutPadding": "{SceneNodeScene.SceneStyle.SeparatorStylePadding}",
           "LayoutChildWeight": [1.0, 0.0]
         })
     EndComponent()
 
-    BeginComponent(HorizontalSeparator)
-        RegisterBase(Widget)
-        ComponentTemplate({
+    BeginPrefab(HorizontalSeparator)
+        PrefabJson({
+               "$components": ["Component.Widget"],
               "RenderableSubMesh": "{SceneNodeScene.SceneStyle.SeparatorStyleHorizontalMesh}",
               "LayoutPadding": "{SceneNodeScene.SceneStyle.SeparatorStylePadding}",
               "LayoutChildWeight": [0.0, 1.0]
           })
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Size2D()), OnSize2DChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TransformHierarchyLevel()), OnMenuChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetDepthOrder()), OnMenuChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClicked()), OnClickedChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetHovered()), OnHoveredChanged, 0)
+    RegisterSystem(OnRect2DChanged, ComponentOf_Rect2D())
+    RegisterSystem(OnWidgetChanged, ComponentOf_Widget())
+    RegisterSystem(OnInteractableWidgetChanged, ComponentOf_InteractableWidget())
 EndUnit()

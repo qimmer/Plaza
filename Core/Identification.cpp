@@ -44,7 +44,7 @@ API_EXPORT Entity FindEntityByUuid(StringRef uuid) {
     return it->second;
 }
 
-static void OnIdentificationChanged(Entity entity, const Identification& value, const Identification& oldValue) {
+static void OnIdentificationChanged(Entity entity, const Identification& oldValue, const Identification& newValue) {
     if(oldValue.Uuid) {
         auto oldIt = uuidTable.find(oldValue.Uuid);
         if(oldIt != uuidTable.end()) {
@@ -52,14 +52,14 @@ static void OnIdentificationChanged(Entity entity, const Identification& value, 
         }
     }
 
-    if(value.Uuid) {
-        auto newUuidIt = uuidTable.find(value.Uuid);
+    if(newValue.Uuid) {
+        auto newUuidIt = uuidTable.find(newValue.Uuid);
         if(newUuidIt != uuidTable.end() && newUuidIt->second != entity) {
-            Log(entity, LogSeverity_Error, "Uuid '%s' is already occupied by '%s'.", value, GetDebugName(newUuidIt->second));
+            Log(entity, LogSeverity_Error, "Uuid '%s' is already occupied by '%s'.", newValue, GetDebugName(newUuidIt->second));
             return;
         }
 
-        uuidTable[value.Uuid] = entity;
+        uuidTable[newValue.Uuid] = entity;
     }
 }
 

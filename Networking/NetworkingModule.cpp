@@ -6,7 +6,6 @@
 #include <Networking/HttpRequest.h>
 #include <Networking/HttpServer.h>
 #include <Networking/Server.h>
-#include <Networking/Replication.h>
 #include <Networking/TcpStream.h>
 #include <Foundation/NativeUtils.h>
 #include <Foundation/AppLoop.h>
@@ -14,11 +13,6 @@
 #include <Json/JsonPersistance.h>
 #include <Json/JsonModule.h>
 #include <Foundation/FoundationModule.h>
-
-struct Networking {
-    bool TcpWaitOnNoWork;
-    Entity ReplicationAppLoop;
-};
 
 BeginModule(Networking)
     RegisterDependency(Core)
@@ -30,7 +24,6 @@ BeginModule(Networking)
     RegisterUnit(HttpRequest)
     RegisterUnit(HttpServer)
     RegisterUnit(Networking)
-    RegisterUnit(Replication)
 
     ModuleData(
         {
@@ -89,6 +82,4 @@ BeginUnit(Networking)
         RegisterArrayProperty(HttpResponseCode, HttpResponseCodes)
         RegisterProperty(bool, TcpWaitOnNoWork)
     EndComponent()
-
-    SetAppLoopOrder(AppLoopOf_Networking(), AppLoopOrder_Input);
 EndUnit()

@@ -6,11 +6,8 @@
 #include <Json/JsonModule.h>
 #include <Networking/NetworkingModule.h>
 #include "RestModule.h"
-#include "RestRouting.h"
 #include "RestEntityRouting.h"
 #include "RestResourceRouting.h"
-#include "RestFunctionRouting.h"
-#include "RestServer.h"
 
 BeginModule(Rest)
     RegisterDependency(Core)
@@ -18,9 +15,6 @@ BeginModule(Rest)
     RegisterDependency(Json)
     RegisterDependency(Networking)
 
-    RegisterUnit(RestRouting)
     RegisterUnit(RestEntityRouting)
     RegisterUnit(RestResourceRouting)
-    RegisterUnit(RestFunctionRouting)
-    RegisterUnit(RestServer)
 EndModule()

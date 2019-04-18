@@ -14,62 +14,20 @@
 static eastl::map<unsigned int*, u32> numExpansions;
 #endif
 
-API_EXPORT void __SetVectorAmount(
-    unsigned int* num,
-    unsigned int newNum,
-    unsigned int* dynCap,
-    unsigned int staCap,
-    void **dynBuf,
-    void *staBuf,
-    unsigned int elementSize
-) {
-    if(*num == newNum) return;
+#define TempBufferCapacity USHRT_MAX
 
-    if(newNum > staCap) {
-        if(!*dynBuf) {
+static Entity tempBuffer[TempBufferCapacity];
+static u32 tempPtr = 0;
 
-#ifdef _DEBUG
-			numExpansions[num] = 0;
-#endif
-            auto newCap = UpperPowerOf2(newNum);
-            *dynBuf = calloc(newCap, elementSize);
-            *dynCap = newCap;
-            memcpy(*dynBuf, staBuf, *num * elementSize);
-        } else {
-            if(*dynCap < newNum) {
+API_EXPORT Entity* TempAlloc(u32 amount) {
+    Assert(0, amount <= (TempBufferCapacity - tempPtr));
 
-#ifdef _DEBUG
-				auto prevExpansions = numExpansions[num];
-				numExpansions[num]++;
-				auto expansions = numExpansions[num];
+    auto ptr = &tempBuffer[tempPtr];
+    tempPtr += amount;
 
-				if ((prevExpansions / 100) != (expansions / 100)) {
-					Log(0, LogSeverity_Warning, "Array 100-expansion mark");
-				}
-#endif
+    return ptr;
+}
 
-                auto newCap = UpperPowerOf2(newNum);
-                auto newBuf = calloc(newCap, elementSize);
-                memcpy(newBuf, *dynBuf, *num * elementSize);
-
-                free(*dynBuf);
-
-                *dynBuf = newBuf;
-                *dynCap = newCap;
-            }
-        }
-    } else {
-        if(*dynBuf) {
-            memcpy(staBuf, *dynBuf, Min(staCap, *dynCap) * elementSize);
-            free(*dynBuf);
-        }
-        *dynCap = 0;
-        *dynBuf = NULL;
-
-        if(newNum > *num) {
-            memset((char*)staBuf + (*num * elementSize), 0, elementSize * (newNum - *num)); // Null all new elements added in the bigger array
-        }
-    }
-
-    *num = newNum;
+API_EXPORT void TempFree() {
+    tempPtr = 0;
 }

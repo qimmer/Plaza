@@ -6,17 +6,17 @@
 
 static StringRef FormatArguments(Entity format) {
     // Parse formatted text and replace argument braces with values
-    static std::vector<char> formattedText;
+    static eastl::fixed_vector<char, 1024> formattedText;
     formattedText.clear();
 
-    auto formatString = GetFormatString(format);
+    auto formatData = GetFormat(format);
 
-    StringRef textStart = formatString;
-    auto length = strlen(formatString);
+    StringRef textStart = formatData.FormatString;
+    auto length = strlen(formatData.FormatString);
 
     while(textStart && *textStart) {
         StringRef textEnd = strchr(textStart, '{');
-        if(!textEnd) textEnd = formatString + length;
+        if(!textEnd) textEnd = formatData.FormatString + length;
 
         formattedText.insert(formattedText.end(), textStart, textEnd);
 
@@ -29,9 +29,8 @@ static StringRef FormatArguments(Entity format) {
             argIndexString[argIndexStringLen] = '\0';
             auto argIndex = strtoul(argIndexString, NULL, 10);
 
-            auto& arguments = GetFormatArguments(format);
-            if(argIndex < arguments.size()) {
-                auto argumentValue = GetFormatArgumentValue(arguments[argIndex]);
+            if(argIndex < formatData.FormatArguments.GetSize()) {
+                auto argumentValue = GetFormatArgument(formatData.FormatArguments[argIndex]).FormatArgumentValue;
                 argumentValue = Cast(argumentValue, TypeOf_StringRef);
                 formattedText.insert(formattedText.end(), argumentValue.as_StringRef, argumentValue.as_StringRef + strlen(argumentValue.as_StringRef));
             }

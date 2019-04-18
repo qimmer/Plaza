@@ -25,122 +25,6 @@
 #define Verbose_Children "children"
 #define Verbose_PropertyChanges "changes"
 
-typedef struct {
-    u32 Count;
-    u32 DynCapacity;
-    Entity * DynBuf;
-    Entity StaBuf [ChildArrayStaticCap];
-} ChildArrayData;
-
-API_EXPORT u32 GetArrayPropertyCount(Entity property, Entity entity) {
-    auto component = GetOwnership(property).Owner;
-    auto componentInfoIndex = GetComponentIndexByIndex(0, component);
-    auto propertyData = GetProperty(property);
-    auto data = (const char*)GetComponentInstanceData(componentInfoIndex, GetComponentIndexByIndex(componentInfoIndex, entity));
-
-    const ChildArrayData& arrayData = *(ChildArrayData*)(data + propertyData.PropertyOffset);
-    return arrayData.Count;
-}
-
-API_EXPORT u32 AddArrayPropertyElement(Entity property, Entity entity, Entity element) {
-    auto component = GetOwnership(property).Owner;
-    auto componentInfoIndex = GetComponentIndexByIndex(0, component);
-    auto propertyData = GetProperty(property);
-    auto data = (char*)const_cast<void*>(GetComponentInstanceData(componentInfoIndex, GetComponentIndexByIndex(componentInfoIndex, entity)));
-
-    ChildArrayData& arrayData = *(ChildArrayData*)(data + propertyData.PropertyOffset);
-    auto index = arrayData.Count;
-    SetVectorAmount(arrayData, arrayData.Count + 1);
-    GetVector(arrayData)[index] = element;
-
-    auto ownership = GetOwnership(element);
-    if(!ownership.Owner || !ownership.OwnerProperty) {
-        ownership.Owner = entity;
-        ownership.OwnerProperty = property;
-    }
-
-    return index;
-}
-
-API_EXPORT void RemoveArrayPropertyElement(Entity property, Entity entity, u32 index) {
-    auto component = GetOwnership(property).Owner;
-    auto componentInfoIndex = GetComponentIndexByIndex(0, component);
-    auto propertyData = GetProperty(property);
-    auto data = (char*)const_cast<void*>(GetComponentInstanceData(componentInfoIndex, GetComponentIndexByIndex(componentInfoIndex, entity)));
-
-    ChildArrayData& arrayData = *(ChildArrayData*)(data + propertyData.PropertyOffset);
-
-    if(index < arrayData.Count) {
-        auto element = GetVector(arrayData)[index];
-
-        auto ownership = GetOwnership(element);
-        if(ownership.Owner == entity && ownership.OwnerProperty == property) {
-            ownership.Owner = 0;
-            ownership.OwnerProperty = 0;
-        }
-
-        // Replace removal slot with last element and pop last slot
-        GetVector(arrayData)[index] = GetVector(arrayData)[arrayData.Count - 1];
-
-        SetVectorAmount(arrayData, arrayData.Count - 1);
-    }
-}
-
-API_EXPORT u32 GetArrayPropertyIndex(Entity property, Entity entity, Entity element) {
-    auto component = GetOwnership(property).Owner;
-    auto componentInfoIndex = GetComponentIndexByIndex(0, component);
-    auto propertyData = GetProperty(property);
-    auto data = (char*)const_cast<void*>(GetComponentInstanceData(componentInfoIndex, GetComponentIndexByIndex(componentInfoIndex, entity)));
-
-    ChildArrayData& arrayData = *(ChildArrayData*)(data + propertyData.PropertyOffset);
-
-    auto v = GetVector(arrayData);
-    for(auto i = 0; i < arrayData.Count; ++i) {
-        if(v[i] == element) {
-            return i;
-        }
-    }
-
-    return InvalidIndex;
-}
-
-API_EXPORT void SetArrayPropertyCount(Entity property, Entity entity, u32 count) {
-    auto existingCount = GetArrayPropertyCount(property, entity);
-
-    if(count > existingCount) {
-        for(auto i = existingCount; i < count; ++i) {
-            AddArrayPropertyElement(property, entity, 0);
-        }
-    } else if (count < existingCount) {
-        while(existingCount > count) {
-            RemoveArrayPropertyElement(property, entity, existingCount - 1);
-            existingCount--;
-        }
-    }
-}
-
-API_EXPORT const Entity *GetArrayPropertyElements(Entity property, Entity entity) {
-    auto component = GetOwnership(property).Owner;
-    auto componentInfoIndex = GetComponentIndexByIndex(0, component);
-    auto propertyData = GetProperty(property);
-    auto data = (char*)const_cast<void*>(GetComponentInstanceData(componentInfoIndex, GetComponentIndexByIndex(componentInfoIndex, entity)));
-
-    ChildArrayData& arrayData = *(ChildArrayData*)(data + propertyData.PropertyOffset);
-
-    return GetVector(arrayData);
-}
-
-API_EXPORT Entity GetArrayPropertyElement(Entity property, Entity entity, u32 index) {
-    auto component = GetOwnership(property).Owner;
-    auto componentInfoIndex = GetComponentIndexByIndex(0, component);
-    auto propertyData = GetProperty(property);
-    auto data = (char*)const_cast<void*>(GetComponentInstanceData(componentInfoIndex, GetComponentIndexByIndex(componentInfoIndex, entity)));
-
-    ChildArrayData& arrayData = *(ChildArrayData*)(data + propertyData.PropertyOffset);
-
-    return GetVector(arrayData)[index];
-}
-
 API_EXPORT Variant GetPropertyValue(Entity property, Entity entity) {
     auto component = GetOwnership(property).Owner;
     auto componentInfoIndex = GetComponentIndexByIndex(0, component);
@@ -173,7 +57,8 @@ API_EXPORT void SetPropertyValue(Entity property, Entity entity, Variant value) 
 static void LayoutProperties(Entity component) {
     auto offset = 0;
 
-    for_children(property, PropertyOf_Properties(), component) {
+    auto componentData = GetComponent(component);
+    for(auto property : componentData.Properties) {
         auto data = GetProperty(property);
 
         auto alignment = GetTypeAlignment(data.PropertyType);
@@ -188,14 +73,13 @@ static void LayoutProperties(Entity component) {
 
     offset = Align(offset, alignof(max_align_t)); // Align component size to maximum possible alignment
 
-    auto componentData = GetComponent(component);
     if(componentData.ComponentSize != offset) {
         componentData.ComponentSize = offset;
         SetComponent(component, componentData);
     }
 }
 
-static void OnPropertyChanged(Entity property, const Property& value, const Property& oldValue) {
+static void OnPropertyChanged(Entity property, const Property& oldValue, const Property& value) {
     auto component = GetOwnership(property).Owner;
     auto componentData = GetComponent(component);
 
@@ -206,7 +90,8 @@ static void OnPropertyChanged(Entity property, const Property& value, const Prop
         auto *data = (char*)alloca(componentData.ComponentSize);
         for_entity_data(entity, component, data) {
             if (oldValue.PropertyType == TypeOf_ChildArray) {
-                SetArrayPropertyCount(property, entity, 0);
+                ChildArray& arr = *(ChildArray*) (data + propertyData.PropertyOffset);
+                arr.SetSize(0);
             } else if (oldValue.PropertyType == TypeOf_Entity) {
                 Entity *child = (Entity *) (data + propertyData.PropertyOffset);
 
@@ -231,14 +116,14 @@ static void OnPropertyChanged(Entity property, const Property& value, const Prop
     }
 }
 
-static void OnComponentChanged(Entity component, const Component& value, const Component& oldValue) {
-    if(value.ComponentExplicitSize) {
+static void OnComponentChanged(Entity component, const Component& oldValue, const Component& newValue) {
+    if(newValue.ComponentExplicitSize) {
         LayoutProperties(component);
     }
 }
 
-static void OnArrayChildChanged(Entity entity, const ArrayChild& value, const ArrayChild& oldValue) {
-    SetIdentification(entity, {StringFormatV("%s.%s", GetIdentification(GetOwnership(entity).Owner), value.Name)});
+static void OnArrayChildChanged(Entity entity, const ArrayChild& oldValue, const ArrayChild& newValue) {
+    SetIdentification(entity, {StringFormatV("%s.%s", GetIdentification(GetOwnership(entity).Owner), newValue.Name)});
 }
 
 BeginUnit(Property)
@@ -252,7 +137,7 @@ BeginUnit(Property)
         RegisterProperty(Type, PropertyType)
         RegisterProperty(bool, PropertyReadOnly)
         RegisterReferenceProperty(Enum, PropertyEnum)
-        RegisterReferenceProperty(Component, PropertyChildComponent)
+        RegisterProperty(Entity, PropertyPrefab)
     EndComponent()
     BeginComponent(Ownership)
         RegisterProperty(Entity, Owner)

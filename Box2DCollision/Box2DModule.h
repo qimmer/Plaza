@@ -15,7 +15,4 @@ Unit(Box2DCollision)
     Component(Box2DCollisionScene)
         Property(NativePtr, World)
 
-    Declare(AppLoop, Box2D)
-    Declare(StopWatch, Box2D)
-
 #endif //PLAZA_BOX2DMODULE_H

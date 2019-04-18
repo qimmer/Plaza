@@ -7,6 +7,20 @@
 
 #include <Core/NativeUtils.h>
 
+struct AnimationFrame {
+    Variant AnimationFrameValue;
+    double AnimationFrameDuration;
+};
+
+struct AnimationTrack {
+    Entity AnimationTrackProperty;
+    ChildArray AnimationTrackFrames;
+};
+
+struct Animation {
+    ChildArray AnimationTracks;
+};
+
 Unit(Animation)
     Component(AnimationFrame)
         Property(double, AnimationFrameDuration)

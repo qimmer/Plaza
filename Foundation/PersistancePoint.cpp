@@ -13,162 +13,168 @@
 #include <Core/Debug.h>
 #include <Core/Identification.h>
 
-using namespace eastl;
+static void Load(Entity persistancePoint) {
+    auto streamData = GetStream(persistancePoint);
+    auto persistancePointData = GetPersistancePoint(persistancePoint);
 
-struct PersistancePoint {
-    bool PersistancePointLoading, PersistancePointSaving, PersistancePointAsync, PersistancePointLoaded;
-};
-
-LocalFunction(OnStreamContentChanged, void, Entity persistancePoint) {
-    // If serialized content has changed, re-deserialize (load) it!
-    if(HasComponent(persistancePoint, ComponentOf_PersistancePoint()) && !GetPersistancePointLoading(persistancePoint) && !GetPersistancePointSaving(persistancePoint) && GetPersistancePointLoaded(persistancePoint)) {
-        SetPersistancePointLoading(persistancePoint, false);
-        SetPersistancePointLoading(persistancePoint, true);
-    }
-}
-
-LocalFunction(OnStreamPathChanged, void, Entity persistancePoint, StringRef oldValue, StringRef newValue) {
-    OnStreamContentChanged(persistancePoint);
-}
-
-LocalFunction(Load, void, Entity persistancePoint) {
-    auto fileType = GetStreamFileType(persistancePoint);
+    auto fileType = streamData.StreamFileType;
     if(!IsEntityValid(fileType)) {
-        Log(persistancePoint, LogSeverity_Error, "Load failed. File type is not found for '%s'.", GetStreamResolvedPath(persistancePoint));
-        SetPersistancePointLoading(persistancePoint, false);
+        Log(persistancePoint, LogSeverity_Error, "Load failed. File type is not found for '%s'.", streamData.StreamResolvedPath);
+
+        persistancePointData.PersistancePointLoading = false;
+        SetPersistancePoint(persistancePoint, persistancePointData);
         return;
     }
 
-    auto mimeType = GetFileTypeMimeType(fileType);
+    auto mimeType = GetFileType(fileType).FileTypeMimeType;
     if(strlen(mimeType) == 0) {
-        Log(persistancePoint, LogSeverity_Error, "Load failed. Unable to determine mime type for '%s'.", GetStreamResolvedPath(persistancePoint));
-        SetPersistancePointLoading(persistancePoint, false);
+        Log(persistancePoint, LogSeverity_Error, "Load failed. Unable to determine mime type for '%s'.", streamData.StreamResolvedPath);
+
+        persistancePointData.PersistancePointLoading = false;
+        SetPersistancePoint(persistancePoint, persistancePointData);
         return;
     }
 
-    auto path = GetStreamPath(persistancePoint);
+    auto path = streamData.StreamPath;
 
     // Find serializer
     Entity serializer = 0;
-    for_entity(serializerEntity, serializerData, Serializer) {
-        if(mimeType == serializerData->SerializerMimeType) {
+    Serializer serializerData;
+    for_entity_data(serializerEntity, ComponentOf_Serializer(), &serializerData) {
+        if(mimeType == serializerData.SerializerMimeType) {
             serializer = serializerEntity;
             break;
         }
     }
 
     if(!IsEntityValid(serializer)) {
-        Log(persistancePoint, LogSeverity_Error, "Load failed. No compatible serializer for mime type '%s' found when deserializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
-        SetPersistancePointLoading(persistancePoint, false);
+        Log(persistancePoint, LogSeverity_Error, "Load failed. No compatible serializer for mime type '%s' found when deserializing '%s'.", mimeType, streamData.StreamResolvedPath);
+
+        persistancePointData.PersistancePointLoading = false;
+        SetPersistancePoint(persistancePoint, persistancePointData);
         return;
     }
     if(!StreamOpen(persistancePoint, StreamMode_Read)) {
-        Log(persistancePoint, LogSeverity_Error, "Load failed. Could not open '%s' for reading.", GetStreamResolvedPath(persistancePoint));
-        SetPersistancePointLoading(persistancePoint, false);
+        Log(persistancePoint, LogSeverity_Error, "Load failed. Could not open '%s' for reading.", streamData.StreamResolvedPath);
+
+        persistancePointData.PersistancePointLoading = false;
+        SetPersistancePoint(persistancePoint, persistancePointData);
         return;
     }
 
-    auto result = GetSerializerData(serializer)->DeserializeHandler(persistancePoint);
+    auto result = serializerData.DeserializeHandler(persistancePoint);
 
     if(result) {
-        SetPersistancePointLoaded(persistancePoint, true);
+        persistancePointData.PersistancePointLoaded = true;
     }
 
-    SetPersistancePointLoading(persistancePoint, false);
+    persistancePointData.PersistancePointLoading = false;
+    SetPersistancePoint(persistancePoint, persistancePointData);
 
     u32 numLoading = 0;
-    for_entity(persistancePoint, ComponentOf_PersistancePoint()) {
-        if(data->PersistancePointLoading) {
+    for_entity_data(persistancePoint, ComponentOf_PersistancePoint(), &persistancePointData) {
+        if(persistancePointData.PersistancePointLoading) {
             numLoading++;
         }
     }
 
     if(numLoading == 0) {
-        for_entity(unresolvedReference, ComponentOf_UnresolvedReference()) {
+        UnresolvedReference unresolvedReferenceData;
+        for_entity_data(unresolvedReference, ComponentOf_UnresolvedReference(), &unresolvedReferenceData) {
             Error(unresolvedReference, "Property '%s' of entity '%s' has an unresolved uuid '%s'.",
-                  GetUuid(data->UnresolvedReferenceProperty),
-                  GetUuid(GetOwnership(unresolvedReference).Owner),
-                  data->UnresolvedReferenceUuid);
+                  GetIdentification(unresolvedReferenceData.UnresolvedReferenceProperty).Uuid,
+                  GetIdentification(GetOwnership(unresolvedReference).Owner).Uuid,
+                  unresolvedReferenceData.UnresolvedReferenceUuid);
         }
     }
 
     StreamClose(persistancePoint);
 }
 
-LocalFunction(OnPersistancePointLoadingChanged, void, Entity persistancePoint, bool oldValue, bool newValue) {
-    if(newValue) {
-        if(GetPersistancePointAsync(persistancePoint)) {
-            char taskName[64];
+static void OnPersistancePointChanged(Entity persistancePoint, const PersistancePoint& oldValue, const PersistancePoint& newValue) {
+    auto persistancePointData = newValue;
+
+    if(!oldValue.PersistancePointLoading && newValue.PersistancePointLoading) {
+        if(newValue.PersistancePointAsync) {
+            /*char taskName[64];
             snprintf(taskName, 64, "LoadTask_%llu", persistancePoint);
 
-            auto task = AddQueuedTasks(ModuleOf_Foundation());
-            SetInvocationFunction(task, FunctionOf_Load());
-            TaskSchedule(task);
+            auto task = CreateEntity();
+            auto functionInvocationData = GetFunctionInvocation(task);
+            functionInvocationData.InvocationFunction = FunctionOf_Load();
+
+            auto argument = CreateEntity();
+
+            SetFunctionInvocation(task, functionInvocationData);
+
+            AddQueuedTasks(ModuleOf_Foundation(), task);
+            TaskSchedule(task);*/
         } else {
             Load(persistancePoint);
         }
     }
-}
 
-LocalFunction(OnPersistancePointSavingChanged, void, Entity persistancePoint, bool oldValue, bool newValue) {
-    if(newValue) {
-        auto fileType = GetStreamFileType(persistancePoint);
+    if(!oldValue.PersistancePointSaving && newValue.PersistancePointSaving) {
+        auto streamData = GetStream(persistancePoint);
+
+        auto fileType = streamData.StreamFileType;
         if(!IsEntityValid(fileType)) {
-            Log(persistancePoint, LogSeverity_Error, "Save failed. File type is not found for '%s'.", GetStreamResolvedPath(persistancePoint));
-            SetPersistancePointSaving(persistancePoint, false);
+            Log(persistancePoint, LogSeverity_Error, "Save failed. File type is not found for '%s'.", streamData.StreamResolvedPath);
+
+            persistancePointData.PersistancePointSaving = false;
+            SetPersistancePoint(persistancePoint, persistancePointData);
             return;
         }
 
-        auto mimeType = GetFileTypeMimeType(fileType);
+        auto mimeType = GetFileType(fileType).FileTypeMimeType;
         if(strlen(mimeType) == 0) {
-            Log(persistancePoint, LogSeverity_Error, "Save failed. Unable to determine serializer, as content mime type is not given for '%s'.", GetStreamResolvedPath(persistancePoint));
-            SetPersistancePointSaving(persistancePoint, false);
+            Log(persistancePoint, LogSeverity_Error, "Save failed. Unable to determine mime type for '%s'.", streamData.StreamResolvedPath);
+
+            persistancePointData.PersistancePointSaving = false;
+            SetPersistancePoint(persistancePoint, persistancePointData);
             return;
         }
 
+        auto path = streamData.StreamPath;
+
+        // Find serializer
         Entity serializer = 0;
-        for_entity(serializerEntity, serializerData, Serializer) {
-            if(mimeType == serializerData->SerializerMimeType) {
+        Serializer serializerData;
+        for_entity_data(serializerEntity, ComponentOf_Serializer(), &serializerData) {
+            if(mimeType == serializerData.SerializerMimeType) {
                 serializer = serializerEntity;
                 break;
             }
         }
 
         if(!IsEntityValid(serializer)) {
-            Log(persistancePoint, LogSeverity_Error, "Save failed. No compatible serializer for mime type '%s' found when serializing '%s'.", mimeType, GetStreamResolvedPath(persistancePoint));
-            SetPersistancePointSaving(persistancePoint, false);
+            Log(persistancePoint, LogSeverity_Error, "Save failed. No compatible serializer for mime type '%s' found when serializing '%s'.", mimeType, streamData.StreamResolvedPath);
+            persistancePointData.PersistancePointSaving = false;
+            SetPersistancePoint(persistancePoint, persistancePointData);
             return;
         }
 
         if(!StreamOpen(persistancePoint, StreamMode_Write)) {
-            Log(persistancePoint, LogSeverity_Error, "Save failed. Could not open '%s' for writing", GetStreamResolvedPath(persistancePoint));
-            SetPersistancePointSaving(persistancePoint, false);
+            Log(persistancePoint, LogSeverity_Error, "Save failed. Could not open '%s' for writing", streamData.StreamResolvedPath);
+            persistancePointData.PersistancePointSaving = false;
+            SetPersistancePoint(persistancePoint, persistancePointData);
             return;
         }
 
-        if(!GetSerializerData(serializer)->SerializeHandler(persistancePoint)) {
-            Log(persistancePoint, LogSeverity_Error, "Serialization failed on trying to save '%s'.", GetStreamResolvedPath(persistancePoint));
+        if(!GetSerializer(serializer).SerializeHandler(persistancePoint)) {
+            Log(persistancePoint, LogSeverity_Error, "Serialization failed on trying to save '%s'.", streamData.StreamResolvedPath);
         }
 
         StreamClose(persistancePoint);
 
-        SetPersistancePointSaving(persistancePoint, false);
+        persistancePointData.PersistancePointSaving = false;
+        SetPersistancePoint(persistancePoint, persistancePointData);
     }
 
-}
-
-// Tries to load all persistance point entities in the given path
-API_EXPORT bool LoadEntityPath(StringRef entityPath) {
-    return false;
-}
-
-LocalFunction(OnPersistancePointLoadedChanged, void, Entity entity, bool oldValue, bool newValue) {
-    auto isLoading = GetPersistancePointLoading(entity);
-
-    if(!isLoading && newValue) {
-        SetPersistancePointLoaded(entity, false);
-
-        SetPersistancePointLoading(entity, true);
+    if(!oldValue.PersistancePointLoaded && newValue.PersistancePointLoaded && !newValue.PersistancePointLoading) {
+        persistancePointData.PersistancePointLoading = true;
+        persistancePointData.PersistancePointLoaded = false;
+        SetPersistancePoint(persistancePoint, persistancePointData);
     }
 }
 
@@ -182,9 +188,5 @@ BeginUnit(PersistancePoint)
         RegisterBase(Stream)
     EndComponent()
 
-    RegisterSubscription(EventOf_StreamContentChanged(), OnStreamContentChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_StreamPath()), OnStreamPathChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PersistancePointLoading()), OnPersistancePointLoadingChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PersistancePointLoaded()), OnPersistancePointLoadedChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PersistancePointSaving()), OnPersistancePointSavingChanged, 0)
+    RegisterSystem(OnPersistancePointChanged, ComponentOf_PersistancePoint())
 EndUnit()

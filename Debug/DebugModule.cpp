@@ -15,7 +15,6 @@
 #include <Core/Identification.h>
 #include <Foundation/StopWatch.h>
 #include "DebugModule.h"
-#include "EntityTracker.h"
 #include "FlowNode.h"
 #include "ModuleProfiling.h"
 
@@ -25,6 +24,7 @@ struct DebugSession {
 
 struct Debug {
     Entity DebugServer;
+    ChildArray DebugServerSessions;
 };
 
 struct DebugServer {
@@ -76,7 +76,6 @@ u16 DebugCreateSession(Entity responseStream, StringRef path) {
     char json[128];
     snprintf(json, 128, "\"%s\"", guid);
 
-    SetStreamPath(responseStream, "memory://response.json");
     if(!StreamOpen(responseStream, StreamMode_Write)) {
         return 500;
     }
@@ -84,32 +83,21 @@ u16 DebugCreateSession(Entity responseStream, StringRef path) {
     StreamWrite(responseStream, strlen(json), json);
     StreamClose(responseStream);
 
-    auto session = AddDebugServerSessions(ModuleOf_Debug());
+    auto session = CreateEntity();
     //SetName(session, guid);
-    SetStopWatchRunning(session, true);
+    SetStopWatch(session, {true, 0.0});
+
+    auto debugData = GetDebug(ModuleOf_Debug());
+    debugData.DebugServerSessions.Add(session);
+    SetDebug(ModuleOf_Debug(), debugData);
 
     return 200;
-}
-
-u16 DebugGetChanges(Entity responseStream, StringRef path) {
-    if(path[0] != '/') return 400;
-
-    char sessionPath[1024];
-    snprintf(sessionPath, 1024, "Module.Debug.DebugServerSessions.%s", path);
-
-    auto session = FindEntityByUuid(sessionPath);
-    if(!IsEntityValid(session)) {
-        return 404;
-    }
-
-    return GetEntityTrackerChanges(GetDebugSessionChangeTracker(session), responseStream);
 }
 
 BeginUnit(DebugModule)
     RegisterFunctionSignature(NativeFunctionInvoker_u16_Entity_StringRef, u16, Entity, StringRef)
     RegisterFunction(DebugAddComponent)
     RegisterFunction(DebugRemoveComponent)
-    RegisterFunction(DebugGetChanges)
     RegisterFunction(DebugCreateSession)
 
     BeginComponent(DebugServer)
@@ -117,11 +105,13 @@ BeginUnit(DebugModule)
     EndComponent()
 
     BeginComponent(DebugSession)
-        RegisterChildProperty(EntityTracker, DebugSessionChangeTracker)
+        BeginChildProperty(DebugSessionChangeTracker)
+    EndChildProperty()
     EndComponent()
 
     BeginComponent(Debug)
-        RegisterChildProperty(DebugServer, DebugServer)
+        BeginChildProperty(DebugServer)
+        EndChildProperty()
         RegisterArrayProperty(DebugSession, DebugServerSessions)
     EndComponent()
 
@@ -193,7 +183,6 @@ BeginModule(Debug)
     RegisterDependency(Json)
     RegisterDependency(Rest)
 
-    RegisterUnit(EntityTracker)
     RegisterUnit(DebugModule)
     RegisterUnit(FlowNode)
 EndModule()

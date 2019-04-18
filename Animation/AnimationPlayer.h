@@ -7,6 +7,16 @@
 
 #include <Core/NativeUtils.h>
 
+struct AnimationPlayerLayer {
+    Entity AnimationPlayerLayerAnimation;
+    float AnimationPlayerLayerWeight, AnimationPlayerLayerSpeed, AnimationPlayerLayerTime;
+    bool AnimationPlayerLayerLooping;
+};
+
+struct AnimationPlayer {
+    ChildArray AnimationPlayerLayers;
+};
+
 Unit(AnimationPlayer)
     Component(AnimationPlayerLayer)
         ReferenceProperty(Animation, AnimationPlayerLayerAnimation)
@@ -17,8 +27,5 @@ Unit(AnimationPlayer)
 
     Component(AnimationPlayer)
         ArrayProperty(AnimationPlayerLayer, AnimationPlayerLayers)
-
-    Declare(AppLoop, Animation)
-    Declare(StopWatch, Animation)
 
 #endif //PLAZA_ANIMATIONPLAYER_H

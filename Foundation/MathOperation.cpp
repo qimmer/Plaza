@@ -110,128 +110,144 @@ static Variant Evaluate(Variant a, Variant b, u8 op) {
     return Variant_Empty;
 }
 
-LocalFunction(OnMathChanged, void, Entity math) {
-    auto data = GetMathData(math);
-    if(data->MathA.type && data->MathB.type) {
-        SetMathResult(math, Evaluate(data->MathA, data->MathB, data->MathOperation));
+static void OnMathChanged(Entity math, const Math& oldData, const Math& newData) {
+    auto data = newData;
+    if(data.MathA.type && data.MathB.type) {
+        auto newResult = Evaluate(data.MathA, data.MathB, data.MathOperation);
+        if(memcmp(&newResult, &data.MathResult, sizeof(Variant)) != 0) {
+            data.MathResult = newResult;
+            SetMath(math, data);
+        }
     }
 }
 
-LocalFunction(OnVectorSplitScalarChanged, void, Entity split, Variant oldValue, Variant newValue) {
-    auto data = GetVectorSplitData(split);
+static void OnVectorSplitChanged(Entity split, const VectorSplit& oldData, const VectorSplit& newData) {
+    auto data = newData;
 
-    if(data->VectorSplitW.type) {
-        switch(data->VectorSplitX.type) {
-            case TypeOf_s32:
-            {
-                v4i value = {
-                    Cast(data->VectorSplitX, TypeOf_s32).as_s32,
-                    Cast(data->VectorSplitY, TypeOf_s32).as_s32,
-                    Cast(data->VectorSplitZ, TypeOf_s32).as_s32,
-                    Cast(data->VectorSplitW, TypeOf_s32).as_s32
-                };
-                SetVectorSplitValue(split, MakeVariant(v4i, value));
-            }
-            case TypeOf_float:
-            {
-                v4f value = {
-                        Cast(data->VectorSplitX, TypeOf_float).as_float,
-                        Cast(data->VectorSplitY, TypeOf_float).as_float,
-                        Cast(data->VectorSplitZ, TypeOf_float).as_float,
-                        Cast(data->VectorSplitW, TypeOf_float).as_float
-                };
-                SetVectorSplitValue(split, MakeVariant(v4f, value));
-            }
-        }
-        return;
-    }
-    if(data->VectorSplitZ.type) {
-        switch(data->VectorSplitX.type) {
-            case TypeOf_s32:
-            {
-                v3i value = {
-                        Cast(data->VectorSplitX, TypeOf_s32).as_s32,
-                        Cast(data->VectorSplitY, TypeOf_s32).as_s32,
-                        Cast(data->VectorSplitZ, TypeOf_s32).as_s32
-                };
-                SetVectorSplitValue(split, MakeVariant(v3i, value));
-            }
-            case TypeOf_float:
-            {
-                v3f value = {
-                        Cast(data->VectorSplitX, TypeOf_float).as_float,
-                        Cast(data->VectorSplitY, TypeOf_float).as_float,
-                        Cast(data->VectorSplitZ, TypeOf_float).as_float
-                };
-                SetVectorSplitValue(split, MakeVariant(v3f, value));
+    if(memcmp(&oldData.VectorSplitValue, &newData.VectorSplitValue, sizeof(Variant)) == 0) {
+        // Vector has changed
+
+        if(data.VectorSplitW.type) {
+            switch(data.VectorSplitX.type) {
+                case TypeOf_s32:
+                {
+                    v4i value = {
+                            Cast(data.VectorSplitX, TypeOf_s32).as_s32,
+                            Cast(data.VectorSplitY, TypeOf_s32).as_s32,
+                            Cast(data.VectorSplitZ, TypeOf_s32).as_s32,
+                            Cast(data.VectorSplitW, TypeOf_s32).as_s32
+                    };
+
+                    data.VectorSplitValue = MakeVariant(v4i, value);
+                }
+                case TypeOf_float:
+                {
+                    v4f value = {
+                            Cast(data.VectorSplitX, TypeOf_float).as_float,
+                            Cast(data.VectorSplitY, TypeOf_float).as_float,
+                            Cast(data.VectorSplitZ, TypeOf_float).as_float,
+                            Cast(data.VectorSplitW, TypeOf_float).as_float
+                    };
+                    data.VectorSplitValue = MakeVariant(v4f, value);
+                }
             }
         }
-        return;
-    }
-    if(data->VectorSplitY.type) {
-        switch(data->VectorSplitX.type) {
-            case TypeOf_s32:
-            {
-                v2i value = {
-                        Cast(data->VectorSplitX, TypeOf_s32).as_s32,
-                        Cast(data->VectorSplitY, TypeOf_s32).as_s32
-                };
-                SetVectorSplitValue(split, MakeVariant(v2i, value));
-            }
-            case TypeOf_float:
-            {
-                v2f value = {
-                        Cast(data->VectorSplitX, TypeOf_float).as_float,
-                        Cast(data->VectorSplitY, TypeOf_float).as_float
-                };
-                SetVectorSplitValue(split, MakeVariant(v2f, value));
+        if(data.VectorSplitZ.type) {
+            switch(data.VectorSplitX.type) {
+                case TypeOf_s32:
+                {
+                    v3i value = {
+                            Cast(data.VectorSplitX, TypeOf_s32).as_s32,
+                            Cast(data.VectorSplitY, TypeOf_s32).as_s32,
+                            Cast(data.VectorSplitZ, TypeOf_s32).as_s32
+                    };
+                    data.VectorSplitValue = MakeVariant(v3i, value);
+                }
+                case TypeOf_float:
+                {
+                    v3f value = {
+                            Cast(data.VectorSplitX, TypeOf_float).as_float,
+                            Cast(data.VectorSplitY, TypeOf_float).as_float,
+                            Cast(data.VectorSplitZ, TypeOf_float).as_float
+                    };
+                    data.VectorSplitValue = MakeVariant(v3f, value);
+                }
             }
         }
-        return;
+        if(data.VectorSplitY.type) {
+            switch(data.VectorSplitX.type) {
+                case TypeOf_s32:
+                {
+                    v2i value = {
+                            Cast(data.VectorSplitX, TypeOf_s32).as_s32,
+                            Cast(data.VectorSplitY, TypeOf_s32).as_s32
+                    };
+                    data.VectorSplitValue = MakeVariant(v2i, value);
+                }
+                case TypeOf_float:
+                {
+                    v2f value = {
+                            Cast(data.VectorSplitX, TypeOf_float).as_float,
+                            Cast(data.VectorSplitY, TypeOf_float).as_float
+                    };
+                    data.VectorSplitValue = MakeVariant(v2f, value);
+                }
+            }
+        }
+
+        if(memcmp(&data.VectorSplitValue, &oldData.VectorSplitValue, sizeof(Variant)) != 0) {
+            SetVectorSplit(split, data);
+        }
+    } else {
+        // Value has changed
+
+        switch(newData.VectorSplitValue.type) {
+            case TypeOf_v2i:
+                data.VectorSplitX = MakeVariant(s32, newData.VectorSplitValue.as_v2i.x);
+                data.VectorSplitY = MakeVariant(s32, newData.VectorSplitValue.as_v2i.y);
+                data.VectorSplitZ = Variant_Empty;
+                data.VectorSplitW = Variant_Empty;
+                break;
+            case TypeOf_v3i:
+                data.VectorSplitX = MakeVariant(s32, newData.VectorSplitValue.as_v3i.x);
+                data.VectorSplitY = MakeVariant(s32, newData.VectorSplitValue.as_v3i.y);
+                data.VectorSplitZ = MakeVariant(s32, newData.VectorSplitValue.as_v3i.z);
+                data.VectorSplitW = Variant_Empty;
+                break;
+            case TypeOf_v4i:
+                data.VectorSplitX = MakeVariant(s32, newData.VectorSplitValue.as_v4i.x);
+                data.VectorSplitY = MakeVariant(s32, newData.VectorSplitValue.as_v4i.y);
+                data.VectorSplitZ = MakeVariant(s32, newData.VectorSplitValue.as_v4i.z);
+                data.VectorSplitW = MakeVariant(s32, newData.VectorSplitValue.as_v4i.w);
+                break;
+            case TypeOf_v2f:
+                data.VectorSplitX = MakeVariant(float, newData.VectorSplitValue.as_v2f.x);
+                data.VectorSplitY = MakeVariant(float, newData.VectorSplitValue.as_v2f.y);
+                data.VectorSplitZ = Variant_Empty;
+                data.VectorSplitW = Variant_Empty;
+                break;
+            case TypeOf_v3f:
+                data.VectorSplitX = MakeVariant(float, newData.VectorSplitValue.as_v3f.x);
+                data.VectorSplitY = MakeVariant(float, newData.VectorSplitValue.as_v3f.y);
+                data.VectorSplitZ = MakeVariant(float, newData.VectorSplitValue.as_v3f.z);
+                data.VectorSplitW = Variant_Empty;
+                break;
+            case TypeOf_v4f:
+                data.VectorSplitX = MakeVariant(float, newData.VectorSplitValue.as_v4f.x);
+                data.VectorSplitY = MakeVariant(float, newData.VectorSplitValue.as_v4f.y);
+                data.VectorSplitZ = MakeVariant(float, newData.VectorSplitValue.as_v4f.z);
+                data.VectorSplitW = MakeVariant(float, newData.VectorSplitValue.as_v4f.w);
+                break;
+        }
+
+        if(memcmp(&data.VectorSplitX, &oldData.VectorSplitX, sizeof(float) * 4) != 0) {
+            SetVectorSplit(split, data);
+        }
     }
+
+
 }
 
-LocalFunction(OnVectorSplitValueChanged, void, Entity split, Variant oldValue, Variant newValue) {
-    auto data = GetVectorSplitData(split);
-    switch(newValue.type) {
-        case TypeOf_v2i:
-            SetVectorSplitX(split, MakeVariant(s32, newValue.as_v2i.x));
-            SetVectorSplitY(split, MakeVariant(s32, newValue.as_v2i.y));
-            SetVectorSplitZ(split, Variant_Empty);
-            SetVectorSplitW(split, Variant_Empty);
-            break;
-        case TypeOf_v3i:
-            SetVectorSplitX(split, MakeVariant(s32, newValue.as_v3i.x));
-            SetVectorSplitY(split, MakeVariant(s32, newValue.as_v3i.y));
-            SetVectorSplitZ(split, MakeVariant(s32, newValue.as_v3i.z));
-            SetVectorSplitW(split, Variant_Empty);
-            break;
-        case TypeOf_v4i:
-            SetVectorSplitX(split, MakeVariant(s32, newValue.as_v4i.x));
-            SetVectorSplitY(split, MakeVariant(s32, newValue.as_v4i.y));
-            SetVectorSplitZ(split, MakeVariant(s32, newValue.as_v4i.z));
-            SetVectorSplitW(split, MakeVariant(s32, newValue.as_v4i.w));
-            break;
-        case TypeOf_v2f:
-            SetVectorSplitX(split, MakeVariant(float, newValue.as_v2f.x));
-            SetVectorSplitY(split, MakeVariant(float, newValue.as_v2f.y));
-            SetVectorSplitZ(split, Variant_Empty);
-            SetVectorSplitW(split, Variant_Empty);
-            break;
-        case TypeOf_v3f:
-            SetVectorSplitX(split, MakeVariant(float, newValue.as_v3f.x));
-            SetVectorSplitY(split, MakeVariant(float, newValue.as_v3f.y));
-            SetVectorSplitZ(split, MakeVariant(float, newValue.as_v3f.z));
-            SetVectorSplitW(split, Variant_Empty);
-            break;
-        case TypeOf_v4f:
-            SetVectorSplitX(split, MakeVariant(float, newValue.as_v4f.x));
-            SetVectorSplitY(split, MakeVariant(float, newValue.as_v4f.y));
-            SetVectorSplitZ(split, MakeVariant(float, newValue.as_v4f.z));
-            SetVectorSplitW(split, MakeVariant(float, newValue.as_v4f.w));
-            break;
-    }
-}
 BeginUnit(MathOperation)
     BeginEnum(MathOperation, false)
         RegisterFlag(MathOperation_Add)
@@ -264,14 +280,8 @@ BeginUnit(MathOperation)
         RegisterProperty(Variant, VectorSplitValue)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MathA()), OnMathChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_MathB()), OnMathChanged, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VectorSplitX()), OnVectorSplitScalarChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VectorSplitY()), OnVectorSplitScalarChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VectorSplitZ()), OnVectorSplitScalarChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VectorSplitW()), OnVectorSplitScalarChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_VectorSplitValue()), OnVectorSplitValueChanged, 0)
+    RegisterSystem(OnMathChanged, ComponentOf_Math())
+    RegisterSystem(OnVectorSplitChanged, ComponentOf_VectorSplit())
 
     RegisterFunction(Not)
     RegisterFunction(Equals)

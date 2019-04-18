@@ -12,75 +12,78 @@
 #include <Scene/Transform.h>
 #include <Json/NativeUtils.h>
 
-LocalFunction(OnPickedPointChanged, void, Entity ray, v3f oldPoint, v3f newPoint) {
-    auto controller = GetOwnership(ray).Owner;
+static void OnTraceRayChanged(Entity entity, const TraceRay& oldData, const TraceRay& newData) {
+    auto controller = GetOwnership(entity).Owner;
     if(!HasComponent(controller, ComponentOf_GuiController())) {
         return;
     }
 
-    if(GetGuiControllerWidgetPicker(controller) == ray) {
-        auto widget = GetTraceRayRenderable(ray);
-        if(HasComponent(widget, ComponentOf_InteractableWidget())) {
-            auto widgetPoint = TransformPoint(0, widget, newPoint);
-            SetWidgetInteractionPoint(widget, {(s32)widgetPoint.x, (s32)widgetPoint.y});
+    if(newData.TraceRayRenderable) {
+        auto widget = newData.TraceRayRenderable;
+        auto interactableWidgetData = GetInteractableWidget(widget);
+
+        if(memcmp(&oldData.TraceRayPoint, &newData.TraceRayPoint, sizeof(v3f)) != 0) {
+            auto widgetPoint = TransformPoint(0, widget, newData.TraceRayPoint);
+
+            interactableWidgetData.WidgetInteractionPoint = {(s32)widgetPoint.x, (s32)widgetPoint.y};
+            SetInteractableWidget(widget, interactableWidgetData);
+        }
+
+        if(oldData.TraceRayRenderable != newData.TraceRayRenderable) {
+            if(IsEntityValid(oldData.TraceRayRenderable)) {
+                auto oldWidgetData = GetInteractableWidget(oldData.TraceRayRenderable);
+                oldWidgetData.WidgetClicked = false;
+                oldWidgetData.WidgetHovered = false;
+                SetInteractableWidget(oldData.TraceRayRenderable, oldWidgetData);
+            }
+
+            if(IsEntityValid(newData.TraceRayRenderable)) {
+                interactableWidgetData.WidgetHovered = true;
+                SetInteractableWidget(widget, interactableWidgetData);
+            }
         }
     }
 }
 
-LocalFunction(OnPickedWidgetChanged, void, Entity ray, Entity oldWidget, Entity newWidget) {
-    auto controller = GetOwnership(ray).Owner;
-    if(!HasComponent(controller, ComponentOf_GuiController())) {
-        return;
-    }
+static void OnGuiControllerChanged(Entity entity, const GuiController& oldData, const GuiController& newData) {
+    auto widget = GetTraceRay(newData.GuiControllerWidgetPicker).TraceRayRenderable;
+    auto scrollableLayout = GetTraceRay(newData.GuiControllerScrollablePicker).TraceRayRenderable;
 
-    if(GetGuiControllerWidgetPicker(controller) == ray) {
-        if(IsEntityValid(oldWidget)) {
-            SetWidgetClicked(oldWidget, false);
-            SetWidgetHovered(oldWidget, false);
-        }
-
-        if(IsEntityValid(newWidget)) {
-            SetWidgetHovered(newWidget, true);
-        }
-    }
-}
-
-LocalFunction(OnGuiControllerLeftClickedChanged, void, Entity controller, bool oldValue, bool newValue) {
-    auto ray = GetGuiControllerWidgetPicker(controller);
-
-    if(newValue > oldValue) { // Pressed
-        auto widget = GetTraceRayRenderable(ray);
+    // Clicked
+    if(!oldData.GuiControllerLeftClicked && newData.GuiControllerLeftClicked) {
         if(IsEntityValid(widget)) {
-            SetWidgetClicked(widget, true);
-            //SetWidgetFocused(widget, true);
+            auto widgetData = GetInteractableWidget(widget);
+            widgetData.WidgetClicked = true;
+            SetInteractableWidget(widget, widgetData);
         }
-    } else { // Released
-        auto widget = GetTraceRayRenderable(ray);
+    }
+
+    // Released
+    if(oldData.GuiControllerLeftClicked && !newData.GuiControllerLeftClicked) {
         if(IsEntityValid(widget)) {
-            SetWidgetClicked(widget, false);
+            auto widgetData = GetInteractableWidget(widget);
+            widgetData.WidgetClicked = false;
+            SetInteractableWidget(widget, widgetData);
         }
     }
-}
 
-LocalFunction(OnGuiControllerScrollUpChanged, void, Entity controller, bool oldValue, bool newValue) {
-    auto ray = GetGuiControllerScrollablePicker(controller);
-    auto layout = GetTraceRayRenderable(ray);
-    if(HasComponent(layout, ComponentOf_ScrollableLayout())) {
-        auto offset = GetLayoutScrollOffset(layout);
-        offset.y += 20;
-        SetLayoutScrollOffset(layout, offset);
+    if(!oldData.GuiControllerScrollUp && newData.GuiControllerScrollUp) {
+        if(HasComponent(widget, ComponentOf_ScrollableLayout())) {
+            auto scrollableLayoutData = GetScrollableLayout(scrollableLayout);
+            scrollableLayoutData.LayoutScrollOffset.y += 20;
+            SetScrollableLayout(scrollableLayout, scrollableLayoutData);
+        }
     }
-}
 
-
-LocalFunction(OnGuiControllerScrollDownChanged, void, Entity controller, bool oldValue, bool newValue) {
-    auto ray = GetGuiControllerScrollablePicker(controller);
-    auto layout = GetTraceRayRenderable(ray);
-    if(HasComponent(layout, ComponentOf_ScrollableLayout())) {
-        auto offset = GetLayoutScrollOffset(layout);
-        offset.y -= 20;
-        SetLayoutScrollOffset(layout, offset);
+    if(!oldData.GuiControllerScrollDown && newData.GuiControllerScrollDown) {
+        if(HasComponent(widget, ComponentOf_ScrollableLayout())) {
+            auto scrollableLayoutData = GetScrollableLayout(scrollableLayout);
+            scrollableLayoutData.LayoutScrollOffset.y -= 20;
+            SetScrollableLayout(scrollableLayout, scrollableLayoutData);
+        }
     }
+
+
 }
 
 BeginUnit(GuiController)
@@ -91,22 +94,18 @@ BeginUnit(GuiController)
         RegisterProperty(bool, GuiControllerScrollUp)
         RegisterProperty(bool, GuiControllerScrollDown)
         RegisterProperty(s8, GuiControllerLastCharacter)
-        RegisterChildProperty(TraceRay, GuiControllerWidgetPicker)
-        RegisterChildProperty(TraceRay, GuiControllerScrollablePicker)
-
-        ComponentTemplate({
-            "GuiControllerWidgetPicker": {
-                "TraceRayComponent": "Component.InteractableWidget"
-            },
-            "GuiControllerScrollablePicker": {
-                "TraceRayComponent": "Component.ScrollableLayout"
-            }
-        })
+        BeginChildProperty(GuiControllerWidgetPicker)
+            BeginChildComponent(TraceRay)
+                data.TraceRayComponent = ComponentOf_InteractableWidget();
+            EndChildComponent()
+        EndChildProperty()
+        BeginChildProperty(GuiControllerScrollablePicker)
+            BeginChildComponent(TraceRay)
+                data.TraceRayComponent = ComponentOf_ScrollableLayout();
+            EndChildComponent()
+        EndChildProperty()
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TraceRayRenderable()), OnPickedWidgetChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_TraceRayPoint()), OnPickedPointChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_GuiControllerLeftClicked()), OnGuiControllerLeftClickedChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_GuiControllerScrollUp()), OnGuiControllerScrollUpChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_GuiControllerScrollDown()), OnGuiControllerScrollDownChanged, 0)
+    RegisterSystem(OnTraceRayChanged, ComponentOf_TraceRay())
+    RegisterSystem(OnGuiControllerChanged, ComponentOf_GuiController())
 EndUnit()

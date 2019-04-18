@@ -3,17 +3,17 @@
 
 #include <cglm/cglm.h>
 
-LocalFunction(OnFrustumTransformUpdate, void, Entity component) {
-    for_entity(frustum, transformData, Frustum) {
-		auto transformData = GetTransformData(frustum);
+static void OnWorldTransformChanged(Entity entity, const WorldTransform& oldData, const WorldTransform& newData) {
+    if(HasComponent(entity, ComponentOf_Frustum())) {
+        auto data = GetFrustum(entity);
 
-        auto data = GetFrustumData(frustum);
-
-        glm_mat4_inv((vec4*)&transformData->TransformGlobalMatrix[0].x, (vec4*)&data->FrustumViewMatrix[0].x);
+        glm_mat4_inv((vec4*)&newData.WorldTransformMatrix[0].x, (vec4*)&data.FrustumViewMatrix[0].x);
         v4f viewProjMat[4];
 
-        glm_mat4_mul((vec4*)&data->FrustumProjectionMatrix, (vec4*)&data->FrustumViewMatrix, (vec4*)&viewProjMat[0].x);
-        glm_mat4_inv((vec4*)&viewProjMat[0].x, (vec4*)&data->FrustumInvViewProjectionMatrix[0].x);
+        glm_mat4_mul((vec4*)&data.FrustumProjectionMatrix, (vec4*)&data.FrustumViewMatrix, (vec4*)&viewProjMat[0].x);
+        glm_mat4_inv((vec4*)&viewProjMat[0].x, (vec4*)&data.FrustumInvViewProjectionMatrix[0].x);
+
+        SetFrustum(entity, data);
     }
 }
 
@@ -24,7 +24,5 @@ BeginUnit(Frustum)
         RegisterProperty(float, FrustumFarClip)
     EndComponent()
 
-	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnFrustumTransformUpdate, AppLoopOf_FrustumTransformUpdate())
-
-	SetAppLoopOrder(AppLoopOf_FrustumTransformUpdate(), AppLoopOrder_FrustumTransformUpdate);
+	RegisterDeferredSystem(OnWorldTransformChanged, ComponentOf_WorldTransform(), AppLoopOrder_FrustumTransformUpdate)
 EndUnit()

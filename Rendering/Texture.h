@@ -7,6 +7,13 @@
 
 #include <Core/NativeUtils.h>
 
+struct Texture {
+    u32 TextureFlag;
+    u16 TextureFormat;
+    bool TextureDynamic;
+    u8 TextureMipLevels;
+};
+
 Unit(Texture)
     Enum(TextureFormat)
     Enum(TextureFlag)

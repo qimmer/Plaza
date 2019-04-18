@@ -18,6 +18,7 @@ BeginUnit(AppLoop)
 
     BeginComponent(AppLoop)
         RegisterProperty(u64, AppLoopFrame)
+        RegisterProperty(double, AppLoopDeltaTime)
         RegisterProperty(bool, AppLoopQuit)
     EndComponent()
 EndUnit()

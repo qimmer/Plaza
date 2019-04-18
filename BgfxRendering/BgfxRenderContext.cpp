@@ -21,6 +21,7 @@
 #include <Rendering/OffscreenRenderTarget.h>
 #include <Rendering/Texture.h>
 #include <Rendering/RenderContext.h>
+#include <Rendering/RenderingModule.h>
 
 #include <Scene/Transform.h>
 
@@ -29,6 +30,7 @@
 
 #include <Input/InputContext.h>
 #include <Input/Key.h>
+#include <Input/InputModule.h>
 
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
@@ -71,6 +73,7 @@ extern "C" {
 #endif
 
 struct BgfxRenderContext {
+    float keyStates[1024];
     GLFWwindow *window;
     bgfx::FrameBufferHandle fb;
     int debugFlags;
@@ -82,71 +85,157 @@ static bool isInsidePoll = false;
 
 bgfx::UniformHandle u_uvOffsetSizePerSampler;
 
-static void UpdateTextureReadBack(Entity readBack, TextureReadBack *data) {
-    auto bgfxData = GetBgfxTextureReadBackData(readBack);
+static void InitContext(Entity entity);
 
-    if(Frame >= bgfxData->ReadyFrame) {
-        auto sourceHandle = GetBgfxResourceHandle(data->TextureReadBackSourceTexture);
-        auto blitHandle = GetBgfxResourceHandle(data->TextureReadBackBlitTexture);
-        auto bufferData = GetMemoryStreamBuffer(data->TextureReadBackBuffer);
+static void UpdateTextureReadBack(Entity readBack, const TextureReadBack& data) {
+    auto bgfxData = GetBgfxTextureReadBack(readBack);
 
-        if(HasComponent(GetOwner(data->TextureReadBackSourceTexture), ComponentOf_OffscreenRenderTarget())) {
-            SetTextureSize2D(data->TextureReadBackBlitTexture, GetTextureSize2D(data->TextureReadBackSourceTexture));
-            SetTextureFormat(data->TextureReadBackBlitTexture, GetTextureFormat(data->TextureReadBackSourceTexture));
-            SetTextureFlag(data->TextureReadBackBlitTexture, TextureFlag_BLIT_DST | TextureFlag_READ_BACK);
+    if(Frame >= bgfxData.ReadyFrame) {
+        auto sourceHandle = GetBgfxResource(data.TextureReadBackSourceTexture).BgfxResourceHandle;
+        auto blitHandle = GetBgfxResource(data.TextureReadBackBlitTexture).BgfxResourceHandle;
+        auto bufferData = GetMemoryStreamBuffer(data.TextureReadBackBuffer);
+
+        if(HasComponent(GetOwnership(data.TextureReadBackSourceTexture).Owner, ComponentOf_OffscreenRenderTarget())) {
+            
+            SetTexture2D(data.TextureReadBackBlitTexture, {GetTexture2D(data.TextureReadBackSourceTexture).TextureSize2D});
+            auto textureData = GetTexture(data.TextureReadBackSourceTexture);
+            textureData.TextureFlag = TextureFlag_BLIT_DST | TextureFlag_READ_BACK;
+            textureData.TextureMipLevels = 0;
+            textureData.TextureDynamic = false;
+            SetTexture(data.TextureReadBackBlitTexture, textureData);
 
             bgfx::blit(255, bgfx::TextureHandle {blitHandle}, 0, 0, bgfx::TextureHandle {sourceHandle});
-            bgfxData->ReadyFrame = bgfx::readTexture(bgfx::TextureHandle {blitHandle}, bufferData);
+            bgfxData.ReadyFrame = bgfx::readTexture(bgfx::TextureHandle {blitHandle}, bufferData);
         } else {
-            bgfxData->ReadyFrame = bgfx::readTexture(bgfx::TextureHandle {sourceHandle}, bufferData);
+            bgfxData.ReadyFrame = bgfx::readTexture(bgfx::TextureHandle {sourceHandle}, bufferData);
         }
+
+        SetBgfxTextureReadBack(readBack, bgfxData);
     }
 }
 
-LocalFunction(OnTextureReadBack, void, Entity appLoop) {
-    for_entity(readBack, ComponentOf_TextureReadBack()) {
+static void ResetContext(Entity entity) {
+    auto data = GetBgfxRenderContext(entity);
+    if(!data.window) {
+        InitContext(entity);
+        data = GetBgfxRenderContext(entity);
+    }
+
+    auto size = GetRenderTarget(entity).RenderTargetSize;
+    auto vsync = GetRenderContext(entity).RenderContextVsync;
+    auto fullscreen = GetRenderContext(entity).RenderContextFullscreen;
+
+#ifdef __APPLE__
+    id windowHandle = glfwGetCocoaWindow(data.window);
+#elif WIN32
+    HWND windowHandle = glfwGetWin32Window(data.window);
+#elif __linux__
+    auto windowHandle = (void*)glfwGetX11Window(data.window);
+#endif
+    glfwSetWindowSize(data.window, size.x, size.y);
+    if(entity == PrimaryContext) {
+        bgfx::reset(size.x, size.y, (vsync ? BGFX_RESET_VSYNC : 0) + (fullscreen ? BGFX_RESET_FULLSCREEN : 0));
+    } else {
+        if(bgfx::isValid(data.fb)) {
+            bgfx::destroy(data.fb);
+        }
+
+        data.fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
+    }
+
+    glfwSetWindowTitle(data.window, GetRenderContext(entity).RenderContextTitle);
+}
+
+static void DestroyContext(Entity entity) {
+    auto data = GetBgfxRenderContext(entity);
+
+    if(bgfx::isValid(data.fb)) {
+        bgfx::destroy(data.fb);
+    }
+
+    if(NumContexts == 1) {
+        auto moduleData = GetModule(ModuleOf_BgfxRendering());
+        for(auto extension : moduleData.Extensions) {
+            auto extensionData = GetExtension(extension);
+            extensionData.ExtensionDisabled = true;
+            SetExtension(extension, extensionData);
+        }
+
+        bgfx::destroy(u_uvOffsetSizePerSampler);
+
+        bgfx::shutdown();
+    }
+
+    glfwDestroyWindow(data.window);
+
+    if(NumContexts == 1) {
+        glfwTerminate();
+
+        PrimaryContext = 0;
+    }
+
+    NumContexts--;
+}
+
+static void OnInputContextChanged(Entity entity, const InputContext& oldData, const InputContext& newData) {
+    if(oldData.InputContextGrabMouse != newData.InputContextGrabMouse) {
+        auto data = GetBgfxRenderContext(entity);
+        glfwSetInputMode(data.window, GLFW_CURSOR, newData.InputContextGrabMouse ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+    }
+}
+
+static void OnTextureReadBack(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
+    TextureReadBack data;
+    for_entity_data(readBack, ComponentOf_TextureReadBack(), &data) {
         UpdateTextureReadBack(readBack, data);
     }
 }
 
-LocalFunction(OnInputPoll, void, Entity appLoop) {
+static void OnInputPoll(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
     if(isInsidePoll) return;
 
     auto numContexts = 0;
     isInsidePoll = true;
 
-    for_entity(context, contextData, BgfxRenderContext) {
+    BgfxRenderContext contextData;
+    for_entity_data(context, ComponentOf_BgfxRenderContext(), &contextData) {
+        if(!contextData.window) {
+            InitContext(context);
+            contextData = GetBgfxRenderContext(context);
+        }
         numContexts++;
 
-        SetInputStateValueByKey(context, MOUSE_SCROLL_DOWN, 0.0f);
-        SetInputStateValueByKey(context, MOUSE_SCROLL_UP, 0.0f);
-        SetInputStateValueByKey(context, MOUSE_SCROLL_LEFT, 0.0f);
-        SetInputStateValueByKey(context, MOUSE_SCROLL_RIGHT, 0.0f);
-        SetInputStateValueByKey(context, MOUSE_DOWN, 0.0f);
-        SetInputStateValueByKey(context, MOUSE_UP, 0.0f);
-        SetInputStateValueByKey(context, MOUSE_LEFT, 0.0f);
-        SetInputStateValueByKey(context, MOUSE_RIGHT, 0.0f);
+        contextData.keyStates[MOUSE_SCROLL_DOWN] = 0.0f;
+        contextData.keyStates[MOUSE_SCROLL_UP] = 0.0f;
+        contextData.keyStates[MOUSE_SCROLL_LEFT] = 0.0f;
+        contextData.keyStates[MOUSE_SCROLL_RIGHT] = 0.0f;
+        contextData.keyStates[MOUSE_DOWN] = 0.0f;
+        contextData.keyStates[MOUSE_UP] = 0.0f;
+        contextData.keyStates[MOUSE_LEFT] = 0.0f;
+        contextData.keyStates[MOUSE_RIGHT] = 0.0f;
 
-        if(glfwWindowShouldClose(contextData->window)) {
-            glfwSetWindowShouldClose(contextData->window, false);
-            SetInputStateValueByKey(context, KEY_WINDOW_CLOSE, 1.0f);
+        auto inputContextData = GetInputContext(context);
+
+        if(glfwWindowShouldClose(contextData.window)) {
+            glfwSetWindowShouldClose(contextData.window, false);
+            contextData.keyStates[KEY_WINDOW_CLOSE] = 1.0f;
         } else {
-            SetInputStateValueByKey(context, KEY_WINDOW_CLOSE, 0.0f);
+            contextData.keyStates[KEY_WINDOW_CLOSE] = 0.0f;
         }
 
-        if(!glfwGetWindowAttrib(contextData->window, GLFW_VISIBLE)) {
-            glfwShowWindow(contextData->window);
+        if(!glfwGetWindowAttrib(contextData.window, GLFW_VISIBLE)) {
+            glfwShowWindow(contextData.window);
         }
 
-        auto deadZone = GetInputContextDeadZone(context);
+        auto deadZone = inputContextData.InputContextDeadZone;
 
         for(auto i = 0; i < GLFW_JOYSTICK_LAST; ++i) {
             if(!glfwJoystickPresent(i)) {
-                SetInputStateValueByKey(context, GAMEPAD_CONNECTED + i * GAMEPAD_MULTIPLIER, 0.0f);
+                contextData.keyStates[GAMEPAD_CONNECTED + i * GAMEPAD_MULTIPLIER] = 0.0f;
                 continue;
             }
 
-            SetInputStateValueByKey(context, GAMEPAD_CONNECTED + i * GAMEPAD_MULTIPLIER, 1.0f);
+            contextData.keyStates[GAMEPAD_CONNECTED + i * GAMEPAD_MULTIPLIER] = 1.0f;
 
             s32 numAxises;
             s32 numButtons;
@@ -164,47 +253,70 @@ LocalFunction(OnInputPoll, void, Entity appLoop) {
             }
 
             for(auto j = 0; j < numButtons; ++j) {
-                SetInputStateValueByKey(context, GAMEPAD_A + j + (GAMEPAD_MULTIPLIER * i), buttonStates[j] ? 1.0f : 0.0f);
+                contextData.keyStates[GAMEPAD_A + j + (GAMEPAD_MULTIPLIER * i)] = buttonStates[j] ? 1.0f : 0.0f;
             }
 
             for(auto j = 0; j < Min(numAxises, 4); ++j) {
-                SetInputStateValueByKey(context, GAMEPAD_LS_LEFT + (j*2+0) + (GAMEPAD_MULTIPLIER * i), Max(-filteredAxisValues[j], 0.0f));
-                SetInputStateValueByKey(context, GAMEPAD_LS_LEFT + (j*2+1) + (GAMEPAD_MULTIPLIER * i), Max(filteredAxisValues[j], 0.0f));
+                contextData.keyStates[GAMEPAD_LS_LEFT + (j*2+0) + (GAMEPAD_MULTIPLIER * i)] = Max(-filteredAxisValues[j], 0.0f);
+                contextData.keyStates[GAMEPAD_LS_LEFT + (j*2+1) + (GAMEPAD_MULTIPLIER * i)] = Max(filteredAxisValues[j], 0.0f);
             }
 
             if(numAxises > 5) {
-                SetInputStateValueByKey(context, GAMEPAD_LT + (GAMEPAD_MULTIPLIER * i), filteredAxisValues[4]);
-                SetInputStateValueByKey(context, GAMEPAD_RT + (GAMEPAD_MULTIPLIER * i), filteredAxisValues[5]);
+                contextData.keyStates[GAMEPAD_LT + (GAMEPAD_MULTIPLIER * i)] = filteredAxisValues[4];
+                contextData.keyStates[GAMEPAD_RT + (GAMEPAD_MULTIPLIER * i)] = filteredAxisValues[5];
             }
 
             if(numHats) {
-                SetInputStateValueByKey(context, GAMEPAD_DPAD_LEFT + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_LEFT) ? 1.0f : 0.0f);
-                SetInputStateValueByKey(context, GAMEPAD_DPAD_RIGHT + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_RIGHT) ? 1.0f : 0.0f);
-                SetInputStateValueByKey(context, GAMEPAD_DPAD_UP+ (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_UP) ? 1.0f : 0.0f);
-                SetInputStateValueByKey(context, GAMEPAD_DPAD_DOWN + (GAMEPAD_MULTIPLIER * i), (hatStates[0] & GLFW_HAT_DOWN) ? 1.0f : 0.0f);
+                contextData.keyStates[GAMEPAD_DPAD_LEFT + (GAMEPAD_MULTIPLIER * i)] = (hatStates[0] & GLFW_HAT_LEFT) ? 1.0f : 0.0f;
+                contextData.keyStates[GAMEPAD_DPAD_RIGHT + (GAMEPAD_MULTIPLIER * i)] = (hatStates[0] & GLFW_HAT_RIGHT) ? 1.0f : 0.0f;
+                contextData.keyStates[GAMEPAD_DPAD_UP+ (GAMEPAD_MULTIPLIER * i)] = (hatStates[0] & GLFW_HAT_UP) ? 1.0f : 0.0f;
+                contextData.keyStates[GAMEPAD_DPAD_DOWN + (GAMEPAD_MULTIPLIER * i)] = (hatStates[0] & GLFW_HAT_DOWN) ? 1.0f : 0.0f;
+            }
+        }
+
+        SetBgfxRenderContext(context, contextData);
+    }
+
+    if(numContexts) {
+        glfwPollEvents();
+    }
+
+    for_entity_data(context, ComponentOf_BgfxRenderContext(), &contextData) {
+        auto inputContextData = GetInputContext(context);
+
+        for(auto inputState : inputContextData.InputContextStates) {
+            auto inputStateData = GetInputState(inputState);
+            auto actualState = contextData.keyStates[inputStateData.InputStateKey];
+            if(actualState != inputStateData.InputStateValue) {
+                inputStateData.InputStateValue = actualState;
+                SetInputState(inputState, inputStateData);
             }
         }
     }
 
-    if(numContexts) {
-        glfwPostEmptyEvent();
-        glfwWaitEvents();
-    }
 
     isInsidePoll = false;
 }
 
-LocalFunction(OnPresent, void, Entity appLoop) {
+static void OnPresent(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
     auto numContexts = 0;
     auto debugFlags = 0;
 
-    for_entity(context, contextData, BgfxRenderContext) {
+    BgfxRenderContext bgfxContextData;
+    for_entity_data(context, ComponentOf_BgfxRenderContext(), &bgfxContextData) {
+        if(!bgfxContextData.window) {
+            InitContext(context);
+            bgfxContextData = GetBgfxRenderContext(context);
+        }
+
         numContexts++;
 
-        if(GetRenderContextShowDebug(context)) {
+        auto contextData = GetRenderContext(context);
+
+        if(contextData.RenderContextShowDebug) {
             debugFlags |= BGFX_DEBUG_IFH | BGFX_DEBUG_STATS;
         }
-        if(GetRenderContextShowStats(context)) {
+        if(contextData.RenderContextShowStats) {
             debugFlags |= BGFX_DEBUG_STATS;
         }
     }
@@ -217,120 +329,99 @@ LocalFunction(OnPresent, void, Entity appLoop) {
     }
 }
 
-static void ResetContext(Entity entity) {
-    auto data = GetBgfxRenderContextData(entity);
-    if(data) {
-        auto size = GetRenderTargetSize(entity);
-        auto vsync = GetRenderContextVsync(entity);
-        auto fullscreen = GetRenderContextFullscreen(entity);
-
-#ifdef __APPLE__
-        id windowHandle = glfwGetCocoaWindow(data->window);
-#elif WIN32
-        HWND windowHandle = glfwGetWin32Window(data->window);
-#elif __linux__
-        auto windowHandle = (void*)glfwGetX11Window(data->window);
-#endif
-        glfwSetWindowSize(data->window, size.x, size.y);
-        if(entity == PrimaryContext) {
-            bgfx::reset(size.x, size.y, (vsync ? BGFX_RESET_VSYNC : 0) + (fullscreen ? BGFX_RESET_FULLSCREEN : 0));
-        } else {
-            if(bgfx::isValid(data->fb)) {
-                bgfx::destroy(data->fb);
-            }
-
-            data->fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
-        }
-    }
-}
-
-LocalFunction(OnContextResized, void, Entity entity, v2i oldSize, v2i newSize) {
+static void OnRenderTargetChanged(Entity entity, const RenderTarget& oldData, const RenderTarget& newData) {
     if(HasComponent(entity, ComponentOf_BgfxRenderContext())) ResetContext(entity);
 }
 
-LocalFunction(OnContextFlagChanged, void, Entity entity, bool oldValue, bool newValue) {
-    ResetContext(entity);
+static void OnRenderContextChanged(Entity entity, const RenderContext& oldData, const RenderContext& newData) {
+    if(HasComponent(entity, ComponentOf_BgfxRenderContext())) ResetContext(entity);
 }
 
-LocalFunction(OnContextTitleChanged, void, Entity entity, StringRef before, StringRef after) {
-    auto data = GetBgfxRenderContextData(entity);
-
-    if(data) {
-        glfwSetWindowTitle(data->window, after);
-    }
-}
-
-LocalFunction(OnGlfwWindowResized, void, GLFWwindow *window, int w, int h) {
+static void OnGlfwWindowResized(GLFWwindow *window, int w, int h) {
     auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
-    SetRenderTargetSize(entity, {w, h});
+    SetRenderTarget(entity, {{w, h}});
 }
 
-LocalFunction(OnCharPressed, void, GLFWwindow *window, unsigned int c) {
+static void OnCharPressed(GLFWwindow *window, unsigned int c) {
     auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
 
-    SetInputContextLastCharacter(entity, c);
+    auto data = GetInputContext(entity);
+    data.InputContextLastCharacter = c;
+    SetInputContext(entity, data);
 }
 
-LocalFunction(OnGlfwFramebufferResized, void, GLFWwindow *window, int w, int h) {
+static void OnGlfwFramebufferResized(GLFWwindow *window, int w, int h) {
 
 }
 
-LocalFunction(OnGlfwWindowRefresh, void, GLFWwindow *window) {
+static void OnGlfwWindowRefresh(GLFWwindow *window) {
 
 }
 
-
-LocalFunction(OnKey, void, GLFWwindow *window, int key, int scanCode, int action, int mods) {
+static void OnKey(GLFWwindow *window, int key, int scanCode, int action, int mods) {
     auto context = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
 
+    auto contextData = GetBgfxRenderContext(context);
     if(action == GLFW_PRESS) {
-        SetInputStateValueByKey(context, key, 1.0f);
+        contextData.keyStates[key] = 1.0f;
+        SetBgfxRenderContext(context, contextData);
     }
 
     if(action == GLFW_RELEASE) {
-        SetInputStateValueByKey(context, key, 0.0f);
+        contextData.keyStates[key] = 0.0f;
+        SetBgfxRenderContext(context, contextData);
     }
 }
 
-LocalFunction(OnMouseScroll, void, GLFWwindow *window, double x, double y) {
+static void OnMouseScroll(GLFWwindow *window, double x, double y) {
     auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
-    
-    SetInputStateValueByKey(entity, MOUSE_SCROLL_DOWN, fmaxf(-y, 0.0f));
-    SetInputStateValueByKey(entity, MOUSE_SCROLL_UP, fmaxf(y, 0.0f));
-    SetInputStateValueByKey(entity, MOUSE_SCROLL_LEFT, fmaxf(-x, 0.0f));
-    SetInputStateValueByKey(entity, MOUSE_SCROLL_RIGHT, fmaxf(x, 0.0f));
+
+    auto contextData = GetBgfxRenderContext(entity);
+    contextData.keyStates[MOUSE_SCROLL_DOWN] = fmaxf(-y, 0.0f);
+    contextData.keyStates[MOUSE_SCROLL_UP] = fmaxf(y, 0.0f);
+    contextData.keyStates[MOUSE_SCROLL_LEFT] = fmaxf(-x, 0.0f);
+    contextData.keyStates[MOUSE_SCROLL_RIGHT] = fmaxf(x, 0.0f);
+    SetBgfxRenderContext(entity, contextData);
 }
 
-LocalFunction(OnMouseMove, void, GLFWwindow *window, double x, double y) {
+static void OnMouseMove(GLFWwindow *window, double x, double y) {
     auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
 
-    auto cp = GetInputContextCursorPosition(entity);
-    auto dx = x - cp.x;
-    auto dy = y - cp.y;
+    auto data = GetInputContext(entity);
+    auto dx = x - data.InputContextCursorPosition.x;
+    auto dy = y - data.InputContextCursorPosition.y;
 
-    SetInputStateValueByKey(entity, MOUSE_DOWN, fmaxf(dy, 0.0f));
-    SetInputStateValueByKey(entity, MOUSE_UP, fmaxf(-dy, 0.0f));
-    SetInputStateValueByKey(entity, MOUSE_LEFT, fmaxf(-dx, 0.0f));
-    SetInputStateValueByKey(entity, MOUSE_RIGHT, fmaxf(dx, 0.0f));
+    auto contextData = GetBgfxRenderContext(entity);
+    contextData.keyStates[MOUSE_DOWN] = fmaxf(dy, 0.0f);
+    contextData.keyStates[MOUSE_UP] = fmaxf(-dy, 0.0f);
+    contextData.keyStates[MOUSE_LEFT] = fmaxf(-dx, 0.0f);
+    contextData.keyStates[MOUSE_RIGHT] = fmaxf(dx, 0.0f);
+    SetBgfxRenderContext(entity, contextData);
 
-    SetInputContextCursorPosition(entity, {(int)x, (int)y});
+    data.InputContextCursorPosition = {(int)x, (int)y};
+    SetInputContext(entity, data);
 }
 
-LocalFunction(OnMouseButton, void, GLFWwindow *window, int button, int action, int mods) {
-    auto entity = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
+static void OnMouseButton(GLFWwindow *window, int button, int action, int mods) {
+    auto context = GetEntityByIndex((u32)(size_t)glfwGetWindowUserPointer(window));
 
+    auto contextData = GetBgfxRenderContext(context);
     if(action == GLFW_PRESS) {
-        SetInputStateValueByKey(entity, MOUSEBUTTON_0 + button, 1.0f);
+        contextData.keyStates[MOUSEBUTTON_0 + button] = 1.0f;
+        SetBgfxRenderContext(context, contextData);
     }
 
     if(action == GLFW_RELEASE) {
-        SetInputStateValueByKey(entity, MOUSEBUTTON_0 + button, 0.0f);
+        contextData.keyStates[MOUSEBUTTON_0 + button] = 0.0f;
+        SetBgfxRenderContext(context, contextData);
     }
 }
 
-LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
-    auto data = GetBgfxRenderContextData(entity);
-    auto size = GetRenderTargetSize(entity);
+static void InitContext(Entity entity) {
+    NumContexts++;
+
+    auto data = GetBgfxRenderContext(entity);
+    auto size = GetRenderTarget(entity).RenderTargetSize;
 
     if(NumContexts == 1) {
         glfwInit();
@@ -339,7 +430,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_VISIBLE, false);
 
-    auto title = GetRenderContextTitle(entity);
+    auto title = GetRenderContext(entity).RenderContextTitle;
     auto window = glfwCreateWindow(Max(size.x, 32), Max(size.y, 32), title ? title : "", NULL, NULL);
     auto monitor = glfwGetPrimaryMonitor();
     glfwSetWindowSizeCallback(window, OnGlfwWindowResized);
@@ -352,7 +443,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
     glfwSetFramebufferSizeCallback(window, OnGlfwFramebufferResized);
     glfwSetWindowRefreshCallback(window, OnGlfwWindowRefresh);
 
-    data->window = window;
+    data.window = window;
 
 #ifdef __APPLE__
     void* displayHandle = NULL;
@@ -366,7 +457,7 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
 #endif
 
     if(NumContexts == 1) {
-        data->fb = BGFX_INVALID_HANDLE;
+        data.fb = BGFX_INVALID_HANDLE;
 
         bgfx::PlatformData pd;
         pd.ndt = displayHandle;
@@ -396,53 +487,15 @@ LocalFunction(OnBgfxRenderContextAdded, void, Entity component, Entity entity) {
 
         PrimaryContext = entity;
 
-        for_children(extension, Extensions, ModuleOf_BgfxRendering()) {
-            SetExtensionDisabled(extension, false);
+        auto moduleData = GetModule(ModuleOf_BgfxRendering());
+        for(auto extension : moduleData.Extensions) {
+            auto extensionData = GetExtension(extension);
+            extensionData.ExtensionDisabled = false;
+            SetExtension(extension, extensionData);
         }
 
     } else {
-        data->fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
-    }
-}
-
-LocalFunction(OnBgfxRenderContextRemoved, void, Entity component, Entity entity) {
-    auto data = GetBgfxRenderContextData(entity);
-
-    if(bgfx::isValid(data->fb)) {
-        bgfx::destroy(data->fb);
-    }
-
-    if(NumContexts == 1) {
-        for_children(extension, Extensions, ModuleOf_BgfxRendering()) {
-            SetExtensionDisabled(extension, true);
-        }
-
-        bgfx::destroy(u_uvOffsetSizePerSampler);
-
-        bgfx::shutdown();
-    }
-
-    glfwDestroyWindow(data->window);
-
-    if(NumContexts == 1) {
-        glfwTerminate();
-
-        PrimaryContext = 0;
-    }
-}
-
-LocalFunction(OnContextAdded, void, Entity component, Entity entity) {
-    NumContexts++;
-}
-
-LocalFunction(OnContextRemoved, void, Entity entity) {
-    NumContexts--;
-}
-
-LocalFunction(OnContextGrabMouseChanged, void, Entity entity, bool oldValue, bool newValue) {
-    auto data = GetBgfxRenderContextData(entity);
-    if(data) {
-        glfwSetInputMode(data->window, GLFW_CURSOR, newValue ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+        data.fb = bgfx::createFrameBuffer(windowHandle, size.x, size.y);
     }
 }
 
@@ -453,19 +506,10 @@ BeginUnit(BgfxRenderContext)
         RegisterBase(BgfxResource)
     EndComponent()
 
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnContextAdded, ComponentOf_RenderContext())
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnBgfxRenderContextAdded, ComponentOf_BgfxRenderContext())
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnContextRemoved, ComponentOf_RenderContext())
-    RegisterSubscription(EventOf_EntityComponentRemoved(), OnBgfxRenderContextRemoved, ComponentOf_BgfxRenderContext())
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnInputPoll, AppLoopOf_InputPoll())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnTextureReadBack, AppLoopOf_ResourceDownload())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnPresent, AppLoopOf_Present())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderTargetSize()), OnContextResized, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextTitle()), OnContextTitleChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextVsync()), OnContextFlagChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextShowDebug()), OnContextFlagChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextShowStats()), OnContextFlagChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderContextFullscreen()), OnContextFlagChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_InputContextGrabMouse()), OnContextGrabMouseChanged, 0)
+    RegisterDeferredSystem(OnRenderContextChanged, ComponentOf_RenderContext(), AppLoopOrder_Present)
+    RegisterDeferredSystem(OnRenderTargetChanged, ComponentOf_RenderContext(), AppLoopOrder_Present)
+    RegisterDeferredSystem(OnPresent, ComponentOf_RenderContext(), AppLoopOrder_Present)
+    RegisterDeferredSystem(OnInputPoll, ComponentOf_RenderContext(), AppLoopOrder_Input)
+    RegisterDeferredSystem(OnInputContextChanged, ComponentOf_InputContext(), AppLoopOrder_Input)
+    RegisterDeferredSystem(OnTextureReadBack, ComponentOf_RenderContext(), AppLoopOrder_ResourceDownload)
 EndUnit()

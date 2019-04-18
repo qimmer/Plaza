@@ -7,6 +7,13 @@
 
 #include <Core/NativeUtils.h>
 
+struct Scene {
+};
+
+struct SceneNode {
+    Entity SceneNodeScene;
+};
+
 Unit(Scene)
     Component(Scene)
     Component(SceneNode)

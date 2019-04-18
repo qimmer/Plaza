@@ -28,19 +28,21 @@ struct FoundationModule {
 };
 
 struct FoundationExtension {
+    ChildArray FileTypes;
 };
 
 BeginUnit(Foundation)
     BeginComponent(FoundationModule)
-        RegisterChildProperty(TaskQueue, TaskQueue)
+        BeginChildProperty(TaskQueue)
+        EndChildProperty()
     EndComponent()
+
 	BeginComponent(FoundationExtension)
 		RegisterArrayProperty(FileType, FileTypes)
 	EndComponent()
 EndUnit()
 
 BeginModule(Foundation)
-    RegisterUnit(Foundation)
     RegisterUnit(AppLoop)
     RegisterUnit(CommandLineArgument)
     RegisterUnit(Invocation)
@@ -58,4 +60,5 @@ BeginModule(Foundation)
     RegisterUnit(MathOperation)
     RegisterUnit(ForEach)
     RegisterUnit(Switch)
+    RegisterUnit(Foundation)
 EndModule()

@@ -7,6 +7,15 @@
 
 #include <Core/NativeUtils.h>
 
+struct Format {
+    StringRef FormatString;
+    ChildArray FormatArguments;
+};
+
+struct FormatArgument {
+    Variant FormatArgumentValue;
+};
+
 Unit(Logical)
     Component(FormatArgument)
         Property(Variant, FormatArgumentValue)

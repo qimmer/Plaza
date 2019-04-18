@@ -16,7 +16,7 @@ struct ChangingBinding {
     Entity Entity, Property;
 };
 
-static Vector<ChangingBinding, 32> currentChangingBindings;
+static eastl::fixed_vector<ChangingBinding, 32> currentChangingBindings;
 
 API_EXPORT EntityBindingData& GetBindingData(Entity entity) {
 	auto entityIndex = GetEntityIndex(entity);
@@ -44,12 +44,12 @@ static inline void UpdateValue(const Listener& listener) {
 
     if(GetProperty(indirection.IndirectionProperty).PropertyType == TypeOf_ChildArray) {
         auto nameToFind = indirection.IndirectionArrayName;
-        auto elements = GetArrayPropertyElements(indirection.IndirectionProperty, indirection.ListenerEntity);
-        auto numElements = GetArrayPropertyCount(indirection.IndirectionProperty, indirection.ListenerEntity);
-        for(auto j = 0; j < numElements; ++j) {
-            auto name = GetArrayChild(elements[j]).Name;
+
+        auto arr = GetPropertyValue(indirection.IndirectionProperty, indirection.ListenerEntity).as_ChildArray;
+        for(auto element : arr) {
+            auto name = GetArrayChild(element).Name;
             if(name == nameToFind) {
-                value = MakeVariant(Entity, elements[j]);
+                value = MakeVariant(Entity, element);
                 break;
             }
         }
@@ -106,13 +106,13 @@ static void EvaluateIndirections(Entity self, Binding& binding) {
         if(sourceEntity && i < (numIndirections - 1)) {
             if(GetProperty(indirection.IndirectionProperty).PropertyType == TypeOf_ChildArray) {
                 auto nameToFind = indirection.IndirectionArrayName;
-                auto elements = GetArrayPropertyElements(indirection.IndirectionProperty, sourceEntity);
-                auto numElements = GetArrayPropertyCount(indirection.IndirectionProperty, sourceEntity);
+                auto arr = GetPropertyValue(indirection.IndirectionProperty, indirection.ListenerEntity).as_ChildArray;
+
                 bool found = false;
-                for(auto j = 0; j < numElements; ++j) {
-                    auto name = GetArrayChild(elements[j]).Name;
+                for(auto element : arr) {
+                    auto name = GetArrayChild(element).Name;
                     if(name == nameToFind) {
-                        sourceEntity = elements[j];
+                        sourceEntity = element;
                         found = true;
                         break;
                     }
@@ -156,13 +156,13 @@ static void AddListeners(Entity self, Binding& binding) {
             if(i < (numIndirections - 1)) {
                 if(GetProperty(indirection.IndirectionProperty).PropertyType == TypeOf_ChildArray) {
                     auto nameToFind = indirection.IndirectionArrayName;
-                    auto elements = GetArrayPropertyElements(indirection.IndirectionProperty, sourceEntity);
-                    auto numElements = GetArrayPropertyCount(indirection.IndirectionProperty, sourceEntity);
+                    auto arr = GetPropertyValue(indirection.IndirectionProperty, indirection.ListenerEntity).as_ChildArray;
+
                     bool found = false;
-                    for(auto j = 0; j < numElements; ++j) {
-                        auto name = GetArrayChild(elements[j]).Name;
+                    for(auto element : arr) {
+                        auto name = GetArrayChild(element).Name;
                         if(name == nameToFind) {
-                            sourceEntity = elements[j];
+                            sourceEntity = element;
                             found = true;
                             break;
                         }

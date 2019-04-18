@@ -30,4 +30,6 @@ Unit(Button)
         Property(v4i, ButtonStylePadding)
         Property(v4f, ButtonStyleTextColor)
 
+    Prefab(Button)
+
 #endif //PLAZA_BUTTON_H

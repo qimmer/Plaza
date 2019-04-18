@@ -20,6 +20,7 @@ enum {
 };
 
 struct RenderPass {
+    ChildArray RenderPassSceneUniforms, RenderPassCameraUniforms, RenderPassRenderableUniforms, RenderPassMaterialUniforms, RenderPassMeshUniforms;
     Entity RenderPassShaderCache;
     Entity RenderPassRenderState;
     float RenderPassClearDepth;
@@ -29,6 +30,7 @@ struct RenderPass {
 };
 
 struct RenderPath {
+    ChildArray RenderPathPasses;
 };
 
 struct Batch {
@@ -37,10 +39,12 @@ struct Batch {
 };
 
 struct CommandList {
+    ChildArray CommandListBatches;
     Entity CommandListPass;
 };
 
 struct SceneRenderer {
+    ChildArray SceneRendererCommandLists;
     Entity SceneRendererScene, SceneRendererTarget, SceneRendererCamera, SceneRendererPath;
     v4f SceneRendererViewport;
 };

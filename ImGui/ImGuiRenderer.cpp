@@ -113,7 +113,7 @@ API_EXPORT Entity GetImGuiPixelShader() {
 
 static void InitializeKeyMapping();
 
-LocalFunction(OnContextAdded, void, Entity context) {
+static void OnContextAdded(Entity context) {
     auto data = GetImGuiRenderer(context);
 
     auto oldContext = ImGui::GetCurrentContext();
@@ -137,7 +137,7 @@ LocalFunction(OnContextAdded, void, Entity context) {
     ImGui::SetCurrentContext(oldContext);
 }
 
-LocalFunction(OnContextRemoved, void, Entity context) {
+static void OnContextRemoved(Entity context) {
     auto data = GetImGuiRenderer(context);
 
     for (auto batch : data->Batches) {
@@ -282,13 +282,13 @@ static void RenderImGui(Entity context, double deltaTime) {
     UpdateBatches(context, data->CommandList);
 }
 
-LocalFunction(OnAppUpdate, void, double deltaTime) {
+static void OnAppUpdate(double deltaTime) {
     for_entity(context, ComponentOf_ImGuiRenderer()) {
         RenderImGui(context, deltaTime);
     }
 }
 
-LocalFunction(OnCharPressed, void, Entity context, char c) {
+static void OnCharPressed(Entity context, char c) {
     auto data = GetImGuiRenderer(context);
 
     SetCurrentContext(data->ImGuiContext);
@@ -368,7 +368,7 @@ static void InitializeKeyMapping() {
     io.KeyMap[ImGuiKey_Z] = KEY_Z;
 }
 
-LocalFunction(OnServiceStart, void, Service service) {
+static void OnServiceStart(Service service) {
     ImGui::GetIO();
     PrimaryImGuiContext = ImGui::GetCurrentContext();
 
@@ -382,7 +382,7 @@ LocalFunction(OnServiceStart, void, Service service) {
     AddExtension(TypeOf_Context(), TypeOf_ImGuiRenderer());
 }
 
-LocalFunction(OnServiceStop, void, Service service) {
+static void OnServiceStop(Service service) {
     RemoveExtension(TypeOf_Context(), TypeOf_ImGuiRenderer());
 
     DestroyEntity(ImGuiDataRoot);

@@ -10,6 +10,7 @@
 struct FunctionInvocation {
     Entity InvocationFunction;
     Variant InvocationResult;
+    ChildArray InvocationArguments;
 };
 
 struct PropertyInvocation {

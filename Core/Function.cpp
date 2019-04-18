@@ -76,10 +76,10 @@ API_EXPORT void SetFunctionArgsByDecl(Entity f, StringRef arguments) {
         SetFunctionArgument(argumentEntity, {type});
         byteOffset += GetTypeSize(type);
 
-        AddFunctionArguments(f, argumentEntity);
+        functionData.FunctionArguments.Add(argumentEntity);
     }
 
-
+    SetFunction(f, functionData);
 }
 
 API_EXPORT Variant CallFunction(
@@ -105,7 +105,7 @@ API_EXPORT Variant CallFunction(
 
 	Verbose(Verbose_Function, "Calling function %s ...", GetName(f));
 
-	if (numArguments < GetNumFunctionArguments(f)) {
+	if (numArguments < data.FunctionArguments.GetSize()) {
 		Log(f, LogSeverity_Error, "Insufficient function arguments provided when calling %s", GetDebugName(f));
 		return Variant_Empty;
 	}
@@ -158,7 +158,7 @@ struct ProfileEntry {
     struct timespec start;
 };
 
-std::vector<ProfileEntry> profileEntries;
+eastl::vector<ProfileEntry> profileEntries;
 
 API_EXPORT void ProfileStart(StringRef tag, double thresholdMsecs) {
     /*ProfileEntry ent;

@@ -11,4 +11,9 @@ Unit(RestEntityRouting)
     Component(RestEntityRouting)
         ChildProperty(JsonSettings, RestEntityRoutingJsonSettings)
 
+    Function(EntityRouteGet, Entity, Entity route, Entity request, Entity response, StringRef uuid)
+    Function(EntityRoutePut, Entity, Entity route, Entity request, Entity response, StringRef uuid)
+    Function(EntityRoutePost, Entity, Entity route, Entity request, Entity response, StringRef uuid, StringRef propertyName)
+    Function(EntityRouteDelete, Entity, Entity route, Entity request, Entity response, StringRef uuid)
+
 #endif //PLAZA_RESTENTITYROUTING_H

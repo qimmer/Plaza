@@ -12,18 +12,21 @@ struct Rect2D {
 };
 
 struct Widget {
-    rgba32 WidgetStateColor;
     Entity WidgetMesh;
     bool WidgetDisabled, WidgetSelected;
-    float WidgetStateTransitionDuration;
-    v3f WidgetState;
     float WidgetDepthOrder;
 };
 
 struct InteractableWidget {
     v2i WidgetInteractionPoint;
     bool WidgetHovered, WidgetFocused, WidgetClicked;
+};
+
+struct WidgetState {
+    v3f WidgetState;
     v3f WidgetInteractionState;
+    rgba32 WidgetStateColor;
+    float WidgetStateTransitionDuration;
 };
 
 struct WidgetVertex {
@@ -61,19 +64,21 @@ Unit(Widget)
         Property(v2i, Size2D)
 
     Component(Widget)
-        Property(float, WidgetStateTransitionDuration)
-        Property(v3f, WidgetState)
         Property(bool, WidgetDisabled)
         Property(bool, WidgetSelected)
-        Property(rgba32, WidgetStateColor)
         Property(float, WidgetDepthOrder)
 
     Component(InteractableWidget)
         Property(v2i, WidgetInteractionPoint)
-        Property(v3f, WidgetInteractionState)
         Property(bool, WidgetHovered)
         Property(bool, WidgetFocused)
         Property(bool, WidgetClicked)
+
+    Component(WidgetState)
+        Property(rgba32, WidgetStateColor)
+        Property(float, WidgetStateTransitionDuration)
+        Property(v3f, WidgetState)
+        Property(v3f, WidgetInteractionState)
 
     Component(WidgetMesh)
         ReferenceProperty(SubTexture2D, WidgetMeshEnabledTexture)

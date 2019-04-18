@@ -21,7 +21,7 @@ struct Module {
     StringRef ModuleSourcePath;
     StringRef ModuleBinaryPath;
 
-    ChildArray Components, Functions, Systems, Enums, Extensions, Dependencies;
+    ChildArray Components, Functions, Systems, Enums, Extensions, Dependencies, Prefabs;
 };
 
 struct ModuleLoader {
@@ -50,6 +50,7 @@ Component(Module)
     ArrayProperty(Enum, Enums)
     ArrayProperty(Extension, Extensions)
     ArrayProperty(Dependency, Dependencies)
+    ArrayProperty(Prefab, Prefabs)
 
 Function(GetRoot, Entity)
 Function(LoadPlazaModule, bool, StringRef libraryPath)

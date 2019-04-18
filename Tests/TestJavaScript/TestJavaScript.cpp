@@ -16,7 +16,7 @@
 
 static char answer[128];
 
-LocalFunction(OnScriptMessage, void, StringRef text) {
+static void OnScriptMessage(StringRef text) {
     snprintf(answer, 128, text);
 }
 

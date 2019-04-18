@@ -11,19 +11,28 @@ struct PerspectiveFrustum {
     float PerspectiveFrustumFieldOfView, PerspectiveFrustumAspectRatio;
 };
 
-LocalFunction(UpdateProjectionMatrix, void, Entity entity) {
-    if(!HasComponent(entity, ComponentOf_PerspectiveFrustum())) return;
+static void UpdateProjectionMatrix(Entity entity) {
+    auto data = GetPerspectiveFrustum(entity);
+	auto frustumData = GetFrustum(entity);
+	auto oldData = frustumData;
 
-    auto data = GetPerspectiveFrustumData(entity);
-	auto frustumData = GetFrustumData(entity);
-
-    glm_perspective(glm_rad(data->PerspectiveFrustumFieldOfView), data->PerspectiveFrustumAspectRatio, GetFrustumNearClip(entity), GetFrustumFarClip(entity), (vec4*)&frustumData->FrustumProjectionMatrix[0].x);
+    glm_perspective(glm_rad(data.PerspectiveFrustumFieldOfView), data.PerspectiveFrustumAspectRatio, frustumData.FrustumNearClip, frustumData.FrustumFarClip, (vec4*)&frustumData.FrustumProjectionMatrix[0].x);
 
     vec3 scale = {1.0f, 1.0f, -1.0f};
-    glm_scale((vec4*)&frustumData->FrustumProjectionMatrix[0].x, scale);
+    glm_scale((vec4*)&frustumData.FrustumProjectionMatrix[0].x, scale);
+
+    if(memcmp(&frustumData.FrustumProjectionMatrix[0], &oldData.FrustumProjectionMatrix[0], sizeof(v4f)*4) != 0) {
+        SetFrustum(entity, frustumData);
+    }
 }
 
-LocalFunction(OnPerspectiveFrustumAdded, void, Entity component, Entity entity) {
+static void OnFrustumChanged(Entity entity, const Frustum& oldData, const Frustum& newData) {
+    if(HasComponent(entity, ComponentOf_PerspectiveFrustum()) && (oldData.FrustumNearClip != newData.FrustumNearClip || oldData.FrustumFarClip != newData.FrustumFarClip)) {
+        UpdateProjectionMatrix(entity);
+    }
+}
+
+static void OnPerspectiveFrustumChanged(Entity entity, const PerspectiveFrustum& oldData, const PerspectiveFrustum& newData) {
     UpdateProjectionMatrix(entity);
 }
 
@@ -34,9 +43,6 @@ BeginUnit(PerspectiveFrustum)
         RegisterProperty(float, PerspectiveFrustumAspectRatio)
     EndComponent()
 
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnPerspectiveFrustumAdded, ComponentOf_PerspectiveFrustum())
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumNearClip()), UpdateProjectionMatrix, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_FrustumFarClip()), UpdateProjectionMatrix, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PerspectiveFrustumFieldOfView()), UpdateProjectionMatrix, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_PerspectiveFrustumAspectRatio()), UpdateProjectionMatrix, 0)
+    RegisterSystem(OnFrustumChanged, ComponentOf_Frustum())
+    RegisterSystem(OnPerspectiveFrustumChanged, ComponentOf_PerspectiveFrustum())
 EndUnit()

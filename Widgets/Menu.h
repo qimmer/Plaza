@@ -60,9 +60,6 @@ Unit(Menu)
 
     Component(MainMenuItem)
 
-    Component(VerticalSeparator)
-    Component(HorizontalSeparator)
-
     Component(MainMenuItemStyle)
         ChildProperty(WidgetMesh, MainMenuItemStyleMesh)
 
@@ -77,5 +74,12 @@ Unit(Menu)
         Property(v4i, SeparatorStylePadding)
         ChildProperty(WidgetMesh, SeparatorStyleVerticalMesh)
         ChildProperty(WidgetMesh, SeparatorStyleHorizontalMesh)
+
+    Prefab(VerticalSeparator)
+    Prefab(HorizontalSeparator)
+    Prefab(Menu)
+    Prefab(MainMenu)
+    Prefab(MenuItem)
+    Prefab(MainMenuItem)
 
 #endif //PLAZA_MENU_H

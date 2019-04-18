@@ -15,6 +15,7 @@ struct Glyph {
 };
 
 struct Font {
+    ChildArray FontGlyphs;
     s32 FontAscent, FontDescent, FontLineGap;
 };
 

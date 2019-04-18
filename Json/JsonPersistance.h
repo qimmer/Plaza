@@ -7,6 +7,7 @@
 
 #include <Core/NativeUtils.h>
 #include <Foundation/PersistancePoint.h>
+#include <Foundation/NativeUtils.h>
 
 struct JsonSettings {
     u8 JsonSettingsMaxRecursiveLevels;
@@ -21,6 +22,8 @@ Unit(JsonPersistance)
         Property(bool, JsonSettingsExplicitComponents)
         Property(bool, JsonSettingsExplicitBindings)
         Property(bool, JsonSettingsExplicitHandle)
+
+        Serializer(Json)
 
 bool SerializeJson(Entity stream, Entity entity, Entity jsonSettings);
 bool DeserializeJson(Entity stream, Entity entity);

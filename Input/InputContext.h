@@ -7,6 +7,20 @@
 
 #include <Core/NativeUtils.h>
 
+
+struct InputState {
+    float InputStateValue;
+    u16 InputStateKey;
+};
+
+struct InputContext {
+    ChildArray InputContextStates;
+    v2i InputContextCursorPosition;
+    float InputContextDeadZone;
+    bool InputContextGrabMouse;
+    s8 InputContextLastCharacter;
+};
+
 Unit(InputContext)
     Component(InputState)
         ReferenceProperty(InputContext, InputStateContext)
@@ -18,16 +32,6 @@ Unit(InputContext)
         Property(v2i, InputContextCursorPosition)
         Property(s8, InputContextLastCharacter)
         Property(float, InputContextDeadZone)
-
-    Component(HotKey)
-        ArrayProperty(InputState, HotKeyStates)
-        Property(float, HotKeyValue)
-
-    Component(InputMapping)
-        ArrayProperty(InputState, InputMappings)
-
-    Declare(AppLoop, InputPoll)
-
-    Function(SetInputStateValueByKey, void, Entity context, u16 key, float value)
+        ArrayProperty(InputState, InputContextStates)
 
 #endif //PLAZA_INPUTCONTEXT_H

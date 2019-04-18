@@ -8,11 +8,16 @@
 #include <Core/NativeUtils.h>
 #include <Foundation/AppLoop.h>
 
+struct StopWatch {
+    bool StopWatchRunning;
+    double StopWatchElapsedSeconds;
+    Entity StopWatchUpdateLoop;
+    u64 lastTime;
+};
+
 Unit(StopWatch)
     Component(StopWatch)
         Property(bool, StopWatchRunning)
         Property(double, StopWatchElapsedSeconds)
-
-    Declare(AppLoop, StopWatchUpdate)
 
 #endif //PLAZA_STOPWATCH_H

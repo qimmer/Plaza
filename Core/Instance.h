@@ -10,6 +10,7 @@
 struct UnresolvedReference {
     Entity UnresolvedReferenceProperty;
     StringRef UnresolvedReferenceUuid;
+    u32 UnresolvedReferenceArrayIndex;
 };
 
 struct UnresolvedEntity {
@@ -17,26 +18,26 @@ struct UnresolvedEntity {
 };
 
 struct Instance {
-    Entity InstanceTemplate;
+    Entity Prefab;
 };
 
-struct TemplatedComponent {
-    Entity ComponentTemplate;
+struct Prefab {
+
 };
 
 Unit(Instance)
     Component(UnresolvedReference)
         ReferenceProperty(Property, UnresolvedReferenceProperty)
         Property(StringRef, UnresolvedReferenceUuid)
+        Property(u32, UnresolvedReferenceArrayIndex)
 
     Component(UnresolvedEntity)
         ArrayProperty(UnresolvedReference, UnresolvedReferences)
 
     Component(Instance)
-        Property(Entity, InstanceTemplate)
+        Property(Entity, Prefab)
 
-    Component(TemplatedComponent)
-        ChildProperty(Identification, ComponentTemplate)
+    Component(Prefab)
 
     Function(ResolveReferences, void)
 

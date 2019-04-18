@@ -26,61 +26,27 @@
 
 static eastl::set<Entity> invalidatedWidgetMeshes;
 
-static void UpdateWidgetBounds(Entity widget) {
-    auto widgetSize = GetSize2D(widget);
-	auto transformData = GetTransformData(widget);
-	if (!transformData) return;
+static void InvalidateWidgetMesh(Entity entity) {
+    invalidatedWidgetMeshes.insert(entity);
+}
+
+static void UpdateWidgetBounds(Entity widget, Renderable& renderableData) {
+    auto widgetSize = GetRect2D(widget).Size2D;
+	auto transformData = GetWorldTransform(widget);
     
     v4f localMin = { 0.0f, 0.0f, 0.0f, 1.0f };
     v4f localMax = { (float)widgetSize.x, (float)widgetSize.y, 0.0f, 1.0f };
 
-    v4f globalMin, globalMax;
-
-    glm_mat4_mulv((vec4*)&transformData->TransformGlobalMatrix[0].x, &localMin.x, &globalMin.x);
-    glm_mat4_mulv((vec4*)&transformData->TransformGlobalMatrix[0].x, &localMax.x, &globalMax.x);
-
-    SetRenderableAABBMin(widget, {globalMin.x, globalMin.y, globalMin.z});
-    SetRenderableAABBMax(widget, {globalMax.x, globalMax.y, globalMax.z});
+    glm_mat4_mulv((vec4*)&transformData.WorldTransformMatrix[0].x, &localMin.x, &renderableData.RenderableAABBMin.x);
+    glm_mat4_mulv((vec4*)&transformData.WorldTransformMatrix[0].x, &localMax.x, &renderableData.RenderableAABBMax.x);
 }
 
-LocalFunction(OnBoundsUpdate, void) {
-	for_entity(widget, ComponentOf_Widget()) {
-		UpdateWidgetBounds(widget);
-	};
+static void RebuildWidgetMesh(Entity mesh) {
+    auto widgetMeshData = GetWidgetMesh(mesh);
+    auto textureSize = GetSubTexture2D(widgetMeshData.WidgetMeshEnabledTexture).SubTexture2DSize;
 
-    for_entity(widget, data2, Widget) {
-        if(GetWidgetDepthOrder(widget) != 0.0f) {
-            SetRenderableScissor(widget, {0, 0, 0, 0});
-            continue;
-        }
-        auto owner = GetOwnership(widget).Owner;
-        auto ownerRect = GetRect2DData(owner);
-        v4i scissor = {INT_MIN, INT_MIN, INT_MAX, INT_MAX};
-        while(ownerRect) {
-            auto transform = GetTransformData(owner);
-            scissor.x = Max(scissor.x, transform->TransformGlobalMatrix[3].x);
-            scissor.y = Max(scissor.y, transform->TransformGlobalMatrix[3].y);
-            scissor.z = Min(scissor.z, transform->TransformGlobalMatrix[3].x + ownerRect->Size2D.x);
-            scissor.w = Min(scissor.w, transform->TransformGlobalMatrix[3].y + ownerRect->Size2D.y);
-
-            owner = GetOwnership(owner).Owner;
-            ownerRect = GetRect2DData(owner);
-        }
-
-        scissor.z -= scissor.x;
-        scissor.w -= scissor.y;
-
-        SetRenderableScissor(widget, scissor);
-    };
-}
-
-LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
-    auto borderWidth = GetWidgetMeshFixedBorderWidth(mesh);
-    auto texture = GetWidgetMeshEnabledTexture(mesh);
-    auto textureSize = GetSubTexture2DSize(texture);
-
-    v2i borderSize = {borderWidth, borderWidth};
-    v2i oneMinusBorderWidth = {textureSize.x - borderWidth, textureSize.y - borderWidth};
+    v2i borderSize = {widgetMeshData.WidgetMeshFixedBorderWidth, widgetMeshData.WidgetMeshFixedBorderWidth};
+    v2i oneMinusBorderWidth = {textureSize.x - widgetMeshData.WidgetMeshFixedBorderWidth, textureSize.y - widgetMeshData.WidgetMeshFixedBorderWidth};
 
     WidgetVertex vertices[4*4];
     u16 indices[54];
@@ -121,9 +87,9 @@ LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
             topLeft.Normal = topRight.Normal = bottomLeft.Normal = bottomRight.Normal = {0, 0, -1};
 
             topLeft.TexCoord = {(float)(x * oneMinusBorderWidth.x), (float)(y * oneMinusBorderWidth.y)};
-            topRight.TexCoord = {(float)(x * oneMinusBorderWidth.x + borderWidth), (float)(y * oneMinusBorderWidth.y)};
-            bottomLeft.TexCoord = {(float)(x * oneMinusBorderWidth.x), (float)(y * oneMinusBorderWidth.y + borderWidth)};
-            bottomRight.TexCoord = {(float)(x * oneMinusBorderWidth.x + borderWidth), (float)(y * oneMinusBorderWidth.y + borderWidth)};
+            topRight.TexCoord = {(float)(x * oneMinusBorderWidth.x + widgetMeshData.WidgetMeshFixedBorderWidth), (float)(y * oneMinusBorderWidth.y)};
+            bottomLeft.TexCoord = {(float)(x * oneMinusBorderWidth.x), (float)(y * oneMinusBorderWidth.y + widgetMeshData.WidgetMeshFixedBorderWidth)};
+            bottomRight.TexCoord = {(float)(x * oneMinusBorderWidth.x + widgetMeshData.WidgetMeshFixedBorderWidth), (float)(y * oneMinusBorderWidth.y + widgetMeshData.WidgetMeshFixedBorderWidth)};
         }
     }
 
@@ -132,116 +98,135 @@ LocalFunction(RebuildWidgetMesh, void, Entity mesh) {
         vertices[i].TexCoord.y /= textureSize.y;
     }
 
-    auto vb = GetMeshVertexBuffer(mesh);
-    auto ib = GetMeshIndexBuffer(mesh);
-    auto vd = FindEntityByUuid("Gui.VertexDeclaration");
+    auto meshData = GetMesh(mesh);
 
-    SetVertexBufferDeclaration(vb, vd);
+    auto vertexBufferData = GetVertexBuffer(meshData.MeshVertexBuffer);
+    vertexBufferData.VertexBufferDeclaration = FindEntityByUuid("Gui.VertexDeclaration");
+    SetVertexBuffer(meshData.MeshVertexBuffer, vertexBufferData);
 
-    auto currentPath = GetStreamPath(vb);
-    if(!currentPath || !strlen(currentPath)) {
-        char path[1024];
-        snprintf(path, sizeof(path), "memory://%s", GetIdentification(vb).Uuid);
-        SetStreamPath(vb, path);
+    auto streamData = GetStream(meshData.MeshVertexBuffer);
+    if(!streamData.StreamPath) {
+        streamData.StreamPath = StringFormatV("memory://%s", GetIdentification(meshData.MeshVertexBuffer).Uuid);
+        SetStream(meshData.MeshVertexBuffer, streamData);
     }
 
-    if(StreamOpen(vb, StreamMode_Write)) {
-        StreamWrite(vb, sizeof(vertices), vertices);
-        StreamClose(vb);
+    if(StreamOpen(meshData.MeshVertexBuffer, StreamMode_Write)) {
+        StreamWrite(meshData.MeshVertexBuffer, sizeof(vertices), vertices);
+        StreamClose(meshData.MeshVertexBuffer);
     }
 
-    currentPath = GetStreamPath(ib);
-    if(!currentPath || !strlen(currentPath)) {
-        char path[1024];
-        snprintf(path, sizeof(path), "memory://%s", GetIdentification(ib).Uuid);
-        SetStreamPath(ib, path);
+    streamData = GetStream(meshData.MeshIndexBuffer);
+    if(!streamData.StreamPath) {
+        streamData.StreamPath = StringFormatV("memory://%s", GetIdentification(meshData.MeshIndexBuffer).Uuid);
+        SetStream(meshData.MeshIndexBuffer, streamData);
     }
 
-    if(StreamOpen(ib, StreamMode_Write)) {
-        StreamWrite(ib, sizeof(indices), indices);
-        StreamClose(ib);
+    if(StreamOpen(meshData.MeshIndexBuffer, StreamMode_Write)) {
+        StreamWrite(meshData.MeshIndexBuffer, sizeof(indices), indices);
+        StreamClose(meshData.MeshIndexBuffer);
     }
 
-    SetNumMeshSubMeshes(mesh, 1);
-    auto subMesh = GetMeshSubMeshes(mesh)[0];
-    SetSubMeshPrimitiveType(subMesh, PrimitiveType_TRIANGLELIST);
-    SetSubMeshNumIndices(subMesh, sizeof(indices) / sizeof(u16));
-    SetSubMeshNumVertices(subMesh, 4*4);
+    meshData.MeshSubMeshes.SetSize(1);
+    if(!meshData.MeshSubMeshes[0]) {
+        meshData.MeshSubMeshes[0] = CreateEntity();
+    }
+
+    SetSubMesh(meshData.MeshSubMeshes[0], {0, 0, 4*4, sizeof(indices) / sizeof(u16), PrimitiveType_TRIANGLELIST, RenderState_STATE_CULL_NONE});
+    SetMesh(mesh, meshData);
 }
 
-LocalFunction(OnValidateMeshes, void) {
+static void UpdateBounds() {
+    Widget data;
+    for_entity_data(widget, ComponentOf_Widget(), &data) {
+        auto renderableData = GetRenderable(widget);
+
+        UpdateWidgetBounds(widget, renderableData);
+
+        if(data.WidgetDepthOrder != 0.0f) {
+            renderableData.RenderableScissor = {0, 0, 0, 0};
+            SetRenderable(widget, renderableData);
+
+            continue;
+        }
+
+        auto owner = GetOwnership(widget).Owner;
+        renderableData.RenderableScissor = {INT_MIN, INT_MIN, INT_MAX, INT_MAX};
+        while(HasComponent(owner, ComponentOf_Rect2D())) {
+            auto ownerRect = GetRect2D(owner);
+            auto transform = GetWorldTransform(owner);
+            renderableData.RenderableScissor.x = Max(renderableData.RenderableScissor.x, transform.WorldTransformMatrix[3].x);
+            renderableData.RenderableScissor.y = Max(renderableData.RenderableScissor.y, transform.WorldTransformMatrix[3].y);
+            renderableData.RenderableScissor.z = Min(renderableData.RenderableScissor.z, transform.WorldTransformMatrix[3].x + ownerRect.Size2D.x);
+            renderableData.RenderableScissor.w = Min(renderableData.RenderableScissor.w, transform.WorldTransformMatrix[3].y + ownerRect.Size2D.y);
+
+            owner = GetOwnership(owner).Owner;
+        }
+
+        renderableData.RenderableScissor.z -= renderableData.RenderableScissor.x;
+        renderableData.RenderableScissor.w -= renderableData.RenderableScissor.y;
+
+        SetRenderable(widget, renderableData);
+    }
+}
+
+static void OnWidgetStateChanged(Entity entity, const WidgetState& oldData, const WidgetState& newData) {
+    auto widgetMesh = GetRenderable(entity).RenderableSubMesh;
+    if (HasComponent(widgetMesh, ComponentOf_SubMesh())) {
+        widgetMesh = GetOwnership(widgetMesh).Owner;
+    }
+
+    auto widgetMeshData = GetWidgetMesh(widgetMesh);
+
+    auto interactableWidgetMeshData = GetInteractableWidgetMesh(widgetMesh);
+
+    rgba32 color = widgetMeshData.WidgetMeshEnabledColor;
+    glm_vec4_lerp(&color.r, &interactableWidgetMeshData.WidgetMeshFocusedColor.r, newData.WidgetInteractionState.y, &color.x);
+    glm_vec4_lerp(&color.r, &interactableWidgetMeshData.WidgetMeshHoveredColor.r, newData.WidgetInteractionState.x, &color.x);
+    glm_vec4_lerp(&color.r, &widgetMeshData.WidgetMeshSelectedColor.r, newData.WidgetState.y, &color.x);
+    glm_vec4_lerp(&color.r, &interactableWidgetMeshData.WidgetMeshClickedColor.r, newData.WidgetInteractionState.z, &color.x);
+    glm_vec4_lerp(&color.r, &widgetMeshData.WidgetMeshDisabledColor.r, newData.WidgetState.x, &color.x);
+
+    auto state = newData;
+    state.WidgetStateColor = color;
+    SetWidgetState(entity, state);
+}
+
+static void OnWidgetMeshChanged(Entity entity, const WidgetMesh& oldData, const WidgetMesh& newData) {
+    invalidatedWidgetMeshes.insert(entity);
+}
+
+static void OnWidgetChanged(Entity entity, const Widget& oldData, const Widget& newData) {
+    auto stateData = GetWidgetState(entity);
+
+    v3f newState = {
+        newData.WidgetDisabled ? 1.0f : 0.0f,
+        newData.WidgetSelected ? 1.0f : 0.0f,
+        GetVisibility(entity).HierarchiallyHidden ? 1.0f : 0.0f
+    };
+
+    Transition(entity, PropertyOf_WidgetState(), MakeVariant(v2f, newState), stateData.WidgetStateTransitionDuration);
+}
+
+static void OnInteractableWidgetChanged(Entity entity, const InteractableWidget& oldData, const InteractableWidget& newData) {
+    auto stateData = GetWidgetState(entity);
+
+    v3f newState = {
+            newData.WidgetHovered ? 1.0f : 0.0f,
+        newData.WidgetFocused ? 1.0f : 0.0f,
+        newData.WidgetClicked ? 1.0f : 0.0f,
+    };
+
+    Transition(entity, PropertyOf_WidgetInteractionState(), MakeVariant(v3f, newState), stateData.WidgetStateTransitionDuration);
+}
+
+static void OnAppLoopChanged(Entity appLoop, const AppLoop& oldData, const AppLoop& newData) {
     for(auto& mesh : invalidatedWidgetMeshes) {
         RebuildWidgetMesh(mesh);
     }
 
     invalidatedWidgetMeshes.clear();
-}
 
-LocalFunction(OnWidgetMeshAdded, void, Entity component, Entity entity) {
-    SetNumMeshSubMeshes(entity, 1);
-    invalidatedWidgetMeshes.insert(entity);
-}
-
-LocalFunction(OnStateChanged, void, Entity entity) {
-    if(HasComponent(entity, ComponentOf_Widget())) {
-        auto data = GetWidgetData(entity);
-
-        v3f newState = {
-                data->WidgetDisabled ? 1.0f : 0.0f,
-                data->WidgetSelected ? 1.0f : 0.0f,
-                GetHidden(entity) ? 1.0f : 0.0f
-        };
-
-        Transition(entity, PropertyOf_WidgetState(), MakeVariant(v2f, newState), GetWidgetStateTransitionDuration(entity));
-    }
-}
-
-LocalFunction(OnInteractableStateChanged, void, Entity entity) {
-    auto data = GetInteractableWidgetData(entity);
-
-    v3f newState = {
-        data->WidgetHovered ? 1.0f : 0.0f,
-        data->WidgetFocused ? 1.0f : 0.0f,
-        data->WidgetClicked ? 1.0f : 0.0f,
-    };
-
-    Transition(entity, PropertyOf_WidgetInteractionState(), MakeVariant(v3f, newState), GetWidgetStateTransitionDuration(entity));
-}
-
-LocalFunction(OnStateUpdated, void, Entity entity) {
-    if(!HasComponent(entity, ComponentOf_Widget())) return;
-
-    auto state = GetWidgetState(entity);
-    auto interactionState = GetWidgetInteractionState(entity);
-
-    auto widgetMesh = GetRenderableSubMesh(entity);
-    if (HasComponent(widgetMesh, ComponentOf_SubMesh())) {
-        widgetMesh = GetOwnership(widgetMesh).Owner;
-    }
-
-    auto widgetMeshData = GetWidgetMeshData(widgetMesh);
-    if(!widgetMeshData) return;
-
-    auto interactableWidgetMeshData = GetInteractableWidgetMeshData(widgetMesh);
-
-    rgba32 color = widgetMeshData->WidgetMeshEnabledColor;
-
-    if(interactableWidgetMeshData) {
-        glm_vec4_lerp(&color.r, &interactableWidgetMeshData->WidgetMeshFocusedColor.r, interactionState.y, &color.x);
-        glm_vec4_lerp(&color.r, &interactableWidgetMeshData->WidgetMeshHoveredColor.r, interactionState.x, &color.x);
-        glm_vec4_lerp(&color.r, &widgetMeshData->WidgetMeshSelectedColor.r, state.y, &color.x);
-        glm_vec4_lerp(&color.r, &interactableWidgetMeshData->WidgetMeshClickedColor.r, interactionState.z, &color.x);
-    } else {
-        glm_vec4_lerp(&color.r, &widgetMeshData->WidgetMeshSelectedColor.r, state.y, &color.x);
-    }
-
-    glm_vec4_lerp(&color.r, &widgetMeshData->WidgetMeshDisabledColor.r, state.x, &color.x);
-
-    SetWidgetStateColor(entity, color);
-}
-
-LocalFunction(InvalidateWidgetMesh, void, Entity entity) {
-    invalidatedWidgetMeshes.insert(entity);
+    UpdateBounds();
 }
 
 BeginUnit(Widget)
@@ -253,25 +238,24 @@ BeginUnit(Widget)
     BeginComponent(Widget)
         RegisterBase(Rect2D)
         RegisterBase(Renderable)
-        RegisterProperty(float, WidgetStateTransitionDuration)
-        RegisterPropertyReadOnly(v3f, WidgetState)
         RegisterProperty(bool, WidgetDisabled)
         RegisterProperty(bool, WidgetSelected)
-        RegisterPropertyReadOnly(rgba32, WidgetStateColor)
         RegisterProperty(float, WidgetDepthOrder)
-
-        ComponentTemplate({
-            "RenderableMaterial": "Gui.Material"
-        })
     EndComponent()
 
     BeginComponent(InteractableWidget)
         RegisterBase(Widget)
-        RegisterPropertyReadOnly(v3f, WidgetInteractionState)
         RegisterPropertyReadOnly(v2i, WidgetInteractionPoint)
         RegisterProperty(bool, WidgetHovered)
         RegisterProperty(bool, WidgetFocused)
         RegisterProperty(bool, WidgetClicked)
+    EndComponent()
+
+    BeginComponent(WidgetState)
+        RegisterProperty(float, WidgetStateTransitionDuration)
+        RegisterPropertyReadOnly(v3f, WidgetState)
+        RegisterPropertyReadOnly(v3f, WidgetInteractionState)
+        RegisterPropertyReadOnly(rgba32, WidgetStateColor)
     EndComponent()
 
     BeginComponent(WidgetMesh)
@@ -283,12 +267,6 @@ BeginUnit(Widget)
         RegisterProperty(rgba32, WidgetMeshDisabledColor)
         RegisterProperty(rgba32, WidgetMeshSelectedColor)
         RegisterProperty(u16, WidgetMeshFixedBorderWidth)
-
-        ComponentTemplate({
-            "WidgetMeshEnabledColor": [0, 0, 0, 1],
-            "WidgetMeshDisabledColor": [0, 0, 0, 1],
-            "WidgetMeshSelectedColor": [0, 0, 0, 1]
-        })
     EndComponent()
 
     BeginComponent(InteractableWidgetMesh)
@@ -299,35 +277,11 @@ BeginUnit(Widget)
         RegisterProperty(rgba32, WidgetMeshHoveredColor)
         RegisterProperty(rgba32, WidgetMeshFocusedColor)
         RegisterProperty(rgba32, WidgetMeshClickedColor)
-        ComponentTemplate({
-          "WidgetMeshHoveredColor": [0, 0, 0, 1],
-          "WidgetMeshFocusedColor": [0, 0, 0, 1],
-          "WidgetMeshClickedColor": [0, 0, 0, 1]
-        })
     EndComponent()
 
-	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnBoundsUpdate, AppLoopOf_BoundsUpdate())
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshFixedBorderWidth()), InvalidateWidgetMesh, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshEnabledTexture()), InvalidateWidgetMesh, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshDisabledTexture()), InvalidateWidgetMesh, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshSelectedTexture()), InvalidateWidgetMesh, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshHoveredTexture()), InvalidateWidgetMesh, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshFocusedTexture()), InvalidateWidgetMesh, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetMeshClickedTexture()), InvalidateWidgetMesh, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetDisabled()), OnStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetSelected()), OnStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Hidden()), OnStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetHovered()), OnInteractableStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetFocused()), OnInteractableStateChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetClicked()), OnInteractableStateChanged, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetState()), OnStateUpdated, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_WidgetInteractionState()), OnStateUpdated, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RenderableSubMesh()), OnStateUpdated, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnValidateMeshes, AppLoopOf_ResourcePreparation())
-
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnWidgetMeshAdded, ComponentOf_WidgetMesh())
+	RegisterSystem(OnWidgetStateChanged, ComponentOf_WidgetState())
+    RegisterSystem(OnWidgetMeshChanged, ComponentOf_WidgetMesh())
+    RegisterSystem(OnWidgetChanged, ComponentOf_Widget())
+    RegisterSystem(OnInteractableWidgetChanged, ComponentOf_InteractableWidget())
+    RegisterDeferredSystem(OnAppLoopChanged, ComponentOf_AppLoop(), AppLoopOrder_BoundsUpdate)
 EndUnit()

@@ -14,11 +14,11 @@ API_EXPORT v3f TransformPoint(Entity sourceSpace, Entity destinationSpace, v3f s
         sourcePoint.z,
         1.0f
     };
-	auto sourceData = GetTransformData(sourceSpace);
-    auto sourceWorld = &sourceData->TransformGlobalMatrix[0];
+	auto sourceData = GetWorldTransform(sourceSpace);
+    auto sourceWorld = &sourceData.WorldTransformMatrix[0];
 
-	auto destinationData = GetTransformData(destinationSpace);
-	auto destinationWorld = &destinationData->TransformGlobalMatrix[0];
+	auto destinationData = GetWorldTransform(destinationSpace);
+	auto destinationWorld = &destinationData.WorldTransformMatrix[0];
 
     v4f destinationWorldInv[4];
     glm_mat4_inv((vec4*)destinationWorld, (vec4*)&destinationWorldInv[0].x);
@@ -46,8 +46,8 @@ API_EXPORT v3f TransformNormal(Entity sourceSpace, Entity destinationSpace, v3f 
         0.0f
     };
 
-	auto sourceData = GetTransformData(sourceSpace);
-	auto sourceWorld = &sourceData->TransformGlobalMatrix[0];
+	auto sourceData = GetWorldTransform(sourceSpace);
+	auto sourceWorld = &sourceData.WorldTransformMatrix[0];
 
 	v4f sourceWorldNormal[] = {
 		sourceWorld[0],
@@ -56,8 +56,8 @@ API_EXPORT v3f TransformNormal(Entity sourceSpace, Entity destinationSpace, v3f 
 		{0, 0, 0, 1}
 	};
 
-	auto destinationData = GetTransformData(destinationSpace);
-	auto destinationWorld = &destinationData->TransformGlobalMatrix[0];
+	auto destinationData = GetWorldTransform(destinationSpace);
+	auto destinationWorld = &destinationData.WorldTransformMatrix[0];
 
 	v4f destinationWorldInv[4];
 	glm_mat4_inv((vec4*)destinationWorld, (vec4*)&destinationWorldInv[0].x);
@@ -79,10 +79,12 @@ API_EXPORT v3f TransformNormal(Entity sourceSpace, Entity destinationSpace, v3f 
 
 
 API_EXPORT void Move3D(Entity transform, v3f direction, bool relativeToRotation) {
-    auto position = GetPosition3D(transform);
+    auto transformData = GetTransform(transform);
+
+    auto position = transformData.Position3D;
 
     if(relativeToRotation) {
-        auto euler = GetRotationEuler3D(transform);
+        auto euler = transformData.RotationEuler3D;
 
         float xUp[] = {1.0f, 0.0f, 0.0f};
         float yUp[] = {0.0f, 1.0f, 0.0f};
@@ -93,11 +95,11 @@ API_EXPORT void Move3D(Entity transform, v3f direction, bool relativeToRotation)
         glm_vec_rotate(&direction.x, glm_rad(euler.z), zUp);
     }
 
-    position.x += direction.x;
-    position.y += direction.y;
-    position.z += direction.z;
+    transformData.Position3D.x += direction.x;
+    transformData.Position3D.y += direction.y;
+    transformData.Position3D.z += direction.z;
 
-    SetPosition3D(transform, position);
+    SetTransform(transform, transformData);
 }
 
 API_EXPORT void LookAt(Entity transform, v3f origin, v3f direction, v3f up) {
@@ -120,135 +122,84 @@ API_EXPORT void LookAt(Entity transform, v3f origin, v3f direction, v3f up) {
     glm_mat4_quat((vec4*)&m[0].x, &quat.x);
     glm_quat_conjugate(&quat.x, &conj.x);
 
-    SetRotationQuat3D(transform, conj);
-    SetPosition3D(transform, origin);
+    auto transformData = GetTransform(transform);
+    transformData.RotationQuat3D = conj;
+    transformData.Position3D = origin;
+    SetTransform(transform, transformData);
 }
 
-static void UpdateLocalTransform(Entity entity) {
-	auto data = GetTransformData(entity);
-
-    auto position = GetPosition3D(entity);
+static void GetLocalTransform(const Transform& data, v4f *localMat) {
+    auto position = data.Position3D;
     float pos4[] = {position.x, position.y, position.z, 0.0f};
-    auto rotationQuat = GetRotationQuat3D(entity);
-    auto scale = GetScale3D(entity);
+    auto rotationQuat = data.RotationQuat3D;
+    auto scale = data.Scale3D;
 
     mat4 scaleMat, rotationMat;
     glm_scale_make(scaleMat, &scale.x);
     glm_quat_mat4(&rotationQuat.x, rotationMat);
-    glm_mul(scaleMat, rotationMat, (vec4*)&data->TransformLocalMatrix[0].x);
+    glm_mul(scaleMat, rotationMat, (vec4*)localMat);
 
-    glm_vec4_add(&data->TransformLocalMatrix[3].x, pos4, &data->TransformLocalMatrix[3].x);
+    glm_vec4_add(&localMat->x, pos4, &localMat->x);
 }
 
-static void ValidateTransform(Entity entity, Transform *transformData) {
-    auto parent = GetOwnership(entity).Owner;
+static void OnTransformChanged(Entity entity, const Transform& oldData, const Transform& newData) {
+    auto validatedData = newData;
 
-    if(transformData->TransformHierarchyLevel > 0 && HasComponent(parent, ComponentOf_Transform()) > 0) {
-		auto parentData = GetTransformData(parent);
-        glm_mat4_mul((vec4*)&parentData->TransformGlobalMatrix[0].x, (vec4*)&transformData->TransformLocalMatrix[0].x, (vec4*)&transformData->TransformGlobalMatrix[0].x);
-	}
-	else {
-		transformData->TransformGlobalMatrix[0] = transformData->TransformLocalMatrix[0];
-		transformData->TransformGlobalMatrix[1] = transformData->TransformLocalMatrix[1];
-		transformData->TransformGlobalMatrix[2] = transformData->TransformLocalMatrix[2];
-		transformData->TransformGlobalMatrix[3] = transformData->TransformLocalMatrix[3];
-	}
-}
+    if(memcmp(&oldData.RotationEuler3D, &newData.RotationEuler3D, sizeof(v3f)) != 0) {
+        v4f qx, qy, qz, t;
+        glm_quat(&qx.x, glm_rad(newData.RotationEuler3D.x), 1.0f, 0.0f, 0.0f);
+        glm_quat(&qy.x, glm_rad(newData.RotationEuler3D.y), 0.0f, 1.0f, 0.0f);
+        glm_quat(&qz.x, glm_rad(newData.RotationEuler3D.z), 0.0f, 0.0f, 1.0f);
+        glm_quat_mul(&qy.x, &qx.x, &t.x);
+        glm_quat_mul(&t.x, &qz.x, &validatedData.RotationQuat3D.x);
 
-static void CalculateHierarchyLevel(Entity entity) {
-    if(HasComponent(entity, ComponentOf_Transform())) {
-        auto parent = GetOwnership(entity).Owner;
-        s32 level = 0;
-        while(HasComponent(parent, ComponentOf_Transform())) {
-            level++;
-            parent = GetOwnership(parent).Owner;
-        }
-
-        GetTransformData(entity)->TransformHierarchyLevel = level;
-
-        for_children(child, Children, entity) {
-            CalculateHierarchyLevel(child);
-        }
+        SetTransform(entity, validatedData);
+        return;
     }
+
+    if(memcmp(&oldData.RotationQuat3D, &newData.RotationQuat3D, sizeof(v4f)) != 0) {
+        auto& q = newData.RotationQuat3D;
+
+        v3f euler = {glm_deg(atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * q.x * q.x - 2 * q.z * q.z)),
+                     glm_deg(atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * q.y * q.y - 2 * q.z * q.z)),
+                     glm_deg(asin(2 * q.x * q.y + 2 * q.z * q.w))};
+
+        validatedData.RotationEuler3D = euler;
+
+        SetTransform(entity, validatedData);
+        return;
+    }
+
+    v4f localTransform;
+    GetLocalTransform(newData, &localTransform);
+
+    auto ownershipData = GetOwnership(entity);
+    auto parentWorldTransform = GetWorldTransform(ownershipData.Owner);
+    WorldTransform worldTransform;
+
+    glm_mat4_mul((vec4*)&parentWorldTransform.WorldTransformMatrix[0].x, (vec4*)&localTransform.x, (vec4*)&worldTransform.WorldTransformMatrix[0].x);
+
+    SetWorldTransform(entity, parentWorldTransform);
 }
 
-LocalFunction(OnLocalChanged, void, Entity entity) {
-    UpdateLocalTransform(entity);
-}
+static void OnOwnerChanged(Entity entity, const Ownership& oldData, const Ownership& newData) {
+    auto ownershipData = GetOwnership(entity);
+    auto transformData = GetTransform(entity);
+    auto parentWorldTransform = GetWorldTransform(ownershipData.Owner);
 
-LocalFunction(OnRotationEuler3DChanged, void, Entity entity) {
-    auto data = GetTransformData(entity);
+    v4f localTransform;
+    GetLocalTransform(transformData, &localTransform);
 
-    v4f qx, qy, qz, t;
-    glm_quat(&qx.x, glm_rad(data->RotationEuler3D.x), 1.0f, 0.0f, 0.0f);
-    glm_quat(&qy.x, glm_rad(data->RotationEuler3D.y), 0.0f, 1.0f, 0.0f);
-    glm_quat(&qz.x, glm_rad(data->RotationEuler3D.z), 0.0f, 0.0f, 1.0f);
-    glm_quat_mul(&qy.x, &qx.x, &t.x);
-    glm_quat_mul(&t.x, &qz.x, &data->RotationQuat3D.x);
+    WorldTransform worldTransform;
 
-    UpdateLocalTransform(entity);
-}
+    glm_mat4_mul((vec4*)&parentWorldTransform.WorldTransformMatrix[0].x, (vec4*)&localTransform.x, (vec4*)&worldTransform.WorldTransformMatrix[0].x);
 
-LocalFunction(OnRotationQuat3DChanged, void, Entity entity) {
-    auto data = GetTransformData(entity);
-    auto& q = data->RotationQuat3D;
-
-    v3f euler = {glm_deg(atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * q.x * q.x - 2 * q.z * q.z)),
-                 glm_deg(atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * q.y * q.y - 2 * q.z * q.z)),
-                 glm_deg(asin(2 * q.x * q.y + 2 * q.z * q.w))};
-
-    data->RotationEuler3D = euler;
-
-    UpdateLocalTransform(entity);
-}
-
-LocalFunction(OnTransformUpdate, void) {
-    s32 level = 0;
-    bool hasAny = false;
-    do
-    {
-        hasAny = false;
-
-        for_entity(entity, transformData, Transform) {
-            if(transformData->TransformHierarchyLevel == level) {
-                hasAny = true;
-            } else {
-                continue;
-            }
-
-            ValidateTransform(entity, transformData);
-        }
-
-        level++;
-    } while(hasAny);
-}
-
-LocalFunction(OnAdded, void, Entity component, Entity entity) {
-	auto data = GetTransformData(entity);
-	data->TransformGlobalMatrix[0] = { 1, 0, 0, 0};
-	data->TransformGlobalMatrix[1] = { 0, 1, 0, 0 };
-	data->TransformGlobalMatrix[2] = { 0, 0, 1, 0 };
-	data->TransformGlobalMatrix[3] = { 0, 0, 0, 1 };
-
-	data->TransformLocalMatrix[0] = { 1, 0, 0, 0 };
-	data->TransformLocalMatrix[1] = { 0, 1, 0, 0 };
-	data->TransformLocalMatrix[2] = { 0, 0, 1, 0 };
-	data->TransformLocalMatrix[3] = { 0, 0, 0, 1 };
-
-    OnRotationEuler3DChanged(entity);
-    SetScale3D(entity, {1.0f, 1.0f, 1.0f});
-
-    CalculateHierarchyLevel(entity);
-}
-
-LocalFunction(OnOwnerChanged, void, Entity entity, Entity oldOwner, Entity newOwner) {
-    CalculateHierarchyLevel(entity);
+    SetWorldTransform(entity, parentWorldTransform);
 }
 
 BeginUnit(Transform)
     BeginComponent(Transform)
         RegisterBase(SceneNode)
-        RegisterPropertyReadOnly(s32, TransformHierarchyLevel)
         RegisterProperty(v3f, Position3D)
         RegisterProperty(v3f, Scale3D)
         RegisterProperty(v3f, RotationEuler3D)
@@ -257,22 +208,11 @@ BeginUnit(Transform)
         RegisterProperty(v2f, Scale2D)
         RegisterProperty(float, Rotation2D)
         RegisterProperty(float, Distance2D)
+
+        defaultValue.Scale3D = {1.0f, 1.0f, 1.0f};
+        defaultValue.RotationQuat3D = {0.0f, 0.0f, 0.0f, 1.0f};
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Scale3D()), OnLocalChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Position3D()), OnLocalChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RotationQuat3D()), OnRotationQuat3DChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_RotationEuler3D()), OnRotationEuler3DChanged, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Position2D()), OnLocalChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Scale2D()), OnLocalChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Rotation2D()), OnRotationEuler3DChanged, 0)
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Distance2D()), OnLocalChanged, 0)
-
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnAdded, ComponentOf_Transform())
-
-	RegisterSubscription(GetPropertyChangedEvent(PropertyOf_AppLoopFrame()), OnTransformUpdate, AppLoopOf_TransformUpdate())
-
-	SetAppLoopOrder(AppLoopOf_TransformUpdate(), AppLoopOrder_TransformUpdate);
+    RegisterDeferredSystem(OnTransformChanged, ComponentOf_Transform(), AppLoopOrder_TransformUpdate)
+    RegisterDeferredSystem(OnOwnerChanged, ComponentOf_Ownership(), AppLoopOrder_TransformUpdate * 0.99f)
 EndUnit()

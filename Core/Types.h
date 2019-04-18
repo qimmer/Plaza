@@ -1,7 +1,7 @@
 #ifndef PLAZA_TYPES_H
 #define PLAZA_TYPES_H
 
-static const int ChildArrayStaticCap = 8;
+#define InvalidIndex 0xFFFFFFFF
 
 #if defined(_WIN32) || defined(_WIN64)
 #   if !defined(_MSVC_LANG)
@@ -37,8 +37,6 @@ typedef signed long long s64;
 typedef u64 Entity;
 typedef u8 Type;
 typedef u64 Date;
-
-typedef char ChildArray[sizeof(u32) * 2 + sizeof(Entity*) + sizeof(Entity) * ChildArrayStaticCap];
 
 typedef struct {
     float x, y;
@@ -222,5 +220,7 @@ Type FindType(StringRef typeName);
 
 #define Variant_Default {0, 0}
 #define NativePtr_Default NULL
+
+#include <Core/Vector.h>
 
 #endif

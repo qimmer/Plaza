@@ -6,16 +6,19 @@
 #include <Foundation/Stream.h>
 #include <Core/Identification.h>
 #include "RestResourceRouting.h"
-#include "RestRouting.h"
 
 struct RestResourceRouting {
     StringRef RestResourceRoutingRoot;
     StringRef RestResourceRoutingDefaultFile;
 };
 
-static Entity handleGet(StringRef path, Entity request, Entity response) {
-    auto responseStream = GetHttpResponseContentStream(response);
-    SetStreamPath(responseStream, path);
+Entity ResourceRouteGet(Entity route, Entity request, Entity response, StringRef path) {
+    auto responseStream = GetHttpResponse(response).HttpResponseContentStream;
+
+    auto streamData = GetStream(responseStream);
+    streamData.StreamPath = path;
+    SetStream(responseStream, streamData);
+
     if(!StreamOpen(responseStream, StreamMode_Read)) {
         RemoveComponent(responseStream, ComponentOf_Stream());
         return FindResponseCode(404);
@@ -26,11 +29,14 @@ static Entity handleGet(StringRef path, Entity request, Entity response) {
     return FindResponseCode(200);
 }
 
-static Entity handlePut(StringRef path, Entity request, Entity response) {
-    auto requestStream = GetHttpRequestContentStream(request);
-    auto responseStream = GetHttpResponseContentStream(response);
+Entity ResourceRoutePut(Entity route, Entity request, Entity response, StringRef path) {
+    auto requestStream = GetHttpRequest(request).HttpRequestContentStream;
+    auto responseStream = GetHttpResponse(response).HttpResponseContentStream;
 
-    SetStreamPath(responseStream, path);
+    auto streamData = GetStream(responseStream);
+    streamData.StreamPath = path;
+    SetStream(responseStream, streamData);
+
     if(!StreamOpen(responseStream, StreamMode_Read)) {
         RemoveComponent(responseStream, ComponentOf_Stream());
         return FindResponseCode(404);
@@ -49,11 +55,13 @@ static Entity handlePut(StringRef path, Entity request, Entity response) {
     return FindResponseCode(204);
 }
 
-static Entity handlePost(StringRef path, Entity request, Entity response) {
-    auto requestStream = GetHttpRequestContentStream(request);
-    auto responseStream = GetHttpResponseContentStream(response);
+Entity ResourceRoutePost(Entity route, Entity request, Entity response, StringRef path) {
+    auto requestStream = GetHttpRequest(request).HttpRequestContentStream;
+    auto responseStream = GetHttpResponse(response).HttpResponseContentStream;
 
-    SetStreamPath(responseStream, path);
+    auto streamData = GetStream(responseStream);
+    streamData.StreamPath = path;
+    SetStream(responseStream, streamData);
 
     if(StreamOpen(responseStream, StreamMode_Read)) {
         StreamClose(responseStream);
@@ -73,10 +81,13 @@ static Entity handlePost(StringRef path, Entity request, Entity response) {
     return FindResponseCode(201);
 }
 
-static Entity handleDelete(StringRef path, Entity request, Entity response) {
-    auto responseStream = GetHttpResponseContentStream(response);
+Entity ResourceRouteDelete(Entity route, Entity request, Entity response, StringRef path) {
+    auto responseStream = GetHttpResponse(response).HttpResponseContentStream;
 
-    SetStreamPath(responseStream, path);
+    auto streamData = GetStream(responseStream);
+    streamData.StreamPath = path;
+    SetStream(responseStream, streamData);
+
     if(!StreamDelete(responseStream)) {
         RemoveComponent(responseStream, ComponentOf_Stream());
         return FindResponseCode(403);
@@ -87,35 +98,14 @@ static Entity handleDelete(StringRef path, Entity request, Entity response) {
     return FindResponseCode(200);
 }
 
-LocalFunction(OnRestRoutingRequest, void, Entity routing, Entity request, Entity response) {
-    auto data = GetRestResourceRoutingData(routing);
-
-    if(data) {
-        char completeRoute[1024];
-        auto requestUrl = GetHttpRequestUrl(request);
-        auto relativeUrl = requestUrl + strlen(GetRestRoutingRoute(routing));
-        snprintf(completeRoute, 1024, "%s/%s", data->RestResourceRoutingRoot, relativeUrl);
-
-        // 501 if handlers do not set any response code
-        auto responseCode = FindResponseCode(501);
-
-        auto method = GetHttpRequestMethod(request);
-        if(strcmp(method, "GET") == 0) responseCode = handleGet(completeRoute, request, response);
-        else if(strcmp(method, "PUT") == 0) responseCode =handlePut(completeRoute, request, response);
-        else if(strcmp(method, "POST") == 0) responseCode =handlePost(completeRoute, request, response);
-        else if(strcmp(method, "DELETE") == 0) responseCode =handleDelete(completeRoute, request, response);
-        else responseCode = FindResponseCode(405);
-
-        SetHttpResponseCode(response, responseCode);
-    }
-}
-
 BeginUnit(RestResourceRouting)
     BeginComponent(RestResourceRouting)
-        RegisterBase(RestRouting)
         RegisterProperty(StringRef, RestResourceRoutingRoot)
         RegisterProperty(StringRef, RestResourceRoutingDefaultFile)
     EndComponent()
 
-    RegisterSubscription(EventOf_RestRoutingRequest(), OnRestRoutingRequest, 0)
+    RegisterFunction(ResourceRouteGet)
+    RegisterFunction(ResourceRoutePut)
+    RegisterFunction(ResourceRoutePost)
+    RegisterFunction(ResourceRouteDelete)
 EndUnit()

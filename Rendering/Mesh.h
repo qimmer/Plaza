@@ -45,6 +45,7 @@ struct VertexBuffer {
 };
 
 struct VertexDeclaration {
+    ChildArray VertexDeclarationAttributes;
 };
 
 struct VertexAttribute {
@@ -58,6 +59,7 @@ struct IndexBuffer {
 };
 
 struct Mesh {
+    ChildArray MeshSubMeshes;
     Entity MeshVertexBuffer, MeshIndexBuffer;
     v3f MeshAABBMin, MeshAABBMax;
 };

@@ -12,7 +12,7 @@
 
 typedef Entity(*ModuleOfSignature)();
 
-LocalFunction(OnModuleLoaderLibraryPathChanged, void, Entity loader, StringRef oldPath, StringRef newPath) {
+static void OnModuleLoaderLibraryPathChanged(Entity loader, StringRef oldPath, StringRef newPath) {
     LoadPlazaModule(newPath);
 }
 
@@ -142,6 +142,7 @@ BeginUnit(Module)
         RegisterArrayProperty(Function, Functions)
         RegisterArrayProperty(Extension, Extensions)
         RegisterArrayProperty(Dependency, Dependencies)
+        RegisterArrayProperty(Prefab, Prefabs)
     EndComponent()
 
     RegisterFunction(GetRoot)

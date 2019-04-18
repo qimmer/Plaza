@@ -12,6 +12,7 @@ struct Texture2D {
 };
 
 struct TextureAtlas {
+    ChildArray TextureAtlasSubTextures;
 };
 
 struct SubTexture2D {

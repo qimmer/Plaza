@@ -4,14 +4,6 @@
 
 #include "AppNode.h"
 
-struct AppRoot {
-    bool AppRootActive;
-};
-
-struct AppNode {
-    Entity AppNodeRoot;
-};
-
 static Entity FindAppRoot(Entity entity) {
     if(!IsEntityValid(entity)) {
         return 0;
@@ -25,7 +17,13 @@ static Entity FindAppRoot(Entity entity) {
 }
 
 static void SetAppNodeRootRecursive(Entity entity) {
-    SetAppNode(entity, {FindAppRoot(entity)});
+    auto appNodeData = GetAppNode(entity);
+    auto root = FindAppRoot(entity);
+
+    if(appNodeData.AppNodeRoot != root) {
+        SetAppNode(entity, {root});
+    }
+
     for_entity(child, ComponentOf_AppNode()) {
         if(GetOwnership(child).Owner == entity) {
             SetAppNodeRootRecursive(child);
@@ -33,17 +31,19 @@ static void SetAppNodeRootRecursive(Entity entity) {
     }
 }
 
-LocalFunction(OnOwnerChanged, void, Entity entity) {
+static void OnOwnerChanged(Entity entity, const Ownership& oldData, const Ownership& newData) {
     if(HasComponent(entity, ComponentOf_AppNode())) {
         SetAppNodeRootRecursive(entity);
     }
 }
 
-LocalFunction(OnAppNodeAdded, void, Entity component, Entity entity) {
-    SetAppNode(entity, {FindAppRoot(entity)});
+static void OnAppNodeChanged(Entity entity, const AppNode& oldData, const AppNode& newData) {
+    if(!newData.AppNodeRoot) {
+        SetAppNode(entity, {FindAppRoot(entity)});
+    }
 }
 
-LocalFunction(OnAppRootAdded, void, Entity component, Entity entity) {
+static void OnAppRootChanged(Entity entity, const AppRoot& oldData, const AppRoot& newData) {
     SetAppNodeRootRecursive(entity);
 }
 
@@ -57,7 +57,7 @@ BeginUnit(AppNode)
         RegisterProperty(bool, AppRootActive)
     EndComponent()
 
-    RegisterSubscription(GetPropertyChangedEvent(PropertyOf_Owner()), OnOwnerChanged, 0)
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnAppNodeAdded, ComponentOf_AppNode())
-    RegisterSubscription(EventOf_EntityComponentAdded(), OnAppRootAdded, ComponentOf_AppRoot())
+    RegisterSystem(OnOwnerChanged, ComponentOf_Ownership())
+    RegisterSystem(OnAppNodeChanged, ComponentOf_AppNode())
+    RegisterSystem(OnAppRootChanged, ComponentOf_AppRoot())
 EndUnit()

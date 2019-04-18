@@ -9,7 +9,8 @@
 
 
 API_EXPORT StringRef GetEnumName(Entity e, u64 value) {
-    for_children(flag, PropertyOf_EnumFlags(), e) {
+    auto enumData = GetEnum(e);
+    for(auto flag : enumData.EnumFlags) {
         if(GetEnumFlag(flag).EnumFlagValue == value) {
             return GetArrayChild(flag).Name;
         }
@@ -25,7 +26,8 @@ API_EXPORT u64 GetEnumValue(Entity e, StringRef name) {
 
     auto uuid = StringFormatV("%s.%s", GetIdentification(e).Uuid, name);
 
-    for_children(flag, PropertyOf_EnumFlags(), e) {
+    auto enumData = GetEnum(e);
+    for(auto flag : enumData.EnumFlags) {
         if(GetIdentification(flag).Uuid == name || GetIdentification(flag).Uuid == uuid) {
             return GetEnumFlag(flag).EnumFlagValue;
         }

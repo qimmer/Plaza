@@ -156,13 +156,11 @@ static void PrintNode(int level, Entity entity) {
 
     printf(")\n");
 
-    for_entity(component, ComponentOf_Component()) {
+    Component componentData;
+    for_entity_data(component, ComponentOf_Component(), &componentData) {
         if(!HasComponent(entity, component)) continue;
 
-        auto properties = GetProperties(component);
-        auto numProperties = GetNumProperties(component);
-        for(u32 i = 0; i < numProperties; ++i) {
-            auto property = properties[i];
+        for(auto property : componentData.Properties) {
             auto propertyData = GetProperty(property);
             auto value = GetPropertyValue(property, entity);
             switch(propertyData.PropertyType) {
@@ -174,11 +172,9 @@ static void PrintNode(int level, Entity entity) {
                     }
                 case TypeOf_ChildArray:
                     printf("%*s%s: [\n", (level + 1) * identation, " ", GetDebugName(property));
-                    auto elements = GetArrayPropertyElements(property, entity);
-                    auto numElements = GetArrayPropertyCount(property, entity);
-                    for(u32 j = 0; j < numElements; ++j) {
-                        printf("%*s [%d]: ", (level + 2) * identation, " ", j);
-                        PrintNode(level+2, elements[j]);
+                    for(auto element : value.as_ChildArray) {
+                        printf("%*s: ", (level + 2) * identation, " ");
+                        PrintNode(level+2, element);
                     }
                     printf("%*s]\n", (level + 1) * identation, " ");
                     break;

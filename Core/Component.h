@@ -9,7 +9,6 @@
 #include <omp.h>
 #include <EASTL/fixed_map.h>
 
-#define InvalidIndex 0xFFFFFFFF
 #define PoolPageElements 256
 
 typedef eastl::fixed_vector<u16, 256> EntityComponentIndexVector;
@@ -82,6 +81,8 @@ struct Component {
 	u16 ComponentDataIndex;
 	u16 ComponentSize;
 	bool ComponentExplicitSize;
+
+	NativePtr ComponentDefaultData;
 };
 
 Unit(Component)
@@ -98,6 +99,7 @@ Unit(Component)
         Property(bool, ComponentExplicitSize)
         ArrayProperty(Property, Properties)
         ArrayProperty(Base, Bases)
+        Property(NativePtr, ComponentDefaultData)
 
 #define for_entity(ENTITYVAR, COMPONENTTYPE) \
     for(Entity __i = 0, __componentTypeIndex = (Entity)GetComponentIndexByIndex(0, COMPONENTTYPE), ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, 0); ENTITYVAR; ENTITYVAR = GetNextEntity((u32*)&__i, (u32)__componentTypeIndex, 0))

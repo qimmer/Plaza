@@ -65,9 +65,12 @@ BeginUnit(Rendering)
     );
 
     auto whiteTexture = TextureOf_White();
-    SetTextureSize2D(whiteTexture, {32, 32});
-    SetTextureFormat(whiteTexture, TextureFormat_RGBA8);
-    SetStreamPath(whiteTexture, "memory://Rendering/WhiteTexture.bin");
+    SetTexture2D(whiteTexture, {{32, 32}});
+    SetTexture(whiteTexture, {TextureFlag_NONE, TextureFormat_RGBA8, false, 0});
+
+    auto streamData = GetStream(whiteTexture);
+    streamData.StreamPath = "memory://Rendering/WhiteTexture.bin";
+    SetStream(whiteTexture, streamData);
 
     if(StreamOpen(whiteTexture, StreamMode_Write)) {
         rgba8 white, black;

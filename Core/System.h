@@ -18,13 +18,12 @@ struct System {
 
 Unit(System)
     Component(System)
-        Property(Entity, SystemComponent)
+        ReferenceProperty(Component, SystemComponent)
         Property(NativePtr, SystemFunction)
         Property(float, SystemOrder)
         Property(bool, SystemDeferred)
 
 void NotifyChange(Entity entity, Entity component, const void *oldData, const void *newData);
-void NotifyArray(Entity entity, Entity property, Entity oldValue, Entity newValue);
 void ProcessSystems();
 
 #endif //PLAZA_SYSTEM_H
